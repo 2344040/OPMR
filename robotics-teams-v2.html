@@ -1,0 +1,1217 @@
+<!doctype html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Открытое первенство Санкт-Петербурга по морской робототехнике</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg: #f3f5f9;
+            --card: #fff;
+            --ink: #16212e;
+            --muted: #64748b;
+            --brand: #0b5fff;
+            --line: #e2e8f0;
+            --title: #517CB3
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--ink)
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            padding: 12px 16px;
+            z-index: 5
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0;
+            flex: 1;
+            min-width: 280px;
+            line-height: 1.22;
+            color: var(--title);
+            font-weight: 800;
+            text-align: center
+        }
+
+        .tabs {
+            display: flex;
+            gap: 6px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 4px
+        }
+
+        .tab {
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            padding: 8px 14px;
+            border-radius: 9px;
+            font: inherit;
+            font-weight: 600;
+            cursor: pointer
+        }
+
+        .tab.active {
+            background: #fff;
+            color: var(--brand);
+            box-shadow: 0 1px 2px #0f172a14
+        }
+
+        button,
+        .btn {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            background: var(--brand);
+            color: #fff;
+            font-weight: 600
+        }
+
+        button.ghost {
+            background: #eef2ff;
+            color: var(--brand)
+        }
+
+        button.danger {
+            background: #fee2e2;
+            color: #b91c1c
+        }
+
+        button.small {
+            padding: 7px 10px;
+            font-size: 13px
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 16px
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            font: inherit;
+            background: #fff
+        }
+
+        .search {
+            flex: 1;
+            min-width: 220px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 12px
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 1px 2px #0f172a0a;
+            cursor: pointer;
+            position: relative
+        }
+
+        .card h3 {
+            margin: 0 40px 6px 0;
+            font-size: 16px
+        }
+
+        .meta {
+            color: var(--muted);
+            font-size: 13px;
+            margin: 2px 0
+        }
+
+        .badge {
+            display: inline-block;
+            background: #eef2ff;
+            color: var(--brand);
+            border-radius: 999px;
+            padding: 3px 9px;
+            font-size: 12px;
+            font-weight: 600
+        }
+
+        .type-chip {
+            font-weight: 800;
+            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            color: #fff;
+            white-space: nowrap
+        }
+
+        .type-chip.large {
+            font-size: 18px;
+            padding: 10px 14px
+        }
+
+        .type-anpa {
+            background: #0b5fff
+        }
+
+        .type-tnpa {
+            background: #0f9d58
+        }
+
+        .type-bek {
+            background: #ea7317
+        }
+
+        .type-unknown {
+            background: #64748b
+        }
+
+        .card .type-chip {
+            position: absolute;
+            right: 14px;
+            bottom: 14px
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center
+        }
+
+        .section {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 14px
+        }
+
+        .section h2 {
+            margin: 0 0 12px;
+            font-size: 17px
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px
+        }
+
+        .section-head h2 {
+            margin: 0
+        }
+
+        .page-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px
+        }
+
+        .page-head .title {
+            flex: 1;
+            min-width: 0
+        }
+
+        .field {
+            margin-bottom: 10px
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 4px
+        }
+
+        .members {
+            display: grid;
+            gap: 10px
+        }
+
+        .member {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            background: #fafafa
+        }
+
+        .member-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px
+        }
+
+        @media(max-width:640px) {
+            .member-grid {
+                grid-template-columns: 1fr
+            }
+        }
+
+        .hidden {
+            display: none !important
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            padding: 30px 10px
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 12px;
+            margin-top: 12px
+        }
+
+        .photo {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff
+        }
+
+        .photo-frame {
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            padding: 8px;
+            cursor: zoom-in
+        }
+
+        .photo img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain
+        }
+
+        .photo-fallback {
+            padding: 18px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 13px
+        }
+
+        .photo-actions {
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            flex-wrap: wrap
+        }
+
+        .photo-actions a,
+        .photo-actions button {
+            flex: 1;
+            text-align: center;
+            text-decoration: none;
+            font-size: 12px;
+            padding: 7px 8px;
+            border-radius: 8px;
+            border: 0;
+            cursor: pointer
+        }
+
+        .photo-actions a,
+        .photo-actions button {
+            background: #eef2ff;
+            color: var(--brand);
+            font-weight: 600
+        }
+
+        .kv {
+            display: grid;
+            grid-template-columns: 180px 1fr;
+            gap: 8px 14px;
+            font-size: 15px
+        }
+
+        .kv dt {
+            color: var(--muted);
+            font-size: 13px;
+            padding-top: 2px
+        }
+
+        .kv dd {
+            margin: 0
+        }
+
+        .kv a {
+            color: var(--brand);
+            text-decoration: none;
+            font-weight: 600
+        }
+
+        .kv a:hover {
+            text-decoration: underline
+        }
+
+        @media(max-width:640px) {
+            .kv {
+                grid-template-columns: 1fr;
+                gap: 2px 0
+            }
+
+            .kv dt {
+                margin-top: 8px
+            }
+        }
+
+        .desc {
+            white-space: pre-wrap;
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 8px
+        }
+
+        .members-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            table-layout: fixed
+        }
+
+        .members-table th,
+        .members-table td {
+            border-bottom: 1px solid var(--line);
+            padding: 9px 8px;
+            text-align: left;
+            vertical-align: top
+        }
+
+        .members-table th {
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .03em
+        }
+
+        .members-table td {
+            overflow-wrap: anywhere
+        }
+
+        .members-table col.c1 {
+            width: 4%
+        }
+
+        .members-table col.c4 {
+            width: 34%
+        }
+
+        .members-table col.c2 {
+            width: 11%
+        }
+
+        .members-table col.c1s {
+            width: 7%
+        }
+
+        .fio {
+            font-weight: 600;
+            white-space: normal
+        }
+
+        .fio-captain::after {
+            content: " (с)";
+            font-weight: 700
+        }
+
+        .member-cards {
+            display: none;
+            grid-template-columns: 1fr;
+            gap: 10px
+        }
+
+        .member-card {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            background: #fff
+        }
+
+        .member-card .head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 10px
+        }
+
+        .member-card .name {
+            font-weight: 700;
+            font-size: 16px;
+            overflow-wrap: anywhere
+        }
+
+        .member-card .rows {
+            display: grid;
+            gap: 8px;
+            font-size: 14px
+        }
+
+        .member-card .item {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 8px
+        }
+
+        .member-card .item b {
+            color: var(--muted);
+            font-weight: 600;
+            font-size: 13px
+        }
+
+        .member-card .item span {
+            overflow-wrap: anywhere
+        }
+
+        .table-wrap {
+            overflow-x: auto
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translateX(-50%);
+            background: #111827;
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            opacity: 0;
+            pointer-events: none;
+            transition: .2s;
+            z-index: 20
+        }
+
+        .toast.show {
+            opacity: 1
+        }
+
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: #0b1220f2;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 50
+        }
+
+        .lightbox img {
+            max-width: 100%;
+            max-height: calc(100vh - 130px);
+            object-fit: contain;
+            border-radius: 12px;
+            background: #fff
+        }
+
+        .lightbox .bar {
+            position: absolute;
+            top: 16px;
+            right: 16px
+        }
+
+        .lightbox .bar button {
+            background: #ffffff22;
+            color: #fff;
+            border: 1px solid #ffffff44
+        }
+
+        .lightbox .nav {
+            position: absolute;
+            bottom: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            align-items: center
+        }
+
+        .lightbox .nav button {
+            background: #ffffff22;
+            color: #fff;
+            border: 1px solid #ffffff44
+        }
+
+        .lightbox .counter {
+            color: #fff;
+            font-size: 14px;
+            min-width: 64px;
+            text-align: center
+        }
+
+        @media(max-width:767px) {
+            .members-table {
+                display: none
+            }
+
+            .member-cards {
+                display: grid
+            }
+
+            .member-card .item {
+                grid-template-columns: 1fr;
+                gap: 2px
+            }
+
+            .member-card .item b {
+                margin-top: 6px
+            }
+
+            .card .type-chip {
+                position: absolute;
+                right: 14px;
+                bottom: 14px
+            }
+
+            .card h3 {
+                margin-right: 0
+            }
+
+            .page-head {
+                flex-direction: row;
+                align-items: center
+            }
+
+            h1 {
+                font-size: 20px
+            }
+        }
+
+        @media print {
+
+            header,
+            .toolbar,
+            .no-print,
+            .lightbox {
+                display: none !important
+            }
+
+            body {
+                background: #fff
+            }
+
+            main {
+                max-width: none;
+                padding: 0
+            }
+
+            .card,
+            .section {
+                border: 0;
+                box-shadow: none;
+                padding: 0;
+                margin: 0 0 14px
+            }
+
+            .page-title h2 {
+                font-size: 22px
+            }
+
+            .photo-frame {
+                height: auto;
+                max-height: 320px
+            }
+
+            .photo img {
+                max-height: 320px
+            }
+
+            .photo-actions {
+                display: none
+            }
+
+            .member-cards {
+                display: none !important
+            }
+
+            .members-table {
+                display: table !important
+            }
+
+            .kv a {
+                color: inherit;
+                text-decoration: none
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-inner">
+            <h1>Открытое первенство<br>Санкт-Петербурга<br>по морской робототехнике<br>27–29 ноября 2026 г.</h1>
+            <div class="tabs">
+                <button id="tabTeams" class="tab active" onclick="showTeams()">Команды</button>
+                <button id="tabCompetitions" class="tab" onclick="showCompetitions()">Соревнования</button>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div id="teamsView">
+            <div class="toolbar no-print">
+                <input id="search" class="search" placeholder="Поиск: организация, город, участник, аппарат" oninput="render()">
+                <label class="btn" style="background:#eef2ff;color:var(--brand)">Загрузить JSON/Excel<input type="file" accept=".json,.xlsx,.xls" hidden onchange="importFile(this)"></label>
+                <button onclick="newTeam()">+ Команда</button>
+            </div>
+            <div id="stats" class="meta"></div>
+            <div id="teams" class="grid"></div>
+        </div>
+
+        <div id="competitionsView" class="hidden">
+            <div class="section">
+                <h2>Соревнования</h2>
+                <div class="empty">Раздел «Соревнования» будет добавлен позже.</div>
+            </div>
+        </div>
+
+        <div id="teamView" class="hidden">
+            <div class="toolbar no-print">
+                <button class="ghost" onclick="showTeams()">← К командам</button>
+                <button id="editBtn" onclick="toggleEdit()">Редактировать</button>
+                <button class="ghost" onclick="window.print()">Печать / PDF</button>
+                <button class="ghost" onclick="downloadPhotos()">Скачать все фото</button>
+                <button id="deleteBtn" class="danger hidden" onclick="deleteTeam()">Удалить</button>
+            </div>
+            <div id="teamContent"></div>
+        </div>
+    </main>
+    <div id="toast" class="toast"></div>
+    <div id="lightbox" class="lightbox" onclick="if(event.target===this)closeLightbox()">
+        <div class="bar"><button onclick="closeLightbox()">Закрыть</button></div>
+        <img id="lightboxImg" src="" alt="Просмотр фотографии">
+        <div class="nav"><button onclick="prevPhoto()">←</button><span id="lightboxCounter" class="counter"></span><button onclick="nextPhoto()">→</button></div>
+    </div>
+
+    <script>
+        const TEAMS = [
+            {
+                "id": "2526674747",
+                "createdAt": "2026-09-18 15:36:10",
+                "organization": "тест",
+                "city": "-",
+                "region": "-",
+                "postalCode": "123456",
+                "address": "-",
+                "organizationPhone": "",
+                "email": "",
+                "organizationHead": "",
+                "vehicleClass": "",
+                "vehicleDescription": "",
+                "vehiclePhotos": [],
+                "teamLead": "",
+                "teamLeadPhone": "",
+                "consent": true,
+                "members": []
+            },
+            {
+                "id": "2538225085",
+                "createdAt": "2026-09-29 11:18:54",
+                "organization": "Санкт-Петербургский государственный морской технический университет",
+                "city": "г.Санкт-Петербург",
+                "region": "",
+                "postalCode": "",
+                "address": "Россия, Санкт-Петербург, Лоцманская улица, 3",
+                "organizationPhone": "+7 962 441-94-52",
+                "email": "alex.levina.ol@mail.ru",
+                "organizationHead": "Туричин Глеб Андреевич",
+                "vehicleClass": "Безэкипажный катер (БЭК)",
+                "vehicleDescription": "Разрабатываемый аппарат представляет собой автономный безэкипажный катамаран для выполнения конкурсной миссии в бассейне. Он оснащается бортовым вычислителем NVIDIA Jetson Orin NX, двумя камерами и комплексом навигационных датчиков.",
+                "vehiclePhotos": [
+                    "https://disk.yandex.ru/client/disk/Yandex.Forms/6aad2816e010db37add23cf4/Files?idApp=client&dialog=slider&idDialog=%2Fdisk%2FYandex.Forms%2F6aad2816e010db37add23cf4%2FFiles%2F6abb7018f47e738eb4ffdae6_image_29_09_26_10_58.webp",
+                    "https://disk.yandex.ru/client/disk/Yandex.Forms/6aad2816e010db37add23cf4/Files?idApp=client&dialog=slider&idDialog=%2Fdisk%2FYandex.Forms%2F6aad2816e010db37add23cf4%2FFiles%2F6abb701849363913f63c3195_image_29_09_26_10_58_1.webp",
+                    "https://disk.yandex.ru/client/disk/Yandex.Forms/6aad2816e010db37add23cf4/Files?idApp=client&dialog=slider&idDialog=%2Fdisk%2FYandex.Forms%2F6aad2816e010db37add23cf4%2FFiles%2F6abb7018e010db1c7912a01c_image_29_09_26_10_58.jpeg",
+                    "https://disk.yandex.ru/client/disk/Yandex.Forms/6aad2816e010db37add23cf4/Files?idApp=client&dialog=slider&idDialog=%2Fdisk%2FYandex.Forms%2F6aad2816e010db37add23cf4%2FFiles%2F6abb701884227cedcad6c946_image_29_09_26_10_58_2.webp"
+                ],
+                "teamLead": "Санникова Александра Олеговна",
+                "teamLeadPhone": "+7 962 441-94-52",
+                "consent": true,
+                "members": [
+                    {
+                        "fullName": "Санникова Александра Олеговна",
+                        "birthDate": "2005-08-02",
+                        "document": "4025 365931",
+                        "isStudent": true,
+                        "enrollmentOrder": "№1235(2) от 25.08.2026"
+                    },
+                    {
+                        "fullName": "Грицюк Ульяна Олеговна",
+                        "birthDate": "2004-07-01",
+                        "document": "4024 932458",
+                        "isStudent": true,
+                        "enrollmentOrder": "№1235(2) от 25.08.2026"
+                    },
+                    {
+                        "fullName": "Олейник Екатерина Юрьевна",
+                        "birthDate": "2004-05-11",
+                        "document": "4024 823227",
+                        "isStudent": true,
+                        "enrollmentOrder": "№ 1175(2) от 29.07.2024"
+                    },
+                    {
+                        "fullName": "Журов Василий Антонович",
+                        "birthDate": "2005-09-16",
+                        "document": "4025 307173",
+                        "isStudent": true,
+                        "enrollmentOrder": "1183(2)"
+                    },
+                    {
+                        "fullName": "Моселов Никита Дмитриевич",
+                        "birthDate": "2006-06-15",
+                        "document": "4026 522925",
+                        "isStudent": true,
+                        "enrollmentOrder": "1183(2)"
+                    },
+                    {
+                        "fullName": "Самарин Арсений Данилович",
+                        "birthDate": "2006-04-07",
+                        "document": "4025 382549",
+                        "isStudent": true,
+                        "enrollmentOrder": "1183(2)"
+                    },
+                    {
+                        "fullName": "Страшнов Николай Александрович",
+                        "birthDate": "2006-09-11",
+                        "document": "4020 815949",
+                        "isStudent": true,
+                        "enrollmentOrder": "1183(2)"
+                    }
+                ]
+            },
+            {
+                "id": "2564426297",
+                "createdAt": "2026-10-21 16:25:10",
+                "organization": "УНМЦ \"Гидронавтика\"",
+                "city": "Москва",
+                "region": "Москва",
+                "postalCode": "105005",
+                "address": "Госпитальный пер., 10, Москва",
+                "organizationPhone": "+7 906 737-06-18",
+                "email": "katerina48369@yandex.ru",
+                "organizationHead": "Вельтищев Вадим Викторович",
+                "vehicleClass": "Телеуправляемый необитаемый подводный аппарат (ТНПА)",
+                "vehicleDescription": "«Агент000» — компактный ТНПА для инспекционных задач и отработки навыков пилотирования. Управление осуществляется по проводному интерфейсу Ethernet, что гарантирует стабильную передачу видеопотока и телеметрии без задержек.\nИзначально созданный для мультиагентных систем, аппарат эффективно работает в режиме прямого телеуправления. Оператор контролирует движение в реальном времени, опираясь на данные бортовой камеры и датчиков.\nКонструкция включает 6 винтомоторных агрегатов, обеспечивающих маневрирование по всем 6 степеням свободы и точное позиционирование у объектов. Для снижения нагрузки на оператора реализована автоматическая стабилизация углов крена и дифферента. Точное определение положения в воде обеспечивают встроенная бесплатформенная система ориентации (БСО) и датчик давления.\nГабариты аппарата составляют 470×260×210 мм, что облегчает транспортировку. Сменный аккумуляторный блок (24В) позволяет вести непрерывную работу до 5 часов.",
+                "vehiclePhotos": [
+                    "https://disk.yandex.ru/client/disk/Yandex.Forms/6aad2816e010db37add23cf4/Files?idApp=client&dialog=slider&idDialog=%2Fdisk%2FYandex.Forms%2F6aad2816e010db37add23cf4%2FFiles%2F6ad785bf2c4f898f711bb252_img20261018013253028.jpg"
+                ],
+                "teamLead": "Абрамов Андрей Дмитриевич",
+                "teamLeadPhone": "+7 982 971-55-63",
+                "consent": true,
+                "members": [
+                    {
+                        "fullName": "Абрамов Андрей Дмитриевич",
+                        "birthDate": "2007-02-10",
+                        "document": "7120 581879",
+                        "isStudent": true,
+                        "enrollmentOrder": "Зачисление приказом от 04.08.2024 № 02.22-02.06/8656 СМ"
+                    },
+                    {
+                        "fullName": "Солдатенко Екатерина Денисовна",
+                        "birthDate": "2007-03-10",
+                        "document": "4621 085328",
+                        "isStudent": true,
+                        "enrollmentOrder": "Приказ О зачислении в МГТУ им. Н. Э. Баумана от 02 августа 2025 № 02.22-02.06/4261 СМ. Дата начала обучения — 01 сентября 2025 года."
+                    },
+                    {
+                        "fullName": "Мызгин Станислав Максимович",
+                        "birthDate": "2007-05-12",
+                        "document": "7421 063061",
+                        "isStudent": true,
+                        "enrollmentOrder": "Приказ О зачислении в МГТУ им. Н. Э. Баумана от 02 августа 2025 № 02.22-02.06/4332 РЛ. Дата начала обучения — 01 сентября 2025 года."
+                    },
+                    {
+                        "fullName": "Горлов Фёдор Александрович",
+                        "birthDate": "2007-09-24",
+                        "document": "4521 540320",
+                        "isStudent": true,
+                        "enrollmentOrder": "Зачисление приказом 02.22-02.06/4261 СМ"
+                    },
+                    {
+                        "fullName": "Шабанов Глеб Михайлович",
+                        "birthDate": "2006-05-16",
+                        "document": "4526 229445",
+                        "isStudent": true,
+                        "enrollmentOrder": "Зачисление приказом от 29.07.2024 № 02.22-02.06/8309 СМ"
+                    },
+                    {
+                        "fullName": "Чуфистов Кирилл Алексеевич",
+                        "birthDate": "2009-03-03",
+                        "document": "4622 981711",
+                        "isStudent": true,
+                        "enrollmentOrder": "02.22-02.06/4121 СМ"
+                    },
+                    {
+                        "fullName": "Думов Александр Дмитриевич",
+                        "birthDate": "2008-01-22",
+                        "document": "6521 467569",
+                        "isStudent": true,
+                        "enrollmentOrder": "02.22-02.06/4261 СМ от 2025-08-02"
+                    },
+                    {
+                        "fullName": "Турусов Павел Владимирович",
+                        "birthDate": "2007-02-07",
+                        "document": "2220 246658",
+                        "isStudent": true,
+                        "enrollmentOrder": "02.22-02.06 №4343 АК"
+                    }
+                ]
+            }
+        ];
+        const VEHICLE_TYPES = {
+            anpa: { code: 'АНПА', title: 'Автономные необитаемые подводные аппараты', cls: 'type-anpa', keys: ['анпа', 'автономн'] },
+            tnpa: { code: 'ТНПА', title: 'Телеуправляемые необитаемые подводные аппараты', cls: 'type-tnpa', keys: ['тнпа', 'телеуправляем'] },
+            bek: { code: 'БЭК', title: 'Безэкипажные катера', cls: 'type-bek', keys: ['бэк', 'безэкипажн'] }
+        };
+        const FIELDS = [
+            ['organization', 'Организация'], ['city', 'Город (населённый пункт)'], ['region', 'Республика/край/область'],
+            ['postalCode', 'Почтовый индекс'], ['address', 'Адрес'], ['organizationPhone', 'Телефон/факс'], ['email', 'Email'],
+            ['organizationHead', 'ФИО руководителя организации'], ['vehicleClass', 'Класс аппарата'], ['vehicleDescription', 'Краткое описание аппарата'],
+            ['teamLead', 'ФИО руководителя команды'], ['teamLeadPhone', 'Контактный телефон руководителя команды']
+        ];
+        let teams = JSON.parse(localStorage.getItem('teams') || 'null') || TEAMS;
+        let currentId = null, editing = false, lightboxIndex = 0;
+        save();
+
+        function save() { localStorage.setItem('teams', JSON.stringify(teams)) }
+        function toast(t) { const el = document.getElementById('toast'); el.textContent = t; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 1800) }
+        function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return ESC_MAP[c]; }); }
+        const ESC_MAP = { '&': '&', '<': '<', '>': '>', '"': '&quot;', "'": '&#39;' };
+        function uid() { return 't' + Date.now() + Math.random().toString(36).slice(2, 7) }
+        function isLocalPhoto(p) { return String(p).startsWith('data:image/') }
+        function isTestTeam(t) { return String(t.organization || '').trim().toLowerCase() === 'тест' }
+        function vehicleType(t) {
+            const s = String(t.vehicleClass || '').toLowerCase();
+            for (const [key, v] of Object.entries(VEHICLE_TYPES)) if (v.keys.some(k => s.includes(k))) return { key, ...v };
+            return { key: 'unknown', code: '—', title: 'Тип не определён', cls: 'type-unknown' };
+        }
+        function setTab(tab) {
+            document.getElementById('tabTeams').classList.toggle('active', tab === 'teams');
+            document.getElementById('tabCompetitions').classList.toggle('active', tab === 'competitions');
+        }
+        function showTeams() { closeLightbox(); currentId = null; editing = false; setTab('teams'); document.getElementById('competitionsView').classList.add('hidden'); document.getElementById('teamView').classList.add('hidden'); document.getElementById('teamsView').classList.remove('hidden'); render() }
+        function showCompetitions() { closeLightbox(); currentId = null; editing = false; setTab('competitions'); document.getElementById('teamsView').classList.add('hidden'); document.getElementById('teamView').classList.add('hidden'); document.getElementById('competitionsView').classList.remove('hidden') }
+        function openTeam(id) { closeLightbox(); currentId = id; editing = false; document.getElementById('teamsView').classList.add('hidden'); document.getElementById('competitionsView').classList.add('hidden'); document.getElementById('teamView').classList.remove('hidden'); renderTeam() }
+        function newTeam() { const t = { id: uid(), createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '), organization: '', city: '', region: '', postalCode: '', address: '', organizationPhone: '', email: '', organizationHead: '', vehicleClass: '', vehicleDescription: '', vehiclePhotos: [], teamLead: '', teamLeadPhone: '', consent: false, members: [] }; teams.unshift(t); save(); openTeam(t.id); toggleEdit() }
+        function getTeam() { return teams.find(t => t.id === currentId) }
+
+        function render() {
+            const q = document.getElementById('search').value.toLowerCase().trim();
+            const filtered = teams.filter(t => !isTestTeam(t) && (!q || JSON.stringify(t).toLowerCase().includes(q)));
+            const visible = teams.filter(t => !isTestTeam(t));
+            document.getElementById('stats').textContent = `Команд: ${visible.length} · Участников: ${visible.reduce((s, t) => s + t.members.length, 0)} · Найдено: ${filtered.length}`;
+            document.getElementById('teams').innerHTML = filtered.map(t => {
+                const v = vehicleType(t); return `
+  <div class="card" onclick="openTeam('${t.id}')">
+   <h3>${esc(t.organization || 'Без названия')}</h3>
+   <div class="meta">${esc([t.city, t.region].filter(Boolean).join(', ') || 'Город не указан')}</div>
+   <div class="meta">${esc(t.vehicleClass || 'Класс аппарата не указан')}</div>
+   <div class="row" style="margin-top:8px"><span class="badge">${t.members.length} участн.</span><span class="badge">${(t.vehiclePhotos || []).length} фото</span></div>
+   <span class="type-chip ${v.cls}" title="${esc(v.title)}">${esc(v.code)}</span>
+  </div>`}).join('') || '<div class="empty">Команды не найдены. Загрузите JSON/Excel или добавьте команду вручную.</div>';
+        }
+
+        function renderTeam() {
+            const t = getTeam(); if (!t) return showTeams();
+            document.getElementById('editBtn').textContent = editing ? 'Просмотр' : 'Редактировать';
+            document.getElementById('editBtn').classList.toggle('ghost', editing);
+            document.getElementById('deleteBtn').classList.toggle('hidden', !editing);
+            document.getElementById('teamContent').innerHTML = editing ? editHtml(t) : viewHtml(t);
+            if (editing) { renderMembers(); renderPhotoEditor() } else { renderPhotoView() }
+        }
+
+        function memberName(t, m, i) {
+            const name = esc(m.fullName || ('Участник ' + (i + 1)));
+            return i === 0 ? name + ' <span class="fio-captain"></span>' : name;
+        }
+
+        function fmtDate(value) {
+            if (!value) return '—';
+            const d = new Date(value);
+            return isNaN(d.getTime()) ? esc(value) : d.toLocaleDateString('ru-RU');
+        }
+
+        function telLink(value) {
+            if (!value) return '—';
+            const digits = String(value).replace(/[^+\d]/g, '');
+            return '<a href="tel:' + esc(digits) + '">' + esc(value) + '</a>';
+        }
+
+        function mailLink(value) {
+            if (!value) return '—';
+            return '<a href="mailto:' + esc(value) + '">' + esc(value) + '</a>';
+        }
+        function viewHtml(t) {
+            const kv = (l, v) => `<dt>${esc(l)}</dt><dd>${v ? esc(v) : '—'}</dd>`;
+            const kvHtml = (l, v) => `<dt>${esc(l)}</dt><dd>${v || '—'}</dd>`;
+            const v = vehicleType(t);
+            const memberCards = t.members.map((m, i) => `
+  <div class="member-card">
+   <div class="head"><div class="name">${memberName(t, m, i)}</div><span class="badge">${i + 1}</span></div>
+   <div class="rows">
+    <div class="item"><b>Дата рождения</b><span>${fmtDate(m.birthDate)}</span></div>
+    <div class="item"><b>Документ</b><span>${esc(m.document || '—')}</span></div>
+    <div class="item"><b>Студент</b><span>${m.isStudent ? 'Да' : 'Нет'}</span></div>
+    <div class="item"><b>Приказ</b><span>${esc(m.enrollmentOrder || '—')}</span></div>
+   </div>
+  </div>`).join('') || '<div class="empty">Участники не добавлены</div>';
+            return `
+ <div class="section page-title">
+  <div class="page-head">
+   <div class="title">
+    <h2>${esc(t.organization || 'Команда')}</h2>
+    <div class="meta">Заявка № ${esc(t.id)} · Подана: ${fmtDate(t.createdAt)}</div>
+   </div>
+   <span class="type-chip large ${v.cls}" title="${esc(v.title)}">${esc(v.code)}</span>
+  </div>
+  <div class="row" style="margin-top:10px">
+   <span class="badge">${t.members.length} участник(ов)</span>
+   <span class="badge">${(t.vehiclePhotos || []).length} фото</span>
+  </div>
+ </div>
+ <div class="section"><h2>Организация</h2><dl class="kv">
+  ${kv('Организация', t.organization)}${kv('Город', t.city)}${kv('Регион', t.region)}${kv('Индекс', t.postalCode)}${kv('Адрес', t.address)}
+  ${kvHtml('Телефон', telLink(t.organizationPhone))}${kvHtml('Email', mailLink(t.email))}${kv('Руководитель организации', t.organizationHead)}
+ </dl></div>
+ <div class="section"><div class="section-head"><h2>Аппарат</h2><span class="type-chip large ${v.cls}" title="${esc(v.title)}">${esc(v.code)}</span></div><dl class="kv">
+  ${kv('Класс аппарата', t.vehicleClass)}${kv('Руководитель команды', t.teamLead)}${kvHtml('Телефон руководителя', telLink(t.teamLeadPhone))}
+ </dl>
+ ${t.vehicleDescription ? `<div class="desc">${esc(t.vehicleDescription)}</div>` : ''}
+ <div id="photoPreview"></div></div>
+ <div class="section"><h2>Участники</h2>
+  <div class="table-wrap"><table class="members-table">
+   <colgroup><col class="c1"><col class="c4"><col class="c2"><col class="c2"><col class="c1s"><col class="c2"></colgroup>
+   <thead><tr><th>№</th><th>ФИО</th><th>Дата рождения</th><th>Документ</th><th>Студент</th><th>Приказ</th></tr></thead>
+   <tbody>${t.members.map((m, i) => `<tr><td>${i + 1}</td><td>${memberName(t, m, i)}</td><td>${fmtDate(m.birthDate)}</td><td>${esc(m.document || '—')}</td><td>${m.isStudent ? 'Да' : 'Нет'}</td><td>${esc(m.enrollmentOrder || '—')}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Участники не добавлены</td></tr>'}</tbody>
+  </table></div>
+  <div class="member-cards">${memberCards}</div>
+ </div>`;
+        }
+
+        function renderPhotoView() {
+            const t = getTeam(), box = document.getElementById('photoPreview');
+            if (!(t.vehiclePhotos || []).length) { box.innerHTML = '<div class="empty">Фотографии не добавлены</div>'; return }
+            box.innerHTML = '<div class="photo-grid">' + t.vehiclePhotos.map((p, i) => `
+  <div class="photo">
+   <div class="photo-frame" onclick="openLightbox(${i})">
+    <img src="${esc(p)}" alt="Фото аппарата ${i + 1}" onload="this.closest('.photo').querySelector('.fallback').classList.add('hidden')" onerror="this.closest('.photo').querySelector('.fallback').classList.remove('hidden');this.style.display='none'">
+   </div>
+   <div class="fallback photo-fallback hidden">Фото недоступно по ссылке.<br>Откройте ссылку или загрузите файл с компьютера.</div>
+   <div class="photo-actions no-print">
+    ${isLocalPhoto(p) ? '' : `<a href="${esc(p)}" target="_blank" rel="noopener">Открыть ссылку</a>`}
+    <button onclick="downloadPhoto(${i})">Скачать</button>
+   </div>
+  </div>`).join('') + '</div>';
+        }
+
+        function renderPhotoEditor() {
+            const t = getTeam();
+            document.getElementById('photoEditor').innerHTML = (t.vehiclePhotos || []).map((p, i) => `
+  <div class="photo">
+   <div class="photo-frame"><img src="${esc(p)}" alt="Фото ${i + 1}"></div>
+   <div class="photo-actions"><button onclick="downloadPhoto(${i})">Скачать</button><button class="danger" onclick="removePhoto(${i})">Удалить</button></div>
+  </div>`).join('') || '<div class="empty">Фотографии не добавлены</div>';
+        }
+
+        function openLightbox(i) {
+            const t = getTeam(); if (!(t.vehiclePhotos || []).length) return;
+            lightboxIndex = i; updateLightbox();
+            document.getElementById('lightbox').classList.add('open');
+        }
+        function updateLightbox() {
+            const t = getTeam(), photos = t.vehiclePhotos || [];
+            if (!photos.length) return closeLightbox();
+            lightboxIndex = (lightboxIndex + photos.length) % photos.length;
+            document.getElementById('lightboxImg').src = photos[lightboxIndex];
+            document.getElementById('lightboxCounter').textContent = `${lightboxIndex + 1} / ${photos.length}`;
+        }
+        function nextPhoto() { lightboxIndex++; updateLightbox() }
+        function prevPhoto() { lightboxIndex--; updateLightbox() }
+        function closeLightbox() { document.getElementById('lightbox').classList.remove('open') }
+        document.addEventListener('keydown', e => {
+            if (!document.getElementById('lightbox').classList.contains('open')) return;
+            if (e.key === 'Escape') closeLightbox();
+            if (e.key === 'ArrowRight') nextPhoto();
+            if (e.key === 'ArrowLeft') prevPhoto();
+        });
+
+        function removePhoto(i) { const t = getTeam(); t.vehiclePhotos.splice(i, 1); save(); renderTeam(); toast('Фото удалено') }
+
+        function downloadPhoto(i) {
+            const t = getTeam(), p = (t.vehiclePhotos || [])[i]; if (!p) return;
+            const a = document.createElement('a'); a.href = p; if (!isLocalPhoto(p)) a.target = '_blank';
+            a.download = `${sanitize(t.organization || 'team')}-photo-${i + 1}.${isLocalPhoto(p) ? 'jpg' : 'bin'}`;
+            document.body.appendChild(a); a.click(); a.remove(); toast('Скачивание запущено');
+        }
+
+        function addPhotoFiles(input) {
+            const files = [...input.files]; if (!files.length) return;
+            const t = getTeam(); let done = 0;
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const max = 1400, scale = Math.min(1, max / Math.max(img.width, img.height));
+                        const canvas = document.createElement('canvas'); canvas.width = img.width * scale; canvas.height = img.height * scale;
+                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                        t.vehiclePhotos.push(canvas.toDataURL('image/jpeg', 0.82));
+                        if (++done === files.length) { save(); renderTeam(); toast('Фото добавлено: ' + done) }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            input.value = '';
+        }
+
+        async function downloadPhotos() {
+            const t = getTeam(); const photos = t.vehiclePhotos || [];
+            if (!photos.length) return toast('Фотографий нет');
+            for (let i = 0; i < photos.length; i++) {
+                const p = photos[i], a = document.createElement('a');
+                a.href = p; if (!isLocalPhoto(p)) a.target = '_blank';
+                a.download = `${sanitize(t.organization || 'team')}-photo-${i + 1}.${isLocalPhoto(p) ? 'jpg' : 'bin'}`;
+                document.body.appendChild(a); a.click(); a.remove();
+                await new Promise(r => setTimeout(r, 350));
+            }
+            toast('Скачивание запущено');
+        }
+        function sanitize(s) { return String(s).replace(/[^\wа-яА-ЯёЁ\- ]+/g, '').trim().replace(/\s+/g, '-').slice(0, 60) || 'team' }
+
+        function editHtml(t) {
+            const fields = FIELDS.map(([k, l]) => `<div class="field"><label>${esc(l)}</label>${k === 'vehicleDescription' ? `<textarea id="f_${k}" rows="4">${esc(t[k])}</textarea>` : `<input id="f_${k}" value="${esc(t[k])}">`}</div>`).join('');
+            return `
+ <div class="section"><h2>Редактирование команды</h2>${fields}
+  <div class="field"><label><input type="checkbox" id="f_consent" ${t.consent ? 'checked' : ''}> Согласие на обработку персональных данных</label></div>
+ </div>
+ <div class="section"><h2>Участники (${t.members.length})</h2><div id="members" class="members"></div>
+ <button class="ghost no-print" onclick="addMember()">+ Добавить участника</button></div>
+ <div class="section"><h2>Фотографии аппарата</h2>
+  <label class="btn no-print" style="background:#eef2ff;color:var(--brand)">+ Загрузить фото с устройства<input type="file" accept="image/*" multiple hidden onchange="addPhotoFiles(this)"></label>
+  <div id="photoEditor" class="photo-grid"></div>
+ </div>`;
+        }
+
+        function renderMembers() {
+            const t = getTeam();
+            document.getElementById('members').innerHTML = t.members.map((m, i) => `
+ <div class="member">
+  <div class="row" style="justify-content:space-between"><b>Участник ${i + 1}</b><button class="danger small no-print" onclick="removeMember(${i})">Удалить</button></div>
+  <div class="member-grid">
+   <div class="field"><label>ФИО</label><input value="${esc(m.fullName)}" oninput="updMember(${i},'fullName',this.value)"></div>
+   <div class="field"><label>Дата рождения</label><input type="date" value="${esc(m.birthDate)}" oninput="updMember(${i},'birthDate',this.value)"></div>
+   <div class="field"><label>Паспорт / свидетельство</label><input value="${esc(m.document)}" oninput="updMember(${i},'document',this.value)"></div>
+   <div class="field"><label>Студент</label><select onchange="updMember(${i},'isStudent',this.value==='true')"><option value="false" ${!m.isStudent ? 'selected' : ''}>Нет</option><option value="true" ${m.isStudent ? 'selected' : ''}>Да</option></select></div>
+   <div class="field" style="grid-column:1/-1"><label>Приказ о зачислении</label><input value="${esc(m.enrollmentOrder)}" oninput="updMember(${i},'enrollmentOrder',this.value)"></div>
+  </div>
+ </div>`).join('') || '<div class="empty">Участники не добавлены</div>';
+        }
+        function addMember() { getTeam().members.push({ fullName: '', birthDate: '', document: '', isStudent: false, enrollmentOrder: '' }); save(); renderMembers() }
+        function removeMember(i) { getTeam().members.splice(i, 1); save(); renderMembers() }
+        function updMember(i, k, v) { getTeam().members[i][k] = v; save() }
+
+        function toggleEdit() { if (editing) collect(); editing = !editing; renderTeam() }
+
+        function collect() {
+            const t = getTeam(); if (!t) return;
+            for (const [k] of FIELDS) { const el = document.getElementById('f_' + k); if (el) t[k] = el.value }
+            t.consent = document.getElementById('f_consent').checked;
+            if (!t.organization) t.organization = 'Без названия';
+            save(); toast('Изменения сохранены');
+        }
+
+        function deleteTeam() { if (!confirm('Удалить команду?')) return; teams = teams.filter(t => t.id !== currentId); save(); showTeams(); toast('Команда удалена') }
+        function clearAll() { if (!confirm('Удалить все данные из этого браузера?')) return; teams = []; save(); showTeams(); toast('Данные очищены') }
+        function exportJson() { const blob = new Blob([JSON.stringify(teams, null, 2)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'teams-' + new Date().toISOString().slice(0, 10) + '.json'; a.click() }
+
+        function importFile(input) {
+            const f = input.files[0]; if (!f) return; const r = new FileReader();
+            r.onload = e => {
+                try {
+                    let rows = [];
+                    if (f.name.toLowerCase().endsWith('.json')) {
+                        const data = JSON.parse(e.target.result);
+                        rows = Array.isArray(data) ? data : (data.teams || data.data || []);
+                        rows = rows.length && Array.isArray(rows[0]) ? rows.map(normalizeFormRow) : rows.map(normalizeStoredTeam);
+                    } else {
+                        const wb = XLSX.read(e.target.result, { type: 'array' });
+                        const aoa = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: '' });
+                        const header = aoa[0]; rows = aoa.slice(1).map(r => Object.fromEntries(header.map((h, i) => [h, r[i]]))).map(normalizeFormRow);
+                    }
+                    const existing = new Set(teams.map(t => t.id)); let added = 0;
+                    rows.forEach(t => { if (!t.id || existing.has(t.id)) t.id = uid(); teams.unshift(t); added++ });
+                    save(); showTeams(); toast(`Загружено команд: ${added}`);
+                } catch (err) { alert('Не удалось обработать файл: ' + err.message) }
+                input.value = '';
+            };
+            f.name.toLowerCase().endsWith('.json') ? r.readAsText(f) : r.readAsArrayBuffer(f);
+        }
+
+        function normalizeFormRow(o) {
+            const get = k => o[k] ?? '';
+            const photos = String(get('Фото аппарата') || '').split(',').map(x => String(x).trim()).filter(Boolean);
+            const members = [];
+            for (let i = 1; i <= 20; i++) {
+                const name = String(get(`Ф.И.О. [${i}]`) || '').trim(); if (!name) continue;
+                members.push({ fullName: name, birthDate: String(get(`Дата рождения [${i}]`) || ''), document: String(get(`Паспорт/Свидетельство о рождении [${i}]`) || ''), isStudent: String(get(`Студент [${i}]`) || '').toLowerCase() === 'да', enrollmentOrder: String(get(`Приказ о зачислении (для студентов) [${i}]`) || '') });
+            }
+            return { id: String(get('ID') || ''), createdAt: String(get('Время создания') || ''), organization: String(get('Организация') || '').trim(), city: String(get('Город (населённый пункт)') || '').trim(), region: String(get('Республика/край/область') || '').trim(), postalCode: String(get('Почтовый индекс') || '').trim(), address: String(get('Адрес') || '').trim(), organizationPhone: String(get('Телефон/факс') || '').trim(), email: String(get('Email') || '').trim(), organizationHead: String(get('ФИО руководителя организации') || '').trim(), vehicleClass: String(get('Класс аппарата') || '').trim(), vehicleDescription: String(get('Краткое описание аппарата') || '').trim(), vehiclePhotos: photos, teamLead: String(get('ФИО руководителя команды') || '').trim(), teamLeadPhone: String(get('Контактный телефон руководителя команды') || '').trim(), consent: String(get('Даю согласие на обработку персональных данных') || '').toLowerCase() === 'да', members };
+        }
+        function normalizeStoredTeam(t) { return { ...t, vehiclePhotos: t.vehiclePhotos || [], members: t.members || [], consent: !!t.consent } }
+
+        showTeams();
+    </script>
+</body>
+
+</html>
