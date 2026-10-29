@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Открытое первенство Санкт-Петербурга по морской робототехнике</title>
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--ink:#16212e;--muted:#64748b;--brand:#0b5fff;--line:#e2e8f0;--title:#517CB3}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#fff;border-bottom:1px solid var(--line);padding:16px}
+h1{max-width:1100px;margin:0 auto;font-size:24px;line-height:1.25;color:var(--title);font-weight:800;text-align:center}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff}
+.search{flex:1;min-width:220px}
+button,.btn{border:0;border-radius:10px;padding:10px 14px;font-size:14px;cursor:pointer;background:var(--brand);color:#fff;font-weight:600}
+button.ghost{background:#eef2ff;color:var(--brand)}button.danger{background:#fee2e2;color:#b91c1c}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer}
+.card h3{margin:0 0 6px;font-size:16px}.meta{color:var(--muted);font-size:13px;margin:2px 0}
+.badge{display:inline-block;background:#eef2ff;color:var(--brand);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600}
+.section{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.section h2{margin:0 0 12px;font-size:17px}
+.field{margin-bottom:10px}label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+.hidden{display:none!important}.empty{text-align:center;color:var(--muted);padding:30px 10px}
+.kv{display:grid;grid-template-columns:180px 1fr;gap:8px 14px;font-size:15px}
+.kv dt{color:var(--muted);font-size:13px}.kv dd{margin:0}
+@media(max-width:640px){.kv{grid-template-columns:1fr}.kv dt{margin-top:8px}}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-top:12px}
+.photo{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+.photo img{width:100%;height:220px;object-fit:cover;display:block}
+.member{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fafafa;margin-bottom:10px}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:20}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+ <h1>Открытое первенство<br>Санкт-Петербурга<br>по морской робототехнике<br>27–29 ноября 2026 г.</h1>
+</header>
+<main>
+<div id="listView">
+ <div class="toolbar">
+  <input id="search" class="search" placeholder="Поиск: организация, город, участник" oninput="render()">
+  <button class="ghost" onclick="showEdit(null)">+ Команда</button>
+ </div>
+ <div id="teams" class="grid"></div>
+</div>
+
+<div id="teamView" class="hidden">
+ <div class="toolbar">
+  <button class="ghost" onclick="showList()">← К командам</button>
+  <button class="ghost" onclick="showEdit(currentId)">Редактировать</button>
+ </div>
+ <div id="teamContent"></div>
+</div>
+
+<div id="editView" class="hidden">
+ <div class="toolbar">
+  <button class="ghost" onclick="showList()">← К командам</button>
+  <button onclick="saveTeam()">Сохранить</button>
+ </div>
+ <div id="editContent"></div>
+</div>
+</main>
+<div id="toast" class="toast"></div>
+
+<script>
+let teams=[], currentId=null, adminPassword=sessionStorage.getItem('adminPassword')||'';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&','<':'<','>':'>','"':'"',"'":'&#39;'}[c]));
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000)}
+function photoSrc(url){return '/api/photo?url='+encodeURIComponent(url)}
+
+async function load(){
+ const res=await fetch('/api/teams');
+ teams=await res.json();
+ render();
+}
+function showList(){$('listView').classList.remove('hidden');$('teamView').classList.add('hidden');$('editView').classList.add('hidden');render()}
+function showTeam(id){currentId=id;const t=teams.find(x=>x.id===id);$('listView').classList.add('hidden');$('editView').classList.add('hidden');$('teamView').classList.remove('hidden');$('teamContent').innerHTML=viewHtml(t)}
+function showEdit(id){
+ currentId=id;
+ const t=id?teams.find(x=>x.id===id):{organization:'',city:'',region:'',postal_code:'',address:'',organization_phone:'',email:'',organization_head:'',vehicle_class:'',vehicle_description:'',team_lead:'',team_lead_phone:'',members:[],photos:[]};
+ if(!adminPassword){adminPassword=prompt('Введите пароль администратора:')||'';sessionStorage.setItem('adminPassword',adminPassword)}
+ $('listView').classList.add('hidden');$('teamView').classList.add('hidden');$('editView').classList.remove('hidden');
+ $('editContent').innerHTML=editHtml(t);
+}
+function render(){
+ const q=$('search').value.toLowerCase().trim();
+ const filtered=teams.filter(t=>!q||JSON.stringify(t).toLowerCase().includes(q));
+ $('teams').innerHTML=filtered.map(t=>`
+  <div class="card" onclick="showTeam('${t.id}')">
+   <h3>${esc(t.organization||'Без названия')}</h3>
+   <div class="meta">${esc([t.city,t.region].filter(Boolean).join(', ')||'Город не указан')}</div>
+   <div class="meta">${esc(t.vehicle_class||'Класс аппарата не указан')}</div>
+   <div class="row" style="margin-top:8px"><span class="badge">${t.members.length} участн.</span><span class="badge">${t.photos.length} фото</span></div>
+  </div>`).join('')||'<div class="empty">Команды не найдены</div>';
+}
+function viewHtml(t){
+ const kv=(l,v)=>`<dt>${esc(l)}</dt><dd>${esc(v||'—')}</dd>`;
+ return `
+ <div class="section"><h2>${esc(t.organization||'Команда')}</h2><dl class="kv">
+  ${kv('Организация',t.organization)}${kv('Город',t.city)}${kv('Регион',t.region)}${kv('Адрес',t.address)}
+  ${kv('Телефон',t.organization_phone)}${kv('Email',t.email)}${kv('Руководитель организации',t.organization_head)}
+ </dl></div>
+ <div class="section"><h2>Аппарат</h2><dl class="kv">
+  ${kv('Класс',t.vehicle_class)}${kv('Руководитель команды',t.team_lead)}${kv('Телефон',t.team_lead_phone)}
+ </dl>${t.vehicle_description?`<div class="meta">${esc(t.vehicle_description)}</div>`:''}
+ <div class="photo-grid">${t.photos.map(p=>`<div class="photo"><img src="${photoSrc(p)}" alt="Фото"></div>`).join('')||'<div class="empty">Фото нет</div>'}</div></div>
+ <div class="section"><h2>Участники</h2>${t.members.map((m,i)=>`
+  <div class="member"><b>${esc(m.full_name||'Участник '+(i+1))}</b>
+  <div class="meta">${esc(m.birth_date||'')} · ${esc(m.document||'')} · ${m.is_student?'Студент':'Не студент'}</div></div>`).join('')||'<div class="empty">Нет участников</div>'}</div>`;
+}
+function editHtml(t){
+ const f=(k,l,v)=>`<div class="field"><label>${esc(l)}</label><input id="f_${k}" value="${esc(v||'')}"></div>`;
+ return `
+ <div class="section"><h2>Команда</h2>
+  ${f('organization','Организация',t.organization)}${f('city','Город',t.city)}${f('region','Регион',t.region)}
+  ${f('postal_code','Индекс',t.postal_code)}${f('address','Адрес',t.address)}${f('organization_phone','Телефон',t.organization_phone)}
+  ${f('email','Email',t.email)}${f('organization_head','Руководитель организации',t.organization_head)}
+ </div>
+ <div class="section"><h2>Аппарат</h2>
+  ${f('vehicle_class','Класс аппарата',t.vehicle_class)}${f('vehicle_description','Описание',t.vehicle_description)}
+  ${f('team_lead','Руководитель команды',t.team_lead)}${f('team_lead_phone','Телефон руководителя',t.team_lead_phone)}
+  <div class="field"><label>Ссылка на фото (Яндекс.Диск, «Поделиться»)</label><input id="f_photo" value="${esc(t.photos[0]||'')}" placeholder="https://disk.yandex.ru/i/..."></div>
+ </div>
+ <div class="section"><h2>Участники</h2><div id="members"></div>
+  <button class="ghost" onclick="addMember()">+ Добавить участника</button></div>`;
+}
+function addMember(){
+ const box=document.createElement('div');box.className='member';
+ box.innerHTML=`<div class="field"><label>ФИО</label><input class="m_name"></div>
+ <div class="field"><label>Дата рождения</label><input type="date" class="m_birth"></div>
+ <div class="field"><label>Документ</label><input class="m_doc"></div>
+ <div class="field"><label>Студент</label><select class="m_student"><option value="0">Нет</option><option value="1">Да</option></select></div>`;
+ $('members').appendChild(box);
+}
+async function saveTeam(){
+ const val=k=>{const el=$('f_'+k);return el?el.value.trim():''};
+ const members=[...document.querySelectorAll('#members .member')].map(m=>({
+  fullName:m.querySelector('.m_name').value.trim(),
+  birthDate:m.querySelector('.m_birth').value,
+  document:m.querySelector('.m_doc').value.trim(),
+  isStudent:m.querySelector('.m_student').value==='1'
+ }));
+ const team={
+  id:currentId, organization:val('organization'), city:val('city'), region:val('region'),
+  postal_code:val('postal_code'), address:val('address'), organization_phone:val('organization_phone'),
+  email:val('email'), organization_head:val('organization_head'), vehicle_class:val('vehicle_class'),
+  vehicle_description:val('vehicle_description'), team_lead:val('team_lead'), team_lead_phone:val('team_lead_phone'),
+  members, photos:[val('photo')].filter(Boolean)
+ };
+ const res=await fetch('/api/teams',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':adminPassword},body:JSON.stringify({team})});
+ if(res.status===401){adminPassword='';sessionStorage.removeItem('adminPassword');return toast('Неверный пароль')}
+ if(!res.ok)return toast('Ошибка сохранения');
+ toast('Сохранено');await load();showList();
+}
+load();
+</script>
+</body>
+</html>
