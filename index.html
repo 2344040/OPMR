@@ -264,10 +264,10 @@
         <div id="editView" class="hidden">
             <div class="toolbar">
                 <button class="ghost" onclick="showList()">← К командам</button>
+                <button class="ghost" onclick="document.getElementById('jsonFile').click()">Загрузить JSON</button>
+                <input type="file" id="jsonFile" accept=".json" class="hidden" onchange="importJson(event)">
                 <button onclick="saveTeam()">Сохранить</button>
             </div>
-            <div id="editContent"></div>
-        </div>
     </main>
     <div id="toast" class="toast"></div>
 
@@ -277,6 +277,63 @@
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#39;' }[c]));
         function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2000) }
         function photoSrc(url) { return '/api/photo?url=' + encodeURIComponent(url) }
+
+        function setVal(id, value) {
+            const el = $(id);
+            if (el) el.value = value == null ? '' : value;
+        }
+
+        function firstUrl(text) {
+            const m = String(text || '').match(/https?:\/\/[^\s,")]+/);
+            return m ? m[0] : '';
+        }
+
+        async function importJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const raw = JSON.parse(text);
+
+                // Берём первую команду из файла
+                const pairs = Array.isArray(raw) ? raw[0] : raw;
+                const d = Object.fromEntries(pairs.map(p => [p[0], p[1]]));
+
+                setVal('f_organization', d['Организация']);
+                setVal('f_city', d['Город (населённый пункт)']);
+                setVal('f_region', d['Республика/край/область']);
+                setVal('f_postal_code', d['Почтовый индекс']);
+                setVal('f_address', d['Адрес']);
+                setVal('f_organization_phone', d['Телефон/факс']);
+                setVal('f_email', d['Email']);
+                setVal('f_organization_head', d['ФИО руководителя организации']);
+                setVal('f_vehicle_class', d['Класс аппарата']);
+                setVal('f_vehicle_description', d['Краткое описание аппарата']);
+                setVal('f_team_lead', d['ФИО руководителя команды']);
+                setVal('f_team_lead_phone', d['Контактный телефон руководителя команды']);
+                setVal('f_photo', firstUrl(d['Фото аппарата']));
+
+                // Участники
+                $('members').innerHTML = '';
+                for (let i = 1; i <= 8; i++) {
+                    const name = d[`Ф.И.О. [${i}]`];
+                    if (!name) continue;
+                    addMember();
+                    const box = $('members').lastElementChild;
+                    box.querySelector('.m_name').value = name;
+                    box.querySelector('.m_birth').value = d[`Дата рождения [${i}]`] || '';
+                    box.querySelector('.m_doc').value = d[`Паспорт/Свидетельство о рождении [${i}]`] || '';
+                    box.querySelector('.m_student').value = (d[`Студент [${i}]`] === 'Да') ? '1' : '0';
+                }
+
+                toast('JSON загружен');
+            } catch (err) {
+                console.error(err);
+                toast('Ошибка чтения JSON');
+            } finally {
+                event.target.value = '';
+            }
+        }
 
         async function load() {
             const res = await fetch('data/teams.json');
