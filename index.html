@@ -400,6 +400,13 @@
             $('members').appendChild(box);
         }
         async function saveTeam() {
+            let token = sessionStorage.getItem('ghToken') || '';
+            if (!token) {
+                token = prompt('Введите GitHub токен (Contents: Read and write):') || '';
+                if (!token) return toast('Нужен токен');
+                sessionStorage.setItem('ghToken', token);
+            }
+
             const val = k => { const el = $('f_' + k); return el ? el.value.trim() : '' };
             const members = [...document.querySelectorAll('#members .member')].map(m => ({
                 fullName: m.querySelector('.m_name').value.trim(),
@@ -407,17 +414,56 @@
                 document: m.querySelector('.m_doc').value.trim(),
                 isStudent: m.querySelector('.m_student').value === '1'
             }));
+
             const team = {
-                id: currentId, organization: val('organization'), city: val('city'), region: val('region'),
+                id: currentId || String(Date.now()),
+                organization: val('organization'), city: val('city'), region: val('region'),
                 postal_code: val('postal_code'), address: val('address'), organization_phone: val('organization_phone'),
                 email: val('email'), organization_head: val('organization_head'), vehicle_class: val('vehicle_class'),
                 vehicle_description: val('vehicle_description'), team_lead: val('team_lead'), team_lead_phone: val('team_lead_phone'),
                 members, photos: [val('photo')].filter(Boolean)
             };
-            const res = await fetch('/api/teams', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword }, body: JSON.stringify({ team }) });
-            if (res.status === 401) { adminPassword = ''; sessionStorage.removeItem('adminPassword'); return toast('Неверный пароль') }
-            if (!res.ok) return toast('Ошибка сохранения');
-            toast('Сохранено'); await load(); showList();
+
+            const api = 'https://api.github.com/repos/2344040/OPMR/contents/data/teams.json';
+            const headers = {
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/vnd.github+json'
+            };
+
+            try {
+                // Читаем текущий файл, чтобы получить sha
+                const getRes = await fetch(api, { headers });
+                if (!getRes.ok) return toast('Не удалось прочитать teams.json: ' + getRes.status);
+                const file = await getRes.json();
+
+                let list = [];
+                try { list = JSON.parse(atob(file.content)) } catch (e) { list = [] }
+
+                // Добавляем или обновляем команду
+                const i = list.findIndex(t => t.id === team.id);
+                if (i >= 0) list[i] = team; else list.push(team);
+
+                const putRes = await fetch(api, {
+                    method: 'PUT',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: 'Обновление teams.json',
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(list, null, 2)))),
+                        sha: file.sha
+                    })
+                });
+
+                if (putRes.status === 401 || putRes.status === 403) return toast('Токен не подходит или нет прав');
+                if (!putRes.ok) return toast('Ошибка сохранения: ' + putRes.status);
+
+                toast('Сохранено');
+                sessionStorage.setItem('ghToken', token);
+                await load();
+                showList();
+            } catch (err) {
+                console.error(err);
+                toast('Ошибка сети');
+            }
         }
         load();
     </script>
