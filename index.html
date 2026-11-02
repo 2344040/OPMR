@@ -329,7 +329,7 @@
                 toast('JSON загружен');
             } catch (err) {
                 console.error(err);
-                toast('Ошибка чтения JSON');
+                toast('Ошибка JSON: ' + err.message);
             } finally {
                 event.target.value = '';
             }
