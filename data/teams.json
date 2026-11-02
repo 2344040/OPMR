@@ -30,50 +30,7 @@
     "vehicle_description": "Разрабатываемый аппарат представляет собой автономный безэкипажный катамаран для выполнения конкурсной миссии в бассейне. Он оснащается бортовым вычислителем NVIDIA Jetson Orin NX, двумя камерами и комплексом навигационных датчиков.",
     "team_lead": "Санникова Александра Олеговна",
     "team_lead_phone": "+7 962 441-94-52",
-    "members": [
-      {
-        "fullName": "Санникова Александра Олеговна",
-        "birthDate": "2005-08-02",
-        "document": "4025 365931",
-        "isStudent": true
-      },
-      {
-        "fullName": "Грицюк Ульяна Олеговна",
-        "birthDate": "2004-07-01",
-        "document": "4024 932458",
-        "isStudent": true
-      },
-      {
-        "fullName": "Олейник Екатерина Юрьевна",
-        "birthDate": "2004-05-11",
-        "document": "4024 823227",
-        "isStudent": true
-      },
-      {
-        "fullName": "Журов Василий Антонович",
-        "birthDate": "2005-09-16",
-        "document": "4025 307173",
-        "isStudent": true
-      },
-      {
-        "fullName": "Моселов Никита Дмитриевич",
-        "birthDate": "2006-06-15",
-        "document": "4026 522925",
-        "isStudent": true
-      },
-      {
-        "fullName": "Самарин Арсений Данилович",
-        "birthDate": "2006-04-07",
-        "document": "4025 382549",
-        "isStudent": true
-      },
-      {
-        "fullName": "Страшнов Николай Александрович",
-        "birthDate": "2006-09-11",
-        "document": "4020 815949",
-        "isStudent": true
-      }
-    ],
+    "members": [],
     "photos": [
       "https://disk.yandex.ru/client/disk/Yandex.Forms/6aad2816e010db37add23cf4/Files?idApp=client&dialog=slider&idDialog=%2Fdisk%2FYandex.Forms%2F6aad2816e010db37add23cf4%2FFiles%2F6abb7018f47e738eb4ffdae6_image_29_09_26_10_58.webp"
     ]
