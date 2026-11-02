@@ -1,6 +1,23 @@
 [
   {
     "id": "1793632996561",
+    "organization": "ÑÐµÑÑ",
+    "city": "-",
+    "region": "-",
+    "postal_code": "123456",
+    "address": "-",
+    "organization_phone": "",
+    "email": "",
+    "organization_head": "",
+    "vehicle_class": "",
+    "vehicle_description": "",
+    "team_lead": "",
+    "team_lead_phone": "",
+    "members": [],
+    "photos": []
+  },
+  {
+    "id": "1793633012881",
     "organization": "тест",
     "city": "-",
     "region": "-",
