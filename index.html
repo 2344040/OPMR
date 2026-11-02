@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Открытое первенство Санкт-Петербурга по морской робототехнике</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg: #f3f5f9;
@@ -244,10 +245,13 @@
     <header>
         <h1>Открытое первенство<br>Санкт-Петербурга<br>по морской робототехнике<br>27–29 ноября 2026 г.</h1>
     </header>
+
     <main>
         <div id="listView">
             <div class="toolbar">
                 <input id="search" class="search" placeholder="Поиск: организация, город, участник" oninput="render()">
+                <button class="ghost" onclick="document.getElementById('importFile').click()">Загрузить JSON/Excel</button>
+                <input type="file" id="importFile" accept=".json,.xlsx,.xls" class="hidden" onchange="importTeams(event)">
                 <button class="ghost" onclick="showEdit(null)">+ Команда</button>
             </div>
             <div id="teams" class="grid"></div>
@@ -264,209 +268,573 @@
         <div id="editView" class="hidden">
             <div class="toolbar">
                 <button class="ghost" onclick="showList()">← К командам</button>
-                <button class="ghost" onclick="document.getElementById('jsonFile').click()">Загрузить JSON</button>
-                <input type="file" id="jsonFile" accept=".json" class="hidden" onchange="importJson(event)">
                 <button onclick="saveTeam()">Сохранить</button>
             </div>
             <div id="editContent"></div>
         </div>
     </main>
+
     <div id="toast" class="toast"></div>
 
     <script>
-        let teams = [], currentId = null, adminPassword = sessionStorage.getItem('adminPassword') || '';
+        const GITHUB_OWNER = '2344040';
+        const GITHUB_REPO = 'OPMR';
+        const TEAMS_FILE = 'data/teams.json';
+        const TEAMS_API = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${TEAMS_FILE}`;
+
+        let teams = [];
+        let currentId = null;
+        let adminPassword = sessionStorage.getItem('adminPassword') || '';
+
         const $ = id => document.getElementById(id);
         const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#39;' }[c]));
-        function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2000) }
-        function photoSrc(url) { return '/api/photo?url=' + encodeURIComponent(url) }
 
-        function setVal(id, value) {
-            const el = $(id);
-            if (el) el.value = value == null ? '' : value;
+        function toast(text) {
+            const el = $('toast');
+            el.textContent = text;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), 2500);
         }
 
-        function firstUrl(text) {
-            const m = String(text || '').match(/https?:\/\/[^\s,")]+/);
-            return m ? m[0] : '';
+        function photoSrc(url) {
+            return url;
         }
 
-        async function importJson(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        async function load() {
             try {
-                const text = await file.text();
-                const raw = JSON.parse(text);
-
-                // Берём первую команду из файла
-                const pairs = Array.isArray(raw) ? raw[0] : raw;
-                const d = Object.fromEntries(pairs.map(p => [p[0], p[1]]));
-
-                setVal('f_organization', d['Организация']);
-                setVal('f_city', d['Город (населённый пункт)']);
-                setVal('f_region', d['Республика/край/область']);
-                setVal('f_postal_code', d['Почтовый индекс']);
-                setVal('f_address', d['Адрес']);
-                setVal('f_organization_phone', d['Телефон/факс']);
-                setVal('f_email', d['Email']);
-                setVal('f_organization_head', d['ФИО руководителя организации']);
-                setVal('f_vehicle_class', d['Класс аппарата']);
-                setVal('f_vehicle_description', d['Краткое описание аппарата']);
-                setVal('f_team_lead', d['ФИО руководителя команды']);
-                setVal('f_team_lead_phone', d['Контактный телефон руководителя команды']);
-                setVal('f_photo', firstUrl(d['Фото аппарата']));
-
-                // Участники
-                $('members').innerHTML = '';
-                for (let i = 1; i <= 8; i++) {
-                    const name = d[`Ф.И.О. [${i}]`];
-                    if (!name) continue;
-                    addMember();
-                    const box = $('members').lastElementChild;
-                    box.querySelector('.m_name').value = name;
-                    box.querySelector('.m_birth').value = d[`Дата рождения [${i}]`] || '';
-                    box.querySelector('.m_doc').value = d[`Паспорт/Свидетельство о рождении [${i}]`] || '';
-                    box.querySelector('.m_student').value = (d[`Студент [${i}]`] === 'Да') ? '1' : '0';
-                }
-
-                toast('JSON загружен');
+                const res = await fetch(TEAMS_FILE + '?t=' + Date.now());
+                teams = await res.json();
+                if (!Array.isArray(teams)) teams = [];
             } catch (err) {
                 console.error(err);
-                toast('Ошибка JSON: ' + err.message);
+                teams = [];
+                toast('Не удалось загрузить список команд');
+            }
+            render();
+        }
+
+        function showList() {
+            $('listView').classList.remove('hidden');
+            $('teamView').classList.add('hidden');
+            $('editView').classList.add('hidden');
+            render();
+        }
+
+        function showTeam(id) {
+            currentId = id;
+            const team = teams.find(x => x.id === id);
+            if (!team) return;
+
+            $('listView').classList.add('hidden');
+            $('editView').classList.add('hidden');
+            $('teamView').classList.remove('hidden');
+            $('teamContent').innerHTML = viewHtml(team);
+        }
+
+        function showEdit(id) {
+            currentId = id;
+
+            const team = id
+                ? teams.find(x => x.id === id)
+                : {
+                    organization: '', city: '', region: '', postal_code: '', address: '',
+                    organization_phone: '', email: '', organization_head: '',
+                    vehicle_class: '', vehicle_description: '', team_lead: '', team_lead_phone: '',
+                    members: [], photos: []
+                };
+
+            if (!adminPassword) {
+                adminPassword = prompt('Введите пароль администратора:') || '';
+                sessionStorage.setItem('adminPassword', adminPassword);
+            }
+
+            $('listView').classList.add('hidden');
+            $('teamView').classList.add('hidden');
+            $('editView').classList.remove('hidden');
+            $('editContent').innerHTML = editHtml(team);
+        }
+
+        function render() {
+            const query = $('search').value.toLowerCase().trim();
+            const filtered = teams.filter(team =>
+                !query || JSON.stringify(team).toLowerCase().includes(query)
+            );
+
+            $('teams').innerHTML = filtered.map(team => `
+                <div class="card" onclick="showTeam('${esc(team.id)}')">
+                    <h3>${esc(team.organization || 'Без названия')}</h3>
+                    <div class="meta">${esc([team.city, team.region].filter(Boolean).join(', ') || 'Город не указан')}</div>
+                    <div class="meta">${esc(team.vehicle_class || 'Класс аппарата не указан')}</div>
+                    <div style="margin-top:8px">
+                        <span class="badge">${(team.members || []).length} участн.</span>
+                        <span class="badge">${(team.photos || []).length} фото</span>
+                    </div>
+                </div>
+            `).join('') || '<div class="empty">Команды не найдены</div>';
+        }
+
+        function viewHtml(team) {
+            const kv = (label, value) => `<dt>${esc(label)}</dt><dd>${esc(value || '—')}</dd>`;
+
+            return `
+                <div class="section">
+                    <h2>${esc(team.organization || 'Команда')}</h2>
+                    <dl class="kv">
+                        ${kv('Организация', team.organization)}
+                        ${kv('Город', team.city)}
+                        ${kv('Регион', team.region)}
+                        ${kv('Адрес', team.address)}
+                        ${kv('Телефон', team.organization_phone)}
+                        ${kv('Email', team.email)}
+                        ${kv('Руководитель организации', team.organization_head)}
+                    </dl>
+                </div>
+
+                <div class="section">
+                    <h2>Аппарат</h2>
+                    <dl class="kv">
+                        ${kv('Класс', team.vehicle_class)}
+                        ${kv('Руководитель команды', team.team_lead)}
+                        ${kv('Телефон', team.team_lead_phone)}
+                    </dl>
+                    ${team.vehicle_description ? `<div class="meta">${esc(team.vehicle_description)}</div>` : ''}
+                    <div class="photo-grid">
+                        ${(team.photos || []).map(photo => `
+                            <div class="photo"><img src="${esc(photo)}" alt="Фото аппарата"></div>
+                        `).join('') || '<div class="empty">Фото нет</div>'}
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Участники</h2>
+                    ${(team.members || []).map((member, index) => `
+                        <div class="member">
+                            <b>${esc(member.fullName || 'Участник ' + (index + 1))}</b>
+                            <div class="meta">
+                                ${esc(member.birthDate || '')} ·
+                                ${esc(member.document || '')} ·
+                                ${member.isStudent ? 'Студент' : 'Не студент'}
+                            </div>
+                        </div>
+                    `).join('') || '<div class="empty">Нет участников</div>'}
+                </div>
+            `;
+        }
+
+        function editHtml(team) {
+            const field = (key, label, value) => `
+                <div class="field">
+                    <label>${esc(label)}</label>
+                    <input id="f_${key}" value="${esc(value || '')}">
+                </div>
+            `;
+
+            return `
+                <div class="section">
+                    <h2>Команда</h2>
+                    ${field('organization', 'Организация', team.organization)}
+                    ${field('city', 'Город', team.city)}
+                    ${field('region', 'Регион', team.region)}
+                    ${field('postal_code', 'Индекс', team.postal_code)}
+                    ${field('address', 'Адрес', team.address)}
+                    ${field('organization_phone', 'Телефон', team.organization_phone)}
+                    ${field('email', 'Email', team.email)}
+                    ${field('organization_head', 'Руководитель организации', team.organization_head)}
+                </div>
+
+                <div class="section">
+                    <h2>Аппарат</h2>
+                    ${field('vehicle_class', 'Класс аппарата', team.vehicle_class)}
+                    ${field('vehicle_description', 'Описание', team.vehicle_description)}
+                    ${field('team_lead', 'Руководитель команды', team.team_lead)}
+                    ${field('team_lead_phone', 'Телефон руководителя', team.team_lead_phone)}
+                    <div class="field">
+                        <label>Ссылка на фото (Яндекс.Диск, «Поделиться»)</label>
+                        <input id="f_photo" value="${esc((team.photos || [])[0] || '')}" placeholder="https://disk.yandex.ru/i/...">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Участники</h2>
+                    <div id="members"></div>
+                    <button class="ghost" onclick="addMember()">+ Добавить участника</button>
+                </div>
+            `;
+        }
+
+        function addMember() {
+            const box = document.createElement('div');
+            box.className = 'member';
+            box.innerHTML = `
+                <div class="field">
+                    <label>ФИО</label>
+                    <input class="m_name">
+                </div>
+                <div class="field">
+                    <label>Дата рождения</label>
+                    <input type="date" class="m_birth">
+                </div>
+                <div class="field">
+                    <label>Документ</label>
+                    <input class="m_doc">
+                </div>
+                <div class="field">
+                    <label>Студент</label>
+                    <select class="m_student">
+                        <option value="0">Нет</option>
+                        <option value="1">Да</option>
+                    </select>
+                </div>
+            `;
+            $('members').appendChild(box);
+        }
+
+        function collectTeamFromForm() {
+            const value = key => {
+                const el = $('f_' + key);
+                return el ? el.value.trim() : '';
+            };
+
+            const members = [...document.querySelectorAll('#members .member')].map(member => ({
+                fullName: member.querySelector('.m_name').value.trim(),
+                birthDate: member.querySelector('.m_birth').value,
+                document: member.querySelector('.m_doc').value.trim(),
+                isStudent: member.querySelector('.m_student').value === '1'
+            }));
+
+            return {
+                id: currentId || 'manual-' + Date.now(),
+                organization: value('organization'),
+                city: value('city'),
+                region: value('region'),
+                postal_code: value('postal_code'),
+                address: value('address'),
+                organization_phone: value('organization_phone'),
+                email: value('email'),
+                organization_head: value('organization_head'),
+                vehicle_class: value('vehicle_class'),
+                vehicle_description: value('vehicle_description'),
+                team_lead: value('team_lead'),
+                team_lead_phone: value('team_lead_phone'),
+                members,
+                photos: [value('photo')].filter(Boolean)
+            };
+        }
+
+        async function saveTeamsFile(updatedTeams, token, commitMessage) {
+            const getRes = await fetch(TEAMS_API, {
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/vnd.github+json'
+                }
+            });
+
+            if (!getRes.ok) {
+                throw new Error('Не удалось прочитать teams.json: ' + getRes.status);
+            }
+
+            const fileData = await getRes.json();
+            const bytes = Uint8Array.from(
+                atob(fileData.content.replace(/\s/g, '')),
+                char => char.charCodeAt(0)
+            );
+            const current = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+
+            if (!Array.isArray(current)) {
+                throw new Error('В teams.json должен быть массив команд');
+            }
+
+            const putRes = await fetch(TEAMS_API, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + token,
+                    'Accept': 'application/vnd.github+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: commitMessage,
+                    content: btoa(unescape(encodeURIComponent(JSON.stringify(updatedTeams, null, 2)))),
+                    sha: fileData.sha
+                })
+            });
+
+            if (putRes.status === 401 || putRes.status === 403) {
+                throw new Error('Токен не подходит или нет права Contents: Read and write');
+            }
+
+            if (!putRes.ok) {
+                throw new Error('GitHub вернул ошибку: ' + putRes.status);
+            }
+        }
+
+        async function saveTeam() {
+            const token = sessionStorage.getItem('ghToken') || prompt('Введите GitHub токен (Contents: Read and write):') || '';
+
+            if (!token) {
+                toast('Нужен GitHub токен');
+                return;
+            }
+
+            sessionStorage.setItem('ghToken', token);
+
+            const team = collectTeamFromForm();
+
+            try {
+                const getRes = await fetch(TEAMS_API, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/vnd.github+json'
+                    }
+                });
+
+                if (!getRes.ok) {
+                    throw new Error('Не удалось прочитать teams.json: ' + getRes.status);
+                }
+
+                const fileData = await getRes.json();
+                const bytes = Uint8Array.from(
+                    atob(fileData.content.replace(/\s/g, '')),
+                    char => char.charCodeAt(0)
+                );
+                const current = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+
+                if (!Array.isArray(current)) {
+                    throw new Error('В teams.json должен быть массив команд');
+                }
+
+                const index = current.findIndex(item => item.id === team.id);
+
+                if (index >= 0) {
+                    current[index] = team;
+                } else {
+                    current.push(team);
+                }
+
+                const putRes = await fetch(TEAMS_API, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/vnd.github+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: index >= 0
+                            ? `Обновление команды: ${team.organization || team.id}`
+                            : `Добавление команды: ${team.organization || team.id}`,
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(current, null, 2)))),
+                        sha: fileData.sha
+                    })
+                });
+
+                if (putRes.status === 401 || putRes.status === 403) {
+                    throw new Error('Токен не подходит или нет права Contents: Read and write');
+                }
+
+                if (!putRes.ok) {
+                    throw new Error('GitHub вернул ошибку: ' + putRes.status);
+                }
+
+                teams = current;
+                currentId = team.id;
+                showList();
+                alert('Команда сохранена в GitHub.');
+            } catch (err) {
+                console.error(err);
+                alert('Не удалось сохранить: ' + err.message);
+            }
+        }
+
+        const IMPORT_FIELDS = {
+            organization: 'Организация',
+            city: 'Город (населённый пункт)',
+            region: 'Республика/край/область',
+            postal_code: 'Почтовый индекс',
+            address: 'Адрес',
+            organization_phone: 'Телефон/факс',
+            email: 'Email',
+            organization_head: 'ФИО руководителя организации',
+            vehicle_class: 'Класс аппарата',
+            vehicle_description: 'Краткое описание аппарата',
+            team_lead: 'ФИО руководителя команды',
+            team_lead_phone: 'Контактный телефон руководителя команды'
+        };
+
+        function firstUrl(text) {
+            const match = String(text || '').match(/https?:\/\/[^\s,")]+/);
+            return match ? match[0] : '';
+        }
+
+        function normalizeImportedTeam(record) {
+            const members = [];
+
+            for (let i = 1; i <= 8; i++) {
+                const fullName = String(record[`Ф.И.О. [${i}]`] || '').trim();
+
+                if (!fullName) continue;
+
+                members.push({
+                    fullName,
+                    birthDate: String(record[`Дата рождения [${i}]`] || ''),
+                    document: String(record[`Паспорт/Свидетельство о рождении [${i}]`] || ''),
+                    isStudent: record[`Студент [${i}]`] === 'Да'
+                });
+            }
+
+            return {
+                id: String(record['ID'] || '').trim() || 'import-' + Date.now() + '-' + Math.random().toString(36).slice(2),
+                organization: String(record['Организация'] || '').trim(),
+                city: String(record['Город (населённый пункт)'] || '').trim(),
+                region: String(record['Республика/край/область'] || '').trim(),
+                postal_code: String(record['Почтовый индекс'] || '').trim(),
+                address: String(record['Адрес'] || '').trim(),
+                organization_phone: String(record['Телефон/факс'] || '').trim(),
+                email: String(record['Email'] || '').trim(),
+                organization_head: String(record['ФИО руководителя организации'] || '').trim(),
+                vehicle_class: String(record['Класс аппарата'] || '').trim(),
+                vehicle_description: String(record['Краткое описание аппарата'] || '').trim(),
+                team_lead: String(record['ФИО руководителя команды'] || '').trim(),
+                team_lead_phone: String(record['Контактный телефон руководителя команды'] || '').trim(),
+                members,
+                photos: [firstUrl(record['Фото аппарата'])].filter(Boolean)
+            };
+        }
+
+        function recordsFromYandexJson(raw) {
+            if (!Array.isArray(raw) || !raw.length) {
+                throw new Error('JSON пуст или имеет неожиданную структуру');
+            }
+
+            const isYandexFormat = Array.isArray(raw[0]) && Array.isArray(raw[0][0]);
+            const records = isYandexFormat ? raw : [raw];
+
+            return records.map((pairs, index) => {
+                const valid = Array.isArray(pairs) && pairs.every(pair =>
+                    Array.isArray(pair) &&
+                    pair.length === 2 &&
+                    typeof pair[0] === 'string'
+                );
+
+                if (!valid) {
+                    throw new Error(`Неверный формат команды №${index + 1}`);
+                }
+
+                return Object.fromEntries(pairs);
+            });
+        }
+
+        async function recordsFromExcel(file) {
+            if (typeof XLSX === 'undefined') {
+                throw new Error('Библиотека для Excel не загрузилась');
+            }
+
+            const buffer = await file.arrayBuffer();
+            const workbook = XLSX.read(buffer);
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+            return XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        }
+
+        async function importTeams(event) {
+            const file = event.target.files[0];
+
+            if (!file) return;
+
+            try {
+                let records;
+
+                if (/\.json$/i.test(file.name)) {
+                    const text = await file.text();
+                    records = recordsFromYandexJson(JSON.parse(text));
+                } else if (/\.xlsx$|\.xls$/i.test(file.name)) {
+                    records = await recordsFromExcel(file);
+                } else {
+                    throw new Error('Выберите файл .json, .xlsx или .xls');
+                }
+
+                const importedTeams = records.map(normalizeImportedTeam);
+
+                if (!importedTeams.length) {
+                    throw new Error('В файле не найдено ни одной команды');
+                }
+
+                const token = sessionStorage.getItem('ghToken') ||
+                    prompt('Введите GitHub токен (Contents: Read and write):') || '';
+
+                if (!token) {
+                    throw new Error('Нужен GitHub токен');
+                }
+
+                sessionStorage.setItem('ghToken', token);
+
+                const getRes = await fetch(TEAMS_API, {
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/vnd.github+json'
+                    }
+                });
+
+                if (!getRes.ok) {
+                    throw new Error('Не удалось прочитать teams.json: ' + getRes.status);
+                }
+
+                const fileData = await getRes.json();
+                const bytes = Uint8Array.from(
+                    atob(fileData.content.replace(/\s/g, '')),
+                    char => char.charCodeAt(0)
+                );
+                const currentTeams = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+
+                if (!Array.isArray(currentTeams)) {
+                    throw new Error('В teams.json должен быть массив команд');
+                }
+
+                const knownIds = new Set(currentTeams.map(team => String(team.id)));
+                const newTeams = importedTeams.filter(team => !knownIds.has(team.id));
+                const duplicates = importedTeams.length - newTeams.length;
+
+                if (!newTeams.length) {
+                    teams = currentTeams;
+                    render();
+                    alert(`Новых команд нет.\n\nПрочитано из файла: ${importedTeams.length}\nУже были в базе: ${duplicates}`);
+                    return;
+                }
+
+                const updatedTeams = [...currentTeams, ...newTeams];
+
+                const putRes = await fetch(TEAMS_API, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Accept': 'application/vnd.github+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Импорт команд: добавлено ${newTeams.length}`,
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(updatedTeams, null, 2)))),
+                        sha: fileData.sha
+                    })
+                });
+
+                if (putRes.status === 401 || putRes.status === 403) {
+                    throw new Error('Токен не подходит или нет права Contents: Read and write');
+                }
+
+                if (!putRes.ok) {
+                    throw new Error('GitHub вернул ошибку: ' + putRes.status);
+                }
+
+                teams = updatedTeams;
+                render();
+
+                alert(`Импорт завершён.\n\nПрочитано из файла: ${importedTeams.length}\nДобавлено новых: ${newTeams.length}\nПропущено дубликатов: ${duplicates}`);
+            } catch (err) {
+                console.error(err);
+                alert('Импорт не выполнен: ' + err.message);
             } finally {
                 event.target.value = '';
             }
         }
 
-        async function load() {
-            const res = await fetch('data/teams.json');
-            teams = await res.json();
-            render();
-        }
-        function showList() { $('listView').classList.remove('hidden'); $('teamView').classList.add('hidden'); $('editView').classList.add('hidden'); render() }
-        function showTeam(id) { currentId = id; const t = teams.find(x => x.id === id); $('listView').classList.add('hidden'); $('editView').classList.add('hidden'); $('teamView').classList.remove('hidden'); $('teamContent').innerHTML = viewHtml(t) }
-        function showEdit(id) {
-            currentId = id;
-            const t = id ? teams.find(x => x.id === id) : { organization: '', city: '', region: '', postal_code: '', address: '', organization_phone: '', email: '', organization_head: '', vehicle_class: '', vehicle_description: '', team_lead: '', team_lead_phone: '', members: [], photos: [] };
-            if (!adminPassword) { adminPassword = prompt('Введите пароль администратора:') || ''; sessionStorage.setItem('adminPassword', adminPassword) }
-            $('listView').classList.add('hidden'); $('teamView').classList.add('hidden'); $('editView').classList.remove('hidden');
-            $('editContent').innerHTML = editHtml(t);
-        }
-        function render() {
-            const q = $('search').value.toLowerCase().trim();
-            const filtered = teams.filter(t => !q || JSON.stringify(t).toLowerCase().includes(q));
-            $('teams').innerHTML = filtered.map(t => `
-  <div class="card" onclick="showTeam('${t.id}')">
-   <h3>${esc(t.organization || 'Без названия')}</h3>
-   <div class="meta">${esc([t.city, t.region].filter(Boolean).join(', ') || 'Город не указан')}</div>
-   <div class="meta">${esc(t.vehicle_class || 'Класс аппарата не указан')}</div>
-   <div class="row" style="margin-top:8px"><span class="badge">${t.members.length} участн.</span><span class="badge">${t.photos.length} фото</span></div>
-  </div>`).join('') || '<div class="empty">Команды не найдены</div>';
-        }
-        function viewHtml(t) {
-            const kv = (l, v) => `<dt>${esc(l)}</dt><dd>${esc(v || '—')}</dd>`;
-            return `
- <div class="section"><h2>${esc(t.organization || 'Команда')}</h2><dl class="kv">
-  ${kv('Организация', t.organization)}${kv('Город', t.city)}${kv('Регион', t.region)}${kv('Адрес', t.address)}
-  ${kv('Телефон', t.organization_phone)}${kv('Email', t.email)}${kv('Руководитель организации', t.organization_head)}
- </dl></div>
- <div class="section"><h2>Аппарат</h2><dl class="kv">
-  ${kv('Класс', t.vehicle_class)}${kv('Руководитель команды', t.team_lead)}${kv('Телефон', t.team_lead_phone)}
- </dl>${t.vehicle_description ? `<div class="meta">${esc(t.vehicle_description)}</div>` : ''}
- <div class="photo-grid">${t.photos.map(p => `<div class="photo"><img src="${photoSrc(p)}" alt="Фото"></div>`).join('') || '<div class="empty">Фото нет</div>'}</div></div>
- <div class="section"><h2>Участники</h2>${t.members.map((m, i) => `
-  <div class="member"><b>${esc(m.full_name || 'Участник ' + (i + 1))}</b>
-  <div class="meta">${esc(m.birth_date || '')} · ${esc(m.document || '')} · ${m.is_student ? 'Студент' : 'Не студент'}</div></div>`).join('') || '<div class="empty">Нет участников</div>'}</div>`;
-        }
-        function editHtml(t) {
-            const f = (k, l, v) => `<div class="field"><label>${esc(l)}</label><input id="f_${k}" value="${esc(v || '')}"></div>`;
-            return `
- <div class="section"><h2>Команда</h2>
-  ${f('organization', 'Организация', t.organization)}${f('city', 'Город', t.city)}${f('region', 'Регион', t.region)}
-  ${f('postal_code', 'Индекс', t.postal_code)}${f('address', 'Адрес', t.address)}${f('organization_phone', 'Телефон', t.organization_phone)}
-  ${f('email', 'Email', t.email)}${f('organization_head', 'Руководитель организации', t.organization_head)}
- </div>
- <div class="section"><h2>Аппарат</h2>
-  ${f('vehicle_class', 'Класс аппарата', t.vehicle_class)}${f('vehicle_description', 'Описание', t.vehicle_description)}
-  ${f('team_lead', 'Руководитель команды', t.team_lead)}${f('team_lead_phone', 'Телефон руководителя', t.team_lead_phone)}
-  <div class="field"><label>Ссылка на фото (Яндекс.Диск, «Поделиться»)</label><input id="f_photo" value="${esc(t.photos[0] || '')}" placeholder="https://disk.yandex.ru/i/..."></div>
- </div>
- <div class="section"><h2>Участники</h2><div id="members"></div>
-  <button class="ghost" onclick="addMember()">+ Добавить участника</button></div>`;
-        }
-        function addMember() {
-            const box = document.createElement('div'); box.className = 'member';
-            box.innerHTML = `<div class="field"><label>ФИО</label><input class="m_name"></div>
- <div class="field"><label>Дата рождения</label><input type="date" class="m_birth"></div>
- <div class="field"><label>Документ</label><input class="m_doc"></div>
- <div class="field"><label>Студент</label><select class="m_student"><option value="0">Нет</option><option value="1">Да</option></select></div>`;
-            $('members').appendChild(box);
-        }
-        async function saveTeam() {
-            let token = sessionStorage.getItem('ghToken') || '';
-            if (!token) {
-                token = prompt('Введите GitHub токен (Contents: Read and write):') || '';
-                if (!token) return toast('Нужен токен');
-                sessionStorage.setItem('ghToken', token);
-            }
-
-            const val = k => { const el = $('f_' + k); return el ? el.value.trim() : '' };
-            const members = [...document.querySelectorAll('#members .member')].map(m => ({
-                fullName: m.querySelector('.m_name').value.trim(),
-                birthDate: m.querySelector('.m_birth').value,
-                document: m.querySelector('.m_doc').value.trim(),
-                isStudent: m.querySelector('.m_student').value === '1'
-            }));
-
-            const team = {
-                id: currentId || String(Date.now()),
-                organization: val('organization'), city: val('city'), region: val('region'),
-                postal_code: val('postal_code'), address: val('address'), organization_phone: val('organization_phone'),
-                email: val('email'), organization_head: val('organization_head'), vehicle_class: val('vehicle_class'),
-                vehicle_description: val('vehicle_description'), team_lead: val('team_lead'), team_lead_phone: val('team_lead_phone'),
-                members, photos: [val('photo')].filter(Boolean)
-            };
-
-            const api = 'https://api.github.com/repos/2344040/OPMR/contents/data/teams.json';
-            const headers = {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/vnd.github+json'
-            };
-
-            try {
-                // Читаем текущий файл, чтобы получить sha
-                const getRes = await fetch(api, { headers });
-                if (!getRes.ok) return toast('Не удалось прочитать teams.json: ' + getRes.status);
-                const file = await getRes.json();
-
-                let list = [];
-                try { list = JSON.parse(atob(file.content)) } catch (e) { list = [] }
-
-                // Добавляем или обновляем команду
-                const i = list.findIndex(t => t.id === team.id);
-                if (i >= 0) list[i] = team; else list.push(team);
-
-                const putRes = await fetch(api, {
-                    method: 'PUT',
-                    headers: { ...headers, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: 'Обновление teams.json',
-                        content: btoa(unescape(encodeURIComponent(JSON.stringify(list, null, 2)))),
-                        sha: file.sha
-                    })
-                });
-
-                if (putRes.status === 401 || putRes.status === 403) return toast('Токен не подходит или нет прав');
-                if (!putRes.ok) return toast('Ошибка сохранения: ' + putRes.status);
-
-                toast('Сохранено');
-                sessionStorage.setItem('ghToken', token);
-                await load();
-                showList();
-            } catch (err) {
-                console.error(err);
-                toast('Ошибка сети');
-            }
-        }
         load();
     </script>
 </body>
