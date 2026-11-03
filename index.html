@@ -23,7 +23,7 @@
             font-size: 0.95rem;
         }
 
-        /* Карточки команд */
+        /* ===== Карточки команд ===== */
         .team-card {
             transition: transform 0.2s, box-shadow 0.2s;
             border: none;
@@ -49,23 +49,58 @@
             color: #6c757d;
         }
 
-        /* Бейджи категорий */
+        .team-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .team-card-head>div:first-child {
+            min-width: 0;
+        }
+
+        /* ===== Бейджи категорий ===== */
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: 0.04em;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        .category-badge-card {
+            font-size: 1.1rem;
+            padding: 0.6rem 0.9rem;
+            min-width: 5.2rem;
+            flex-shrink: 0;
+        }
+
+        .category-badge-xl {
+            font-size: 2.25rem;
+            padding: 0.55rem 1.1rem;
+            min-width: 9rem;
+        }
+
         .badge-bek {
-            background-color: #a8d5e2;
-            color: #1a5f7a;
+            background-color: #cfe8f3;
+            color: #174a5b;
         }
 
         .badge-tnpa {
-            background-color: #b8e6c1;
-            color: #2d6a4f;
+            background-color: #d6ecd3;
+            color: #285238;
         }
 
         .badge-anpa {
-            background-color: #d4a5e5;
-            color: #6b2d7a;
+            background-color: #e5d6f2;
+            color: #56326b;
         }
 
-        /* Детальная страница */
+        /* ===== Переключение страниц ===== */
         .detail-page {
             display: none;
         }
@@ -82,34 +117,64 @@
             display: none;
         }
 
+        /* ===== Детальная страница ===== */
         .detail-section {
             background: white;
             border-radius: 12px;
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            font-size: 1.5rem;
         }
 
         .detail-section-title {
             font-weight: 700;
             color: #0d3b66;
+            font-size: 1.85rem;
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 2px solid #e9ecef;
+        }
+
+        .detail-section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 15px;
+        }
+
+        .detail-section-head .detail-section-title {
+            border-bottom: 0;
+            padding-bottom: 0;
+            margin-bottom: 0;
         }
 
         .detail-row {
             margin-bottom: 12px;
         }
 
-        .detail-label {
+        /* Заголовок пункта — muted */
+        #detailPage .detail-label {
+            font-size: 1.35rem;
             font-weight: 600;
-            color: #495057;
-            font-size: 0.9rem;
+            color: #7a828a;
+            margin-bottom: 0.25rem;
         }
 
-        .detail-value {
+        /* Значение — bold и крупнее на 0.5 от заголовка */
+        #detailPage .detail-value {
+            font-size: 1.85rem;
+            font-weight: 700;
+            line-height: 1.25;
             color: #212529;
+            overflow-wrap: anywhere;
+        }
+
+        #detailPage .detail-value a {
+            font-weight: 700;
         }
 
         /* Таблица участников (десктоп) */
@@ -117,15 +182,18 @@
             width: 100%;
         }
 
-        .members-table th {
+        #detailPage .members-table th {
             background-color: #f8f9fa;
-            font-weight: 600;
-            color: #495057;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #6c757d;
             padding: 12px;
             border-bottom: 2px solid #dee2e6;
         }
 
-        .members-table td {
+        #detailPage .members-table td {
+            font-size: 1.35rem;
+            font-weight: 600;
             padding: 12px;
             border-bottom: 1px solid #e9ecef;
             vertical-align: middle;
@@ -140,14 +208,15 @@
             border-left: 3px solid #0d6efd;
         }
 
-        .member-fio {
-            font-weight: 600;
+        #detailPage .member-fio {
+            font-size: 1.55rem;
+            font-weight: 700;
             color: #212529;
             margin-bottom: 8px;
         }
 
-        .member-info {
-            font-size: 0.85rem;
+        #detailPage .member-info {
+            font-size: 1.25rem;
             color: #6c757d;
             margin-bottom: 4px;
         }
@@ -162,7 +231,6 @@
             border-radius: 8px;
         }
 
-        /* Кнопки управления */
         .btn-upload,
         .btn-action {
             border-radius: 20px;
@@ -172,8 +240,10 @@
         /* Фото аппарата */
         .apparatus-photo {
             max-width: 100%;
+            max-height: 400px;
             border-radius: 8px;
             margin-top: 10px;
+            object-fit: contain;
         }
 
         @media (max-width: 768px) {
@@ -218,7 +288,7 @@
             </div>
         </div>
 
-        <!-- Страница списка команд -->
+        <!-- Страница списка -->
         <div id="listPage" class="list-page">
             <div class="row g-3" id="teamsContainer">
                 <div class="col-12 text-center text-muted py-5">
@@ -228,15 +298,12 @@
             </div>
         </div>
 
-        <!-- Страница деталей команды -->
+        <!-- Страница деталей -->
         <div id="detailPage" class="detail-page">
             <button class="btn btn-outline-secondary mb-3" onclick="showListPage()">
                 <i class="fas fa-arrow-left me-2"></i>К командам
             </button>
-
-            <div id="detailContent">
-                <!-- Контент загружается динамически -->
-            </div>
+            <div id="detailContent"></div>
         </div>
 
         <!-- Страница редактирования -->
@@ -290,8 +357,18 @@
                             <input type="text" class="form-control" id="editApparatusClass">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Фото аппарата</label>
-                            <input type="file" class="form-control" id="editPhoto" accept="image/*">
+                            <label class="form-label d-block">Фото аппарата</label>
+                            <input type="file" class="d-none" id="editPhoto" accept="image/*" onchange="previewApparatusPhoto(this)">
+                            <div class="d-flex flex-wrap gap-2">
+                                <label for="editPhoto" class="btn btn-outline-primary btn-action mb-0">
+                                    <i class="fas fa-image me-2"></i>Загрузить фото
+                                </label>
+                                <button type="button" class="btn btn-outline-danger btn-action" onclick="removeApparatusPhoto()">
+                                    <i class="fas fa-trash me-2"></i>Удалить
+                                </button>
+                            </div>
+                            <div id="editPhotoName" class="text-muted small mt-2">Фото не загружено</div>
+                            <img id="editPhotoPreview" class="apparatus-photo mt-2 d-none" alt="Предпросмотр">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Краткое описание аппарата</label>
@@ -337,82 +414,24 @@
     <script>
         let teamsData = [];
         let currentTeamId = null;
-        let apparatusPhotoData = null;
         let editPhotoValue = '';
 
-        function updatePhotoPreview(src, fileName = '') {
-            const preview = document.getElementById('editPhotoPreview');
-            const name = document.getElementById('editPhotoName');
+        // Сопоставление категорий
+        function getCategoryBadge(apparatusClass, extraClass = '') {
+            const raw = String(apparatusClass || '').trim();
+            const value = raw.toLowerCase();
 
-            if (!preview || !name) return;
+            let category = { abbr: 'Н/Д', class: 'bg-secondary text-white' };
 
-            if (src && String(src).startsWith('data:image/')) {
-                preview.src = src;
-                preview.classList.remove('d-none');
-                name.textContent = fileName || 'Фото загружено';
-                return;
+            if (value.includes('бэк') || value.includes('безэкипаж')) {
+                category = { abbr: 'БЭК', class: 'badge-bek' };
+            } else if (value.includes('тнпа') || value.includes('телеуправляем')) {
+                category = { abbr: 'ТНПА', class: 'badge-tnpa' };
+            } else if (value.includes('анпа') || value.includes('автономн')) {
+                category = { abbr: 'АНПА', class: 'badge-anpa' };
             }
 
-            preview.removeAttribute('src');
-            preview.classList.add('d-none');
-
-            if (src) {
-                name.textContent = 'Фото из JSON указано ссылкой. Для отображения загрузите файл.';
-            } else {
-                name.textContent = 'Фото не загружено';
-            }
-        }
-
-        function previewApparatusPhoto(input) {
-            const file = input.files && input.files[0];
-
-            if (!file) return;
-
-            if (!file.type.startsWith('image/')) {
-                alert('Выберите файл изображения.');
-                input.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-
-            reader.onload = function (e) {
-                editPhotoValue = e.target.result;
-                updatePhotoPreview(editPhotoValue, file.name);
-            };
-
-            reader.readAsDataURL(file);
-        }
-
-        function removeApparatusPhoto() {
-            editPhotoValue = '';
-
-            const input = document.getElementById('editPhoto');
-            if (input) input.value = '';
-
-            updatePhotoPreview('');
-        }
-
-        // Сопоставление классов аппаратов
-        const apparatusCategories = {
-            'Безэкипажный катер (БЭК)': { abbr: 'БЭК', class: 'badge-bek' },
-            'Безэкипажный катер': { abbr: 'БЭК', class: 'badge-bek' },
-            'Телеуправляемый необитаемый подводный аппарат (ТНПА)': { abbr: 'ТНПА', class: 'badge-tnpa' },
-            'Телеуправляемый необитаемый подводный аппарат': { abbr: 'ТНПА', class: 'badge-tnpa' },
-            'Автономный необитаемый подводный аппарат (АНПА)': { abbr: 'АНПА', class: 'badge-anpa' },
-            'Автономный необитаемый подводный аппарат': { abbr: 'АНПА', class: 'badge-anpa' }
-        };
-
-        function getCategoryBadge(apparatusClass) {
-            if (!apparatusClass) return '<span class="badge bg-secondary">Не указан</span>';
-
-            const trimmedClass = apparatusClass.trim();
-            const category = apparatusCategories[trimmedClass];
-
-            if (category) {
-                return `<span class="badge ${category.class}">${category.abbr}</span>`;
-            }
-            return `<span class="badge bg-secondary">${trimmedClass}</span>`;
+            return `<span class="badge category-badge ${extraClass} ${category.class}">${category.abbr}</span>`;
         }
 
         // Конвертация JSON
@@ -458,7 +477,7 @@
             });
         }
 
-        // Рендер списка команд
+        // Рендер списка
         function renderTeams(teams) {
             const container = document.getElementById('teamsContainer');
             if (teams.length === 0) {
@@ -469,12 +488,12 @@
             container.innerHTML = teams.map(team => `
             <div class="col-md-6 col-lg-4">
                 <div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div class="team-card-head mb-2">
                         <div class="flex-grow-1">
                             <div class="org-name">${team.organization}</div>
                             <div class="team-meta">${team.city || 'Город не указан'}</div>
                         </div>
-                        ${getCategoryBadge(team.apparatusClass)}
+                        ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
                     </div>
                     <div class="mt-auto pt-2 border-top">
                         <div class="d-flex justify-content-between align-items-center">
@@ -494,14 +513,12 @@
             document.getElementById('editPage').classList.remove('active');
             document.getElementById('headerButtons').style.display = 'flex';
         }
-
         function showDetailPage() {
             document.getElementById('listPage').classList.add('hidden');
             document.getElementById('detailPage').classList.add('active');
             document.getElementById('editPage').classList.remove('active');
             document.getElementById('headerButtons').style.display = 'none';
         }
-
         function showEditPage() {
             document.getElementById('listPage').classList.add('hidden');
             document.getElementById('detailPage').classList.remove('active');
@@ -518,7 +535,6 @@
             const phoneLink = team.phone ? `<a href="tel:${team.phone.replace(/\s/g, '')}">${team.phone}</a>` : '—';
             const emailLink = team.email ? `<a href="mailto:${team.email}">${team.email}</a>` : '—';
 
-            // Таблица участников (десктоп)
             const membersTableHtml = team.members.length > 0 ? `
             <table class="members-table">
                 <thead>
@@ -544,7 +560,6 @@
             </table>
         ` : '<div class="text-muted">Состав команды не указан</div>';
 
-            // Карточки участников (мобильные)
             const membersCardsHtml = team.members.length > 0 ? team.members.map(m => `
             <div class="member-card">
                 <div class="member-fio">${m.fio}</div>
@@ -556,6 +571,10 @@
                 ` : ''}
             </div>
         `).join('') : '<div class="text-muted">Состав команды не указан</div>';
+
+            const photoHtml = team.photo && team.photo.startsWith('data:image/')
+                ? `<img src="${team.photo}" class="apparatus-photo" alt="Фото аппарата">`
+                : `<div class="detail-value text-muted">Фото не загружено</div>`;
 
             document.getElementById('detailContent').innerHTML = `
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -599,9 +618,9 @@
             </div>
 
             <div class="detail-section">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h5 class="detail-section-title mb-0">Аппарат</h5>
-                    ${getCategoryBadge(team.apparatusClass)}
+                <div class="detail-section-head">
+                    <h5 class="detail-section-title">Аппарат</h5>
+                    ${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}
                 </div>
                 <div class="row g-3">
                     <div class="col-12">
@@ -613,14 +632,9 @@
                         <div class="detail-value" style="white-space: pre-wrap;">${team.description || '—'}</div>
                     </div>
                     <div class="col-12">
-    <div class="detail-label">Фото аппарата</div>
-
-    ${team.photo && team.photo.startsWith('data:image/') ? `
-        <img src="${team.photo}" class="apparatus-photo" alt="Фото аппарата">
-    ` : `
-        <div class="detail-value text-muted">Фото не загружено</div>
-    `}
-</div>
+                        <div class="detail-label">Фото аппарата</div>
+                        ${photoHtml}
+                    </div>
                 </div>
             </div>
 
@@ -640,12 +654,8 @@
 
             <div class="detail-section">
                 <h5 class="detail-section-title">Участники (${team.members.length})</h5>
-                <div class="members-table-desktop">
-                    ${membersTableHtml}
-                </div>
-                <div class="members-cards-mobile">
-                    ${membersCardsHtml}
-                </div>
+                <div class="members-table-desktop">${membersTableHtml}</div>
+                <div class="members-cards-mobile">${membersCardsHtml}</div>
             </div>
         `;
 
@@ -670,30 +680,24 @@
             document.getElementById('editTeamLeader').value = team.teamLeader;
             document.getElementById('editTeamLeaderPhone').value = team.teamLeaderPhone;
 
-            // Заполняем участников
-            const container = document.getElementById('editMembersContainer');
-            container.innerHTML = '';
-            team.members.forEach((member, idx) => {
-                addMemberField(member);
-            });
-
             editPhotoValue = team.photo || '';
-
             const photoInput = document.getElementById('editPhoto');
             if (photoInput) photoInput.value = '';
-
             updatePhotoPreview(editPhotoValue);
 
-            apparatusPhotoData = null;
+            const container = document.getElementById('editMembersContainer');
+            container.innerHTML = '';
+            team.members.forEach(m => addMemberField(m));
+
             showEditPage();
         }
 
         function addMemberField(member = null) {
             const container = document.getElementById('editMembersContainer');
             const idx = container.children.length;
-            const memberDiv = document.createElement('div');
-            memberDiv.className = 'border rounded p-3 mb-3';
-            memberDiv.innerHTML = `
+            const div = document.createElement('div');
+            div.className = 'border rounded p-3 mb-3';
+            div.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="mb-0">Участник ${idx + 1}</h6>
                 <button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest('.border').remove()">
@@ -726,7 +730,7 @@
                 </div>
             </div>
         `;
-            container.appendChild(memberDiv);
+            container.appendChild(div);
         }
 
         function saveEdit() {
@@ -745,8 +749,8 @@
             team.description = document.getElementById('editDescription').value;
             team.teamLeader = document.getElementById('editTeamLeader').value;
             team.teamLeaderPhone = document.getElementById('editTeamLeaderPhone').value;
+            team.photo = editPhotoValue;
 
-            // Сохраняем участников
             const memberDivs = document.querySelectorAll('#editMembersContainer .border');
             team.members = [];
             memberDivs.forEach(div => {
@@ -762,9 +766,6 @@
                 }
             });
 
-            // Обработка фото
-            team.photo = editPhotoValue;
-
             renderTeams(teamsData);
             showTeamDetails(currentTeamId);
         }
@@ -773,11 +774,55 @@
             showTeamDetails(currentTeamId);
         }
 
-        // Загрузка файла
+        // ===== Работа с фото =====
+        function updatePhotoPreview(src, fileName = '') {
+            const preview = document.getElementById('editPhotoPreview');
+            const name = document.getElementById('editPhotoName');
+            if (!preview || !name) return;
+
+            if (src && String(src).startsWith('data:image/')) {
+                preview.src = src;
+                preview.classList.remove('d-none');
+                name.textContent = fileName || 'Фото загружено';
+                return;
+            }
+            preview.removeAttribute('src');
+            preview.classList.add('d-none');
+
+            if (src) {
+                name.textContent = 'Фото из JSON указано ссылкой. Для отображения загрузите файл.';
+            } else {
+                name.textContent = 'Фото не загружено';
+            }
+        }
+
+        function previewApparatusPhoto(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                alert('Выберите файл изображения.');
+                input.value = '';
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                editPhotoValue = e.target.result;
+                updatePhotoPreview(editPhotoValue, file.name);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeApparatusPhoto() {
+            editPhotoValue = '';
+            const input = document.getElementById('editPhoto');
+            if (input) input.value = '';
+            updatePhotoPreview('');
+        }
+
+        // Загрузка JSON
         document.getElementById('fileInput').addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function (e) {
                 try {
@@ -792,7 +837,6 @@
             reader.readAsText(file);
         });
 
-        // Загрузка по умолчанию
         async function loadDefaultData() {
             try {
                 const response = await fetch('data/teams.json');
