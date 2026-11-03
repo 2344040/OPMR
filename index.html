@@ -338,6 +338,60 @@
         let teamsData = [];
         let currentTeamId = null;
         let apparatusPhotoData = null;
+        let editPhotoValue = '';
+
+        function updatePhotoPreview(src, fileName = '') {
+            const preview = document.getElementById('editPhotoPreview');
+            const name = document.getElementById('editPhotoName');
+
+            if (!preview || !name) return;
+
+            if (src && String(src).startsWith('data:image/')) {
+                preview.src = src;
+                preview.classList.remove('d-none');
+                name.textContent = fileName || 'Фото загружено';
+                return;
+            }
+
+            preview.removeAttribute('src');
+            preview.classList.add('d-none');
+
+            if (src) {
+                name.textContent = 'Фото из JSON указано ссылкой. Для отображения загрузите файл.';
+            } else {
+                name.textContent = 'Фото не загружено';
+            }
+        }
+
+        function previewApparatusPhoto(input) {
+            const file = input.files && input.files[0];
+
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                alert('Выберите файл изображения.');
+                input.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                editPhotoValue = e.target.result;
+                updatePhotoPreview(editPhotoValue, file.name);
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        function removeApparatusPhoto() {
+            editPhotoValue = '';
+
+            const input = document.getElementById('editPhoto');
+            if (input) input.value = '';
+
+            updatePhotoPreview('');
+        }
 
         // Сопоставление классов аппаратов
         const apparatusCategories = {
@@ -558,12 +612,15 @@
                         <div class="detail-label">Краткое описание</div>
                         <div class="detail-value" style="white-space: pre-wrap;">${team.description || '—'}</div>
                     </div>
-                    ${team.photo ? `
-                        <div class="col-12">
-                            <div class="detail-label">Фото аппарата</div>
-                            <img src="${team.photo}" class="apparatus-photo" alt="Фото аппарата" onerror="this.style.display='none'">
-                        </div>
-                    ` : ''}
+                    <div class="col-12">
+    <div class="detail-label">Фото аппарата</div>
+
+    ${team.photo && team.photo.startsWith('data:image/') ? `
+        <img src="${team.photo}" class="apparatus-photo" alt="Фото аппарата">
+    ` : `
+        <div class="detail-value text-muted">Фото не загружено</div>
+    `}
+</div>
                 </div>
             </div>
 
@@ -619,6 +676,13 @@
             team.members.forEach((member, idx) => {
                 addMemberField(member);
             });
+
+            editPhotoValue = team.photo || '';
+
+            const photoInput = document.getElementById('editPhoto');
+            if (photoInput) photoInput.value = '';
+
+            updatePhotoPreview(editPhotoValue);
 
             apparatusPhotoData = null;
             showEditPage();
@@ -699,17 +763,10 @@
             });
 
             // Обработка фото
-            const photoInput = document.getElementById('editPhoto');
-            if (photoInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    team.photo = e.target.result;
-                    showTeamDetails(currentTeamId);
-                };
-                reader.readAsDataURL(photoInput.files[0]);
-            } else {
-                showTeamDetails(currentTeamId);
-            }
+            team.photo = editPhotoValue;
+
+            renderTeams(teamsData);
+            showTeamDetails(currentTeamId);
         }
 
         function cancelEdit() {
