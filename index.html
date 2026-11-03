@@ -719,13 +719,13 @@
         /* ===== СТИЛИ ДЛЯ ПЕЧАТИ (А4) ===== */
         @media print {
             @page {
-                size: A4;
-                margin: 15mm 12mm;
+                size: A4 portrait;
+                margin: 10mm 12mm;
             }
 
             body {
                 background: white !important;
-                font-size: 9pt !important;
+                font-size: 8pt !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -740,16 +740,13 @@
             .edit-btn-mobile,
             .btn,
             button,
-            label[for] {
+            label[for],
+            #detailPage>button {
                 display: none !important;
             }
 
             #detailPage {
                 display: block !important;
-            }
-
-            #detailPage .btn-outline-secondary {
-                display: none !important;
             }
 
             .container {
@@ -759,50 +756,52 @@
 
             /* Заголовок организации */
             #detailContent>div:first-child {
-                margin-bottom: 8px !important;
-                padding-bottom: 6px !important;
-                border-bottom: 2px solid #0f172a !important;
+                margin-bottom: 6px !important;
+                padding-bottom: 4px !important;
+                border-bottom: 1.5px solid #0f172a !important;
             }
 
             #detailContent>div:first-child h3 {
-                font-size: 16pt !important;
+                font-size: 14pt !important;
                 margin: 0 !important;
             }
 
-            /* Секции — компактнее */
+            /* Секции — максимально компактно */
             .detail-section {
-                padding: 8px 0 !important;
-                margin-bottom: 6px !important;
+                padding: 4px 0 !important;
+                margin-bottom: 4px !important;
                 box-shadow: none !important;
                 border: none !important;
-                border-bottom: 1px solid #e2e8f0 !important;
+                border-bottom: 0.5px solid #cbd5e1 !important;
                 border-radius: 0 !important;
                 page-break-inside: avoid;
             }
 
             .detail-section-title {
-                font-size: 11pt !important;
-                margin-bottom: 6px !important;
-                padding-bottom: 4px !important;
+                font-size: 9pt !important;
+                margin-bottom: 3px !important;
+                padding-bottom: 2px !important;
                 color: #0f172a !important;
+                font-weight: 700 !important;
             }
 
             .detail-section-head {
-                padding-bottom: 4px !important;
-                margin-bottom: 6px !important;
+                padding-bottom: 2px !important;
+                margin-bottom: 3px !important;
             }
 
             /* Метки и значения */
             #detailPage .detail-label {
-                font-size: 7pt !important;
+                font-size: 6.5pt !important;
                 color: #64748b !important;
-                margin-bottom: 1px !important;
+                margin-bottom: 0 !important;
+                line-height: 1 !important;
             }
 
             #detailPage .detail-value {
-                font-size: 9pt !important;
-                line-height: 1.3 !important;
-                margin-bottom: 4px !important;
+                font-size: 8pt !important;
+                line-height: 1.2 !important;
+                margin-bottom: 2px !important;
             }
 
             /* Сетка полей — 2 колонки */
@@ -813,75 +812,71 @@
             .detail-section .col-md-6 {
                 width: 50% !important;
                 float: left !important;
-                padding: 2px 8px !important;
+                padding: 1px 6px !important;
                 box-sizing: border-box;
             }
 
             .detail-section .col-12 {
                 width: 100% !important;
-                padding: 2px 0 !important;
+                padding: 1px 0 !important;
             }
 
             /* Бейдж категории */
             .category-badge-xl {
-                font-size: 11pt !important;
-                padding: 3px 10px !important;
+                font-size: 9pt !important;
+                padding: 2px 8px !important;
                 min-width: auto !important;
             }
 
             .category-badge-card {
-                font-size: 8pt !important;
-                padding: 2px 8px !important;
+                font-size: 7pt !important;
+                padding: 1px 6px !important;
             }
 
-            /* Фото — маленькие, в ряд */
-            .apparatus-photo-grid {
-                grid-template-columns: repeat(4, 1fr) !important;
-                gap: 4px !important;
-                max-width: 100% !important;
-            }
-
+            /* ФОТО — НЕ ПЕЧАТАЕМ */
+            .apparatus-photo-grid,
             .apparatus-photo-item {
-                aspect-ratio: 4/3 !important;
-                border: 1px solid #cbd5e1 !important;
-            }
-
-            .apparatus-photo-item img {
-                position: absolute !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-                object-fit: cover !important;
+                display: none !important;
             }
 
             /* Таблица участников — компактная */
+            .members-table-desktop {
+                display: block !important;
+            }
+
+            .members-cards-mobile {
+                display: none !important;
+            }
+
             .members-table {
-                font-size: 8pt !important;
-                margin-top: 4px !important;
+                font-size: 7pt !important;
+                margin-top: 2px !important;
+                width: 100% !important;
             }
 
             #detailPage .members-table th {
-                font-size: 7pt !important;
-                padding: 4px 6px !important;
+                font-size: 6.5pt !important;
+                padding: 2px 4px !important;
                 background: #f1f5f9 !important;
+                border-bottom: 1px solid #cbd5e1 !important;
             }
 
             #detailPage .members-table td {
-                font-size: 8pt !important;
-                padding: 4px 6px !important;
+                font-size: 7pt !important;
+                padding: 2px 4px !important;
+                border-bottom: 0.5px solid #e2e8f0 !important;
             }
 
             .col-fio {
-                width: 35% !important;
+                width: 30% !important;
             }
 
             .col-birth {
-                width: 12% !important;
+                width: 11% !important;
             }
 
             .col-passport {
-                width: 18% !important;
+                width: 16% !important;
             }
 
             .col-student {
@@ -889,13 +884,13 @@
             }
 
             .col-order {
-                width: 27% !important;
+                width: 35% !important;
             }
 
             /* Бейдж капитана */
             .badge {
-                font-size: 7pt !important;
-                padding: 1px 4px !important;
+                font-size: 6pt !important;
+                padding: 0 3px !important;
             }
 
             /* Ссылки — показываем текст */
@@ -904,15 +899,15 @@
                 text-decoration: none !important;
             }
 
-            /* Запрет разрыва внутри секций */
-            .detail-section {
-                page-break-inside: avoid;
-            }
-
             /* Описание аппарата — мелкое */
             #detailPage .detail-value p {
-                font-size: 8pt !important;
-                line-height: 1.3 !important;
+                font-size: 7pt !important;
+                line-height: 1.2 !important;
+                margin-bottom: 1px !important;
+            }
+
+            /* Заголовок "Участники" */
+            .detail-section:last-child .detail-section-title {
                 margin-bottom: 2px !important;
             }
         }
@@ -1420,15 +1415,27 @@
             }
 
             const editButtonDesktop = isAdmin ? `<button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')"><i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span></button>` : '';
-            const printButtonDesktop = `<button class="btn btn-outline-secondary btn-action edit-btn-desktop ${isAdmin ? 'ms-2' : ''}" onclick="window.print()"><i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span></button>`;
             const editButtonMobile = isAdmin ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;"><i class="fas fa-edit"></i></button>` : '';
-            const printButtonMobile = `<button class="btn btn-outline-secondary btn-sm edit-btn-mobile ms-1" onclick="window.print()" title="Печать" style="display: none;"><i class="fas fa-print"></i></button>`;
 
             document.getElementById('detailContent').innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-                    <div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>${getCategoryBadge(team.apparatusClass, 'category-badge-card')}</div>
-                    ${editButtonDesktop}${printButtonDesktop}
-                </div>
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>
+        ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
+    </div>
+    <div class="d-flex gap-2">
+        ${editButtonDesktop}
+        <button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()">
+            <i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span>
+        </button>
+    </div>
+</div>
+<div class="d-flex gap-1 mb-2">
+    ${editButtonMobile}
+    <button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display: none;">
+        <i class="fas fa-print"></i>
+    </button>
+</div>
                 ${editButtonMobile}${printButtonMobile}
                 <div class="detail-section"><div class="row g-4">
                     <div class="col-md-6"><div class="detail-label">ID заявки</div><div class="detail-value">${team.id}</div></div>
