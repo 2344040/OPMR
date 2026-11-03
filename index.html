@@ -371,7 +371,58 @@
             color: #0f172a;
         }
 
-        /* ===== СЕТКА ФОТО ===== */
+        /* ===== ПОЛЯ ДЛЯ ССЫЛОК НА ФОТО ===== */
+        .photo-link-field {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .photo-link-field input {
+            flex: 1;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+
+        .photo-link-field input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+
+        .photo-link-field .preview-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .photo-link-field .remove-link-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .photo-link-field .remove-link-btn:hover {
+            background: #b91c1c;
+        }
+
         .apparatus-photo-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -441,114 +492,6 @@
             margin-bottom: 8px;
         }
 
-        /* ===== ПРЕДПРОСМОТР ССЫЛОК В ФОРМЕ ===== */
-        .photo-link-preview {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 0.85rem;
-        }
-
-        .photo-link-preview img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 6px;
-            flex-shrink: 0;
-        }
-
-        .photo-link-preview .link-url {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: #3b82f6;
-            font-family: 'Inter', monospace;
-        }
-
-        .photo-link-preview .link-status {
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 4px;
-            flex-shrink: 0;
-        }
-
-        .link-status.valid {
-            background: #dcfce7;
-            color: #15803d;
-        }
-
-        .link-status.invalid {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .photo-link-preview .remove-link-btn {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            padding: 4px;
-            font-size: 1rem;
-            flex-shrink: 0;
-            transition: color 0.2s;
-        }
-
-        .photo-link-preview .remove-link-btn:hover {
-            color: #b91c1c;
-        }
-
-        .edit-photo-preview-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .edit-photo-preview-item {
-            position: relative;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #f1f5f9;
-            aspect-ratio: 4 / 3;
-            border: 1px solid #e2e8f0;
-        }
-
-        .edit-photo-preview-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .edit-photo-remove-btn {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: rgba(239, 68, 68, 0.9);
-            color: white;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 0.75rem;
-            transition: background 0.2s;
-            backdrop-filter: blur(4px);
-        }
-
-        .edit-photo-remove-btn:hover {
-            background: rgba(220, 38, 38, 1);
-        }
-
         .lightbox-overlay {
             position: fixed;
             inset: 0;
@@ -608,8 +551,7 @@
                 display: block !important;
             }
 
-            .apparatus-photo-grid,
-            .edit-photo-preview-grid {
+            .apparatus-photo-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
 
@@ -670,17 +612,13 @@
         }
 
         @media (max-width: 992px) {
-
-            .apparatus-photo-grid,
-            .edit-photo-preview-grid {
+            .apparatus-photo-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
 
         @media (max-width: 480px) {
-
-            .apparatus-photo-grid,
-            .edit-photo-preview-grid {
+            .apparatus-photo-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -772,12 +710,14 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Ссылки на фото аппарата</label>
-                            <textarea class="form-control" id="editPhotoLinks" rows="4" placeholder="Вставьте ссылки на фото, по одной на строку:&#10;https://example.com/photo1.jpg&#10;https://example.com/photo2.jpg"></textarea>
-                            <div class="form-text">
+                            <div id="photoLinksContainer"></div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addPhotoLinkField()">
+                                <i class="fas fa-plus me-1"></i>Добавить ссылку
+                            </button>
+                            <div class="form-text mt-2">
                                 <i class="fas fa-info-circle me-1"></i>
-                                Используйте прямые ссылки на изображения (заканчиваются на .jpg, .png, .webp). Ссылки на Яндекс.Диск отображаются как кнопки перехода.
+                                Вставьте прямые ссылки на изображения (заканчиваются на .jpg, .png, .webp). Ссылки на Яндекс.Диск отображаются как кнопки перехода.
                             </div>
-                            <div id="photoLinksPreview" class="mt-3"></div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Краткое описание аппарата</label>
@@ -829,7 +769,7 @@
     <script>
         let teamsData = [];
         let currentTeamId = null;
-        let editPhotoLinks = []; // массив ссылок на фото
+        let editPhotoLinks = [];
         let isNewTeam = false;
         const STORAGE_KEY = 'opmr_teams_data';
         const STORAGE_TIMESTAMP_KEY = 'opmr_teams_timestamp';
@@ -837,7 +777,6 @@
 
         let isAdmin = localStorage.getItem(ADMIN_MODE_KEY) === 'true';
 
-        // ===== Утилиты форматирования =====
         function formatDate(dateStr) {
             if (!dateStr) return '—';
             const parts = String(dateStr).trim().split('-');
@@ -898,13 +837,6 @@
             return String(value).split(',').map(s => s.trim()).filter(s => s.length > 0);
         }
 
-        function parsePhotoLinksFromTextarea(text) {
-            if (!text) return [];
-            return text.split('\n')
-                .map(line => line.trim())
-                .filter(line => line.length > 0 && line.startsWith('http'));
-        }
-
         function isDirectImageLink(url) {
             return /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url);
         }
@@ -960,7 +892,6 @@
             });
         }
 
-        // ===== Рендер кнопок в шапке =====
         function renderHeaderButtons() {
             const container = document.getElementById('headerButtons');
 
@@ -1266,6 +1197,48 @@
             document.body.style.overflow = '';
         }
 
+        // ===== ПОЛЯ ДЛЯ ССЫЛОК НА ФОТО =====
+        function addPhotoLinkField(url = '') {
+            const container = document.getElementById('photoLinksContainer');
+            const idx = container.children.length;
+
+            const field = document.createElement('div');
+            field.className = 'photo-link-field';
+            field.innerHTML = `
+                <img class="preview-thumb" src="${url}" alt="Превью" style="display: ${url ? 'block' : 'none'}" onerror="this.style.display='none'">
+                <input type="text" class="photo-link-input" placeholder="Вставьте ссылку на фото..." value="${url}" oninput="updatePhotoPreview(this)">
+                <button type="button" class="remove-link-btn" onclick="removePhotoLinkField(this)" title="Удалить ссылку">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+
+            container.appendChild(field);
+        }
+
+        function removePhotoLinkField(btn) {
+            btn.closest('.photo-link-field').remove();
+        }
+
+        function updatePhotoPreview(input) {
+            const field = input.closest('.photo-link-field');
+            const img = field.querySelector('.preview-thumb');
+            const url = input.value.trim();
+
+            if (url && isDirectImageLink(url)) {
+                img.src = url;
+                img.style.display = 'block';
+            } else {
+                img.style.display = 'none';
+            }
+        }
+
+        function getPhotoLinks() {
+            const inputs = document.querySelectorAll('.photo-link-input');
+            return Array.from(inputs)
+                .map(input => input.value.trim())
+                .filter(url => url.length > 0);
+        }
+
         function createNewTeam() {
             currentTeamId = null;
             isNewTeam = true;
@@ -1284,9 +1257,9 @@
             document.getElementById('editDescription').value = '';
             document.getElementById('editTeamLeader').value = '';
             document.getElementById('editTeamLeaderPhone').value = '';
-            document.getElementById('editPhotoLinks').value = '';
 
-            renderPhotoLinksPreview();
+            document.getElementById('photoLinksContainer').innerHTML = '';
+            addPhotoLinkField();
 
             const container = document.getElementById('editMembersContainer');
             container.innerHTML = '';
@@ -1316,10 +1289,14 @@
             document.getElementById('editTeamLeader').value = team.teamLeader;
             document.getElementById('editTeamLeaderPhone').value = team.teamLeaderPhone;
 
-            // Заполняем textarea ссылками на фото (по одной на строку)
+            // Заполняем поля для ссылок на фото
+            document.getElementById('photoLinksContainer').innerHTML = '';
             editPhotoLinks = team.photos || [];
-            document.getElementById('editPhotoLinks').value = editPhotoLinks.join('\n');
-            renderPhotoLinksPreview();
+            if (editPhotoLinks.length === 0) {
+                addPhotoLinkField();
+            } else {
+                editPhotoLinks.forEach(url => addPhotoLinkField(url));
+            }
 
             const container = document.getElementById('editMembersContainer');
             container.innerHTML = '';
@@ -1327,60 +1304,6 @@
 
             showEditPage();
         }
-
-        // ===== ПРЕДПРОСМОТР ССЫЛОК НА ФОТО =====
-        function renderPhotoLinksPreview() {
-            const container = document.getElementById('photoLinksPreview');
-            if (!container) return;
-
-            const textarea = document.getElementById('editPhotoLinks');
-            const links = parsePhotoLinksFromTextarea(textarea ? textarea.value : '');
-
-            if (links.length === 0) {
-                container.innerHTML = '<div class="text-muted small">Ссылки не добавлены</div>';
-                return;
-            }
-
-            container.innerHTML = links.map((url, idx) => {
-                const isDirect = isDirectImageLink(url);
-                const statusClass = isDirect ? 'valid' : 'invalid';
-                const statusText = isDirect ? 'Изображение' : 'Ссылка';
-
-                const previewHtml = isDirect
-                    ? `<img src="${url}" alt="Фото ${idx + 1}" onerror="this.style.display='none'">`
-                    : '';
-
-                return `
-                    <div class="photo-link-preview">
-                        ${previewHtml}
-                        <div class="link-url" title="${url}">${url}</div>
-                        <span class="link-status ${statusClass}">${statusText}</span>
-                        <button type="button" class="remove-link-btn" onclick="removePhotoLink(${idx})" title="Удалить ссылку">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function removePhotoLink(idx) {
-            const textarea = document.getElementById('editPhotoLinks');
-            const links = parsePhotoLinksFromTextarea(textarea.value);
-            links.splice(idx, 1);
-            textarea.value = links.join('\n');
-            renderPhotoLinksPreview();
-        }
-
-        // Автообновление предпросмотра при вводе
-        document.addEventListener('DOMContentLoaded', function () {
-            const textarea = document.getElementById('editPhotoLinks');
-            if (textarea) {
-                textarea.addEventListener('input', function () {
-                    clearTimeout(textarea._previewTimeout);
-                    textarea._previewTimeout = setTimeout(renderPhotoLinksPreview, 500);
-                });
-            }
-        });
 
         function addMemberField(member = null) {
             const container = document.getElementById('editMembersContainer');
@@ -1424,7 +1347,6 @@
             container.appendChild(div);
         }
 
-        // ===== АВТОСОХРАНЕНИЕ В LOCALSTORAGE =====
         function saveToLocalStorage() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(teamsData));
@@ -1458,8 +1380,7 @@
                 return;
             }
 
-            // Парсим ссылки на фото из textarea
-            const photoLinks = parsePhotoLinksFromTextarea(document.getElementById('editPhotoLinks').value);
+            const photoLinks = getPhotoLinks();
 
             const memberDivs = document.querySelectorAll('#editMembersContainer .border');
             const members = [];
@@ -1523,7 +1444,6 @@
             }
         }
 
-        // ===== ЭКСПОРТ JSON =====
         function downloadJSON() {
             if (teamsData.length === 0) {
                 alert('Нет данных для сохранения');
@@ -1541,7 +1461,6 @@
             URL.revokeObjectURL(url);
         }
 
-        // ===== ЗАГРУЗКА JSON =====
         function attachFileInputListener() {
             const input = document.getElementById('fileInput');
             if (!input) return;
@@ -1586,7 +1505,6 @@
             event.target.value = '';
         }
 
-        // ===== ЗАГРУЗКА ДАННЫХ ПРИ СТАРТЕ =====
         async function loadDefaultData() {
             if (loadFromLocalStorage()) {
                 renderTeams(teamsData);
