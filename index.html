@@ -682,6 +682,39 @@
                 max-width: 100%;
             }
         }
+
+        .apparatus-photo-grid {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 12px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+
+        .apparatus-photo-item {
+            min-width: 0 !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+        }
+
+        .apparatus-photo-item img {
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+
+        @media (max-width: 768px) {
+            .apparatus-photo-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .apparatus-photo-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 
@@ -1128,11 +1161,17 @@
             const descHtml = formatDescription(team.description);
             const photos = team.photos || [];
             let photosHtml;
-            if (photos.length === 0) { photosHtml = `<div class="detail-value text-muted" style="font-size: 1rem;">Фото не загружено</div>`; }
-            else {
+            if (photos.length === 0) {
+                photosHtml = `<div class="detail-value text-muted" style="font-size: 1rem;">Фото не загружено</div>`;
+            } else {
                 const gridClass = photos.length === 1 ? 'apparatus-photo-grid single-photo' : 'apparatus-photo-grid';
-                const items = photos.map((src, idx) => { const isDirect = isDirectImageLink(src); if (isDirect) return `<div class="apparatus-photo-item"><img src="${src}" alt="Фото ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')" onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'"></div>`; else return `<div class="apparatus-photo-item"><a href="${src}" target="_blank" rel="noopener" class="photo-link-card"><i class="fas fa-external-link-alt"></i><span>Открыть фото ${idx + 1}</span></a></div>`; }).join('');
-                photosHtml = `<div class="${gridClass}">${items}</div>`;
+                const items = photos.map((src, idx) => {
+                    const isDirect = isDirectImageLink(src);
+                    if (isDirect) return `<div class="apparatus-photo-item"><img src="${src}" alt="Фото ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')" onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'"></div>`;
+                    else return `<div class="apparatus-photo-item"><a href="${src}" target="_blank" rel="noopener" class="photo-link-card"><i class="fas fa-external-link-alt"></i><span>Открыть фото ${idx + 1}</span></a></div>`;
+                }).join('');
+                // Обёртка с жёсткими ограничениями
+                photosHtml = `<div style="width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box;"><div class="${gridClass}" style="width: 100%; max-width: 100%; overflow: hidden;">${items}</div></div>`;
             }
 
             const editButtonDesktop = isAdmin ? `<button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')"><i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span></button>` : '';
