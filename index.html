@@ -270,6 +270,10 @@
             font-weight: 700;
             color: #0f172a;
             margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
         }
 
         #detailPage .member-info {
@@ -330,11 +334,9 @@
         .apparatus-photo-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            /* 4 фото в ряд */
             gap: 12px;
         }
 
-        /* Если фото всего одно, оно занимает 50% ширины и центрируется */
         .apparatus-photo-grid.single-photo {
             grid-template-columns: 1fr;
             justify-items: center;
@@ -358,6 +360,7 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
+            /* Гарантирует заполнение контейнера без искажений */
             display: block;
             cursor: pointer;
             transition: transform 0.3s ease;
@@ -367,7 +370,6 @@
             transform: scale(1.05);
         }
 
-        /* Карточка-ссылка (если картинку нельзя встроить напрямую) */
         .photo-link-card {
             display: flex;
             flex-direction: column;
@@ -511,7 +513,6 @@
 
             .apparatus-photo-grid.single-photo .apparatus-photo-item {
                 width: 80%;
-                /* На мобильном одно фото чуть шире */
             }
 
             .detail-section {
@@ -633,7 +634,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Краткое описание аппарата</label>
-                            <textarea class="form-control" id="editDescription" rows="3"></textarea>
+                            <textarea class="form-control" id="editDescription" rows="4"></textarea>
                         </div>
 
                         <div class="col-12 mt-4">
@@ -727,9 +728,19 @@
                     }
                 }
 
+                // Извлекаем дату из "Время создания" (формат: 2026-09-29 11:18:54 -> 29.09.2026)
+                let createdDate = "—";
+                if (obj["Время создания"]) {
+                    const datePart = obj["Время создания"].trim().split(' ')[0];
+                    const parts = datePart.split('-');
+                    if (parts.length === 3) {
+                        createdDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
+                    }
+                }
+
                 return {
                     id: obj["ID"] || Math.random().toString(36).substr(2, 9),
-                    created: obj["Время создания"] || "",
+                    created: createdDate,
                     organization: obj["Организация"] || "Без названия",
                     city: obj["Город (населённый пункт)"] || "",
                     region: obj["Республика/край/область"] || "",
@@ -745,6 +756,10 @@
                     teamLeaderPhone: obj["Контактный телефон руководителя команды"] || "",
                     members: members
                 };
+            }).filter(team => {
+                // 1. Фильтр: не выводим организацию "Тест"
+                const org = (team.organization || "").toLowerCase().trim();
+                return org !== "тест";
             });
         }
 
@@ -803,7 +818,17 @@
             const phoneLink = team.phone ? `<a href="tel:${team.phone.replace(/\s/g, '')}">${team.phone}</a>` : '—';
             const emailLink = team.email ? `<a href="mailto:${team.email}">${team.email}</a>` : '—';
 
-            const membersTableHtml = team.members.length > 0 ? `
+            // 5. Сортировка участников: капитан (руководитель команды) всегда первый
+            let sortedMembers = [...team.members];
+            const leaderFio = (team.teamLeader || "").trim().toLowerCase();
+
+            const captainIdx = sortedMembers.findIndex(m => (m.fio || "").trim().toLowerCase() === leaderFio);
+            if (captainIdx > 0) {
+                const captain = sortedMembers.splice(captainIdx, 1)[0];
+                sortedMembers.unshift(captain);
+            }
+
+            const membersTableHtml = sortedMembers.length > 0 ? `
             <table class="members-table">
                 <thead>
                     <tr>
@@ -815,30 +840,42 @@
                     </tr>
                 </thead>
                 <tbody>
-                    ${team.members.map(m => `
+                    ${sortedMembers.map((m, idx) => {
+                const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
+                const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem; vertical-align: middle;">Капитан</span>' : '';
+                return `
                         <tr>
-                            <td>${m.fio}</td>
+                            <td>${m.fio}${captainBadge}</td>
                             <td>${m.birth || '—'}</td>
                             <td>${m.passport || '—'}</td>
                             <td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td>
                             <td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td>
                         </tr>
-                    `).join('')}
+                    `}).join('')}
                 </tbody>
             </table>
         ` : '<div class="text-muted py-3">Состав команды не указан</div>';
 
-            const membersCardsHtml = team.members.length > 0 ? team.members.map(m => `
-            <div class="member-card">
-                <div class="member-fio">${m.fio}</div>
-                <div class="member-info"><i class="fas fa-birthday-cake"></i> ${m.birth || 'Не указана'}</div>
-                <div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>
-                ${m.isStudent === 'Да' ? `
-                    <div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div>
-                    <div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>
-                ` : ''}
-            </div>
-        `).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
+            const membersCardsHtml = sortedMembers.length > 0 ? sortedMembers.map(m => {
+                const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
+                const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem; vertical-align: middle;">Капитан</span>' : '';
+                return `
+                <div class="member-card">
+                    <div class="member-fio">${m.fio}${captainBadge}</div>
+                    <div class="member-info"><i class="fas fa-birthday-cake"></i> ${m.birth || 'Не указана'}</div>
+                    <div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>
+                    ${m.isStudent === 'Да' ? `
+                        <div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div>
+                        <div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>
+                    ` : ''}
+                </div>
+            `}).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
+
+            // 3. Форматирование описания: каждое предложение (абзац) с новой строки и отступом
+            const descParts = (team.description || "").split('\n').filter(p => p.trim() !== "");
+            const descHtml = descParts.length > 0
+                ? descParts.map(p => `<p style="text-indent: 1.5em; margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${p.trim()}</p>`).join('')
+                : '<div class="detail-value text-muted">—</div>';
 
             const photos = team.photos || [];
             let photosHtml;
@@ -846,23 +883,20 @@
             if (photos.length === 0) {
                 photosHtml = `<div class="detail-value text-muted" style="font-size: 1rem;">Фото не загружено</div>`;
             } else {
-                // Определяем класс сетки: если 1 фото, добавляем класс single-photo для 50% ширины
                 const gridClass = photos.length === 1 ? 'apparatus-photo-grid single-photo' : 'apparatus-photo-grid';
 
                 const items = photos.map((src, idx) => {
                     const isDataUrl = String(src).startsWith('data:image/');
                     const isDirectImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(src);
 
-                    // Если это base64 или прямая ссылка на картинку, пробуем показать как <img>
                     if (isDataUrl || isDirectImage) {
                         return `
                         <div class="apparatus-photo-item">
                             <img src="${src}" alt="Фото аппарата ${idx + 1}" 
                                  onclick="openLightbox('${src.replace(/'/g, "\\'")}')"
-                                 onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1} (ссылка)</span></a>'">
+                                 onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'">
                         </div>`;
                     } else {
-                        // Если это ссылка на Яндекс.Диск или другую веб-страницу, показываем красивую карточку-ссылку
                         return `
                         <div class="apparatus-photo-item">
                             <a href="${src}" target="_blank" rel="noopener" class="photo-link-card">
@@ -886,6 +920,14 @@
 
             <div class="detail-section">
                 <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="detail-label">ID заявки</div>
+                        <div class="detail-value">${team.id}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Дата заявки</div>
+                        <div class="detail-value">${team.created}</div>
+                    </div>
                     <div class="col-md-6">
                         <div class="detail-label">Город / Населённый пункт</div>
                         <div class="detail-value">${team.city || '—'}</div>
@@ -929,7 +971,9 @@
                     </div>
                     <div class="col-12">
                         <div class="detail-label">Краткое описание</div>
-                        <div class="detail-value" style="white-space: pre-wrap; font-size: 1rem; line-height: 1.6;">${team.description || '—'}</div>
+                        <div class="detail-value">
+                            ${descHtml}
+                        </div>
                     </div>
                     <div class="col-12">
                         <div class="detail-label">Фото аппарата (${photos.length})</div>
@@ -953,7 +997,7 @@
             </div>
 
             <div class="detail-section">
-                <h5 class="detail-section-title">Участники (${team.members.length})</h5>
+                <h5 class="detail-section-title">Участники (${sortedMembers.length})</h5>
                 <div class="members-table-desktop">${membersTableHtml}</div>
                 <div class="members-cards-mobile">${membersCardsHtml}</div>
             </div>
