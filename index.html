@@ -1410,7 +1410,6 @@
                     if (isDirect) return `<div class="apparatus-photo-item"><img src="${src}" alt="Фото ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')" onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'"></div>`;
                     else return `<div class="apparatus-photo-item"><a href="${src}" target="_blank" rel="noopener" class="photo-link-card"><i class="fas fa-external-link-alt"></i><span>Открыть фото ${idx + 1}</span></a></div>`;
                 }).join('');
-                // Обёртка с жёсткими ограничениями
                 photosHtml = `<div style="width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box;"><div class="${gridClass}" style="width: 100%; max-width: 100%; overflow: hidden;">${items}</div></div>`;
             }
 
@@ -1418,47 +1417,46 @@
             const editButtonMobile = isAdmin ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;"><i class="fas fa-edit"></i></button>` : '';
 
             document.getElementById('detailContent').innerHTML = `
-                <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
-    <div class="d-flex align-items-center gap-3 flex-wrap">
-        <h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>
-        ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
-    </div>
-    <div class="d-flex gap-2">
-        ${editButtonDesktop}
-        <button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()">
-            <i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span>
-        </button>
-    </div>
-</div>
-<div class="d-flex gap-1 mb-2">
-    ${editButtonMobile}
-    <button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display: none;">
-        <i class="fas fa-print"></i>
-    </button>
-</div>
-                ${editButtonMobile}${printButtonMobile}
-                <div class="detail-section"><div class="row g-4">
-                    <div class="col-md-6"><div class="detail-label">ID заявки</div><div class="detail-value">${team.id}</div></div>
-                    <div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div>
-                    <div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${team.city || '—'}</div></div>
-                    <div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || '—'}</div></div>
-                    <div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || '—'}</div></div>
-                    <div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || '—'}</div></div>
-                    <div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div>
-                    <div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div>
-                    <div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || '—'}</div></div>
-                </div></div>
-                <div class="detail-section"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}</div><div class="row g-4">
-                    <div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || '—'}</div></div>
-                    <div class="col-12"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div>
-                    <div class="col-12"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div>
-                </div></div>
-                <div class="detail-section"><h5 class="detail-section-title">Команда</h5><div class="row g-4">
-                    <div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || '—'}</div></div>
-                    <div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${team.teamLeaderPhone.replace(/\s/g, '')}">${team.teamLeaderPhone || '—'}</a></div></div>
-                </div></div>
-                <div class="detail-section"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>
-            `;
+        <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>
+                ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
+            </div>
+            <div class="d-flex gap-2">
+                ${editButtonDesktop}
+                <button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span>
+                </button>
+            </div>
+        </div>
+        <div class="d-flex gap-1 mb-2">
+            ${editButtonMobile}
+            <button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display: none;">
+                <i class="fas fa-print"></i>
+            </button>
+        </div>
+        <div class="detail-section"><div class="row g-4">
+            <div class="col-md-6"><div class="detail-label">ID заявки</div><div class="detail-value">${team.id}</div></div>
+            <div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div>
+            <div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${team.city || '—'}</div></div>
+            <div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || '—'}</div></div>
+            <div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || '—'}</div></div>
+            <div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || '—'}</div></div>
+            <div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div>
+            <div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div>
+            <div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || '—'}</div></div>
+        </div></div>
+        <div class="detail-section"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}</div><div class="row g-4">
+            <div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || '—'}</div></div>
+            <div class="col-12"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div>
+            <div class="col-12"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div>
+        </div></div>
+        <div class="detail-section"><h5 class="detail-section-title">Команда</h5><div class="row g-4">
+            <div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || '—'}</div></div>
+            <div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${team.teamLeaderPhone.replace(/\s/g, '')}">${team.teamLeaderPhone || '—'}</a></div></div>
+        </div></div>
+        <div class="detail-section"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>
+    `;
             showDetailPage();
         }
 
