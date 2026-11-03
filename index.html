@@ -920,7 +920,7 @@
                 <tbody>
                     ${sortedMembers.map(m => {
                 const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
-                const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle;">Капитан</span>' : '';
+                const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle;">К</span>' : '';
                 return `
                         <tr>
                             <td>${formatFio(m.fio)}${captainBadge}</td>
