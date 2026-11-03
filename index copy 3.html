@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPMR - База данных участников</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f8;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #1f2937;
+        }
+
+        .header-title,
+        .detail-section-title,
+        .org-name,
+        .category-badge {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .header-title {
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .header-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        .team-card {
+            transition: all 0.25s;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            cursor: pointer;
+        }
+
+        .team-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+        }
+
+        .org-name {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 1.15rem;
+            margin-bottom: 4px;
+        }
+
+        .team-meta {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .team-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .team-card-head>div:first-child {
+            min-width: 0;
+        }
+
+        .category-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: 0.06em;
+            border-radius: 999px;
+            white-space: nowrap;
+            text-transform: uppercase;
+        }
+
+        .category-badge-card {
+            font-size: 0.95rem;
+            padding: 0.5rem 0.85rem;
+            min-width: 5rem;
+            flex-shrink: 0;
+        }
+
+        .category-badge-xl {
+            font-size: 2rem;
+            padding: 0.6rem 1.2rem;
+            min-width: 9rem;
+        }
+
+        .badge-bek {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+        }
+
+        .badge-tnpa {
+            background-color: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-anpa {
+            background-color: #f3e8ff;
+            color: #7e22ce;
+            border: 1px solid #e9d5ff;
+        }
+
+        .detail-page {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .detail-page.active {
+            display: block;
+        }
+
+        .list-page {
+            display: block;
+        }
+
+        .list-page.hidden {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .detail-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border: 1px solid #e2e8f0;
+        }
+
+        .detail-section-title {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .detail-section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #f1f5f9;
+            margin-bottom: 20px;
+        }
+
+        .detail-section-head .detail-section-title {
+            border-bottom: 0;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        #detailPage .detail-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.35rem;
+        }
+
+        #detailPage .detail-value {
+            font-size: 1.1rem;
+            font-weight: 500;
+            line-height: 1.5;
+            color: #0f172a;
+            overflow-wrap: anywhere;
+        }
+
+        #detailPage .detail-value a {
+            color: #2563eb;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        #detailPage .detail-value a:hover {
+            border-bottom-color: #2563eb;
+        }
+
+        .members-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+        }
+
+        #detailPage .members-table th {
+            font-family: 'Manrope', sans-serif;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            font-weight: 700;
+            color: #64748b;
+            background-color: #f8fafc;
+            padding: 14px 16px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        #detailPage .members-table th:first-child {
+            border-top-left-radius: 8px;
+        }
+
+        #detailPage .members-table th:last-child {
+            border-top-right-radius: 8px;
+        }
+
+        #detailPage .members-table td {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #334155;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        #detailPage .members-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .col-fio {
+            width: 40%;
+        }
+
+        .col-birth {
+            width: 13%;
+        }
+
+        .col-passport {
+            width: 17%;
+        }
+
+        .col-student {
+            width: 5%;
+        }
+
+        .col-order {
+            width: 25%;
+        }
+
+        .fio-cell {
+            line-height: 1.4;
+        }
+
+        .fio-surname {
+            font-weight: 600;
+        }
+
+        .fio-name-patronymic {
+            font-weight: 400;
+            color: #475569;
+        }
+
+        .member-card {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        #detailPage .member-fio {
+            font-family: 'Manrope', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        #detailPage .member-info {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .edit-form .form-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.4rem;
+        }
+
+        .edit-form .form-control,
+        .edit-form .form-select {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 0.6rem 0.85rem;
+            font-size: 0.95rem;
+        }
+
+        .edit-form .form-control:focus,
+        .edit-form .form-select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            outline: none;
+        }
+
+        .edit-form .form-text {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .btn-upload,
+        .btn-action {
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 0.5rem 1.2rem;
+        }
+
+        .btn-outline-primary {
+            border-color: #cbd5e1;
+            color: #334155;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: #f1f5f9;
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+
+        .photo-link-field {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .photo-link-field input {
+            flex: 1;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+
+        .photo-link-field input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+
+        .photo-link-field .preview-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+
+        .photo-link-field .remove-link-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .photo-link-field .remove-link-btn:hover {
+            background: #b91c1c;
+        }
+
+        .apparatus-photo-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .apparatus-photo-grid.single-photo {
+            grid-template-columns: 1fr;
+            justify-items: center;
+        }
+
+        .apparatus-photo-grid.single-photo .apparatus-photo-item {
+            width: 50%;
+            max-width: 600px;
+        }
+
+        .apparatus-photo-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f1f5f9;
+            aspect-ratio: 4 / 3;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .apparatus-photo-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .apparatus-photo-item img:hover {
+            transform: scale(1.05);
+        }
+
+        .photo-link-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 16px 8px;
+            text-decoration: none;
+            color: #3b82f6;
+            font-weight: 500;
+            font-size: 0.85rem;
+            height: 100%;
+            text-align: center;
+        }
+
+        .photo-link-card:hover {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+
+        .photo-link-card i {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .lightbox-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .lightbox-overlay.active {
+            display: flex;
+        }
+
+        .lightbox-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 24px;
+            right: 24px;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .members-table-desktop {
+            display: block;
+        }
+
+        .members-cards-mobile {
+            display: none;
+        }
+
+        /* Toast уведомления */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast-msg {
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+            max-width: 360px;
+        }
+
+        .toast-msg.success {
+            background: #10b981;
+        }
+
+        .toast-msg.error {
+            background: #ef4444;
+        }
+
+        .toast-msg.info {
+            background: #3b82f6;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .members-table-desktop {
+                display: none !important;
+            }
+
+            .members-cards-mobile {
+                display: block !important;
+            }
+
+            .apparatus-photo-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .apparatus-photo-grid.single-photo .apparatus-photo-item {
+                width: 80%;
+            }
+
+            .detail-section {
+                padding: 20px;
+            }
+
+            .edit-btn-desktop {
+                display: none !important;
+            }
+
+            .edit-btn-mobile {
+                display: inline-flex !important;
+            }
+
+            #headerButtons {
+                flex-wrap: nowrap !important;
+                gap: 0.4rem;
+                overflow-x: auto;
+            }
+
+            #headerButtons .btn-text {
+                display: none !important;
+            }
+
+            #headerButtons .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .members-table-desktop {
+                display: block !important;
+            }
+
+            .members-cards-mobile {
+                display: none !important;
+            }
+
+            .edit-btn-desktop {
+                display: inline-flex !important;
+            }
+
+            .edit-btn-mobile {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .apparatus-photo-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .apparatus-photo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .apparatus-photo-grid.single-photo .apparatus-photo-item {
+                width: 100%;
+            }
+        }
+
+        /* Ограничиваем ширину сетки фото */
+        #detailPage .detail-section .col-12 {
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .apparatus-photo-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+        }
+
+        .apparatus-photo-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f1f5f9;
+            aspect-ratio: 4 / 3;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+
+        .apparatus-photo-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+            transition: transform 0.3s;
+            max-width: 100%;
+        }
+
+        /* Для мобильных */
+        @media (max-width: 768px) {
+            .apparatus-photo-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .apparatus-photo-grid.single-photo .apparatus-photo-item {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .apparatus-photo-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .apparatus-photo-grid.single-photo .apparatus-photo-item {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <h2 class="header-title mb-0">Открытое первенство СПб по морской робототехнике</h2>
+                <div class="header-subtitle">27–29 ноября 2026 г. | База данных участников</div>
+            </div>
+            <div class="d-flex gap-2" id="headerButtons"></div>
+        </div>
+
+        <div id="listPage" class="list-page">
+            <div class="row g-3" id="teamsContainer">
+                <div class="col-12 text-center text-muted py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="mt-2">Загрузка данных...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="detailPage" class="detail-page">
+            <button class="btn btn-outline-secondary mb-3 btn-action" onclick="showListPage()" title="На главную"><i class="fas fa-home"></i></button>
+            <div id="detailContent"></div>
+        </div>
+
+        <div id="editPage" class="detail-page">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <button class="btn btn-outline-secondary btn-action" onclick="cancelEdit()" title="На главную"><i class="fas fa-home"></i></button>
+                <div id="editPageAdminButtons"></div>
+            </div>
+
+            <div class="detail-section">
+                <h4 class="detail-section-title" id="editFormTitle">Редактирование команды</h4>
+                <form id="editForm" class="edit-form">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label">Организация</label><input type="text" class="form-control" id="editOrganization"></div>
+                        <div class="col-md-6"><label class="form-label">Город</label><input type="text" class="form-control" id="editCity"></div>
+                        <div class="col-md-6"><label class="form-label">Республика/край/область</label><input type="text" class="form-control" id="editRegion"></div>
+                        <div class="col-md-6"><label class="form-label">Почтовый индекс</label><input type="text" class="form-control" id="editPostalCode"></div>
+                        <div class="col-12"><label class="form-label">Адрес</label><input type="text" class="form-control" id="editAddress"></div>
+                        <div class="col-md-6"><label class="form-label">Телефон/факс</label><input type="tel" class="form-control" id="editPhone"></div>
+                        <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" id="editEmail"></div>
+                        <div class="col-12"><label class="form-label">ФИО руководителя организации</label><input type="text" class="form-control" id="editOrgLeader"></div>
+
+                        <div class="col-12 mt-4">
+                            <h5 class="fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Аппарат</h5>
+                        </div>
+                        <div class="col-md-6"><label class="form-label">Класс аппарата</label><input type="text" class="form-control" id="editApparatusClass"></div>
+                        <div class="col-12">
+                            <label class="form-label">Ссылки на фото аппарата</label>
+                            <div id="photoLinksContainer"></div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addPhotoLinkField()">
+                                <i class="fas fa-plus me-1"></i>Добавить ссылку
+                            </button>
+                            <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i>Вставьте прямые ссылки на изображения (.jpg, .png, .webp). Ссылки на Яндекс.Диск отображаются как кнопки перехода.</div>
+                        </div>
+                        <div class="col-12"><label class="form-label">Краткое описание аппарата</label><textarea class="form-control" id="editDescription" rows="4"></textarea></div>
+
+                        <div class="col-12 mt-4">
+                            <h5 class="fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Команда</h5>
+                        </div>
+                        <div class="col-md-6"><label class="form-label">ФИО руководителя команды</label><input type="text" class="form-control" id="editTeamLeader"></div>
+                        <div class="col-md-6"><label class="form-label">Контактный телефон</label><input type="tel" class="form-control" id="editTeamLeaderPhone"></div>
+
+                        <div class="col-12 mt-4">
+                            <h5 class="fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Участники</h5>
+                            <div id="editMembersContainer"></div>
+                            <button type="button" class="btn btn-outline-primary btn-sm mt-2 btn-action" onclick="addMemberField()">
+                                <i class="fas fa-plus me-1"></i><span class="btn-text">Добавить участника</span>
+                            </button>
+                        </div>
+
+                        <div class="col-12 mt-4 pt-3 border-top">
+                            <button type="button" class="btn btn-primary btn-action px-4" onclick="saveEdit()">
+                                <i class="fas fa-save me-2"></i><span class="btn-text">Сохранить изменения</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-action ms-2" onclick="cancelEdit()">
+                                <span class="btn-text">Отмена</span>
+                                <i class="fas fa-times ms-2 d-md-none"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка настроек GitHub -->
+    <div class="modal fade" id="githubSettingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fab fa-github me-2"></i>Настройки GitHub</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Владелец репозитория (owner)</label>
+                        <input type="text" class="form-control" id="ghOwner" placeholder="например: your-username">
+                        <div class="form-text">Имя пользователя или организации на GitHub</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Название репозитория (repo)</label>
+                        <input type="text" class="form-control" id="ghRepo" placeholder="например: opmr-website">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ветка (branch)</label>
+                        <input type="text" class="form-control" id="ghBranch" placeholder="main" value="main">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Personal Access Token</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="ghToken" placeholder="ghp_...">
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleTokenVisibility()">
+                                <i class="fas fa-eye" id="tokenToggleIcon"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            Токен с правами <code>repo</code> или <code>contents</code>.
+                            <a href="https://github.com/settings/tokens/new" target="_blank">Создать токен →</a>
+                        </div>
+                    </div>
+                    <div class="alert alert-info small mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Данные сохраняются только в вашем браузере (localStorage). Токен не передаётся третьим лицам.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-outline-primary" onclick="testGitHubConnection()">
+                        <i class="fas fa-plug me-1"></i>Проверить соединение
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveGitHubSettings()">
+                        <i class="fas fa-check me-1"></i>Сохранить
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let teamsData = [];
+        let currentTeamId = null;
+        let isNewTeam = false;
+        const STORAGE_KEY = 'opmr_teams_data';
+        const ADMIN_MODE_KEY = 'opmr_admin_mode';
+        const GH_SETTINGS_KEY = 'opmr_gh_settings';
+        let isAdmin = localStorage.getItem(ADMIN_MODE_KEY) === 'true';
+
+        // ===== GitHub настройки =====
+        function getGitHubSettings() {
+            try {
+                const s = localStorage.getItem(GH_SETTINGS_KEY);
+                return s ? JSON.parse(s) : null;
+            } catch { return null; }
+        }
+
+        function saveGitHubSettings() {
+            const settings = {
+                owner: document.getElementById('ghOwner').value.trim(),
+                repo: document.getElementById('ghRepo').value.trim(),
+                branch: document.getElementById('ghBranch').value.trim() || 'main',
+                token: document.getElementById('ghToken').value.trim()
+            };
+            if (!settings.owner || !settings.repo || !settings.token) {
+                showToast('Заполните все обязательные поля', 'error');
+                return;
+            }
+            localStorage.setItem(GH_SETTINGS_KEY, JSON.stringify(settings));
+            bootstrap.Modal.getInstance(document.getElementById('githubSettingsModal')).hide();
+            showToast('Настройки GitHub сохранены', 'success');
+            renderHeaderButtons();
+        }
+
+        function openGitHubSettings() {
+            const settings = getGitHubSettings();
+            if (settings) {
+                document.getElementById('ghOwner').value = settings.owner;
+                document.getElementById('ghRepo').value = settings.repo;
+                document.getElementById('ghBranch').value = settings.branch;
+                document.getElementById('ghToken').value = settings.token;
+            } else {
+                document.getElementById('ghOwner').value = '';
+                document.getElementById('ghRepo').value = '';
+                document.getElementById('ghBranch').value = 'main';
+                document.getElementById('ghToken').value = '';
+            }
+            new bootstrap.Modal(document.getElementById('githubSettingsModal')).show();
+        }
+
+        function toggleTokenVisibility() {
+            const input = document.getElementById('ghToken');
+            const icon = document.getElementById('tokenToggleIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        async function testGitHubConnection() {
+            const settings = {
+                owner: document.getElementById('ghOwner').value.trim(),
+                repo: document.getElementById('ghRepo').value.trim(),
+                token: document.getElementById('ghToken').value.trim()
+            };
+            if (!settings.owner || !settings.repo || !settings.token) {
+                showToast('Заполните owner, repo и token', 'error');
+                return;
+            }
+            showToast('Проверка соединения...', 'info');
+            try {
+                const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}`, {
+                    headers: { 'Authorization': `token ${settings.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast(`✓ Подключено: ${data.full_name}`, 'success');
+                } else {
+                    const err = await res.json();
+                    showToast(`✗ Ошибка: ${err.message}`, 'error');
+                }
+            } catch (e) {
+                showToast(`✗ Ошибка сети: ${e.message}`, 'error');
+            }
+        }
+
+        // ===== Коммит в GitHub =====
+        async function commitToGitHub() {
+            const settings = getGitHubSettings();
+            if (!settings || !settings.owner || !settings.repo || !settings.token) {
+                return { success: false, message: 'Настройки GitHub не заданы' };
+            }
+
+            const filePath = 'data/teams.json';
+            const apiUrl = `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${filePath}`;
+            const headers = {
+                'Authorization': `token ${settings.token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            };
+
+            try {
+                // 1. Получаем текущий файл и его SHA
+                let sha = null;
+                const getRes = await fetch(`${apiUrl}?ref=${settings.branch}`, { headers });
+                if (getRes.ok) {
+                    const getFile = await getRes.json();
+                    sha = getFile.sha;
+                } else if (getRes.status !== 404) {
+                    const err = await getRes.json();
+                    return { success: false, message: `Ошибка чтения файла: ${err.message}` };
+                }
+
+                // 2. Кодируем JSON в base64
+                const jsonStr = JSON.stringify(teamsData, null, 2);
+                const content = btoa(unescape(encodeURIComponent(jsonStr)));
+
+                // 3. Отправляем PUT
+                const body = {
+                    message: `Обновление базы участников (${new Date().toLocaleString('ru-RU')})`,
+                    content: content,
+                    branch: settings.branch
+                };
+                if (sha) body.sha = sha;
+
+                const putRes = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                if (putRes.ok) {
+                    return { success: true, message: 'Данные сохранены в GitHub' };
+                } else {
+                    const err = await putRes.json();
+                    return { success: false, message: `Ошибка коммита: ${err.message}` };
+                }
+            } catch (e) {
+                return { success: false, message: `Ошибка сети: ${e.message}` };
+            }
+        }
+
+        // ===== Toast уведомления =====
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-msg ${type}`;
+            toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // ===== Утилиты =====
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            const parts = String(dateStr).trim().split('-');
+            if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
+            return dateStr;
+        }
+        function formatFio(fio) {
+            if (!fio) return '—';
+            const parts = fio.trim().split(/\s+/);
+            if (parts.length >= 2) return `<span class="fio-cell"><span class="fio-surname">${parts[0]}</span> <span class="fio-name-patronymic">${parts.slice(1).join(' ')}</span></span>`;
+            return `<span class="fio-cell"><span class="fio-surname">${fio}</span></span>`;
+        }
+        function formatDescription(desc) {
+            if (!desc || desc.trim() === '') return '<div class="detail-value text-muted">—</div>';
+            return desc.split('\n').filter(p => p.trim() !== '').map(para => {
+                const sentences = para.split('. ').filter(s => s.trim() !== '');
+                if (sentences.length > 1) return sentences.map(s => `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${s.endsWith('.') ? s : s + '.'}</p>`).join('');
+                return `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${para.trim()}</p>`;
+            }).join('');
+        }
+        function getCategoryBadge(apparatusClass, extraClass = '') {
+            const value = String(apparatusClass || '').trim().toLowerCase();
+            let category = { abbr: 'Н/Д', class: 'bg-secondary text-white' };
+            if (value.includes('бэк') || value.includes('безэкипаж')) category = { abbr: 'БЭК', class: 'badge-bek' };
+            else if (value.includes('тнпа') || value.includes('телеуправляем')) category = { abbr: 'ТНПА', class: 'badge-tnpa' };
+            else if (value.includes('анпа') || value.includes('автономн')) category = { abbr: 'АНПА', class: 'badge-anpa' };
+            return `<span class="badge category-badge ${extraClass} ${category.class}">${category.abbr}</span>`;
+        }
+        function parsePhotosField(value) {
+            if (!value) return [];
+            if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(v => v.length > 0);
+            return String(value).split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+        function isDirectImageLink(url) { return /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url); }
+
+        function transformYandexFormsData(rawArray) {
+            return rawArray.map(teamArr => {
+                let obj = {};
+                teamArr.forEach(([key, value]) => { obj[key.trim()] = value ? value.trim() : ""; });
+                let members = [];
+                for (let i = 1; i <= 10; i++) {
+                    let fioKey = `Ф.И.О. [${i}]`;
+                    if (obj[fioKey] && obj[fioKey] !== "") {
+                        members.push({ fio: obj[fioKey], birth: obj[`Дата рождения [${i}]`] || "", passport: obj[`Паспорт/Свидетельство о рождении [${i}]`] || "", isStudent: obj[`Студент [${i}]`] || "", order: obj[`Приказ о зачислении (для студентов) [${i}]`] || "" });
+                    }
+                }
+                let createdDate = "—";
+                if (obj["Время создания"]) { const parts = obj["Время создания"].trim().split(' ')[0].split('-'); if (parts.length === 3) createdDate = `${parts[2]}.${parts[1]}.${parts[0]}`; }
+                return { id: obj["ID"] || Math.random().toString(36).substr(2, 9), created: createdDate, organization: obj["Организация"] || "Без названия", city: obj["Город (населённый пункт)"] || "", region: obj["Республика/край/область"] || "", postalCode: obj["Почтовый индекс"] || "", address: obj["Адрес"] || "", phone: obj["Телефон/факс"] || "", email: obj["Email"] || "", orgLeader: obj["ФИО руководителя организации"] || "", apparatusClass: obj["Класс аппарата"] || "", description: obj["Краткое описание аппарата"] || "", photos: parsePhotosField(obj["Фото аппарата"]), teamLeader: obj["ФИО руководителя команды"] || "", teamLeaderPhone: obj["Контактный телефон руководителя команды"] || "", members: members };
+            }).filter(team => (team.organization || "").toLowerCase().trim() !== "тест");
+        }
+
+        function renderHeaderButtons() {
+            const container = document.getElementById('headerButtons');
+            const adminButtons = isAdmin ? `
+                <label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
+                    <i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span>
+                </label>
+                <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные и сохранить в папку data/teams.json">
+                    <i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span>
+                </button>
+                <button class="btn btn-primary btn-upload" onclick="createNewTeam()">
+                    <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
+                </button>
+                <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub для автокоммита">
+                    <i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span>
+                </button>
+            ` : '';
+            container.innerHTML = `${adminButtons}
+                <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}">
+                    <i class="fas fa-${isAdmin ? 'user-shield' : 'user'}"></i><span class="btn-text ms-2">Админ</span>
+                </button>`;
+            renderEditPageAdminButtons();
+        }
+
+        function renderEditPageAdminButtons() {
+            const container = document.getElementById('editPageAdminButtons');
+            if (!container) return;
+            container.innerHTML = isAdmin ? `
+                <label for="fileInputEdit" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
+                    <i class="fas fa-file-upload me-2"></i><span class="btn-text">Загрузить JSON</span>
+                </label>
+                <input type="file" id="fileInputEdit" accept=".json" class="d-none" onchange="handleEditPageFileUpload(event)">
+            ` : '';
+        }
+
+        function toggleAdminMode() {
+            isAdmin = !isAdmin;
+            localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
+            renderHeaderButtons();
+            if (currentTeamId && document.getElementById('detailPage').classList.contains('active')) showTeamDetails(currentTeamId);
+        }
+
+        function renderTeams(teams) {
+            const container = document.getElementById('teamsContainer');
+            if (teams.length === 0) { container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет загруженных команд</div>'; return; }
+            container.innerHTML = teams.map(team => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')">
+                        <div class="team-card-head mb-2">
+                            <div class="flex-grow-1"><div class="org-name">${team.organization}</div><div class="team-meta">${team.city || 'Город не указан'}</div></div>
+                            ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
+                        </div>
+                        <div class="mt-auto pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members.length} участн.</span>
+                                <span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader.split(' ')[0] || '—'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showListPage() { document.getElementById('listPage').classList.remove('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'flex'; currentTeamId = null; isNewTeam = false; }
+        function showDetailPage() { document.getElementById('listPage').classList.add('hidden'); document.getElementById('detailPage').classList.add('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'none'; }
+        function showEditPage() { document.getElementById('listPage').classList.add('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.add('active'); document.getElementById('headerButtons').style.display = 'none'; }
+
+        function showTeamDetails(teamId) {
+            currentTeamId = teamId; isNewTeam = false;
+            const team = teamsData.find(t => t.id === teamId);
+            if (!team) return;
+            const phoneLink = team.phone ? `<a href="tel:${team.phone.replace(/\s/g, '')}">${team.phone}</a>` : '—';
+            const emailLink = team.email ? `<a href="mailto:${team.email}">${team.email}</a>` : '—';
+            let sortedMembers = [...team.members];
+            const leaderFio = (team.teamLeader || "").trim().toLowerCase();
+            const captainIdx = sortedMembers.findIndex(m => (m.fio || "").trim().toLowerCase() === leaderFio);
+            if (captainIdx > 0) { const captain = sortedMembers.splice(captainIdx, 1)[0]; sortedMembers.unshift(captain); }
+
+            const membersTableHtml = sortedMembers.length > 0 ? `<table class="members-table"><thead><tr><th class="col-fio">ФИО</th><th class="col-birth">Дата рождения</th><th class="col-passport">Паспорт/Св-во</th><th class="col-student">Студент</th><th class="col-order">Приказ о зачислении</th></tr></thead><tbody>${sortedMembers.map(m => { const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== ""; const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0;">К</span>' : ''; return `<tr><td>${formatFio(m.fio)}${captainBadge}</td><td>${formatDate(m.birth)}</td><td>${m.passport || '—'}</td><td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td><td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td></tr>`; }).join('')}</tbody></table>` : '<div class="text-muted py-3">Состав команды не указан</div>';
+
+            const membersCardsHtml = sortedMembers.length > 0 ? sortedMembers.map(m => { const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== ""; const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0;">К</span>' : ''; return `<div class="member-card"><div class="member-fio">${m.fio}${captainBadge}</div><div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div><div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>${m.isStudent === 'Да' ? `<div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div><div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>` : ''}</div>`; }).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
+
+            const descHtml = formatDescription(team.description);
+            const photos = team.photos || [];
+            let photosHtml;
+            if (photos.length === 0) { photosHtml = `<div class="detail-value text-muted" style="font-size: 1rem;">Фото не загружено</div>`; }
+            else {
+                const gridClass = photos.length === 1 ? 'apparatus-photo-grid single-photo' : 'apparatus-photo-grid';
+                const items = photos.map((src, idx) => { const isDirect = isDirectImageLink(src); if (isDirect) return `<div class="apparatus-photo-item"><img src="${src}" alt="Фото ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')" onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'"></div>`; else return `<div class="apparatus-photo-item"><a href="${src}" target="_blank" rel="noopener" class="photo-link-card"><i class="fas fa-external-link-alt"></i><span>Открыть фото ${idx + 1}</span></a></div>`; }).join('');
+                photosHtml = `<div class="${gridClass}">${items}</div>`;
+            }
+
+            const editButtonDesktop = isAdmin ? `<button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')"><i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span></button>` : '';
+            const editButtonMobile = isAdmin ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;"><i class="fas fa-edit"></i></button>` : '';
+
+            document.getElementById('detailContent').innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>${getCategoryBadge(team.apparatusClass, 'category-badge-card')}</div>
+                    ${editButtonDesktop}
+                </div>
+                ${editButtonMobile}
+                <div class="detail-section"><div class="row g-4">
+                    <div class="col-md-6"><div class="detail-label">ID заявки</div><div class="detail-value">${team.id}</div></div>
+                    <div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div>
+                    <div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${team.city || '—'}</div></div>
+                    <div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || '—'}</div></div>
+                    <div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || '—'}</div></div>
+                    <div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || '—'}</div></div>
+                    <div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div>
+                    <div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div>
+                    <div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || '—'}</div></div>
+                </div></div>
+                <div class="detail-section"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}</div><div class="row g-4">
+                    <div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || '—'}</div></div>
+                    <div class="col-12"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div>
+                    <div class="col-12"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div>
+                </div></div>
+                <div class="detail-section"><h5 class="detail-section-title">Команда</h5><div class="row g-4">
+                    <div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || '—'}</div></div>
+                    <div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${team.teamLeaderPhone.replace(/\s/g, '')}">${team.teamLeaderPhone || '—'}</a></div></div>
+                </div></div>
+                <div class="detail-section"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>
+            `;
+            showDetailPage();
+        }
+
+        function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('active'); document.body.style.overflow = 'hidden'; }
+        function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); document.getElementById('lightboxImg').src = ''; document.body.style.overflow = ''; }
+
+        function addPhotoLinkField(url = '') {
+            const container = document.getElementById('photoLinksContainer');
+            const field = document.createElement('div');
+            field.className = 'photo-link-field';
+            field.innerHTML = `<img class="preview-thumb" src="${url}" alt="Превью" style="display: ${url && isDirectImageLink(url) ? 'block' : 'none'}" onerror="this.style.display='none'"><input type="text" class="photo-link-input" placeholder="Вставьте ссылку на фото..." value="${url}" oninput="updatePhotoPreview(this)"><button type="button" class="remove-link-btn" onclick="this.closest('.photo-link-field').remove()" title="Удалить ссылку"><i class="fas fa-times"></i></button>`;
+            container.appendChild(field);
+        }
+        function updatePhotoPreview(input) { const field = input.closest('.photo-link-field'); const img = field.querySelector('.preview-thumb'); const url = input.value.trim(); if (url && isDirectImageLink(url)) { img.src = url; img.style.display = 'block'; } else { img.style.display = 'none'; } }
+        function getPhotoLinks() { return Array.from(document.querySelectorAll('.photo-link-input')).map(input => input.value.trim()).filter(url => url.length > 0); }
+
+        function createNewTeam() {
+            currentTeamId = null; isNewTeam = true;
+            document.getElementById('editFormTitle').textContent = 'Новая команда';
+            ['editOrganization', 'editCity', 'editRegion', 'editPostalCode', 'editAddress', 'editPhone', 'editEmail', 'editOrgLeader', 'editApparatusClass', 'editDescription', 'editTeamLeader', 'editTeamLeaderPhone'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('photoLinksContainer').innerHTML = '';
+            addPhotoLinkField();
+            document.getElementById('editMembersContainer').innerHTML = '';
+            addMemberField();
+            showEditPage();
+        }
+
+        function editTeam(teamId) {
+            const team = teamsData.find(t => t.id === teamId);
+            if (!team) return;
+            currentTeamId = teamId; isNewTeam = false;
+            document.getElementById('editFormTitle').textContent = 'Редактирование команды';
+            document.getElementById('editOrganization').value = team.organization;
+            document.getElementById('editCity').value = team.city;
+            document.getElementById('editRegion').value = team.region;
+            document.getElementById('editPostalCode').value = team.postalCode;
+            document.getElementById('editAddress').value = team.address;
+            document.getElementById('editPhone').value = team.phone;
+            document.getElementById('editEmail').value = team.email;
+            document.getElementById('editOrgLeader').value = team.orgLeader;
+            document.getElementById('editApparatusClass').value = team.apparatusClass;
+            document.getElementById('editDescription').value = team.description;
+            document.getElementById('editTeamLeader').value = team.teamLeader;
+            document.getElementById('editTeamLeaderPhone').value = team.teamLeaderPhone;
+            document.getElementById('photoLinksContainer').innerHTML = '';
+            const photos = team.photos || [];
+            if (photos.length === 0) addPhotoLinkField(); else photos.forEach(url => addPhotoLinkField(url));
+            document.getElementById('editMembersContainer').innerHTML = '';
+            team.members.forEach(m => addMemberField(m));
+            showEditPage();
+        }
+
+        function addMemberField(member = null) {
+            const container = document.getElementById('editMembersContainer');
+            const idx = container.children.length;
+            const div = document.createElement('div');
+            div.className = 'border rounded p-3 mb-3';
+            div.style.borderColor = '#e2e8f0';
+            div.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3"><h6 class="mb-0 fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Участник ${idx + 1}</h6><button type="button" class="btn btn-outline-danger btn-sm" style="border-radius: 6px;" onclick="this.closest('.border').remove()"><i class="fas fa-trash"></i></button></div><div class="row g-3"><div class="col-md-6"><label class="form-label">ФИО</label><input type="text" class="form-control member-fio-input" value="${member?.fio || ''}"></div><div class="col-md-6"><label class="form-label">Дата рождения</label><input type="date" class="form-control member-birth-input" value="${member?.birth || ''}"></div><div class="col-md-6"><label class="form-label">Паспорт/Св-во</label><input type="text" class="form-control member-passport-input" value="${member?.passport || ''}"></div><div class="col-md-6"><label class="form-label">Студент</label><select class="form-select member-student-input"><option value="Нет" ${member?.isStudent !== 'Да' ? 'selected' : ''}>Нет</option><option value="Да" ${member?.isStudent === 'Да' ? 'selected' : ''}>Да</option></select></div><div class="col-12"><label class="form-label">Приказ о зачислении</label><input type="text" class="form-control member-order-input" value="${member?.order || ''}"></div></div>`;
+            container.appendChild(div);
+        }
+
+        function saveToLocalStorage() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(teamsData)); } catch (e) { console.warn('Не удалось сохранить в localStorage:', e); } }
+        function loadFromLocalStorage() { try { const data = localStorage.getItem(STORAGE_KEY); if (data) { teamsData = JSON.parse(data); return true; } } catch (e) { console.warn('Ошибка чтения localStorage:', e); } return false; }
+
+        async function saveEdit() {
+            const orgName = document.getElementById('editOrganization').value.trim();
+            if (!orgName) { showToast('Укажите название организации', 'error'); return; }
+
+            const photoLinks = getPhotoLinks();
+            const memberDivs = document.querySelectorAll('#editMembersContainer .border');
+            const members = [];
+            memberDivs.forEach(div => { const fio = div.querySelector('.member-fio-input').value.trim(); if (fio) members.push({ fio: fio, birth: div.querySelector('.member-birth-input').value, passport: div.querySelector('.member-passport-input').value, isStudent: div.querySelector('.member-student-input').value, order: div.querySelector('.member-order-input').value }); });
+
+            const teamData = { organization: orgName, city: document.getElementById('editCity').value, region: document.getElementById('editRegion').value, postalCode: document.getElementById('editPostalCode').value, address: document.getElementById('editAddress').value, phone: document.getElementById('editPhone').value, email: document.getElementById('editEmail').value, orgLeader: document.getElementById('editOrgLeader').value, apparatusClass: document.getElementById('editApparatusClass').value, description: document.getElementById('editDescription').value, teamLeader: document.getElementById('editTeamLeader').value, teamLeaderPhone: document.getElementById('editTeamLeaderPhone').value, photos: photoLinks, members: members };
+
+            if (isNewTeam || !currentTeamId) {
+                const now = new Date();
+                const newTeam = { id: 'NEW_' + Date.now(), created: `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`, ...teamData };
+                teamsData.push(newTeam);
+                currentTeamId = newTeam.id;
+                isNewTeam = false;
+            } else {
+                const team = teamsData.find(t => t.id === currentTeamId);
+                if (team) Object.assign(team, teamData);
+            }
+
+            saveToLocalStorage();
+            renderTeams(teamsData);
+
+            // Автокоммит в GitHub
+            const ghSettings = getGitHubSettings();
+            if (ghSettings && ghSettings.owner && ghSettings.repo && ghSettings.token) {
+                showToast('Сохранение в GitHub...', 'info');
+                const result = await commitToGitHub();
+                if (result.success) {
+                    showToast(result.message, 'success');
+                } else {
+                    showToast(result.message + ' (данные сохранены локально)', 'error');
+                }
+            } else {
+                showToast('Данные сохранены локально. Настройте GitHub для автокоммита.', 'info');
+            }
+
+            showTeamDetails(currentTeamId);
+        }
+
+        function cancelEdit() { if (isNewTeam || !currentTeamId) showListPage(); else showTeamDetails(currentTeamId); }
+
+        function downloadJSON() {
+            if (teamsData.length === 0) { showToast('Нет данных', 'error'); return; }
+            const dataStr = JSON.stringify(teamsData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url; link.download = 'teams.json';
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function attachFileInputListener() {
+            const input = document.getElementById('fileInput');
+            if (!input) return;
+            input.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const rawData = JSON.parse(e.target.result);
+
+                        // Проверяем формат данных
+                        if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+                            // Формат Яндекс.Форм (массив массивов)
+                            teamsData = transformYandexFormsData(rawData);
+                            showToast('Данные загружены из формата Яндекс.Форм', 'success');
+                        } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === 'object' && rawData[0].organization) {
+                            // Наш формат (массив объектов)
+                            teamsData = rawData;
+                            showToast('Данные загружены', 'success');
+                        } else {
+                            throw new Error('Неизвестный формат данных');
+                        }
+
+                        renderTeams(teamsData);
+                        saveToLocalStorage();
+                        showListPage();
+                    } catch (err) {
+                        showToast('Ошибка чтения JSON: ' + err.message, 'error');
+                        console.error(err);
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            });
+        }
+
+        function handleEditPageFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const rawData = JSON.parse(e.target.result);
+
+                    // Проверяем формат данных
+                    if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+                        teamsData = transformYandexFormsData(rawData);
+                        showToast('Данные загружены из формата Яндекс.Форм', 'success');
+                    } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === 'object' && rawData[0].organization) {
+                        teamsData = rawData;
+                        showToast('Данные загружены', 'success');
+                    } else {
+                        throw new Error('Неизвестный формат данных');
+                    }
+
+                    renderTeams(teamsData);
+                    saveToLocalStorage();
+                    showListPage();
+                } catch (err) {
+                    showToast('Ошибка чтения JSON: ' + err.message, 'error');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        async function loadDefaultData() {
+            if (loadFromLocalStorage()) {
+                renderTeams(teamsData);
+                renderHeaderButtons();
+                attachFileInputListener();
+                return;
+            }
+            try {
+                const response = await fetch('data/teams.json');
+                if (!response.ok) throw new Error('Файл не найден');
+                const rawData = await response.json();
+
+                // Проверяем формат
+                if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+                    teamsData = transformYandexFormsData(rawData);
+                } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === 'object' && rawData[0].organization) {
+                    teamsData = rawData;
+                } else {
+                    throw new Error('Неизвестный формат данных');
+                }
+
+                renderTeams(teamsData);
+                saveToLocalStorage();
+            } catch (error) {
+                document.getElementById('teamsContainer').innerHTML = `
+            <div class="col-12 text-center text-muted py-5">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: #f59e0b;"></i>
+                <div>Не удалось загрузить <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">data/teams.json</code>.<br>Войдите в режим Админ и загрузите файл вручную.</div>
+            </div>`;
+            }
+            renderHeaderButtons();
+            attachFileInputListener();
+        }
+
+        renderHeaderButtons();
+        loadDefaultData();
+    </script>
+</body>
+
+</html>

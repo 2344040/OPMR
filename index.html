@@ -154,6 +154,7 @@
             margin-bottom: 24px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
             border: 1px solid #e2e8f0;
+            overflow: hidden;
         }
 
         .detail-section-title {
@@ -404,10 +405,15 @@
             background: #b91c1c;
         }
 
+        /* ===== СЕТКА ФОТО — ФИКС ВЫЛЕЗАНИЯ ===== */
         .apparatus-photo-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
         }
 
         .apparatus-photo-grid.single-photo {
@@ -429,6 +435,7 @@
             border: 1px solid #e2e8f0;
             width: 100%;
             max-width: 100%;
+            min-width: 0;
             box-sizing: border-box;
         }
 
@@ -442,6 +449,7 @@
             display: block;
             cursor: pointer;
             transition: transform 0.3s;
+            max-width: 100%;
         }
 
         .apparatus-photo-item img:hover {
@@ -563,6 +571,13 @@
             }
         }
 
+        /* ===== АДАПТИВНОСТЬ ===== */
+        @media (max-width: 992px) {
+            .apparatus-photo-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
             .members-table-desktop {
                 display: none !important;
@@ -574,10 +589,12 @@
 
             .apparatus-photo-grid {
                 grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
             }
 
             .apparatus-photo-grid.single-photo .apparatus-photo-item {
-                width: 80%;
+                width: 100%;
+                max-width: 100%;
             }
 
             .detail-section {
@@ -627,12 +644,6 @@
             }
         }
 
-        @media (max-width: 992px) {
-            .apparatus-photo-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-
         @media (max-width: 480px) {
             .apparatus-photo-grid {
                 grid-template-columns: 1fr;
@@ -640,6 +651,7 @@
 
             .apparatus-photo-grid.single-photo .apparatus-photo-item {
                 width: 100%;
+                max-width: 100%;
             }
         }
     </style>
