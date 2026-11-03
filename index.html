@@ -357,18 +357,18 @@
                             <input type="text" class="form-control" id="editApparatusClass">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label d-block">Фото аппарата</label>
-                            <input type="file" class="d-none" id="editPhoto" accept="image/*" onchange="previewApparatusPhoto(this)">
+                            <label class="form-label d-block">Фото аппарата (можно несколько)</label>
+                            <input type="file" class="d-none" id="editPhoto" accept="image/*" multiple onchange="addApparatusPhotos(this)">
                             <div class="d-flex flex-wrap gap-2">
                                 <label for="editPhoto" class="btn btn-outline-primary btn-action mb-0">
-                                    <i class="fas fa-image me-2"></i>Загрузить фото
+                                    <i class="fas fa-images me-2"></i>Добавить фото
                                 </label>
-                                <button type="button" class="btn btn-outline-danger btn-action" onclick="removeApparatusPhoto()">
-                                    <i class="fas fa-trash me-2"></i>Удалить
+                                <button type="button" class="btn btn-outline-danger btn-action" onclick="removeAllApparatusPhotos()">
+                                    <i class="fas fa-trash me-2"></i>Удалить все
                                 </button>
                             </div>
                             <div id="editPhotoName" class="text-muted small mt-2">Фото не загружено</div>
-                            <img id="editPhotoPreview" class="apparatus-photo mt-2 d-none" alt="Предпросмотр">
+                            <div id="editPhotoPreviewGrid" class="edit-photo-preview-grid"></div>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Краткое описание аппарата</label>
@@ -409,14 +409,20 @@
         </div>
     </div>
 
+    <!-- Лайтбокс -->
+    <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+        <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         let teamsData = [];
         let currentTeamId = null;
-        let editPhotoValue = '';
+        let editPhotosArray = []; // массив base64-строк для редактирования
 
-        // Сопоставление категорий
+        // ===== Сопоставление категорий =====
         function getCategoryBadge(apparatusClass, extraClass = '') {
             const raw = String(apparatusClass || '').trim();
             const value = raw.toLowerCase();
@@ -434,7 +440,19 @@
             return `<span class="badge category-badge ${extraClass} ${category.class}">${category.abbr}</span>`;
         }
 
-        // Конвертация JSON
+        // ===== Конвертация JSON =====
+        function parsePhotosField(value) {
+            if (!value) return [];
+            if (Array.isArray(value)) {
+                return value.map(v => String(v).trim()).filter(v => v.length > 0);
+            }
+            // Строка — может содержать несколько ссылок через запятую
+            return String(value)
+                .split(',')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+        }
+
         function transformYandexFormsData(rawArray) {
             return rawArray.map(teamArr => {
                 let obj = {};
@@ -469,7 +487,7 @@
                     orgLeader: obj["ФИО руководителя организации"] || "",
                     apparatusClass: obj["Класс аппарата"] || "",
                     description: obj["Краткое описание аппарата"] || "",
-                    photo: obj["Фото аппарата"] || "",
+                    photos: parsePhotosField(obj["Фото аппарата"]),
                     teamLeader: obj["ФИО руководителя команды"] || "",
                     teamLeaderPhone: obj["Контактный телефон руководителя команды"] || "",
                     members: members
@@ -477,7 +495,7 @@
             });
         }
 
-        // Рендер списка
+        // ===== Рендер списка =====
         function renderTeams(teams) {
             const container = document.getElementById('teamsContainer');
             if (teams.length === 0) {
@@ -506,7 +524,7 @@
         `).join('');
         }
 
-        // Переключение страниц
+        // ===== Переключение страниц =====
         function showListPage() {
             document.getElementById('listPage').classList.remove('hidden');
             document.getElementById('detailPage').classList.remove('active');
@@ -526,7 +544,7 @@
             document.getElementById('headerButtons').style.display = 'none';
         }
 
-        // Детали команды
+        // ===== Детали команды =====
         function showTeamDetails(teamId) {
             currentTeamId = teamId;
             const team = teamsData.find(t => t.id === teamId);
@@ -572,12 +590,38 @@
             </div>
         `).join('') : '<div class="text-muted">Состав команды не указан</div>';
 
-            const photoHtml = team.photo && team.photo.startsWith('data:image/')
-                ? `<img src="${team.photo}" class="apparatus-photo" alt="Фото аппарата">`
-                : `<div class="detail-value text-muted">Фото не загружено</div>`;
+            // Фото — сетка col-3 (через CSS grid)
+            const photos = team.photos || [];
+            let photosHtml;
+            if (photos.length === 0) {
+                photosHtml = `<div class="detail-value text-muted">Фото не загружено</div>`;
+            } else {
+                const items = photos.map((src, idx) => {
+                    // Показываем только base64-изображения (загруженные через форму).
+                    // Ссылки на Яндекс.Диск не отображаются как картинки, но сохраняются в массиве.
+                    const isDataUrl = String(src).startsWith('data:image/');
+                    if (isDataUrl) {
+                        return `
+                        <div class="apparatus-photo-item">
+                            <img src="${src}" alt="Фото аппарата ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')">
+                        </div>
+                    `;
+                    }
+                    // Для внешних ссылок — показываем как кликабельную ссылку
+                    return `
+                    <div class="apparatus-photo-item d-flex align-items-center justify-content-center p-2">
+                        <a href="${src}" target="_blank" rel="noopener" class="text-center small">
+                            <i class="fas fa-external-link-alt fa-2x mb-2 d-block text-primary"></i>
+                            Открыть фото ${idx + 1}
+                        </a>
+                    </div>
+                `;
+                }).join('');
+                photosHtml = `<div class="apparatus-photo-grid">${items}</div>`;
+            }
 
             document.getElementById('detailContent').innerHTML = `
-            <div class="d-flex justify-content-between align-items-start mb-3">
+            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
                 <h3 class="fw-bold mb-0">${team.organization}</h3>
                 <button class="btn btn-outline-primary btn-action" onclick="editTeam('${team.id}')">
                     <i class="fas fa-edit me-2"></i>Редактировать
@@ -632,8 +676,8 @@
                         <div class="detail-value" style="white-space: pre-wrap;">${team.description || '—'}</div>
                     </div>
                     <div class="col-12">
-                        <div class="detail-label">Фото аппарата</div>
-                        ${photoHtml}
+                        <div class="detail-label">Фото аппарата (${photos.length})</div>
+                        ${photosHtml}
                     </div>
                 </div>
             </div>
@@ -662,7 +706,17 @@
             showDetailPage();
         }
 
-        // Редактирование
+        // ===== Лайтбокс =====
+        function openLightbox(src) {
+            document.getElementById('lightboxImg').src = src;
+            document.getElementById('lightbox').classList.add('active');
+        }
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+            document.getElementById('lightboxImg').src = '';
+        }
+
+        // ===== Редактирование =====
         function editTeam(teamId) {
             const team = teamsData.find(t => t.id === teamId);
             if (!team) return;
@@ -680,16 +734,83 @@
             document.getElementById('editTeamLeader').value = team.teamLeader;
             document.getElementById('editTeamLeaderPhone').value = team.teamLeaderPhone;
 
-            editPhotoValue = team.photo || '';
+            // Инициализируем массив фото (только base64 — внешние ссылки не редактируются)
+            editPhotosArray = (team.photos || []).filter(p => String(p).startsWith('data:image/'));
+
             const photoInput = document.getElementById('editPhoto');
             if (photoInput) photoInput.value = '';
-            updatePhotoPreview(editPhotoValue);
+
+            renderEditPhotoPreview();
 
             const container = document.getElementById('editMembersContainer');
             container.innerHTML = '';
             team.members.forEach(m => addMemberField(m));
 
             showEditPage();
+        }
+
+        function renderEditPhotoPreview() {
+            const grid = document.getElementById('editPhotoPreviewGrid');
+            const name = document.getElementById('editPhotoName');
+            if (!grid) return;
+
+            if (editPhotosArray.length === 0) {
+                grid.innerHTML = '';
+                if (name) name.textContent = 'Фото не загружено';
+                return;
+            }
+
+            if (name) name.textContent = `Загружено фото: ${editPhotosArray.length}`;
+
+            grid.innerHTML = editPhotosArray.map((src, idx) => `
+            <div class="edit-photo-preview-item">
+                <img src="${src}" alt="Фото ${idx + 1}">
+                <button type="button" class="edit-photo-remove-btn" onclick="removeApparatusPhoto(${idx})" title="Удалить">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `).join('');
+        }
+
+        function addApparatusPhotos(input) {
+            const files = input.files;
+            if (!files || files.length === 0) return;
+
+            let processed = 0;
+            const total = files.length;
+
+            Array.from(files).forEach(file => {
+                if (!file.type.startsWith('image/')) {
+                    processed++;
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    editPhotosArray.push(e.target.result);
+                    processed++;
+                    if (processed === total) {
+                        renderEditPhotoPreview();
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // Сбрасываем input, чтобы можно было выбрать те же файлы повторно
+            input.value = '';
+        }
+
+        function removeApparatusPhoto(idx) {
+            editPhotosArray.splice(idx, 1);
+            renderEditPhotoPreview();
+        }
+
+        function removeAllApparatusPhotos() {
+            if (editPhotosArray.length === 0) return;
+            if (!confirm('Удалить все загруженные фото?')) return;
+            editPhotosArray = [];
+            const input = document.getElementById('editPhoto');
+            if (input) input.value = '';
+            renderEditPhotoPreview();
         }
 
         function addMemberField(member = null) {
@@ -749,7 +870,9 @@
             team.description = document.getElementById('editDescription').value;
             team.teamLeader = document.getElementById('editTeamLeader').value;
             team.teamLeaderPhone = document.getElementById('editTeamLeaderPhone').value;
-            team.photo = editPhotoValue;
+
+            // Сохраняем фото: оставляем только base64 (внешние ссылки Яндекс.Диска не работают как src)
+            team.photos = [...editPhotosArray];
 
             const memberDivs = document.querySelectorAll('#editMembersContainer .border');
             team.members = [];
@@ -774,52 +897,7 @@
             showTeamDetails(currentTeamId);
         }
 
-        // ===== Работа с фото =====
-        function updatePhotoPreview(src, fileName = '') {
-            const preview = document.getElementById('editPhotoPreview');
-            const name = document.getElementById('editPhotoName');
-            if (!preview || !name) return;
-
-            if (src && String(src).startsWith('data:image/')) {
-                preview.src = src;
-                preview.classList.remove('d-none');
-                name.textContent = fileName || 'Фото загружено';
-                return;
-            }
-            preview.removeAttribute('src');
-            preview.classList.add('d-none');
-
-            if (src) {
-                name.textContent = 'Фото из JSON указано ссылкой. Для отображения загрузите файл.';
-            } else {
-                name.textContent = 'Фото не загружено';
-            }
-        }
-
-        function previewApparatusPhoto(input) {
-            const file = input.files && input.files[0];
-            if (!file) return;
-            if (!file.type.startsWith('image/')) {
-                alert('Выберите файл изображения.');
-                input.value = '';
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                editPhotoValue = e.target.result;
-                updatePhotoPreview(editPhotoValue, file.name);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function removeApparatusPhoto() {
-            editPhotoValue = '';
-            const input = document.getElementById('editPhoto');
-            if (input) input.value = '';
-            updatePhotoPreview('');
-        }
-
-        // Загрузка JSON
+        // ===== Загрузка JSON =====
         document.getElementById('fileInput').addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (!file) return;
