@@ -773,21 +773,32 @@
 
         function normalizeImportedTeam(record) {
             const members = [];
+            const usedKeys = new Set();
 
             for (let i = 1; i <= 8; i++) {
-                const name = String(record[`Ф.И.О. [${i}]`] || '').trim();
-                if (!name) continue;
-
                 const member = {};
+                let hasName = false;
 
                 for (const [key, value] of Object.entries(record)) {
-                    if (key.endsWith(`[${i}]`)) {
-                        const cleanKey = key.replace(` [${i}]`, '');
+                    const match = key.match(/\[(\d+)\]\s*$/);
+                    if (!match || Number(match[1]) !== i) continue;
+
+                    const cleanKey = key.replace(/\s*\[\d+\]\s*$/, '');
+                    const text = String(value == null ? '' : value).trim();
+
+                    if (text) {
                         member[cleanKey] = value;
+                        usedKeys.add(key);
+                    }
+
+                    if (/ф\.?\s*и\.?\s*о\.?/i.test(cleanKey) && text) {
+                        hasName = true;
                     }
                 }
 
-                members.push(member);
+                if (hasName) {
+                    members.push(member);
+                }
             }
 
             return {
@@ -845,6 +856,31 @@
             return XLSX.utils.sheet_to_json(sheet, { defval: '' });
         }
 
+        async function commitTeams(token, message, applyChanges) {
+            let lastError = null;
+
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    const { fileData, list } = await readTeamsFile(token);
+                    const updatedTeams = applyChanges(list);
+
+                    await writeTeamsFile(updatedTeams, token, fileData, message);
+                    return updatedTeams;
+                } catch (err) {
+                    lastError = err;
+
+                    if (err.isConflict && attempt < 3) {
+                        await new Promise(resolve => setTimeout(resolve, 700));
+                        continue;
+                    }
+
+                    throw err;
+                }
+            }
+
+            throw lastError;
+        }
+
         async function importTeams(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -876,25 +912,30 @@
 
                 sessionStorage.setItem('ghToken', token);
 
-                const { fileData, list } = await readTeamsFile(token);
-                const knownIds = new Set(list.map(team => String(team.id)));
-                const newTeams = importedTeams.filter(team => !knownIds.has(team.id));
-                const duplicates = importedTeams.length - newTeams.length;
+                const stats = { added: 0, updated: 0 };
 
-                if (!newTeams.length) {
-                    teams = list;
-                    render();
-                    alert(`Новых команд нет.\n\nПрочитано из файла: ${importedTeams.length}\nУже были в базе: ${duplicates}`);
-                    return;
-                }
-
-                const updatedTeams = [...list, ...newTeams];
-
-                await writeTeamsFile(
-                    updatedTeams,
+                const updatedTeams = await commitTeams(
                     token,
-                    fileData,
-                    `Импорт команд: добавлено ${newTeams.length}`
+                    'Импорт команд',
+                    list => {
+                        const result = [...list];
+
+                        importedTeams.forEach(team => {
+                            const index = result.findIndex(
+                                item => String(item.id) === String(team.id)
+                            );
+
+                            if (index >= 0) {
+                                result[index] = team;
+                                stats.updated++;
+                            } else {
+                                result.push(team);
+                                stats.added++;
+                            }
+                        });
+
+                        return result;
+                    }
                 );
 
                 teams = updatedTeams;
@@ -903,8 +944,9 @@
                 alert(
                     `Импорт завершён.\n\n` +
                     `Прочитано из файла: ${importedTeams.length}\n` +
-                    `Добавлено новых: ${newTeams.length}\n` +
-                    `Пропущено дубликатов: ${duplicates}`
+                    `Добавлено новых: ${stats.added}\n` +
+                    `Обновлено существующих: ${stats.updated}\n` +
+                    `Без изменений: ${importedTeams.length - stats.added - stats.updated}`
                 );
             } catch (err) {
                 console.error(err);
