@@ -1254,8 +1254,29 @@
                 if (!file) return;
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    try { teamsData = transformYandexFormsData(JSON.parse(e.target.result)); renderTeams(teamsData); saveToLocalStorage(); showListPage(); showToast('Данные загружены', 'success'); }
-                    catch (err) { showToast('Ошибка чтения JSON', 'error'); console.error(err); }
+                    try {
+                        const rawData = JSON.parse(e.target.result);
+
+                        // Проверяем формат данных
+                        if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+                            // Формат Яндекс.Форм (массив массивов)
+                            teamsData = transformYandexFormsData(rawData);
+                            showToast('Данные загружены из формата Яндекс.Форм', 'success');
+                        } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === 'object' && rawData[0].organization) {
+                            // Наш формат (массив объектов)
+                            teamsData = rawData;
+                            showToast('Данные загружены', 'success');
+                        } else {
+                            throw new Error('Неизвестный формат данных');
+                        }
+
+                        renderTeams(teamsData);
+                        saveToLocalStorage();
+                        showListPage();
+                    } catch (err) {
+                        showToast('Ошибка чтения JSON: ' + err.message, 'error');
+                        console.error(err);
+                    }
                 };
                 reader.readAsText(file);
                 event.target.value = '';
@@ -1267,32 +1288,61 @@
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function (e) {
-                try { teamsData = transformYandexFormsData(JSON.parse(e.target.result)); renderTeams(teamsData); saveToLocalStorage(); showListPage(); showToast('Данные загружены', 'success'); }
-                catch (err) { showToast('Ошибка чтения JSON', 'error'); console.error(err); }
+                try {
+                    const rawData = JSON.parse(e.target.result);
+
+                    // Проверяем формат данных
+                    if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+                        teamsData = transformYandexFormsData(rawData);
+                        showToast('Данные загружены из формата Яндекс.Форм', 'success');
+                    } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === 'object' && rawData[0].organization) {
+                        teamsData = rawData;
+                        showToast('Данные загружены', 'success');
+                    } else {
+                        throw new Error('Неизвестный формат данных');
+                    }
+
+                    renderTeams(teamsData);
+                    saveToLocalStorage();
+                    showListPage();
+                } catch (err) {
+                    showToast('Ошибка чтения JSON: ' + err.message, 'error');
+                    console.error(err);
+                }
             };
             reader.readAsText(file);
             event.target.value = '';
         }
 
         async function loadDefaultData() {
-            if (loadFromLocalStorage()) { renderTeams(teamsData); renderHeaderButtons(); attachFileInputListener(); return; }
+            if (loadFromLocalStorage()) {
+                renderTeams(teamsData);
+                renderHeaderButtons();
+                attachFileInputListener();
+                return;
+            }
             try {
                 const response = await fetch('data/teams.json');
                 if (!response.ok) throw new Error('Файл не найден');
-                teamsData = transformYandexFormsData(await response.json());
+                const rawData = await response.json();
+
+                // Проверяем формат
+                if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+                    teamsData = transformYandexFormsData(rawData);
+                } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === 'object' && rawData[0].organization) {
+                    teamsData = rawData;
+                } else {
+                    throw new Error('Неизвестный формат данных');
+                }
+
                 renderTeams(teamsData);
                 saveToLocalStorage();
             } catch (error) {
                 document.getElementById('teamsContainer').innerHTML = `
-        <div class="col-12 text-center text-muted py-5">
-            <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: #f59e0b;"></i>
-            <div>
-                <strong>Ошибка:</strong> ${error.message}<br>
-                <strong>URL:</strong> data/teams.json<br>
-                <strong>Статус:</strong> ${error.status || 'N/A'}
-            </div>
-        </div>`;
-                console.error('Full error:', error);
+            <div class="col-12 text-center text-muted py-5">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: #f59e0b;"></i>
+                <div>Не удалось загрузить <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">data/teams.json</code>.<br>Войдите в режим Админ и загрузите файл вручную.</div>
+            </div>`;
             }
             renderHeaderButtons();
             attachFileInputListener();
