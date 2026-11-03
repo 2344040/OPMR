@@ -890,6 +890,11 @@
 
                 if (/\.json$/i.test(file.name)) {
                     const text = await file.text();
+
+                    if (!text.trim()) {
+                        throw new Error(`Файл пустой или не читается: ${file.name}`);
+                    }
+
                     records = recordsFromYandexJson(JSON.parse(text));
                 } else if (/\.xlsx$|\.xls$/i.test(file.name)) {
                     records = await recordsFromExcel(file);
