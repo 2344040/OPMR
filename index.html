@@ -1487,25 +1487,29 @@
         }
 
         // ===== ЗАГРУЗКА JSON С ГЛАВНОЙ =====
-        document.getElementById('fileInput').addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const rawData = JSON.parse(e.target.result);
-                    teamsData = transformYandexFormsData(rawData);
-                    renderTeams(teamsData);
-                    saveToLocalStorage();
-                    showListPage();
-                } catch (err) {
-                    alert('Ошибка чтения JSON файла.');
-                    console.error(err);
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        });
+        function attachFileInputListener() {
+            const input = document.getElementById('fileInput');
+            if (!input) return;
+            input.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    try {
+                        const rawData = JSON.parse(e.target.result);
+                        teamsData = transformYandexFormsData(rawData);
+                        renderTeams(teamsData);
+                        saveToLocalStorage();
+                        showListPage();
+                    } catch (err) {
+                        alert('Ошибка чтения JSON файла.');
+                        console.error(err);
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            });
+        }
 
         // ===== ЗАГРУЗКА JSON СО СТРАНИЦЫ РЕДАКТИРОВАНИЯ =====
         function handleEditPageFileUpload(event) {
@@ -1557,7 +1561,7 @@
         renderHeaderButtons();
         loadDefaultData();
     </script>
-    
+
     <!-- Скрытый input для загрузки JSON — всегда в DOM, чтобы не было ошибки -->
     <input type="file" id="fileInput" accept=".json" class="d-none">
 
