@@ -177,7 +177,8 @@
         }
 
         .kv dd {
-            margin: 0
+            margin: 0;
+            word-break: break-word
         }
 
         @media(max-width:640px) {
@@ -192,7 +193,7 @@
 
         .photo-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-top: 12px
         }
@@ -204,11 +205,36 @@
             background: #fff
         }
 
+        .photo.single {
+            grid-column: span 3
+        }
+
         .photo img {
             width: 100%;
-            height: 220px;
-            object-fit: cover;
-            display: block
+            height: 260px;
+            object-fit: contain;
+            display: block;
+            background: #fff
+        }
+
+        @media(max-width:900px) {
+            .photo-grid {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .photo.single {
+                grid-column: span 2
+            }
+        }
+
+        @media(max-width:560px) {
+            .photo-grid {
+                grid-template-columns: 1fr
+            }
+
+            .photo.single {
+                grid-column: span 1
+            }
         }
 
         .member {
@@ -217,6 +243,56 @@
             padding: 12px;
             background: #fafafa;
             margin-bottom: 10px
+        }
+
+        .member-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 14px;
+            font-size: 14px
+        }
+
+        .member-fields div {
+            word-break: break-word
+        }
+
+        .member-fields b {
+            font-size: 13px;
+            color: var(--muted);
+            display: block
+        }
+
+        .photo-preview {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px
+        }
+
+        .photo-preview .item {
+            position: relative;
+            width: 120px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 90px;
+            object-fit: contain;
+            display: block;
+            background: #fff
+        }
+
+        .photo-preview button {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            background: #fee2e2;
+            color: #b91c1c
         }
 
         .toast {
@@ -284,20 +360,17 @@
 
         let teams = [];
         let currentId = null;
-        let adminPassword = sessionStorage.getItem('adminPassword') || '';
+        let editPhotos = [];
 
         const $ = id => document.getElementById(id);
-        const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#39;' }[c]));
+        const esc = s => String(s == null ? '' : s)
+            .replace(/[&<>"']/g, c => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#39;' }[c]));
 
         function toast(text) {
             const el = $('toast');
             el.textContent = text;
             el.classList.add('show');
             setTimeout(() => el.classList.remove('show'), 2500);
-        }
-
-        function photoSrc(url) {
-            return url;
         }
 
         async function load() {
@@ -333,25 +406,23 @@
 
         function showEdit(id) {
             currentId = id;
-
-            const team = id
-                ? teams.find(x => x.id === id)
-                : {
-                    organization: '', city: '', region: '', postal_code: '', address: '',
-                    organization_phone: '', email: '', organization_head: '',
-                    vehicle_class: '', vehicle_description: '', team_lead: '', team_lead_phone: '',
-                    members: [], photos: []
-                };
-
-            if (!adminPassword) {
-                adminPassword = prompt('Введите пароль администратора:') || '';
-                sessionStorage.setItem('adminPassword', adminPassword);
-            }
+            const team = id ? teams.find(x => x.id === id) : emptyTeam();
+            editPhotos = [...(team.photos || [])];
 
             $('listView').classList.add('hidden');
             $('teamView').classList.add('hidden');
             $('editView').classList.remove('hidden');
             $('editContent').innerHTML = editHtml(team);
+            renderPhotoPreviews();
+        }
+
+        function emptyTeam() {
+            return {
+                organization: '', city: '', region: '', postal_code: '', address: '',
+                organization_phone: '', email: '', organization_head: '',
+                vehicle_class: '', vehicle_description: '', team_lead: '', team_lead_phone: '',
+                members: [], photos: []
+            };
         }
 
         function render() {
@@ -374,7 +445,13 @@
         }
 
         function viewHtml(team) {
-            const kv = (label, value) => `<dt>${esc(label)}</dt><dd>${esc(value || '—')}</dd>`;
+            const kv = (label, value) => `
+                <dt>${esc(label)}</dt>
+                <dd>${esc(value || '—')}</dd>
+            `;
+
+            const photos = team.photos || [];
+            const photoClass = photos.length === 1 ? 'photo single' : 'photo';
 
             return `
                 <div class="section">
@@ -398,9 +475,12 @@
                         ${kv('Телефон', team.team_lead_phone)}
                     </dl>
                     ${team.vehicle_description ? `<div class="meta">${esc(team.vehicle_description)}</div>` : ''}
+
                     <div class="photo-grid">
-                        ${(team.photos || []).map(photo => `
-                            <div class="photo"><img src="${esc(photo)}" alt="Фото аппарата"></div>
+                        ${photos.map(photo => `
+                            <div class="${photoClass}">
+                                <img src="${esc(photo)}" alt="Фото аппарата">
+                            </div>
                         `).join('') || '<div class="empty">Фото нет</div>'}
                     </div>
                 </div>
@@ -409,11 +489,16 @@
                     <h2>Участники</h2>
                     ${(team.members || []).map((member, index) => `
                         <div class="member">
-                            <b>${esc(member.fullName || 'Участник ' + (index + 1))}</b>
-                            <div class="meta">
-                                ${esc(member.birthDate || '')} ·
-                                ${esc(member.document || '')} ·
-                                ${member.isStudent ? 'Студент' : 'Не студент'}
+                            <b>${esc(member['Ф.И.О.'] || member.fullName || 'Участник ' + (index + 1))}</b>
+                            <div class="member-fields">
+                                ${Object.entries(member)
+                    .filter(([key]) => key !== 'Ф.И.О.')
+                    .map(([key, value]) => `
+                                        <div>
+                                            <b>${esc(key)}</b>
+                                            ${esc(value || '—')}
+                                        </div>
+                                    `).join('')}
                             </div>
                         </div>
                     `).join('') || '<div class="empty">Нет участников</div>'}
@@ -448,9 +533,15 @@
                     ${field('vehicle_description', 'Описание', team.vehicle_description)}
                     ${field('team_lead', 'Руководитель команды', team.team_lead)}
                     ${field('team_lead_phone', 'Телефон руководителя', team.team_lead_phone)}
+
                     <div class="field">
-                        <label>Ссылка на фото (Яндекс.Диск, «Поделиться»)</label>
-                        <input id="f_photo" value="${esc((team.photos || [])[0] || '')}" placeholder="https://disk.yandex.ru/i/...">
+                        <label>Фото аппарата</label>
+                        <div id="photoPreviews" class="photo-preview"></div>
+                        <button class="ghost" onclick="document.getElementById('photoFile').click()">
+                            Загрузить фото
+                        </button>
+                        <input type="file" id="photoFile" accept="image/*" multiple class="hidden"
+                               onchange="addPhotos(event)">
                     </div>
                 </div>
 
@@ -462,28 +553,71 @@
             `;
         }
 
-        function addMember() {
+        function renderPhotoPreviews() {
+            const box = $('photoPreviews');
+            if (!box) return;
+
+            box.innerHTML = editPhotos.map((photo, index) => `
+                <div class="item">
+                    <img src="${esc(photo)}" alt="Фото ${index + 1}">
+                    <button onclick="removePhoto(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removePhoto(index) {
+            editPhotos.splice(index, 1);
+            renderPhotoPreviews();
+        }
+
+        function addPhotos(event) {
+            const files = [...event.target.files];
+            let pending = files.length;
+
+            if (!pending) return;
+
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    editPhotos.push(e.target.result);
+                    pending--;
+                    if (!pending) {
+                        renderPhotoPreviews();
+                        toast('Фото добавлено. Нажмите «Сохранить».');
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+
+            event.target.value = '';
+        }
+
+        function addMember(data = {}) {
             const box = document.createElement('div');
             box.className = 'member';
             box.innerHTML = `
                 <div class="field">
                     <label>ФИО</label>
-                    <input class="m_name">
+                    <input class="m_name" value="${esc(data['Ф.И.О.'] || data.fullName || '')}">
                 </div>
                 <div class="field">
                     <label>Дата рождения</label>
-                    <input type="date" class="m_birth">
+                    <input type="date" class="m_birth" value="${esc(data['Дата рождения'] || data.birthDate || '')}">
                 </div>
                 <div class="field">
                     <label>Документ</label>
-                    <input class="m_doc">
+                    <input class="m_doc" value="${esc(data['Паспорт/Свидетельство о рождении'] || data.document || '')}">
                 </div>
                 <div class="field">
                     <label>Студент</label>
                     <select class="m_student">
                         <option value="0">Нет</option>
-                        <option value="1">Да</option>
+                        <option value="1" ${data['Студент'] === 'Да' || data.isStudent ? 'selected' : ''}>Да</option>
                     </select>
+                </div>
+                <div class="field">
+                    <label>Приказ о зачислении</label>
+                    <input class="m_order" value="${esc(data['Приказ о зачислении (для студентов)'] || '')}">
                 </div>
             `;
             $('members').appendChild(box);
@@ -495,12 +629,18 @@
                 return el ? el.value.trim() : '';
             };
 
-            const members = [...document.querySelectorAll('#members .member')].map(member => ({
-                fullName: member.querySelector('.m_name').value.trim(),
-                birthDate: member.querySelector('.m_birth').value,
-                document: member.querySelector('.m_doc').value.trim(),
-                isStudent: member.querySelector('.m_student').value === '1'
-            }));
+            const members = [...document.querySelectorAll('#members .member')].map(member => {
+                const name = member.querySelector('.m_name').value.trim();
+                if (!name) return null;
+
+                return {
+                    'Ф.И.О.': name,
+                    'Дата рождения': member.querySelector('.m_birth').value,
+                    'Паспорт/Свидетельство о рождении': member.querySelector('.m_doc').value.trim(),
+                    'Студент': member.querySelector('.m_student').value === '1' ? 'Да' : 'Нет',
+                    'Приказ о зачислении (для студентов)': member.querySelector('.m_order').value.trim()
+                };
+            }).filter(Boolean);
 
             return {
                 id: currentId || 'manual-' + Date.now(),
@@ -517,34 +657,38 @@
                 team_lead: value('team_lead'),
                 team_lead_phone: value('team_lead_phone'),
                 members,
-                photos: [value('photo')].filter(Boolean)
+                photos: editPhotos.filter(Boolean)
             };
         }
 
-        async function saveTeamsFile(updatedTeams, token, commitMessage) {
-            const getRes = await fetch(TEAMS_API, {
+        async function readTeamsFile(token) {
+            const res = await fetch(TEAMS_API, {
                 headers: {
                     'Authorization': 'Bearer ' + token,
                     'Accept': 'application/vnd.github+json'
                 }
             });
 
-            if (!getRes.ok) {
-                throw new Error('Не удалось прочитать teams.json: ' + getRes.status);
+            if (!res.ok) {
+                throw new Error('Не удалось прочитать teams.json: ' + res.status);
             }
 
-            const fileData = await getRes.json();
+            const fileData = await res.json();
             const bytes = Uint8Array.from(
                 atob(fileData.content.replace(/\s/g, '')),
                 char => char.charCodeAt(0)
             );
-            const current = JSON.parse(new TextDecoder('utf-8').decode(bytes));
+            const list = JSON.parse(new TextDecoder('utf-8').decode(bytes));
 
-            if (!Array.isArray(current)) {
+            if (!Array.isArray(list)) {
                 throw new Error('В teams.json должен быть массив команд');
             }
 
-            const putRes = await fetch(TEAMS_API, {
+            return { fileData, list };
+        }
+
+        async function writeTeamsFile(updatedTeams, token, fileData, message) {
+            const res = await fetch(TEAMS_API, {
                 method: 'PUT',
                 headers: {
                     'Authorization': 'Bearer ' + token,
@@ -552,23 +696,24 @@
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    message: commitMessage,
+                    message,
                     content: btoa(unescape(encodeURIComponent(JSON.stringify(updatedTeams, null, 2)))),
                     sha: fileData.sha
                 })
             });
 
-            if (putRes.status === 401 || putRes.status === 403) {
+            if (res.status === 401 || res.status === 403) {
                 throw new Error('Токен не подходит или нет права Contents: Read and write');
             }
 
-            if (!putRes.ok) {
-                throw new Error('GitHub вернул ошибку: ' + putRes.status);
+            if (!res.ok) {
+                throw new Error('GitHub вернул ошибку: ' + res.status);
             }
         }
 
         async function saveTeam() {
-            const token = sessionStorage.getItem('ghToken') || prompt('Введите GitHub токен (Contents: Read and write):') || '';
+            const token = sessionStorage.getItem('ghToken') ||
+                prompt('Введите GitHub токен (Contents: Read and write):') || '';
 
             if (!token) {
                 toast('Нужен GitHub токен');
@@ -576,65 +721,27 @@
             }
 
             sessionStorage.setItem('ghToken', token);
-
             const team = collectTeamFromForm();
 
             try {
-                const getRes = await fetch(TEAMS_API, {
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Accept': 'application/vnd.github+json'
-                    }
-                });
-
-                if (!getRes.ok) {
-                    throw new Error('Не удалось прочитать teams.json: ' + getRes.status);
-                }
-
-                const fileData = await getRes.json();
-                const bytes = Uint8Array.from(
-                    atob(fileData.content.replace(/\s/g, '')),
-                    char => char.charCodeAt(0)
-                );
-                const current = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-
-                if (!Array.isArray(current)) {
-                    throw new Error('В teams.json должен быть массив команд');
-                }
-
-                const index = current.findIndex(item => item.id === team.id);
+                const { fileData, list } = await readTeamsFile(token);
+                const index = list.findIndex(item => item.id === team.id);
 
                 if (index >= 0) {
-                    current[index] = team;
+                    list[index] = team;
                 } else {
-                    current.push(team);
+                    list.push(team);
                 }
 
-                const putRes = await fetch(TEAMS_API, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Accept': 'application/vnd.github+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: index >= 0
-                            ? `Обновление команды: ${team.organization || team.id}`
-                            : `Добавление команды: ${team.organization || team.id}`,
-                        content: btoa(unescape(encodeURIComponent(JSON.stringify(current, null, 2)))),
-                        sha: fileData.sha
-                    })
-                });
+                await writeTeamsFile(
+                    list,
+                    token,
+                    fileData,
+                    (index >= 0 ? 'Обновление команды: ' : 'Добавление команды: ') +
+                    (team.organization || team.id)
+                );
 
-                if (putRes.status === 401 || putRes.status === 403) {
-                    throw new Error('Токен не подходит или нет права Contents: Read and write');
-                }
-
-                if (!putRes.ok) {
-                    throw new Error('GitHub вернул ошибку: ' + putRes.status);
-                }
-
-                teams = current;
+                teams = list;
                 currentId = team.id;
                 showList();
                 alert('Команда сохранена в GitHub.');
@@ -668,20 +775,24 @@
             const members = [];
 
             for (let i = 1; i <= 8; i++) {
-                const fullName = String(record[`Ф.И.О. [${i}]`] || '').trim();
+                const name = String(record[`Ф.И.О. [${i}]`] || '').trim();
+                if (!name) continue;
 
-                if (!fullName) continue;
+                const member = {};
 
-                members.push({
-                    fullName,
-                    birthDate: String(record[`Дата рождения [${i}]`] || ''),
-                    document: String(record[`Паспорт/Свидетельство о рождении [${i}]`] || ''),
-                    isStudent: record[`Студент [${i}]`] === 'Да'
-                });
+                for (const [key, value] of Object.entries(record)) {
+                    if (key.endsWith(`[${i}]`)) {
+                        const cleanKey = key.replace(` [${i}]`, '');
+                        member[cleanKey] = value;
+                    }
+                }
+
+                members.push(member);
             }
 
             return {
-                id: String(record['ID'] || '').trim() || 'import-' + Date.now() + '-' + Math.random().toString(36).slice(2),
+                id: String(record['ID'] || '').trim() ||
+                    'import-' + Date.now() + '-' + Math.random().toString(36).slice(2),
                 organization: String(record['Организация'] || '').trim(),
                 city: String(record['Город (населённый пункт)'] || '').trim(),
                 region: String(record['Республика/край/область'] || '').trim(),
@@ -736,7 +847,6 @@
 
         async function importTeams(event) {
             const file = event.target.files[0];
-
             if (!file) return;
 
             try {
@@ -766,67 +876,36 @@
 
                 sessionStorage.setItem('ghToken', token);
 
-                const getRes = await fetch(TEAMS_API, {
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Accept': 'application/vnd.github+json'
-                    }
-                });
-
-                if (!getRes.ok) {
-                    throw new Error('Не удалось прочитать teams.json: ' + getRes.status);
-                }
-
-                const fileData = await getRes.json();
-                const bytes = Uint8Array.from(
-                    atob(fileData.content.replace(/\s/g, '')),
-                    char => char.charCodeAt(0)
-                );
-                const currentTeams = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-
-                if (!Array.isArray(currentTeams)) {
-                    throw new Error('В teams.json должен быть массив команд');
-                }
-
-                const knownIds = new Set(currentTeams.map(team => String(team.id)));
+                const { fileData, list } = await readTeamsFile(token);
+                const knownIds = new Set(list.map(team => String(team.id)));
                 const newTeams = importedTeams.filter(team => !knownIds.has(team.id));
                 const duplicates = importedTeams.length - newTeams.length;
 
                 if (!newTeams.length) {
-                    teams = currentTeams;
+                    teams = list;
                     render();
                     alert(`Новых команд нет.\n\nПрочитано из файла: ${importedTeams.length}\nУже были в базе: ${duplicates}`);
                     return;
                 }
 
-                const updatedTeams = [...currentTeams, ...newTeams];
+                const updatedTeams = [...list, ...newTeams];
 
-                const putRes = await fetch(TEAMS_API, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': 'Bearer ' + token,
-                        'Accept': 'application/vnd.github+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: `Импорт команд: добавлено ${newTeams.length}`,
-                        content: btoa(unescape(encodeURIComponent(JSON.stringify(updatedTeams, null, 2)))),
-                        sha: fileData.sha
-                    })
-                });
-
-                if (putRes.status === 401 || putRes.status === 403) {
-                    throw new Error('Токен не подходит или нет права Contents: Read and write');
-                }
-
-                if (!putRes.ok) {
-                    throw new Error('GitHub вернул ошибку: ' + putRes.status);
-                }
+                await writeTeamsFile(
+                    updatedTeams,
+                    token,
+                    fileData,
+                    `Импорт команд: добавлено ${newTeams.length}`
+                );
 
                 teams = updatedTeams;
                 render();
 
-                alert(`Импорт завершён.\n\nПрочитано из файла: ${importedTeams.length}\nДобавлено новых: ${newTeams.length}\nПропущено дубликатов: ${duplicates}`);
+                alert(
+                    `Импорт завершён.\n\n` +
+                    `Прочитано из файла: ${importedTeams.length}\n` +
+                    `Добавлено новых: ${newTeams.length}\n` +
+                    `Пропущено дубликатов: ${duplicates}`
+                );
             } catch (err) {
                 console.error(err);
                 alert('Импорт не выполнен: ' + err.message);
