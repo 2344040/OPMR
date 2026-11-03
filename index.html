@@ -425,11 +425,17 @@
             border-radius: 12px;
             overflow: hidden;
             background: #f1f5f9;
-            aspect-ratio: 4/3;
+            aspect-ratio: 4 / 3;
             border: 1px solid #e2e8f0;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
 
         .apparatus-photo-item img {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -1075,9 +1081,9 @@
             const captainIdx = sortedMembers.findIndex(m => (m.fio || "").trim().toLowerCase() === leaderFio);
             if (captainIdx > 0) { const captain = sortedMembers.splice(captainIdx, 1)[0]; sortedMembers.unshift(captain); }
 
-            const membersTableHtml = sortedMembers.length > 0 ? `<table class="members-table"><thead><tr><th class="col-fio">ФИО</th><th class="col-birth">Дата рождения</th><th class="col-passport">Паспорт/Св-во</th><th class="col-student">Студент</th><th class="col-order">Приказ о зачислении</th></tr></thead><tbody>${sortedMembers.map(m => { const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== ""; const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle;">Капитан</span>' : ''; return `<tr><td>${formatFio(m.fio)}${captainBadge}</td><td>${formatDate(m.birth)}</td><td>${m.passport || '—'}</td><td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td><td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td></tr>`; }).join('')}</tbody></table>` : '<div class="text-muted py-3">Состав команды не указан</div>';
+            const membersTableHtml = sortedMembers.length > 0 ? `<table class="members-table"><thead><tr><th class="col-fio">ФИО</th><th class="col-birth">Дата рождения</th><th class="col-passport">Паспорт/Св-во</th><th class="col-student">Студент</th><th class="col-order">Приказ о зачислении</th></tr></thead><tbody>${sortedMembers.map(m => { const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== ""; const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle; width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0;">К</span>' : ''; return `<tr><td>${formatFio(m.fio)}${captainBadge}</td><td>${formatDate(m.birth)}</td><td>${m.passport || '—'}</td><td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td><td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td></tr>`; }).join('')}</tbody></table>` : '<div class="text-muted py-3">Состав команды не указан</div>';
 
-            const membersCardsHtml = sortedMembers.length > 0 ? sortedMembers.map(m => { const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== ""; const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem;">Капитан</span>' : ''; return `<div class="member-card"><div class="member-fio">${m.fio}${captainBadge}</div><div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div><div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>${m.isStudent === 'Да' ? `<div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div><div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>` : ''}</div>`; }).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
+            const membersCardsHtml = sortedMembers.length > 0 ? sortedMembers.map(m => { const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== ""; const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0;">К</span>' : ''; return `<div class="member-card"><div class="member-fio">${m.fio}${captainBadge}</div><div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div><div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>${m.isStudent === 'Да' ? `<div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div><div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>` : ''}</div>`; }).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
 
             const descHtml = formatDescription(team.description);
             const photos = team.photos || [];
