@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OPMR - База данных участников</title>
 
-    <!-- Подключение современных шрифтов Inter и Manrope -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
@@ -15,18 +14,13 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 
     <style>
-        /* ===== Базовые настройки ===== */
         body {
             background-color: #f4f6f8;
-            /* Более современный, холодный оттенок фона */
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             color: #1f2937;
-            /* Мягкий темно-серый вместо резкого черного */
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ===== Типографика заголовков ===== */
         .header-title,
         .detail-section-title,
         .org-name,
@@ -48,7 +42,6 @@
             margin-top: 4px;
         }
 
-        /* ===== Карточки команд ===== */
         .team-card {
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid #e2e8f0;
@@ -89,7 +82,6 @@
             min-width: 0;
         }
 
-        /* ===== Бейджи категорий ===== */
         .category-badge {
             display: inline-flex;
             align-items: center;
@@ -115,7 +107,6 @@
             min-width: 9rem;
         }
 
-        /* Уточненные пастельные цвета (в стиле Tailwind) */
         .badge-bek {
             background-color: #e0f2fe;
             color: #0369a1;
@@ -134,7 +125,6 @@
             border: 1px solid #e9d5ff;
         }
 
-        /* ===== Переключение страниц ===== */
         .detail-page {
             display: none;
             animation: fadeIn 0.3s ease-out;
@@ -164,7 +154,6 @@
             }
         }
 
-        /* ===== Детальная страница ===== */
         .detail-section {
             background: white;
             border-radius: 16px;
@@ -200,7 +189,6 @@
             margin-bottom: 0;
         }
 
-        /* Современная иерархия полей: метка маленькая и приглушенная, значение четкое */
         #detailPage .detail-label {
             font-size: 0.8rem;
             font-weight: 600;
@@ -229,7 +217,6 @@
             border-bottom-color: #2563eb;
         }
 
-        /* Таблица участников (десктоп) */
         .members-table {
             width: 100%;
             border-collapse: separate;
@@ -269,7 +256,6 @@
             border-bottom: none;
         }
 
-        /* Карточки участников (мобильные) */
         .member-card {
             background: #f8fafc;
             border-radius: 12px;
@@ -295,7 +281,6 @@
             gap: 6px;
         }
 
-        /* Форма редактирования */
         .edit-form .form-label {
             font-size: 0.9rem;
             font-weight: 600;
@@ -341,11 +326,23 @@
             color: #0f172a;
         }
 
-        /* Сетка фото */
+        /* ===== СЕТКА ФОТО ===== */
         .apparatus-photo-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
+            /* 4 фото в ряд */
             gap: 12px;
+        }
+
+        /* Если фото всего одно, оно занимает 50% ширины и центрируется */
+        .apparatus-photo-grid.single-photo {
+            grid-template-columns: 1fr;
+            justify-items: center;
+        }
+
+        .apparatus-photo-grid.single-photo .apparatus-photo-item {
+            width: 50%;
+            max-width: 600px;
         }
 
         .apparatus-photo-item {
@@ -370,9 +367,41 @@
             transform: scale(1.05);
         }
 
+        /* Карточка-ссылка (если картинку нельзя встроить напрямую) */
+        .photo-link-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 16px 8px;
+            text-decoration: none;
+            color: #3b82f6;
+            font-weight: 500;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            height: 100%;
+            text-align: center;
+            width: 100%;
+        }
+
+        .photo-link-card:hover {
+            background: #eff6ff;
+            border-color: #3b82f6;
+            color: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .photo-link-card i {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
         .edit-photo-preview-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 10px;
             margin-top: 12px;
         }
@@ -416,7 +445,6 @@
             background: rgba(220, 38, 38, 1);
         }
 
-        /* Лайтбокс */
         .lightbox-overlay {
             position: fixed;
             inset: 0;
@@ -459,6 +487,14 @@
             opacity: 1;
         }
 
+        @media (max-width: 992px) {
+
+            .apparatus-photo-grid,
+            .edit-photo-preview-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
         @media (max-width: 768px) {
             .members-table-desktop {
                 display: none;
@@ -473,18 +509,13 @@
                 grid-template-columns: repeat(2, 1fr);
             }
 
+            .apparatus-photo-grid.single-photo .apparatus-photo-item {
+                width: 80%;
+                /* На мобильном одно фото чуть шире */
+            }
+
             .detail-section {
                 padding: 20px;
-            }
-        }
-
-        @media (min-width: 769px) {
-            .members-table-desktop {
-                display: block;
-            }
-
-            .members-cards-mobile {
-                display: none;
             }
         }
 
@@ -494,6 +525,10 @@
             .edit-photo-preview-grid {
                 grid-template-columns: 1fr;
             }
+
+            .apparatus-photo-grid.single-photo .apparatus-photo-item {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -501,7 +536,6 @@
 <body>
 
     <div class="container py-4">
-        <!-- Шапка -->
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
                 <h2 class="header-title mb-0">Открытое первенство СПб по морской робототехнике</h2>
@@ -518,7 +552,6 @@
             </div>
         </div>
 
-        <!-- Страница списка -->
         <div id="listPage" class="list-page">
             <div class="row g-3" id="teamsContainer">
                 <div class="col-12 text-center text-muted py-5">
@@ -528,7 +561,6 @@
             </div>
         </div>
 
-        <!-- Страница деталей -->
         <div id="detailPage" class="detail-page">
             <button class="btn btn-outline-secondary mb-3 btn-action" onclick="showListPage()">
                 <i class="fas fa-arrow-left me-2"></i>К командам
@@ -536,7 +568,6 @@
             <div id="detailContent"></div>
         </div>
 
-        <!-- Страница редактирования -->
         <div id="editPage" class="detail-page">
             <button class="btn btn-outline-secondary mb-3 btn-action" onclick="cancelEdit()">
                 <i class="fas fa-times me-2"></i>Отмена
@@ -639,7 +670,6 @@
         </div>
     </div>
 
-    <!-- Лайтбокс -->
     <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
         <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
         <img id="lightboxImg" src="" alt="">
@@ -652,11 +682,9 @@
         let currentTeamId = null;
         let editPhotosArray = [];
 
-        // ===== Сопоставление категорий =====
         function getCategoryBadge(apparatusClass, extraClass = '') {
             const raw = String(apparatusClass || '').trim();
             const value = raw.toLowerCase();
-
             let category = { abbr: 'Н/Д', class: 'bg-secondary text-white' };
 
             if (value.includes('бэк') || value.includes('безэкипаж')) {
@@ -670,7 +698,6 @@
             return `<span class="badge category-badge ${extraClass} ${category.class}">${category.abbr}</span>`;
         }
 
-        // ===== Конвертация JSON =====
         function parsePhotosField(value) {
             if (!value) return [];
             if (Array.isArray(value)) {
@@ -721,7 +748,6 @@
             });
         }
 
-        // ===== Рендер списка =====
         function renderTeams(teams) {
             const container = document.getElementById('teamsContainer');
             if (teams.length === 0) {
@@ -750,7 +776,6 @@
         `).join('');
         }
 
-        // ===== Переключение страниц =====
         function showListPage() {
             document.getElementById('listPage').classList.remove('hidden');
             document.getElementById('detailPage').classList.remove('active');
@@ -770,7 +795,6 @@
             document.getElementById('headerButtons').style.display = 'none';
         }
 
-        // ===== Детали команды =====
         function showTeamDetails(teamId) {
             currentTeamId = teamId;
             const team = teamsData.find(t => t.id === teamId);
@@ -818,28 +842,38 @@
 
             const photos = team.photos || [];
             let photosHtml;
+
             if (photos.length === 0) {
                 photosHtml = `<div class="detail-value text-muted" style="font-size: 1rem;">Фото не загружено</div>`;
             } else {
+                // Определяем класс сетки: если 1 фото, добавляем класс single-photo для 50% ширины
+                const gridClass = photos.length === 1 ? 'apparatus-photo-grid single-photo' : 'apparatus-photo-grid';
+
                 const items = photos.map((src, idx) => {
                     const isDataUrl = String(src).startsWith('data:image/');
-                    if (isDataUrl) {
+                    const isDirectImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(src);
+
+                    // Если это base64 или прямая ссылка на картинку, пробуем показать как <img>
+                    if (isDataUrl || isDirectImage) {
                         return `
                         <div class="apparatus-photo-item">
-                            <img src="${src}" alt="Фото аппарата ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')">
-                        </div>
-                    `;
+                            <img src="${src}" alt="Фото аппарата ${idx + 1}" 
+                                 onclick="openLightbox('${src.replace(/'/g, "\\'")}')"
+                                 onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1} (ссылка)</span></a>'">
+                        </div>`;
+                    } else {
+                        // Если это ссылка на Яндекс.Диск или другую веб-страницу, показываем красивую карточку-ссылку
+                        return `
+                        <div class="apparatus-photo-item">
+                            <a href="${src}" target="_blank" rel="noopener" class="photo-link-card">
+                                <i class="fas fa-external-link-alt"></i>
+                                <span>Открыть фото ${idx + 1}</span>
+                            </a>
+                        </div>`;
                     }
-                    return `
-                    <div class="apparatus-photo-item d-flex align-items-center justify-content-center p-3">
-                        <a href="${src}" target="_blank" rel="noopener" class="text-center text-decoration-none" style="color: #3b82f6; font-weight: 500; font-size: 0.9rem;">
-                            <i class="fas fa-external-link-alt fa-2x mb-2 d-block"></2x></i>
-                            Открыть фото ${idx + 1}
-                        </a>
-                    </div>
-                `;
                 }).join('');
-                photosHtml = `<div class="apparatus-photo-grid">${items}</div>`;
+
+                photosHtml = `<div class="${gridClass}">${items}</div>`;
             }
 
             document.getElementById('detailContent').innerHTML = `
@@ -928,7 +962,6 @@
             showDetailPage();
         }
 
-        // ===== Лайтбокс =====
         function openLightbox(src) {
             document.getElementById('lightboxImg').src = src;
             document.getElementById('lightbox').classList.add('active');
@@ -940,7 +973,6 @@
             document.body.style.overflow = '';
         }
 
-        // ===== Редактирование =====
         function editTeam(teamId) {
             const team = teamsData.find(t => t.id === teamId);
             if (!team) return;
@@ -1119,7 +1151,6 @@
             showTeamDetails(currentTeamId);
         }
 
-        // ===== Загрузка JSON =====
         document.getElementById('fileInput').addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (!file) return;
