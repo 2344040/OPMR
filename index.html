@@ -408,16 +408,17 @@
         /* ===== СЕТКА ФОТО — ФИКС ВЫЛЕЗАНИЯ ===== */
         .apparatus-photo-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 12px;
             width: 100%;
             max-width: 100%;
             min-width: 0;
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .apparatus-photo-grid.single-photo {
-            grid-template-columns: 1fr;
+            grid-template-columns: minmax(0, 1fr);
             justify-items: center;
         }
 
@@ -454,6 +455,36 @@
 
         .apparatus-photo-item img:hover {
             transform: scale(1.05);
+        }
+
+        /* Мобильные фиксы */
+        @media (max-width: 992px) {
+            .apparatus-photo-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .apparatus-photo-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .apparatus-photo-grid.single-photo .apparatus-photo-item {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .apparatus-photo-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .apparatus-photo-grid.single-photo .apparatus-photo-item {
+                width: 100%;
+                max-width: 100%;
+            }
         }
 
         .photo-link-card {
@@ -572,11 +603,7 @@
         }
 
         /* ===== АДАПТИВНОСТЬ ===== */
-        @media (max-width: 992px) {
-            .apparatus-photo-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
+
 
         @media (max-width: 768px) {
             .members-table-desktop {
@@ -587,15 +614,6 @@
                 display: block !important;
             }
 
-            .apparatus-photo-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
-            }
-
-            .apparatus-photo-grid.single-photo .apparatus-photo-item {
-                width: 100%;
-                max-width: 100%;
-            }
 
             .detail-section {
                 padding: 20px;
@@ -641,17 +659,6 @@
 
             .edit-btn-mobile {
                 display: none !important;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .apparatus-photo-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .apparatus-photo-grid.single-photo .apparatus-photo-item {
-                width: 100%;
-                max-width: 100%;
             }
         }
     </style>
