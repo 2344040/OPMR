@@ -217,10 +217,12 @@
             border-bottom-color: #2563eb;
         }
 
+        /* ===== Таблица участников ===== */
         .members-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+            table-layout: fixed;
         }
 
         #detailPage .members-table th {
@@ -250,12 +252,52 @@
             padding: 14px 16px;
             border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
+            overflow: hidden;
         }
 
         #detailPage .members-table tr:last-child td {
             border-bottom: none;
         }
 
+        /* Фиксированные ширины колонок */
+        .col-fio {
+            width: 40%;
+        }
+
+        .col-birth {
+            width: 13%;
+        }
+
+        .col-passport {
+            width: 17%;
+        }
+
+        .col-student {
+            width: 5%;
+        }
+
+        .col-order {
+            width: 25%;
+        }
+
+        /* Перенос ФИО: фамилия сверху, имя-отчество снизу */
+        .fio-cell {
+            line-height: 1.3;
+        }
+
+        .fio-surname {
+            font-weight: 600;
+            display: block;
+        }
+
+        .fio-name-patronymic {
+            font-weight: 400;
+            color: #475569;
+            display: block;
+            font-size: 0.9rem;
+        }
+
+        /* Карточки участников */
         .member-card {
             background: #f8fafc;
             border-radius: 12px;
@@ -360,7 +402,6 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            /* Гарантирует заполнение контейнера без искажений */
             display: block;
             cursor: pointer;
             transition: transform 0.3s ease;
@@ -489,21 +530,22 @@
             opacity: 1;
         }
 
-        @media (max-width: 992px) {
+        /* ===== ПЕРЕКЛЮЧЕНИЕ ТАБЛИЦА/КАРТОЧКИ ===== */
+        .members-table-desktop {
+            display: block;
+        }
 
-            .apparatus-photo-grid,
-            .edit-photo-preview-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
+        .members-cards-mobile {
+            display: none;
         }
 
         @media (max-width: 768px) {
             .members-table-desktop {
-                display: none;
+                display: none !important;
             }
 
             .members-cards-mobile {
-                display: block;
+                display: block !important;
             }
 
             .apparatus-photo-grid,
@@ -517,6 +559,24 @@
 
             .detail-section {
                 padding: 20px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .members-table-desktop {
+                display: block !important;
+            }
+
+            .members-cards-mobile {
+                display: none !important;
+            }
+        }
+
+        @media (max-width: 992px) {
+
+            .apparatus-photo-grid,
+            .edit-photo-preview-grid {
+                grid-template-columns: repeat(3, 1fr);
             }
         }
 
@@ -683,6 +743,27 @@
         let currentTeamId = null;
         let editPhotosArray = [];
 
+        // ===== Утилиты форматирования =====
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            const parts = String(dateStr).trim().split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}.${parts[1]}.${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        function formatFio(fio) {
+            if (!fio) return '—';
+            const parts = fio.trim().split(/\s+/);
+            if (parts.length >= 2) {
+                const surname = parts[0];
+                const namePatronymic = parts.slice(1).join(' ');
+                return `<span class="fio-cell"><span class="fio-surname">${surname}</span><span class="fio-name-patronymic">${namePatronymic}</span></span>`;
+            }
+            return `<span class="fio-cell"><span class="fio-surname">${fio}</span></span>`;
+        }
+
         function getCategoryBadge(apparatusClass, extraClass = '') {
             const raw = String(apparatusClass || '').trim();
             const value = raw.toLowerCase();
@@ -728,7 +809,6 @@
                     }
                 }
 
-                // Извлекаем дату из "Время создания" (формат: 2026-09-29 11:18:54 -> 29.09.2026)
                 let createdDate = "—";
                 if (obj["Время создания"]) {
                     const datePart = obj["Время создания"].trim().split(' ')[0];
@@ -757,7 +837,6 @@
                     members: members
                 };
             }).filter(team => {
-                // 1. Фильтр: не выводим организацию "Тест"
                 const org = (team.organization || "").toLowerCase().trim();
                 return org !== "тест";
             });
@@ -818,7 +897,6 @@
             const phoneLink = team.phone ? `<a href="tel:${team.phone.replace(/\s/g, '')}">${team.phone}</a>` : '—';
             const emailLink = team.email ? `<a href="mailto:${team.email}">${team.email}</a>` : '—';
 
-            // 5. Сортировка участников: капитан (руководитель команды) всегда первый
             let sortedMembers = [...team.members];
             const leaderFio = (team.teamLeader || "").trim().toLowerCase();
 
@@ -832,21 +910,21 @@
             <table class="members-table">
                 <thead>
                     <tr>
-                        <th>ФИО</th>
-                        <th>Дата рождения</th>
-                        <th>Паспорт/Св-во</th>
-                        <th>Студент</th>
-                        <th>Приказ о зачислении</th>
+                        <th class="col-fio">ФИО</th>
+                        <th class="col-birth">Дата рождения</th>
+                        <th class="col-passport">Паспорт/Св-во</th>
+                        <th class="col-student">Студент</th>
+                        <th class="col-order">Приказ о зачислении</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${sortedMembers.map((m, idx) => {
+                    ${sortedMembers.map(m => {
                 const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
-                const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem; vertical-align: middle;">Капитан</span>' : '';
+                const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle;">Капитан</span>' : '';
                 return `
                         <tr>
-                            <td>${m.fio}${captainBadge}</td>
-                            <td>${m.birth || '—'}</td>
+                            <td>${formatFio(m.fio)}${captainBadge}</td>
+                            <td>${formatDate(m.birth)}</td>
                             <td>${m.passport || '—'}</td>
                             <td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td>
                             <td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td>
@@ -862,7 +940,7 @@
                 return `
                 <div class="member-card">
                     <div class="member-fio">${m.fio}${captainBadge}</div>
-                    <div class="member-info"><i class="fas fa-birthday-cake"></i> ${m.birth || 'Не указана'}</div>
+                    <div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div>
                     <div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>
                     ${m.isStudent === 'Да' ? `
                         <div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div>
@@ -871,7 +949,6 @@
                 </div>
             `}).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
 
-            // 3. Форматирование описания: каждое предложение (абзац) с новой строки и отступом
             const descParts = (team.description || "").split('\n').filter(p => p.trim() !== "");
             const descHtml = descParts.length > 0
                 ? descParts.map(p => `<p style="text-indent: 1.5em; margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${p.trim()}</p>`).join('')
