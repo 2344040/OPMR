@@ -872,6 +872,7 @@
         const STORAGE_KEY = 'opmr_teams_data';
         const ADMIN_MODE_KEY = 'opmr_admin_mode';
         const GH_SETTINGS_KEY = 'opmr_gh_settings';
+        const ADMIN_PASSWORD = 'opmr2026';
         let isAdmin = localStorage.getItem(ADMIN_MODE_KEY) === 'true';
 
         // ===== GitHub настройки =====
@@ -1095,8 +1096,8 @@
             ` : '';
             container.innerHTML = `${adminButtons}
                 <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}">
-                    <i class="fas fa-${isAdmin ? 'user-shield' : 'user'}"></i><span class="btn-text ms-2">Админ</span>
-                </button>`;
+    <i class="fas fa-${isAdmin ? 'user-shield' : 'lock'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Вход'}</span>
+</button>
             renderEditPageAdminButtons();
         }
 
@@ -1104,53 +1105,96 @@
             const container = document.getElementById('editPageAdminButtons');
             if (!container) return;
             container.innerHTML = isAdmin ? `
-                <label for="fileInputEdit" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
+                < label for= "fileInputEdit" class= "btn btn-outline-primary btn-upload mb-0" title = "Импортировать данные из JSON файла" >
                     <i class="fas fa-file-upload me-2"></i><span class="btn-text">Загрузить JSON</span>
-                </label>
+                </label >
                 <input type="file" id="fileInputEdit" accept=".json" class="d-none" onchange="handleEditPageFileUpload(event)">
-            ` : '';
+                    ` : '';
         }
 
-        function toggleAdminMode() {
-            isAdmin = !isAdmin;
-            localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
-            renderHeaderButtons();
-            if (currentTeamId && document.getElementById('detailPage').classList.contains('active')) showTeamDetails(currentTeamId);
+                    function toggleAdminMode() {
+            if (isAdmin) {
+                        // Выход из режима админа — без пароля
+                        isAdmin = false;
+                    localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
+                    renderHeaderButtons();
+                    if (currentTeamId && document.getElementById('detailPage').classList.contains('active')) {
+                        showTeamDetails(currentTeamId);
+                }
+                    showToast('Режим администратора выключен', 'info');
+            } else {
+                        // Вход — запрашиваем пароль
+                        document.getElementById('adminPasswordInput').value = '';
+                    document.getElementById('adminPasswordError').style.display = 'none';
+                    const modal = new bootstrap.Modal(document.getElementById('adminPasswordModal'));
+                    modal.show();
+                setTimeout(() => document.getElementById('adminPasswordInput').focus(), 300);
+            }
         }
 
-        function renderTeams(teams) {
+                    function checkAdminPassword() {
+            const input = document.getElementById('adminPasswordInput');
+                    const error = document.getElementById('adminPasswordError');
+
+                    if (input.value === ADMIN_PASSWORD) {
+                        isAdmin = true;
+                    localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
+                    bootstrap.Modal.getInstance(document.getElementById('adminPasswordModal')).hide();
+                    renderHeaderButtons();
+                    if (currentTeamId && document.getElementById('detailPage').classList.contains('active')) {
+                        showTeamDetails(currentTeamId);
+                }
+                    showToast('Режим администратора включён', 'success');
+            } else {
+                        error.style.display = 'block';
+                    input.value = '';
+                    input.focus();
+            }
+        }
+
+                    // Enter в поле пароля = попытка входа
+                    document.addEventListener('DOMContentLoaded', function () {
+            const pwdInput = document.getElementById('adminPasswordInput');
+                    if (pwdInput) {
+                        pwdInput.addEventListener('keypress', function (e) {
+                            if (e.key === 'Enter') checkAdminPassword();
+                        });
+            }
+        });
+
+                    function renderTeams(teams) {
             const container = document.getElementById('teamsContainer');
-            if (teams.length === 0) { container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет загруженных команд</div>'; return; }
+                    if (teams.length === 0) {container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет загруженных команд</div>'; return; }
             container.innerHTML = teams.map(team => `
-                <div class="col-md-6 col-lg-4">
-                    <div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')">
-                        <div class="team-card-head mb-2">
-                            <div class="flex-grow-1"><div class="org-name">${team.organization}</div><div class="team-meta">${team.city || 'Город не указан'}</div></div>
-                            ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
-                        </div>
-                        <div class="mt-auto pt-3 border-top">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members.length} участн.</span>
-                                <span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader.split(' ')[0] || '—'}</span>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')">
+                            <div class="team-card-head mb-2">
+                                <div class="flex-grow-1"><div class="org-name">${team.organization}</div><div class="team-meta">${team.city || 'Город не указан'}</div></div>
+                                ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
+                            </div>
+                            <div class="mt-auto pt-3 border-top">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members.length} участн.</span>
+                                    <span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader.split(' ')[0] || '—'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                    `).join('');
         }
 
-        function showListPage() { document.getElementById('listPage').classList.remove('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'flex'; currentTeamId = null; isNewTeam = false; }
-        function showDetailPage() { document.getElementById('listPage').classList.add('hidden'); document.getElementById('detailPage').classList.add('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'none'; }
-        function showEditPage() { document.getElementById('listPage').classList.add('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.add('active'); document.getElementById('headerButtons').style.display = 'none'; }
+                    function showListPage() {document.getElementById('listPage').classList.remove('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'flex'; currentTeamId = null; isNewTeam = false; }
+                    function showDetailPage() {document.getElementById('listPage').classList.add('hidden'); document.getElementById('detailPage').classList.add('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'none'; }
+                    function showEditPage() {document.getElementById('listPage').classList.add('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.add('active'); document.getElementById('headerButtons').style.display = 'none'; }
 
-        function showTeamDetails(teamId) {
-            currentTeamId = teamId; isNewTeam = false;
+                    function showTeamDetails(teamId) {
+                        currentTeamId = teamId; isNewTeam = false;
             const team = teamsData.find(t => t.id === teamId);
-            if (!team) return;
-            const phoneLink = team.phone ? `<a href="tel:${team.phone.replace(/\s/g, '')}">${team.phone}</a>` : '—';
-            const emailLink = team.email ? `<a href="mailto:${team.email}">${team.email}</a>` : '—';
-            let sortedMembers = [...team.members];
-            const leaderFio = (team.teamLeader || "").trim().toLowerCase();
+                    if (!team) return;
+                    const phoneLink = team.phone ? `<a href="tel:${team.phone.replace(/\s/g, '')}">${team.phone}</a>` : '—';
+                    const emailLink = team.email ? `<a href="mailto:${team.email}">${team.email}</a>` : '—';
+                    let sortedMembers = [...team.members];
+                    const leaderFio = (team.teamLeader || "").trim().toLowerCase();
             const captainIdx = sortedMembers.findIndex(m => (m.fio || "").trim().toLowerCase() === leaderFio);
             if (captainIdx > 0) { const captain = sortedMembers.splice(captainIdx, 1)[0]; sortedMembers.unshift(captain); }
 
@@ -1158,26 +1202,26 @@
 
             const membersCardsHtml = sortedMembers.length > 0 ? sortedMembers.map(m => { const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== ""; const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0;">К</span>' : ''; return `<div class="member-card"><div class="member-fio">${m.fio}${captainBadge}</div><div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div><div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>${m.isStudent === 'Да' ? `<div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div><div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>` : ''}</div>`; }).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
 
-            const descHtml = formatDescription(team.description);
-            const photos = team.photos || [];
-            let photosHtml;
-            if (photos.length === 0) {
-                photosHtml = `<div class="detail-value text-muted" style="font-size: 1rem;">Фото не загружено</div>`;
+                    const descHtml = formatDescription(team.description);
+                    const photos = team.photos || [];
+                    let photosHtml;
+                    if (photos.length === 0) {
+                        photosHtml = `<div class="detail-value text-muted" style="font-size: 1rem;">Фото не загружено</div>`;
             } else {
                 const gridClass = photos.length === 1 ? 'apparatus-photo-grid single-photo' : 'apparatus-photo-grid';
                 const items = photos.map((src, idx) => {
                     const isDirect = isDirectImageLink(src);
                     if (isDirect) return `<div class="apparatus-photo-item"><img src="${src}" alt="Фото ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')" onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'"></div>`;
                     else return `<div class="apparatus-photo-item"><a href="${src}" target="_blank" rel="noopener" class="photo-link-card"><i class="fas fa-external-link-alt"></i><span>Открыть фото ${idx + 1}</span></a></div>`;
-                }).join('');
-                // Обёртка с жёсткими ограничениями
-                photosHtml = `<div style="width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box;"><div class="${gridClass}" style="width: 100%; max-width: 100%; overflow: hidden;">${items}</div></div>`;
+        }).join('');
+        // Обёртка с жёсткими ограничениями
+        photosHtml = `<div style="width: 100%; max-width: 100%; overflow: hidden; box-sizing: border-box;"><div class="${gridClass}" style="width: 100%; max-width: 100%; overflow: hidden;">${items}</div></div>`;
             }
 
-            const editButtonDesktop = isAdmin ? `<button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')"><i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span></button>` : '';
-            const editButtonMobile = isAdmin ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;"><i class="fas fa-edit"></i></button>` : '';
+        const editButtonDesktop = isAdmin ? `<button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')"><i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span></button>` : '';
+        const editButtonMobile = isAdmin ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;"><i class="fas fa-edit"></i></button>` : '';
 
-            document.getElementById('detailContent').innerHTML = `
+        document.getElementById('detailContent').innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
                     <div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>${getCategoryBadge(team.apparatusClass, 'category-badge-card')}</div>
                     ${editButtonDesktop}
@@ -1205,7 +1249,7 @@
                 </div></div>
                 <div class="detail-section"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>
             `;
-            showDetailPage();
+        showDetailPage();
         }
 
         function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('active'); document.body.style.overflow = 'hidden'; }
