@@ -5,20 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OPMR - База данных участников</title>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-
     <style>
         body {
             background-color: #f4f6f8;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             color: #1f2937;
-            -webkit-font-smoothing: antialiased;
         }
 
         .header-title,
@@ -32,7 +28,6 @@
             font-weight: 800;
             color: #0f172a;
             letter-spacing: -0.02em;
-            line-height: 1.2;
         }
 
         .header-subtitle {
@@ -43,9 +38,9 @@
         }
 
         .team-card {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.25s;
             border: 1px solid #e2e8f0;
-            background: #ffffff;
+            background: #fff;
             border-radius: 16px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
             cursor: pointer;
@@ -54,14 +49,12 @@
         .team-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
-            border-color: #cbd5e1;
         }
 
         .org-name {
             font-weight: 700;
             color: #0f172a;
             font-size: 1.15rem;
-            line-height: 1.3;
             margin-bottom: 4px;
         }
 
@@ -127,7 +120,7 @@
 
         .detail-page {
             display: none;
-            animation: fadeIn 0.3s ease-out;
+            animation: fadeIn 0.3s;
         }
 
         .detail-page.active {
@@ -170,7 +163,6 @@
             margin-bottom: 20px;
             padding-bottom: 12px;
             border-bottom: 2px solid #f1f5f9;
-            letter-spacing: -0.01em;
         }
 
         .detail-section-head {
@@ -251,7 +243,6 @@
             padding: 14px 16px;
             border-bottom: 1px solid #f1f5f9;
             vertical-align: middle;
-            overflow: hidden;
         }
 
         #detailPage .members-table tr:last-child td {
@@ -305,10 +296,6 @@
             font-weight: 700;
             color: #0f172a;
             margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
         }
 
         #detailPage .member-info {
@@ -333,8 +320,6 @@
             border-radius: 8px;
             padding: 0.6rem 0.85rem;
             font-size: 0.95rem;
-            color: #1f2937;
-            transition: all 0.15s ease-in-out;
         }
 
         .edit-form .form-control:focus,
@@ -342,7 +327,6 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
             outline: none;
-            background-color: #fff;
         }
 
         .edit-form .form-text {
@@ -357,7 +341,6 @@
             font-weight: 600;
             font-size: 0.9rem;
             padding: 0.5rem 1.2rem;
-            transition: all 0.2s;
         }
 
         .btn-outline-primary {
@@ -371,7 +354,7 @@
             color: #0f172a;
         }
 
-        /* ===== ПОЛЯ ДЛЯ ССЫЛОК НА ФОТО ===== */
+        /* Поля для ссылок на фото */
         .photo-link-field {
             display: flex;
             gap: 10px;
@@ -415,7 +398,6 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: background 0.2s;
             flex-shrink: 0;
         }
 
@@ -444,7 +426,7 @@
             border-radius: 12px;
             overflow: hidden;
             background: #f1f5f9;
-            aspect-ratio: 4 / 3;
+            aspect-ratio: 4/3;
             border: 1px solid #e2e8f0;
         }
 
@@ -454,7 +436,7 @@
             object-fit: cover;
             display: block;
             cursor: pointer;
-            transition: transform 0.3s ease;
+            transition: transform 0.3s;
         }
 
         .apparatus-photo-item img:hover {
@@ -474,17 +456,13 @@
             color: #3b82f6;
             font-weight: 500;
             font-size: 0.85rem;
-            transition: all 0.2s;
             height: 100%;
             text-align: center;
-            width: 100%;
         }
 
         .photo-link-card:hover {
             background: #eff6ff;
             border-color: #3b82f6;
-            color: #1d4ed8;
-            transform: translateY(-2px);
         }
 
         .photo-link-card i {
@@ -506,7 +484,6 @@
 
         .lightbox-overlay.active {
             display: flex;
-            animation: fadeIn 0.2s ease-out;
         }
 
         .lightbox-overlay img {
@@ -514,7 +491,6 @@
             max-height: 90%;
             border-radius: 8px;
             object-fit: contain;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
         }
 
         .lightbox-close {
@@ -526,12 +502,6 @@
             cursor: pointer;
             background: none;
             border: none;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-
-        .lightbox-close:hover {
-            opacity: 1;
         }
 
         .members-table-desktop {
@@ -575,7 +545,6 @@
                 flex-wrap: nowrap !important;
                 gap: 0.4rem;
                 overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
             }
 
             #headerButtons .btn-text {
@@ -586,10 +555,6 @@
                 padding: 0.5rem 0.75rem;
                 font-size: 0.85rem;
                 white-space: nowrap;
-            }
-
-            #headerButtons .me-2 {
-                margin-right: 0 !important;
             }
         }
 
@@ -630,7 +595,6 @@
 </head>
 
 <body>
-
     <div class="container py-4">
         <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
             <div>
@@ -650,17 +614,13 @@
         </div>
 
         <div id="detailPage" class="detail-page">
-            <button class="btn btn-outline-secondary mb-3 btn-action" onclick="showListPage()" title="На главную">
-                <i class="fas fa-home"></i>
-            </button>
+            <button class="btn btn-outline-secondary mb-3 btn-action" onclick="showListPage()" title="На главную"><i class="fas fa-home"></i></button>
             <div id="detailContent"></div>
         </div>
 
         <div id="editPage" class="detail-page">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                <button class="btn btn-outline-secondary btn-action" onclick="cancelEdit()" title="На главную">
-                    <i class="fas fa-home"></i>
-                </button>
+                <button class="btn btn-outline-secondary btn-action" onclick="cancelEdit()" title="На главную"><i class="fas fa-home"></i></button>
                 <div id="editPageAdminButtons"></div>
             </div>
 
@@ -668,46 +628,19 @@
                 <h4 class="detail-section-title" id="editFormTitle">Редактирование команды</h4>
                 <form id="editForm" class="edit-form">
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Организация</label>
-                            <input type="text" class="form-control" id="editOrganization">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Город</label>
-                            <input type="text" class="form-control" id="editCity">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Республика/край/область</label>
-                            <input type="text" class="form-control" id="editRegion">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Почтовый индекс</label>
-                            <input type="text" class="form-control" id="editPostalCode">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">Адрес</label>
-                            <input type="text" class="form-control" id="editAddress">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Телефон/факс</label>
-                            <input type="tel" class="form-control" id="editPhone">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" id="editEmail">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label">ФИО руководителя организации</label>
-                            <input type="text" class="form-control" id="editOrgLeader">
-                        </div>
+                        <div class="col-md-6"><label class="form-label">Организация</label><input type="text" class="form-control" id="editOrganization"></div>
+                        <div class="col-md-6"><label class="form-label">Город</label><input type="text" class="form-control" id="editCity"></div>
+                        <div class="col-md-6"><label class="form-label">Республика/край/область</label><input type="text" class="form-control" id="editRegion"></div>
+                        <div class="col-md-6"><label class="form-label">Почтовый индекс</label><input type="text" class="form-control" id="editPostalCode"></div>
+                        <div class="col-12"><label class="form-label">Адрес</label><input type="text" class="form-control" id="editAddress"></div>
+                        <div class="col-md-6"><label class="form-label">Телефон/факс</label><input type="tel" class="form-control" id="editPhone"></div>
+                        <div class="col-md-6"><label class="form-label">Email</label><input type="email" class="form-control" id="editEmail"></div>
+                        <div class="col-12"><label class="form-label">ФИО руководителя организации</label><input type="text" class="form-control" id="editOrgLeader"></div>
 
                         <div class="col-12 mt-4">
                             <h5 class="fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Аппарат</h5>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Класс аппарата</label>
-                            <input type="text" class="form-control" id="editApparatusClass">
-                        </div>
+                        <div class="col-md-6"><label class="form-label">Класс аппарата</label><input type="text" class="form-control" id="editApparatusClass"></div>
                         <div class="col-12">
                             <label class="form-label">Ссылки на фото аппарата</label>
                             <div id="photoLinksContainer"></div>
@@ -715,26 +648,16 @@
                                 <i class="fas fa-plus me-1"></i>Добавить ссылку
                             </button>
                             <div class="form-text mt-2">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Вставьте прямые ссылки на изображения (заканчиваются на .jpg, .png, .webp). Ссылки на Яндекс.Диск отображаются как кнопки перехода.
+                                <i class="fas fa-info-circle me-1"></i>Вставьте прямые ссылки на изображения (.jpg, .png, .webp). Ссылки на Яндекс.Диск отображаются как кнопки перехода.
                             </div>
                         </div>
-                        <div class="col-12">
-                            <label class="form-label">Краткое описание аппарата</label>
-                            <textarea class="form-control" id="editDescription" rows="4"></textarea>
-                        </div>
+                        <div class="col-12"><label class="form-label">Краткое описание аппарата</label><textarea class="form-control" id="editDescription" rows="4"></textarea></div>
 
                         <div class="col-12 mt-4">
                             <h5 class="fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Команда</h5>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">ФИО руководителя команды</label>
-                            <input type="text" class="form-control" id="editTeamLeader">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Контактный телефон</label>
-                            <input type="tel" class="form-control" id="editTeamLeaderPhone">
-                        </div>
+                        <div class="col-md-6"><label class="form-label">ФИО руководителя команды</label><input type="text" class="form-control" id="editTeamLeader"></div>
+                        <div class="col-md-6"><label class="form-label">Контактный телефон</label><input type="tel" class="form-control" id="editTeamLeaderPhone"></div>
 
                         <div class="col-12 mt-4">
                             <h5 class="fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Участники</h5>
@@ -765,24 +688,18 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
         let teamsData = [];
         let currentTeamId = null;
-        let editPhotoLinks = [];
         let isNewTeam = false;
         const STORAGE_KEY = 'opmr_teams_data';
-        const STORAGE_TIMESTAMP_KEY = 'opmr_teams_timestamp';
         const ADMIN_MODE_KEY = 'opmr_admin_mode';
-
         let isAdmin = localStorage.getItem(ADMIN_MODE_KEY) === 'true';
 
         function formatDate(dateStr) {
             if (!dateStr) return '—';
             const parts = String(dateStr).trim().split('-');
-            if (parts.length === 3) {
-                return `${parts[2]}.${parts[1]}.${parts[0]}`;
-            }
+            if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
             return dateStr;
         }
 
@@ -790,9 +707,7 @@
             if (!fio) return '—';
             const parts = fio.trim().split(/\s+/);
             if (parts.length >= 2) {
-                const surname = parts[0];
-                const namePatronymic = parts.slice(1).join(' ');
-                return `<span class="fio-cell"><span class="fio-surname">${surname}</span> <span class="fio-name-patronymic">${namePatronymic}</span></span>`;
+                return `<span class="fio-cell"><span class="fio-surname">${parts[0]}</span> <span class="fio-name-patronymic">${parts.slice(1).join(' ')}</span></span>`;
             }
             return `<span class="fio-cell"><span class="fio-surname">${fio}</span></span>`;
         }
@@ -800,40 +715,27 @@
         function formatDescription(desc) {
             if (!desc || desc.trim() === '') return '<div class="detail-value text-muted">—</div>';
             const paragraphs = desc.split('\n').filter(p => p.trim() !== '');
-            let html = '';
-            paragraphs.forEach(para => {
+            return paragraphs.map(para => {
                 const sentences = para.split('. ').filter(s => s.trim() !== '');
-                if (sentences.length > 1 && !para.includes('\n')) {
-                    sentences.forEach((sentence) => {
-                        const cleanSentence = sentence.endsWith('.') ? sentence : sentence + '.';
-                        html += `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${cleanSentence.trim()}</p>`;
-                    });
-                } else {
-                    html += `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${para.trim()}</p>`;
+                if (sentences.length > 1) {
+                    return sentences.map(s => `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${s.endsWith('.') ? s : s + '.'}</p>`).join('');
                 }
-            });
-            return html;
+                return `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${para.trim()}</p>`;
+            }).join('');
         }
 
         function getCategoryBadge(apparatusClass, extraClass = '') {
-            const raw = String(apparatusClass || '').trim();
-            const value = raw.toLowerCase();
+            const value = String(apparatusClass || '').trim().toLowerCase();
             let category = { abbr: 'Н/Д', class: 'bg-secondary text-white' };
-            if (value.includes('бэк') || value.includes('безэкипаж')) {
-                category = { abbr: 'БЭК', class: 'badge-bek' };
-            } else if (value.includes('тнпа') || value.includes('телеуправляем')) {
-                category = { abbr: 'ТНПА', class: 'badge-tnpa' };
-            } else if (value.includes('анпа') || value.includes('автономн')) {
-                category = { abbr: 'АНПА', class: 'badge-anpa' };
-            }
+            if (value.includes('бэк') || value.includes('безэкипаж')) category = { abbr: 'БЭК', class: 'badge-bek' };
+            else if (value.includes('тнпа') || value.includes('телеуправляем')) category = { abbr: 'ТНПА', class: 'badge-tnpa' };
+            else if (value.includes('анпа') || value.includes('автономн')) category = { abbr: 'АНПА', class: 'badge-anpa' };
             return `<span class="badge category-badge ${extraClass} ${category.class}">${category.abbr}</span>`;
         }
 
         function parsePhotosField(value) {
             if (!value) return [];
-            if (Array.isArray(value)) {
-                return value.map(v => String(v).trim()).filter(v => v.length > 0);
-            }
+            if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(v => v.length > 0);
             return String(value).split(',').map(s => s.trim()).filter(s => s.length > 0);
         }
 
@@ -844,9 +746,7 @@
         function transformYandexFormsData(rawArray) {
             return rawArray.map(teamArr => {
                 let obj = {};
-                teamArr.forEach(([key, value]) => {
-                    obj[key.trim()] = value ? value.trim() : "";
-                });
+                teamArr.forEach(([key, value]) => { obj[key.trim()] = value ? value.trim() : ""; });
                 let members = [];
                 for (let i = 1; i <= 10; i++) {
                     let fioKey = `Ф.И.О. [${i}]`;
@@ -862,11 +762,8 @@
                 }
                 let createdDate = "—";
                 if (obj["Время создания"]) {
-                    const datePart = obj["Время создания"].trim().split(' ')[0];
-                    const parts = datePart.split('-');
-                    if (parts.length === 3) {
-                        createdDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
-                    }
+                    const parts = obj["Время создания"].trim().split(' ')[0].split('-');
+                    if (parts.length === 3) createdDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
                 }
                 return {
                     id: obj["ID"] || Math.random().toString(36).substr(2, 9),
@@ -886,15 +783,11 @@
                     teamLeaderPhone: obj["Контактный телефон руководителя команды"] || "",
                     members: members
                 };
-            }).filter(team => {
-                const org = (team.organization || "").toLowerCase().trim();
-                return org !== "тест";
-            });
+            }).filter(team => (team.organization || "").toLowerCase().trim() !== "тест");
         }
 
         function renderHeaderButtons() {
             const container = document.getElementById('headerButtons');
-
             const adminButtons = isAdmin ? `
                 <label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
                     <i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span>
@@ -906,21 +799,16 @@
                     <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
                 </button>
             ` : '';
-
-            container.innerHTML = `
-                ${adminButtons}
+            container.innerHTML = `${adminButtons}
                 <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}">
-                    <i class="fas fa-${isAdmin ? 'user-shield' : 'user'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Админ'}</span>
-                </button>
-            `;
-
+                    <i class="fas fa-${isAdmin ? 'user-shield' : 'user'}"></i><span class="btn-text ms-2">Админ</span>
+                </button>`;
             renderEditPageAdminButtons();
         }
 
         function renderEditPageAdminButtons() {
             const container = document.getElementById('editPageAdminButtons');
             if (!container) return;
-
             container.innerHTML = isAdmin ? `
                 <label for="fileInputEdit" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
                     <i class="fas fa-file-upload me-2"></i><span class="btn-text">Загрузить JSON</span>
@@ -933,10 +821,7 @@
             isAdmin = !isAdmin;
             localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
             renderHeaderButtons();
-
-            if (currentTeamId && document.getElementById('detailPage').classList.contains('active')) {
-                showTeamDetails(currentTeamId);
-            }
+            if (currentTeamId && document.getElementById('detailPage').classList.contains('active')) showTeamDetails(currentTeamId);
         }
 
         function renderTeams(teams) {
@@ -974,14 +859,12 @@
             currentTeamId = null;
             isNewTeam = false;
         }
-
         function showDetailPage() {
             document.getElementById('listPage').classList.add('hidden');
             document.getElementById('detailPage').classList.add('active');
             document.getElementById('editPage').classList.remove('active');
             document.getElementById('headerButtons').style.display = 'none';
         }
-
         function showEditPage() {
             document.getElementById('listPage').classList.add('hidden');
             document.getElementById('detailPage').classList.remove('active');
@@ -1008,49 +891,22 @@
 
             const membersTableHtml = sortedMembers.length > 0 ? `
                 <table class="members-table">
-                    <thead>
-                        <tr>
-                            <th class="col-fio">ФИО</th>
-                            <th class="col-birth">Дата рождения</th>
-                            <th class="col-passport">Паспорт/Св-во</th>
-                            <th class="col-student">Студент</th>
-                            <th class="col-order">Приказ о зачислении</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${sortedMembers.map(m => {
+                    <thead><tr><th class="col-fio">ФИО</th><th class="col-birth">Дата рождения</th><th class="col-passport">Паспорт/Св-во</th><th class="col-student">Студент</th><th class="col-order">Приказ о зачислении</th></tr></thead>
+                    <tbody>${sortedMembers.map(m => {
                 const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
                 const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle;">Капитан</span>' : '';
-                return `
-                            <tr>
-                                <td>${formatFio(m.fio)}${captainBadge}</td>
-                                <td>${formatDate(m.birth)}</td>
-                                <td>${m.passport || '—'}</td>
-                                <td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td>
-                                <td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td>
-                            </tr>
-                        `}).join('')}
-                    </tbody>
+                return `<tr><td>${formatFio(m.fio)}${captainBadge}</td><td>${formatDate(m.birth)}</td><td>${m.passport || '—'}</td><td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td><td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td></tr>`;
+            }).join('')}</tbody>
                 </table>
             ` : '<div class="text-muted py-3">Состав команды не указан</div>';
 
             const membersCardsHtml = sortedMembers.length > 0 ? sortedMembers.map(m => {
                 const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
-                const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem; vertical-align: middle;">Капитан</span>' : '';
-                return `
-                    <div class="member-card">
-                        <div class="member-fio">${m.fio}${captainBadge}</div>
-                        <div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div>
-                        <div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>
-                        ${m.isStudent === 'Да' ? `
-                            <div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div>
-                            <div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>
-                        ` : ''}
-                    </div>
-                `}).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
+                const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem;">Капитан</span>' : '';
+                return `<div class="member-card"><div class="member-fio">${m.fio}${captainBadge}</div><div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div><div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>${m.isStudent === 'Да' ? `<div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div><div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>` : ''}</div>`;
+            }).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
 
             const descHtml = formatDescription(team.description);
-
             const photos = team.photos || [];
             let photosHtml;
             if (photos.length === 0) {
@@ -1060,36 +916,16 @@
                 const items = photos.map((src, idx) => {
                     const isDirect = isDirectImageLink(src);
                     if (isDirect) {
-                        return `
-                            <div class="apparatus-photo-item">
-                                <img src="${src}" alt="Фото аппарата ${idx + 1}" 
-                                     onclick="openLightbox('${src.replace(/'/g, "\\'")}')"
-                                     onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'">
-                            </div>`;
+                        return `<div class="apparatus-photo-item"><img src="${src}" alt="Фото ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')" onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'"></div>`;
                     } else {
-                        return `
-                            <div class="apparatus-photo-item">
-                                <a href="${src}" target="_blank" rel="noopener" class="photo-link-card">
-                                    <i class="fas fa-external-link-alt"></i>
-                                    <span>Открыть фото ${idx + 1}</span>
-                                </a>
-                            </div>`;
+                        return `<div class="apparatus-photo-item"><a href="${src}" target="_blank" rel="noopener" class="photo-link-card"><i class="fas fa-external-link-alt"></i><span>Открыть фото ${idx + 1}</span></a></div>`;
                     }
                 }).join('');
                 photosHtml = `<div class="${gridClass}">${items}</div>`;
             }
 
-            const editButtonDesktop = isAdmin ? `
-                <button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')">
-                    <i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span>
-                </button>
-            ` : '';
-
-            const editButtonMobile = isAdmin ? `
-                <button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;">
-                    <i class="fas fa-edit"></i>
-                </button>
-            ` : '';
+            const editButtonDesktop = isAdmin ? `<button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')"><i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span></button>` : '';
+            const editButtonMobile = isAdmin ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;"><i class="fas fa-edit"></i></button>` : '';
 
             document.getElementById('detailContent').innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
@@ -1103,42 +939,15 @@
 
                 <div class="detail-section">
                     <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="detail-label">ID заявки</div>
-                            <div class="detail-value">${team.id}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Дата заявки</div>
-                            <div class="detail-value">${team.created}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Город / Населённый пункт</div>
-                            <div class="detail-value">${team.city || '—'}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Республика / край / область</div>
-                            <div class="detail-value">${team.region || '—'}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Почтовый индекс</div>
-                            <div class="detail-value">${team.postalCode || '—'}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Адрес</div>
-                            <div class="detail-value">${team.address || '—'}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Телефон / факс</div>
-                            <div class="detail-value">${phoneLink}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Email</div>
-                            <div class="detail-value">${emailLink}</div>
-                        </div>
-                        <div class="col-12">
-                            <div class="detail-label">ФИО руководителя организации</div>
-                            <div class="detail-value">${team.orgLeader || '—'}</div>
-                        </div>
+                        <div class="col-md-6"><div class="detail-label">ID заявки</div><div class="detail-value">${team.id}</div></div>
+                        <div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div>
+                        <div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${team.city || '—'}</div></div>
+                        <div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || '—'}</div></div>
+                        <div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || '—'}</div></div>
+                        <div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || '—'}</div></div>
+                        <div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div>
+                        <div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div>
+                        <div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || '—'}</div></div>
                     </div>
                 </div>
 
@@ -1148,32 +957,17 @@
                         ${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}
                     </div>
                     <div class="row g-4">
-                        <div class="col-12">
-                            <div class="detail-label">Класс аппарата</div>
-                            <div class="detail-value">${team.apparatusClass || '—'}</div>
-                        </div>
-                        <div class="col-12">
-                            <div class="detail-label">Краткое описание</div>
-                            <div class="detail-value">${descHtml}</div>
-                        </div>
-                        <div class="col-12">
-                            <div class="detail-label">Фото аппарата (${photos.length})</div>
-                            ${photosHtml}
-                        </div>
+                        <div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || '—'}</div></div>
+                        <div class="col-12"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div>
+                        <div class="col-12"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div>
                     </div>
                 </div>
 
                 <div class="detail-section">
                     <h5 class="detail-section-title">Команда</h5>
                     <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="detail-label">ФИО руководителя</div>
-                            <div class="detail-value">${team.teamLeader || '—'}</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Контактный телефон</div>
-                            <div class="detail-value"><a href="tel:${team.teamLeaderPhone.replace(/\s/g, '')}">${team.teamLeaderPhone || '—'}</a></div>
-                        </div>
+                        <div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || '—'}</div></div>
+                        <div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${team.teamLeaderPhone.replace(/\s/g, '')}">${team.teamLeaderPhone || '—'}</a></div></div>
                     </div>
                 </div>
 
@@ -1197,33 +991,25 @@
             document.body.style.overflow = '';
         }
 
-        // ===== ПОЛЯ ДЛЯ ССЫЛОК НА ФОТО =====
+        // Поля для ссылок на фото
         function addPhotoLinkField(url = '') {
             const container = document.getElementById('photoLinksContainer');
-            const idx = container.children.length;
-
             const field = document.createElement('div');
             field.className = 'photo-link-field';
             field.innerHTML = `
-                <img class="preview-thumb" src="${url}" alt="Превью" style="display: ${url ? 'block' : 'none'}" onerror="this.style.display='none'">
+                <img class="preview-thumb" src="${url}" alt="Превью" style="display: ${url && isDirectImageLink(url) ? 'block' : 'none'}" onerror="this.style.display='none'">
                 <input type="text" class="photo-link-input" placeholder="Вставьте ссылку на фото..." value="${url}" oninput="updatePhotoPreview(this)">
-                <button type="button" class="remove-link-btn" onclick="removePhotoLinkField(this)" title="Удалить ссылку">
+                <button type="button" class="remove-link-btn" onclick="this.closest('.photo-link-field').remove()" title="Удалить ссылку">
                     <i class="fas fa-times"></i>
                 </button>
             `;
-
             container.appendChild(field);
-        }
-
-        function removePhotoLinkField(btn) {
-            btn.closest('.photo-link-field').remove();
         }
 
         function updatePhotoPreview(input) {
             const field = input.closest('.photo-link-field');
             const img = field.querySelector('.preview-thumb');
             const url = input.value.trim();
-
             if (url && isDirectImageLink(url)) {
                 img.src = url;
                 img.style.display = 'block';
@@ -1233,8 +1019,7 @@
         }
 
         function getPhotoLinks() {
-            const inputs = document.querySelectorAll('.photo-link-input');
-            return Array.from(inputs)
+            return Array.from(document.querySelectorAll('.photo-link-input'))
                 .map(input => input.value.trim())
                 .filter(url => url.length > 0);
         }
@@ -1242,8 +1027,6 @@
         function createNewTeam() {
             currentTeamId = null;
             isNewTeam = true;
-            editPhotoLinks = [];
-
             document.getElementById('editFormTitle').textContent = 'Новая команда';
             document.getElementById('editOrganization').value = '';
             document.getElementById('editCity').value = '';
@@ -1257,25 +1040,19 @@
             document.getElementById('editDescription').value = '';
             document.getElementById('editTeamLeader').value = '';
             document.getElementById('editTeamLeaderPhone').value = '';
-
             document.getElementById('photoLinksContainer').innerHTML = '';
             addPhotoLinkField();
-
-            const container = document.getElementById('editMembersContainer');
-            container.innerHTML = '';
+            document.getElementById('editMembersContainer').innerHTML = '';
             addMemberField();
-
             showEditPage();
         }
 
         function editTeam(teamId) {
             const team = teamsData.find(t => t.id === teamId);
             if (!team) return;
-
             currentTeamId = teamId;
             isNewTeam = false;
             document.getElementById('editFormTitle').textContent = 'Редактирование команды';
-
             document.getElementById('editOrganization').value = team.organization;
             document.getElementById('editCity').value = team.city;
             document.getElementById('editRegion').value = team.region;
@@ -1289,19 +1066,16 @@
             document.getElementById('editTeamLeader').value = team.teamLeader;
             document.getElementById('editTeamLeaderPhone').value = team.teamLeaderPhone;
 
-            // Заполняем поля для ссылок на фото
             document.getElementById('photoLinksContainer').innerHTML = '';
-            editPhotoLinks = team.photos || [];
-            if (editPhotoLinks.length === 0) {
+            const photos = team.photos || [];
+            if (photos.length === 0) {
                 addPhotoLinkField();
             } else {
-                editPhotoLinks.forEach(url => addPhotoLinkField(url));
+                photos.forEach(url => addPhotoLinkField(url));
             }
 
-            const container = document.getElementById('editMembersContainer');
-            container.innerHTML = '';
+            document.getElementById('editMembersContainer').innerHTML = '';
             team.members.forEach(m => addMemberField(m));
-
             showEditPage();
         }
 
@@ -1319,29 +1093,11 @@
                     </button>
                 </div>
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">ФИО</label>
-                        <input type="text" class="form-control member-fio-input" value="${member?.fio || ''}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Дата рождения</label>
-                        <input type="date" class="form-control member-birth-input" value="${member?.birth || ''}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Паспорт/Св-во</label>
-                        <input type="text" class="form-control member-passport-input" value="${member?.passport || ''}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Студент</label>
-                        <select class="form-select member-student-input">
-                            <option value="Нет" ${member?.isStudent !== 'Да' ? 'selected' : ''}>Нет</option>
-                            <option value="Да" ${member?.isStudent === 'Да' ? 'selected' : ''}>Да</option>
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">Приказ о зачислении</label>
-                        <input type="text" class="form-control member-order-input" value="${member?.order || ''}">
-                    </div>
+                    <div class="col-md-6"><label class="form-label">ФИО</label><input type="text" class="form-control member-fio-input" value="${member?.fio || ''}"></div>
+                    <div class="col-md-6"><label class="form-label">Дата рождения</label><input type="date" class="form-control member-birth-input" value="${member?.birth || ''}"></div>
+                    <div class="col-md-6"><label class="form-label">Паспорт/Св-во</label><input type="text" class="form-control member-passport-input" value="${member?.passport || ''}"></div>
+                    <div class="col-md-6"><label class="form-label">Студент</label><select class="form-select member-student-input"><option value="Нет" ${member?.isStudent !== 'Да' ? 'selected' : ''}>Нет</option><option value="Да" ${member?.isStudent === 'Да' ? 'selected' : ''}>Да</option></select></div>
+                    <div class="col-12"><label class="form-label">Приказ о зачислении</label><input type="text" class="form-control member-order-input" value="${member?.order || ''}"></div>
                 </div>
             `;
             container.appendChild(div);
@@ -1350,8 +1106,6 @@
         function saveToLocalStorage() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(teamsData));
-                localStorage.setItem(STORAGE_TIMESTAMP_KEY, new Date().toISOString());
-                console.log('Данные автосохранены в браузере');
             } catch (e) {
                 console.warn('Не удалось сохранить в localStorage:', e);
                 alert('Внимание: данные не удалось сохранить в браузере.');
@@ -1361,10 +1115,8 @@
         function loadFromLocalStorage() {
             try {
                 const data = localStorage.getItem(STORAGE_KEY);
-                const timestamp = localStorage.getItem(STORAGE_TIMESTAMP_KEY);
                 if (data) {
                     teamsData = JSON.parse(data);
-                    console.log('Данные загружены из localStorage (сохранено:', new Date(timestamp).toLocaleString('ru-RU'), ')');
                     return true;
                 }
             } catch (e) {
@@ -1381,7 +1133,6 @@
             }
 
             const photoLinks = getPhotoLinks();
-
             const memberDivs = document.querySelectorAll('#editMembersContainer .border');
             const members = [];
             memberDivs.forEach(div => {
@@ -1426,9 +1177,7 @@
                 isNewTeam = false;
             } else {
                 const team = teamsData.find(t => t.id === currentTeamId);
-                if (team) {
-                    Object.assign(team, teamData);
-                }
+                if (team) Object.assign(team, teamData);
             }
 
             saveToLocalStorage();
@@ -1437,11 +1186,8 @@
         }
 
         function cancelEdit() {
-            if (isNewTeam || !currentTeamId) {
-                showListPage();
-            } else {
-                showTeamDetails(currentTeamId);
-            }
+            if (isNewTeam || !currentTeamId) showListPage();
+            else showTeamDetails(currentTeamId);
         }
 
         function downloadJSON() {
@@ -1512,7 +1258,6 @@
                 attachFileInputListener();
                 return;
             }
-
             try {
                 const response = await fetch('data/teams.json');
                 if (!response.ok) throw new Error('Файл не найден');
@@ -1534,7 +1279,6 @@
         renderHeaderButtons();
         loadDefaultData();
     </script>
-
 </body>
 
 </html>
