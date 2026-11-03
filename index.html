@@ -1283,7 +1283,16 @@
                 renderTeams(teamsData);
                 saveToLocalStorage();
             } catch (error) {
-                document.getElementById('teamsContainer').innerHTML = `<div class="col-12 text-center text-muted py-5"><i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: #f59e0b;"></i><div>Не удалось загрузить <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">data/teams.json</code>.<br>Войдите в режим Админ и загрузите файл вручную.</div></div>`;
+                document.getElementById('teamsContainer').innerHTML = `
+        <div class="col-12 text-center text-muted py-5">
+            <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: #f59e0b;"></i>
+            <div>
+                <strong>Ошибка:</strong> ${error.message}<br>
+                <strong>URL:</strong> data/teams.json<br>
+                <strong>Статус:</strong> ${error.status || 'N/A'}
+            </div>
+        </div>`;
+                console.error('Full error:', error);
             }
             renderHeaderButtons();
             attachFileInputListener();
