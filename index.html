@@ -910,6 +910,47 @@
             .detail-section:last-child .detail-section-title {
                 margin-bottom: 2px !important;
             }
+
+            /* 1. Включаем Flexbox для контейнера, чтобы управлять порядком блоков ТОЛЬКО при печати */
+            #detailContent {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            /* 2. Задаем строгий порядок блоков при печати */
+            .print-header {
+                order: 1 !important;
+            }
+
+            .print-header-mobile {
+                order: 1 !important;
+            }
+
+            .print-section-info {
+                order: 2 !important;
+            }
+
+            .print-section-team {
+                order: 3 !important;
+            }
+
+            .print-section-members {
+                order: 4 !important;
+            }
+
+            /* 3. Аппарат строго на втором листе */
+            .print-section-apparatus {
+                order: 5 !important;
+                page-break-before: always !important;
+                break-before: page !important;
+                margin-top: 20px !important;
+            }
+
+            /* 4. Скрываем описание и фото аппарата при печати, оставляем только заголовок и класс */
+            .print-hide-desc,
+            .print-hide-photos {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -1387,8 +1428,10 @@
             currentTeamId = teamId; isNewTeam = false;
             const team = teamsData.find(t => t.id === teamId);
             if (!team) return;
+
             const phoneLink = team.phone ? `<a href="tel:${team.phone.replace(/\s/g, '')}">${team.phone}</a>` : '—';
             const emailLink = team.email ? `<a href="mailto:${team.email}">${team.email}</a>` : '—';
+
             let sortedMembers = [...team.members];
             const leaderFio = (team.teamLeader || "").trim().toLowerCase();
             const captainIdx = sortedMembers.findIndex(m => (m.fio || "").trim().toLowerCase() === leaderFio);
@@ -1417,7 +1460,7 @@
             const editButtonMobile = isAdmin ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;"><i class="fas fa-edit"></i></button>` : '';
 
             document.getElementById('detailContent').innerHTML = `
-        <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+        <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2 print-header">
             <div class="d-flex align-items-center gap-3 flex-wrap">
                 <h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>
                 ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
@@ -1429,13 +1472,14 @@
                 </button>
             </div>
         </div>
-        <div class="d-flex gap-1 mb-2">
+        <div class="d-flex gap-1 mb-2 print-header-mobile">
             ${editButtonMobile}
             <button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display: none;">
                 <i class="fas fa-print"></i>
             </button>
         </div>
-        <div class="detail-section"><div class="row g-4">
+        
+        <div class="detail-section print-section-info"><div class="row g-4">
             <div class="col-md-6"><div class="detail-label">ID заявки</div><div class="detail-value">${team.id}</div></div>
             <div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div>
             <div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${team.city || '—'}</div></div>
@@ -1446,16 +1490,19 @@
             <div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div>
             <div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || '—'}</div></div>
         </div></div>
-        <div class="detail-section"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}</div><div class="row g-4">
+        
+        <div class="detail-section print-section-apparatus"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}</div><div class="row g-4">
             <div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || '—'}</div></div>
-            <div class="col-12"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div>
-            <div class="col-12"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div>
+            <div class="col-12 print-hide-desc"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div>
+            <div class="col-12 print-hide-photos"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div>
         </div></div>
-        <div class="detail-section"><h5 class="detail-section-title">Команда</h5><div class="row g-4">
+        
+        <div class="detail-section print-section-team"><h5 class="detail-section-title">Команда</h5><div class="row g-4">
             <div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || '—'}</div></div>
             <div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${team.teamLeaderPhone.replace(/\s/g, '')}">${team.teamLeaderPhone || '—'}</a></div></div>
         </div></div>
-        <div class="detail-section"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>
+        
+        <div class="detail-section print-section-members"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>
     `;
             showDetailPage();
         }
