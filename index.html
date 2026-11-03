@@ -259,7 +259,6 @@
             border-bottom: none;
         }
 
-        /* Фиксированные ширины колонок */
         .col-fio {
             width: 40%;
         }
@@ -280,21 +279,18 @@
             width: 25%;
         }
 
-        /* Перенос ФИО: фамилия сверху, имя-отчество снизу */
+        /* ФИО: фамилия жирная, остальное обычное, в одной строке */
         .fio-cell {
-            line-height: 1.3;
+            line-height: 1.4;
         }
 
         .fio-surname {
             font-weight: 600;
-            display: block;
         }
 
         .fio-name-patronymic {
             font-weight: 400;
             color: #475569;
-            display: block;
-            font-size: 0.9rem;
         }
 
         /* Карточки участников */
@@ -607,6 +603,9 @@
                     <i class="fas fa-file-upload me-2"></i>Загрузить JSON
                 </label>
                 <input type="file" id="fileInput" accept=".json" class="d-none">
+                <button class="btn btn-success btn-upload" onclick="downloadJSON()">
+                    <i class="fas fa-download me-2"></i>Скачать JSON
+                </button>
                 <button class="btn btn-primary btn-upload" onclick="alert('Функция добавления в разработке')">
                     <i class="fas fa-plus me-2"></i>Команда
                 </button>
@@ -759,9 +758,35 @@
             if (parts.length >= 2) {
                 const surname = parts[0];
                 const namePatronymic = parts.slice(1).join(' ');
-                return `<span class="fio-cell"><span class="fio-surname">${surname}</span><span class="fio-name-patronymic">${namePatronymic}</span></span>`;
+                return `<span class="fio-cell"><span class="fio-surname">${surname}</span> <span class="fio-name-patronymic">${namePatronymic}</span></span>`;
             }
             return `<span class="fio-cell"><span class="fio-surname">${fio}</span></span>`;
+        }
+
+        function formatDescription(desc) {
+            if (!desc || desc.trim() === '') return '<div class="detail-value text-muted">—</div>';
+
+            // Разбиваем по переносам строк
+            const paragraphs = desc.split('\n').filter(p => p.trim() !== '');
+
+            let html = '';
+            paragraphs.forEach(para => {
+                // Если абзац содержит несколько предложений (по ". "), разбиваем их
+                const sentences = para.split('. ').filter(s => s.trim() !== '');
+
+                if (sentences.length > 1 && !para.includes('\n')) {
+                    // Несколько предложений в одной строке - разбиваем
+                    sentences.forEach((sentence, idx) => {
+                        const cleanSentence = sentence.endsWith('.') ? sentence : sentence + '.';
+                        html += `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${cleanSentence.trim()}</p>`;
+                    });
+                } else {
+                    // Один абзац или уже разбит по \n
+                    html += `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${para.trim()}</p>`;
+                }
+            });
+
+            return html;
         }
 
         function getCategoryBadge(apparatusClass, extraClass = '') {
@@ -920,7 +945,7 @@
                 <tbody>
                     ${sortedMembers.map(m => {
                 const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
-                const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle;">К</span>' : '';
+                const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle;">Капитан</span>' : '';
                 return `
                         <tr>
                             <td>${formatFio(m.fio)}${captainBadge}</td>
@@ -949,10 +974,7 @@
                 </div>
             `}).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
 
-            const descParts = (team.description || "").split('\n').filter(p => p.trim() !== "");
-            const descHtml = descParts.length > 0
-                ? descParts.map(p => `<p style="text-indent: 1.5em; margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${p.trim()}</p>`).join('')
-                : '<div class="detail-value text-muted">—</div>';
+            const descHtml = formatDescription(team.description);
 
             const photos = team.photos || [];
             let photosHtml;
@@ -1270,6 +1292,26 @@
 
         function cancelEdit() {
             showTeamDetails(currentTeamId);
+        }
+
+        // ===== Скачивание JSON =====
+        function downloadJSON() {
+            if (teamsData.length === 0) {
+                alert('Нет данных для сохранения');
+                return;
+            }
+
+            const dataStr = JSON.stringify(teamsData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `teams_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         }
 
         document.getElementById('fileInput').addEventListener('change', function (event) {
