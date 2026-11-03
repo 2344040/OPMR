@@ -217,7 +217,6 @@
             border-bottom-color: #2563eb;
         }
 
-        /* ===== Таблица участников ===== */
         .members-table {
             width: 100%;
             border-collapse: separate;
@@ -279,7 +278,6 @@
             width: 25%;
         }
 
-        /* ФИО: фамилия жирная, остальное обычное, в одной строке */
         .fio-cell {
             line-height: 1.4;
         }
@@ -293,7 +291,6 @@
             color: #475569;
         }
 
-        /* Карточки участников */
         .member-card {
             background: #f8fafc;
             border-radius: 12px;
@@ -368,7 +365,6 @@
             color: #0f172a;
         }
 
-        /* ===== СЕТКА ФОТО ===== */
         .apparatus-photo-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -526,7 +522,6 @@
             opacity: 1;
         }
 
-        /* ===== ПЕРЕКЛЮЧЕНИЕ ТАБЛИЦА/КАРТОЧКИ ===== */
         .members-table-desktop {
             display: block;
         }
@@ -535,6 +530,12 @@
             display: none;
         }
 
+        /* ===== Кнопка редактирования: десктоп — текст + иконка, мобильный — только иконка ===== */
+        .edit-btn-desktop .edit-btn-text {
+            display: inline;
+        }
+
+        /* ===== Адаптивность ===== */
         @media (max-width: 768px) {
             .members-table-desktop {
                 display: none !important;
@@ -556,6 +557,37 @@
             .detail-section {
                 padding: 20px;
             }
+
+            /* Кнопка редактирования — только иконка */
+            .edit-btn-desktop {
+                display: none !important;
+            }
+
+            .edit-btn-mobile {
+                display: inline-flex !important;
+            }
+
+            /* Кнопки в шапке — в одну строку, только иконки */
+            #headerButtons {
+                flex-wrap: nowrap !important;
+                gap: 0.4rem;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #headerButtons .btn-text {
+                display: none !important;
+            }
+
+            #headerButtons .btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.85rem;
+                white-space: nowrap;
+            }
+
+            #headerButtons .me-2 {
+                margin-right: 0 !important;
+            }
         }
 
         @media (min-width: 769px) {
@@ -564,6 +596,14 @@
             }
 
             .members-cards-mobile {
+                display: none !important;
+            }
+
+            .edit-btn-desktop {
+                display: inline-flex !important;
+            }
+
+            .edit-btn-mobile {
                 display: none !important;
             }
         }
@@ -599,16 +639,7 @@
                 <div class="header-subtitle">27–29 ноября 2026 г. | База данных участников</div>
             </div>
             <div class="d-flex gap-2" id="headerButtons">
-                <label for="fileInput" class="btn btn-outline-primary btn-upload mb-0">
-                    <i class="fas fa-file-upload me-2"></i>Загрузить JSON
-                </label>
-                <input type="file" id="fileInput" accept=".json" class="d-none">
-                <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные и сохранить в папку data/teams.json">
-                    <i class="fas fa-download me-2"></i>Скачать JSON
-                </button>
-                <button class="btn btn-primary btn-upload" onclick="alert('Функция добавления в разработке')">
-                    <i class="fas fa-plus me-2"></i>Команда
-                </button>
+                <!-- Кнопки рендерятся через JS в зависимости от режима -->
             </div>
         </div>
 
@@ -622,19 +653,22 @@
         </div>
 
         <div id="detailPage" class="detail-page">
-            <button class="btn btn-outline-secondary mb-3 btn-action" onclick="showListPage()">
-                <i class="fas fa-arrow-left me-2"></i>К командам
+            <button class="btn btn-outline-secondary mb-3 btn-action" onclick="showListPage()" title="На главную">
+                <i class="fas fa-home"></i>
             </button>
             <div id="detailContent"></div>
         </div>
 
         <div id="editPage" class="detail-page">
-            <button class="btn btn-outline-secondary mb-3 btn-action" onclick="cancelEdit()">
-                <i class="fas fa-times me-2"></i>Отмена
-            </button>
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <button class="btn btn-outline-secondary btn-action" onclick="cancelEdit()" title="На главную">
+                    <i class="fas fa-home"></i>
+                </button>
+                <div id="editPageAdminButtons"></div>
+            </div>
 
             <div class="detail-section">
-                <h4 class="detail-section-title">Редактирование команды</h4>
+                <h4 class="detail-section-title" id="editFormTitle">Редактирование команды</h4>
                 <form id="editForm" class="edit-form">
                     <div class="row g-3">
                         <div class="col-md-6">
@@ -682,10 +716,10 @@
                             <input type="file" class="d-none" id="editPhoto" accept="image/*" multiple onchange="addApparatusPhotos(this)">
                             <div class="d-flex flex-wrap gap-2">
                                 <label for="editPhoto" class="btn btn-outline-primary btn-action mb-0">
-                                    <i class="fas fa-images me-2"></i>Добавить фото
+                                    <i class="fas fa-images me-2"></i><span class="btn-text">Добавить фото</span>
                                 </label>
                                 <button type="button" class="btn btn-outline-danger btn-action" onclick="removeAllApparatusPhotos()">
-                                    <i class="fas fa-trash me-2"></i>Удалить все
+                                    <i class="fas fa-trash me-2"></i><span class="btn-text">Удалить все</span>
                                 </button>
                             </div>
                             <div id="editPhotoName" class="text-muted small mt-2">Фото не загружено</div>
@@ -712,16 +746,17 @@
                             <h5 class="fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Участники</h5>
                             <div id="editMembersContainer"></div>
                             <button type="button" class="btn btn-outline-primary btn-sm mt-2 btn-action" onclick="addMemberField()">
-                                <i class="fas fa-plus me-1"></i>Добавить участника
+                                <i class="fas fa-plus me-1"></i><span class="btn-text">Добавить участника</span>
                             </button>
                         </div>
 
                         <div class="col-12 mt-4 pt-3 border-top">
                             <button type="button" class="btn btn-primary btn-action px-4" onclick="saveEdit()">
-                                <i class="fas fa-save me-2"></i>Сохранить изменения
+                                <i class="fas fa-save me-2"></i><span class="btn-text">Сохранить изменения</span>
                             </button>
                             <button type="button" class="btn btn-outline-secondary btn-action ms-2" onclick="cancelEdit()">
-                                Отмена
+                                <span class="btn-text">Отмена</span>
+                                <i class="fas fa-times ms-2 d-md-none"></i>
                             </button>
                         </div>
                     </div>
@@ -741,6 +776,13 @@
         let teamsData = [];
         let currentTeamId = null;
         let editPhotosArray = [];
+        let isNewTeam = false;
+        const STORAGE_KEY = 'opmr_teams_data';
+        const STORAGE_TIMESTAMP_KEY = 'opmr_teams_timestamp';
+        const ADMIN_MODE_KEY = 'opmr_admin_mode';
+
+        // Режим по умолчанию — пользователь
+        let isAdmin = localStorage.getItem(ADMIN_MODE_KEY) === 'true';
 
         // ===== Утилиты форматирования =====
         function formatDate(dateStr) {
@@ -765,27 +807,19 @@
 
         function formatDescription(desc) {
             if (!desc || desc.trim() === '') return '<div class="detail-value text-muted">—</div>';
-
-            // Разбиваем по переносам строк
             const paragraphs = desc.split('\n').filter(p => p.trim() !== '');
-
             let html = '';
             paragraphs.forEach(para => {
-                // Если абзац содержит несколько предложений (по ". "), разбиваем их
                 const sentences = para.split('. ').filter(s => s.trim() !== '');
-
                 if (sentences.length > 1 && !para.includes('\n')) {
-                    // Несколько предложений в одной строке - разбиваем
-                    sentences.forEach((sentence, idx) => {
+                    sentences.forEach((sentence) => {
                         const cleanSentence = sentence.endsWith('.') ? sentence : sentence + '.';
                         html += `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${cleanSentence.trim()}</p>`;
                     });
                 } else {
-                    // Один абзац или уже разбит по \n
                     html += `<p style="margin-bottom: 0.5rem; color: #334155; font-size: 1rem; line-height: 1.6;">${para.trim()}</p>`;
                 }
             });
-
             return html;
         }
 
@@ -793,7 +827,6 @@
             const raw = String(apparatusClass || '').trim();
             const value = raw.toLowerCase();
             let category = { abbr: 'Н/Д', class: 'bg-secondary text-white' };
-
             if (value.includes('бэк') || value.includes('безэкипаж')) {
                 category = { abbr: 'БЭК', class: 'badge-bek' };
             } else if (value.includes('тнпа') || value.includes('телеуправляем')) {
@@ -801,7 +834,6 @@
             } else if (value.includes('анпа') || value.includes('автономн')) {
                 category = { abbr: 'АНПА', class: 'badge-anpa' };
             }
-
             return `<span class="badge category-badge ${extraClass} ${category.class}">${category.abbr}</span>`;
         }
 
@@ -819,7 +851,6 @@
                 teamArr.forEach(([key, value]) => {
                     obj[key.trim()] = value ? value.trim() : "";
                 });
-
                 let members = [];
                 for (let i = 1; i <= 10; i++) {
                     let fioKey = `Ф.И.О. [${i}]`;
@@ -833,7 +864,6 @@
                         });
                     }
                 }
-
                 let createdDate = "—";
                 if (obj["Время создания"]) {
                     const datePart = obj["Время создания"].trim().split(' ')[0];
@@ -842,7 +872,6 @@
                         createdDate = `${parts[2]}.${parts[1]}.${parts[0]}`;
                     }
                 }
-
                 return {
                     id: obj["ID"] || Math.random().toString(36).substr(2, 9),
                     created: createdDate,
@@ -867,32 +896,81 @@
             });
         }
 
+        // ===== Рендер кнопок в шапке в зависимости от режима =====
+        function renderHeaderButtons() {
+            const container = document.getElementById('headerButtons');
+
+            const adminButtons = isAdmin ? `
+                <label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
+                    <i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span>
+                </label>
+                <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные и сохранить в папку data/teams.json">
+                    <i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span>
+                </button>
+                <button class="btn btn-primary btn-upload" onclick="createNewTeam()">
+                    <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
+                </button>
+            ` : '';
+
+            container.innerHTML = `
+                ${adminButtons}
+                <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}">
+                    <i class="fas fa-${isAdmin ? 'user-shield' : 'user'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Админ'}</span>
+                </button>
+            `;
+
+            // Рендер кнопок на странице редактирования
+            renderEditPageAdminButtons();
+        }
+
+        function renderEditPageAdminButtons() {
+            const container = document.getElementById('editPageAdminButtons');
+            if (!container) return;
+
+            container.innerHTML = isAdmin ? `
+                <label for="fileInputEdit" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
+                    <i class="fas fa-file-upload me-2"></i><span class="btn-text">Загрузить JSON</span>
+                </label>
+                <input type="file" id="fileInputEdit" accept=".json" class="d-none" onchange="handleEditPageFileUpload(event)">
+            ` : '';
+        }
+
+        function toggleAdminMode() {
+            isAdmin = !isAdmin;
+            localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
+            renderHeaderButtons();
+
+            // Если мы на странице деталей — перерисовать (чтобы показать/скрыть кнопку Редактировать)
+            if (currentTeamId && document.getElementById('detailPage').classList.contains('active')) {
+                showTeamDetails(currentTeamId);
+            }
+        }
+
         function renderTeams(teams) {
             const container = document.getElementById('teamsContainer');
             if (teams.length === 0) {
                 container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет загруженных команд</div>';
                 return;
             }
-
             container.innerHTML = teams.map(team => `
-            <div class="col-md-6 col-lg-4">
-                <div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')">
-                    <div class="team-card-head mb-2">
-                        <div class="flex-grow-1">
-                            <div class="org-name">${team.organization}</div>
-                            <div class="team-meta">${team.city || 'Город не указан'}</div>
+                <div class="col-md-6 col-lg-4">
+                    <div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')">
+                        <div class="team-card-head mb-2">
+                            <div class="flex-grow-1">
+                                <div class="org-name">${team.organization}</div>
+                                <div class="team-meta">${team.city || 'Город не указан'}</div>
+                            </div>
+                            ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
                         </div>
-                        ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
-                    </div>
-                    <div class="mt-auto pt-3 border-top">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members.length} участн.</span>
-                            <span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader.split(' ')[0] || '—'}</span>
+                        <div class="mt-auto pt-3 border-top">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members.length} участн.</span>
+                                <span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader.split(' ')[0] || '—'}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
         }
 
         function showListPage() {
@@ -900,13 +978,17 @@
             document.getElementById('detailPage').classList.remove('active');
             document.getElementById('editPage').classList.remove('active');
             document.getElementById('headerButtons').style.display = 'flex';
+            currentTeamId = null;
+            isNewTeam = false;
         }
+
         function showDetailPage() {
             document.getElementById('listPage').classList.add('hidden');
             document.getElementById('detailPage').classList.add('active');
             document.getElementById('editPage').classList.remove('active');
             document.getElementById('headerButtons').style.display = 'none';
         }
+
         function showEditPage() {
             document.getElementById('listPage').classList.add('hidden');
             document.getElementById('detailPage').classList.remove('active');
@@ -916,6 +998,7 @@
 
         function showTeamDetails(teamId) {
             currentTeamId = teamId;
+            isNewTeam = false;
             const team = teamsData.find(t => t.id === teamId);
             if (!team) return;
 
@@ -924,7 +1007,6 @@
 
             let sortedMembers = [...team.members];
             const leaderFio = (team.teamLeader || "").trim().toLowerCase();
-
             const captainIdx = sortedMembers.findIndex(m => (m.fio || "").trim().toLowerCase() === leaderFio);
             if (captainIdx > 0) {
                 const captain = sortedMembers.splice(captainIdx, 1)[0];
@@ -932,176 +1014,184 @@
             }
 
             const membersTableHtml = sortedMembers.length > 0 ? `
-            <table class="members-table">
-                <thead>
-                    <tr>
-                        <th class="col-fio">ФИО</th>
-                        <th class="col-birth">Дата рождения</th>
-                        <th class="col-passport">Паспорт/Св-во</th>
-                        <th class="col-student">Студент</th>
-                        <th class="col-order">Приказ о зачислении</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${sortedMembers.map(m => {
+                <table class="members-table">
+                    <thead>
+                        <tr>
+                            <th class="col-fio">ФИО</th>
+                            <th class="col-birth">Дата рождения</th>
+                            <th class="col-passport">Паспорт/Св-во</th>
+                            <th class="col-student">Студент</th>
+                            <th class="col-order">Приказ о зачислении</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sortedMembers.map(m => {
                 const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
                 const captainBadge = isCaptain ? ' <span class="badge bg-primary" style="font-size: 0.7rem; vertical-align: middle;">Капитан</span>' : '';
                 return `
-                        <tr>
-                            <td>${formatFio(m.fio)}${captainBadge}</td>
-                            <td>${formatDate(m.birth)}</td>
-                            <td>${m.passport || '—'}</td>
-                            <td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td>
-                            <td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td>
-                        </tr>
-                    `}).join('')}
-                </tbody>
-            </table>
-        ` : '<div class="text-muted py-3">Состав команды не указан</div>';
+                            <tr>
+                                <td>${formatFio(m.fio)}${captainBadge}</td>
+                                <td>${formatDate(m.birth)}</td>
+                                <td>${m.passport || '—'}</td>
+                                <td>${m.isStudent === 'Да' ? '<span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Да</span>' : '—'}</td>
+                                <td>${m.isStudent === 'Да' ? (m.order || '—') : '—'}</td>
+                            </tr>
+                        `}).join('')}
+                    </tbody>
+                </table>
+            ` : '<div class="text-muted py-3">Состав команды не указан</div>';
 
             const membersCardsHtml = sortedMembers.length > 0 ? sortedMembers.map(m => {
                 const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
                 const captainBadge = isCaptain ? '<span class="badge bg-primary ms-2" style="font-size: 0.75rem; vertical-align: middle;">Капитан</span>' : '';
                 return `
-                <div class="member-card">
-                    <div class="member-fio">${m.fio}${captainBadge}</div>
-                    <div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div>
-                    <div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>
-                    ${m.isStudent === 'Да' ? `
-                        <div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div>
-                        <div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>
-                    ` : ''}
-                </div>
-            `}).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
+                    <div class="member-card">
+                        <div class="member-fio">${m.fio}${captainBadge}</div>
+                        <div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div>
+                        <div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || 'Не указан'}</div>
+                        ${m.isStudent === 'Да' ? `
+                            <div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size: 0.75rem; padding: 0.35em 0.65em;">Студент</span></div>
+                            <div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || '—'}</div>
+                        ` : ''}
+                    </div>
+                `}).join('') : '<div class="text-muted py-3">Состав команды не указан</div>';
 
             const descHtml = formatDescription(team.description);
 
             const photos = team.photos || [];
             let photosHtml;
-
             if (photos.length === 0) {
                 photosHtml = `<div class="detail-value text-muted" style="font-size: 1rem;">Фото не загружено</div>`;
             } else {
                 const gridClass = photos.length === 1 ? 'apparatus-photo-grid single-photo' : 'apparatus-photo-grid';
-
                 const items = photos.map((src, idx) => {
                     const isDataUrl = String(src).startsWith('data:image/');
                     const isDirectImage = /\.(jpg|jpeg|png|webp|gif)$/i.test(src);
-
                     if (isDataUrl || isDirectImage) {
                         return `
-                        <div class="apparatus-photo-item">
-                            <img src="${src}" alt="Фото аппарата ${idx + 1}" 
-                                 onclick="openLightbox('${src.replace(/'/g, "\\'")}')"
-                                 onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'">
-                        </div>`;
+                            <div class="apparatus-photo-item">
+                                <img src="${src}" alt="Фото аппарата ${idx + 1}" 
+                                     onclick="openLightbox('${src.replace(/'/g, "\\'")}')"
+                                     onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'">
+                            </div>`;
                     } else {
                         return `
-                        <div class="apparatus-photo-item">
-                            <a href="${src}" target="_blank" rel="noopener" class="photo-link-card">
-                                <i class="fas fa-external-link-alt"></i>
-                                <span>Открыть фото ${idx + 1}</span>
-                            </a>
-                        </div>`;
+                            <div class="apparatus-photo-item">
+                                <a href="${src}" target="_blank" rel="noopener" class="photo-link-card">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    <span>Открыть фото ${idx + 1}</span>
+                                </a>
+                            </div>`;
                     }
                 }).join('');
-
                 photosHtml = `<div class="${gridClass}">${items}</div>`;
             }
 
-            document.getElementById('detailContent').innerHTML = `
-            <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-                <h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>
-                <button class="btn btn-outline-primary btn-action" onclick="editTeam('${team.id}')">
-                    <i class="fas fa-edit me-2"></i>Редактировать
+            // Кнопка редактирования — только для админа
+            const editButtonDesktop = isAdmin ? `
+                <button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')">
+                    <i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span>
                 </button>
-            </div>
+            ` : '';
 
-            <div class="detail-section">
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="detail-label">ID заявки</div>
-                        <div class="detail-value">${team.id}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Дата заявки</div>
-                        <div class="detail-value">${team.created}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Город / Населённый пункт</div>
-                        <div class="detail-value">${team.city || '—'}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Республика / край / область</div>
-                        <div class="detail-value">${team.region || '—'}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Почтовый индекс</div>
-                        <div class="detail-value">${team.postalCode || '—'}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Адрес</div>
-                        <div class="detail-value">${team.address || '—'}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Телефон / факс</div>
-                        <div class="detail-value">${phoneLink}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Email</div>
-                        <div class="detail-value">${emailLink}</div>
-                    </div>
-                    <div class="col-12">
-                        <div class="detail-label">ФИО руководителя организации</div>
-                        <div class="detail-value">${team.orgLeader || '—'}</div>
-                    </div>
-                </div>
-            </div>
+            const editButtonMobile = isAdmin ? `
+                <button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display: none;">
+                    <i class="fas fa-edit"></i>
+                </button>
+            ` : '';
 
-            <div class="detail-section">
-                <div class="detail-section-head">
-                    <h5 class="detail-section-title">Аппарат</h5>
-                    ${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}
-                </div>
-                <div class="row g-4">
-                    <div class="col-12">
-                        <div class="detail-label">Класс аппарата</div>
-                        <div class="detail-value">${team.apparatusClass || '—'}</div>
+            document.getElementById('detailContent').innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <h3 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a; font-size: 1.75rem;">${team.organization}</h3>
+                        ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
                     </div>
-                    <div class="col-12">
-                        <div class="detail-label">Краткое описание</div>
-                        <div class="detail-value">
-                            ${descHtml}
+                    ${editButtonDesktop}
+                </div>
+                ${editButtonMobile}
+
+                <div class="detail-section">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="detail-label">ID заявки</div>
+                            <div class="detail-value">${team.id}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Дата заявки</div>
+                            <div class="detail-value">${team.created}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Город / Населённый пункт</div>
+                            <div class="detail-value">${team.city || '—'}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Республика / край / область</div>
+                            <div class="detail-value">${team.region || '—'}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Почтовый индекс</div>
+                            <div class="detail-value">${team.postalCode || '—'}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Адрес</div>
+                            <div class="detail-value">${team.address || '—'}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Телефон / факс</div>
+                            <div class="detail-value">${phoneLink}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value">${emailLink}</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="detail-label">ФИО руководителя организации</div>
+                            <div class="detail-value">${team.orgLeader || '—'}</div>
                         </div>
                     </div>
-                    <div class="col-12">
-                        <div class="detail-label">Фото аппарата (${photos.length})</div>
-                        ${photosHtml}
+                </div>
+
+                <div class="detail-section">
+                    <div class="detail-section-head">
+                        <h5 class="detail-section-title">Аппарат</h5>
+                        ${getCategoryBadge(team.apparatusClass, 'category-badge-xl')}
+                    </div>
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <div class="detail-label">Класс аппарата</div>
+                            <div class="detail-value">${team.apparatusClass || '—'}</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="detail-label">Краткое описание</div>
+                            <div class="detail-value">${descHtml}</div>
+                        </div>
+                        <div class="col-12">
+                            <div class="detail-label">Фото аппарата (${photos.length})</div>
+                            ${photosHtml}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="detail-section">
-                <h5 class="detail-section-title">Команда</h5>
-                <div class="row g-4">
-                    <div class="col-md-6">
-                        <div class="detail-label">ФИО руководителя</div>
-                        <div class="detail-value">${team.teamLeader || '—'}</div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="detail-label">Контактный телефон</div>
-                        <div class="detail-value"><a href="tel:${team.teamLeaderPhone.replace(/\s/g, '')}">${team.teamLeaderPhone || '—'}</a></div>
+                <div class="detail-section">
+                    <h5 class="detail-section-title">Команда</h5>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="detail-label">ФИО руководителя</div>
+                            <div class="detail-value">${team.teamLeader || '—'}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="detail-label">Контактный телефон</div>
+                            <div class="detail-value"><a href="tel:${team.teamLeaderPhone.replace(/\s/g, '')}">${team.teamLeaderPhone || '—'}</a></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="detail-section">
-                <h5 class="detail-section-title">Участники (${sortedMembers.length})</h5>
-                <div class="members-table-desktop">${membersTableHtml}</div>
-                <div class="members-cards-mobile">${membersCardsHtml}</div>
-            </div>
-        `;
-
+                <div class="detail-section">
+                    <h5 class="detail-section-title">Участники (${sortedMembers.length})</h5>
+                    <div class="members-table-desktop">${membersTableHtml}</div>
+                    <div class="members-cards-mobile">${membersCardsHtml}</div>
+                </div>
+            `;
             showDetailPage();
         }
 
@@ -1116,9 +1206,45 @@
             document.body.style.overflow = '';
         }
 
+        // ===== Создание новой команды =====
+        function createNewTeam() {
+            currentTeamId = null;
+            isNewTeam = true;
+            editPhotosArray = [];
+
+            document.getElementById('editFormTitle').textContent = 'Новая команда';
+            document.getElementById('editOrganization').value = '';
+            document.getElementById('editCity').value = '';
+            document.getElementById('editRegion').value = '';
+            document.getElementById('editPostalCode').value = '';
+            document.getElementById('editAddress').value = '';
+            document.getElementById('editPhone').value = '';
+            document.getElementById('editEmail').value = '';
+            document.getElementById('editOrgLeader').value = '';
+            document.getElementById('editApparatusClass').value = '';
+            document.getElementById('editDescription').value = '';
+            document.getElementById('editTeamLeader').value = '';
+            document.getElementById('editTeamLeaderPhone').value = '';
+
+            const photoInput = document.getElementById('editPhoto');
+            if (photoInput) photoInput.value = '';
+            renderEditPhotoPreview();
+
+            const container = document.getElementById('editMembersContainer');
+            container.innerHTML = '';
+            // Добавляем одного пустого участника по умолчанию
+            addMemberField();
+
+            showEditPage();
+        }
+
         function editTeam(teamId) {
             const team = teamsData.find(t => t.id === teamId);
             if (!team) return;
+
+            currentTeamId = teamId;
+            isNewTeam = false;
+            document.getElementById('editFormTitle').textContent = 'Редактирование команды';
 
             document.getElementById('editOrganization').value = team.organization;
             document.getElementById('editCity').value = team.city;
@@ -1134,10 +1260,8 @@
             document.getElementById('editTeamLeaderPhone').value = team.teamLeaderPhone;
 
             editPhotosArray = (team.photos || []).filter(p => String(p).startsWith('data:image/'));
-
             const photoInput = document.getElementById('editPhoto');
             if (photoInput) photoInput.value = '';
-
             renderEditPhotoPreview();
 
             const container = document.getElementById('editMembersContainer');
@@ -1151,32 +1275,27 @@
             const grid = document.getElementById('editPhotoPreviewGrid');
             const name = document.getElementById('editPhotoName');
             if (!grid) return;
-
             if (editPhotosArray.length === 0) {
                 grid.innerHTML = '';
                 if (name) name.textContent = 'Фото не загружено';
                 return;
             }
-
             if (name) name.textContent = `Загружено фото: ${editPhotosArray.length}`;
-
             grid.innerHTML = editPhotosArray.map((src, idx) => `
-            <div class="edit-photo-preview-item">
-                <img src="${src}" alt="Фото ${idx + 1}">
-                <button type="button" class="edit-photo-remove-btn" onclick="removeApparatusPhoto(${idx})" title="Удалить">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-        `).join('');
+                <div class="edit-photo-preview-item">
+                    <img src="${src}" alt="Фото ${idx + 1}">
+                    <button type="button" class="edit-photo-remove-btn" onclick="removeApparatusPhoto(${idx})" title="Удалить">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
         }
 
         function addApparatusPhotos(input) {
             const files = input.files;
             if (!files || files.length === 0) return;
-
             let processed = 0;
             const total = files.length;
-
             Array.from(files).forEach(file => {
                 if (!file.type.startsWith('image/')) {
                     processed++;
@@ -1192,7 +1311,6 @@
                 };
                 reader.readAsDataURL(file);
             });
-
             input.value = '';
         }
 
@@ -1217,66 +1335,81 @@
             div.className = 'border rounded p-3 mb-3';
             div.style.borderColor = '#e2e8f0';
             div.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h6 class="mb-0 fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Участник ${idx + 1}</h6>
-                <button type="button" class="btn btn-outline-danger btn-sm" style="border-radius: 6px;" onclick="this.closest('.border').remove()">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">ФИО</label>
-                    <input type="text" class="form-control member-fio-input" value="${member?.fio || ''}">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0 fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Участник ${idx + 1}</h6>
+                    <button type="button" class="btn btn-outline-danger btn-sm" style="border-radius: 6px;" onclick="this.closest('.border').remove()">
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Дата рождения</label>
-                    <input type="date" class="form-control member-birth-input" value="${member?.birth || ''}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">ФИО</label>
+                        <input type="text" class="form-control member-fio-input" value="${member?.fio || ''}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Дата рождения</label>
+                        <input type="date" class="form-control member-birth-input" value="${member?.birth || ''}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Паспорт/Св-во</label>
+                        <input type="text" class="form-control member-passport-input" value="${member?.passport || ''}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Студент</label>
+                        <select class="form-select member-student-input">
+                            <option value="Нет" ${member?.isStudent !== 'Да' ? 'selected' : ''}>Нет</option>
+                            <option value="Да" ${member?.isStudent === 'Да' ? 'selected' : ''}>Да</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Приказ о зачислении</label>
+                        <input type="text" class="form-control member-order-input" value="${member?.order || ''}">
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <label class="form-label">Паспорт/Св-во</label>
-                    <input type="text" class="form-control member-passport-input" value="${member?.passport || ''}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Студент</label>
-                    <select class="form-select member-student-input">
-                        <option value="Нет" ${member?.isStudent !== 'Да' ? 'selected' : ''}>Нет</option>
-                        <option value="Да" ${member?.isStudent === 'Да' ? 'selected' : ''}>Да</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <label class="form-label">Приказ о зачислении</label>
-                    <input type="text" class="form-control member-order-input" value="${member?.order || ''}">
-                </div>
-            </div>
-        `;
+            `;
             container.appendChild(div);
         }
 
+        // ===== АВТОСОХРАНЕНИЕ В LOCALSTORAGE =====
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(teamsData));
+                localStorage.setItem(STORAGE_TIMESTAMP_KEY, new Date().toISOString());
+                console.log('Данные автосохранены в браузере');
+            } catch (e) {
+                console.warn('Не удалось сохранить в localStorage (возможно, превышен лимит из-за фото):', e);
+                alert('Внимание: данные не удалось сохранить в браузере (слишком много фото). Нажмите "Скачать JSON" для сохранения в файл.');
+            }
+        }
+
+        function loadFromLocalStorage() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                const timestamp = localStorage.getItem(STORAGE_TIMESTAMP_KEY);
+                if (data) {
+                    teamsData = JSON.parse(data);
+                    console.log('Данные загружены из localStorage (сохранено:', new Date(timestamp).toLocaleString('ru-RU'), ')');
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Ошибка чтения localStorage:', e);
+            }
+            return false;
+        }
+
         function saveEdit() {
-            const team = teamsData.find(t => t.id === currentTeamId);
-            if (!team) return;
-
-            team.organization = document.getElementById('editOrganization').value;
-            team.city = document.getElementById('editCity').value;
-            team.region = document.getElementById('editRegion').value;
-            team.postalCode = document.getElementById('editPostalCode').value;
-            team.address = document.getElementById('editAddress').value;
-            team.phone = document.getElementById('editPhone').value;
-            team.email = document.getElementById('editEmail').value;
-            team.orgLeader = document.getElementById('editOrgLeader').value;
-            team.apparatusClass = document.getElementById('editApparatusClass').value;
-            team.description = document.getElementById('editDescription').value;
-            team.teamLeader = document.getElementById('editTeamLeader').value;
-            team.teamLeaderPhone = document.getElementById('editTeamLeaderPhone').value;
-
-            team.photos = [...editPhotosArray];
+            const orgName = document.getElementById('editOrganization').value.trim();
+            if (!orgName) {
+                alert('Пожалуйста, укажите название организации');
+                return;
+            }
 
             const memberDivs = document.querySelectorAll('#editMembersContainer .border');
-            team.members = [];
+            const members = [];
             memberDivs.forEach(div => {
-                const fio = div.querySelector('.member-fio-input').value;
+                const fio = div.querySelector('.member-fio-input').value.trim();
                 if (fio) {
-                    team.members.push({
+                    members.push({
                         fio: fio,
                         birth: div.querySelector('.member-birth-input').value,
                         passport: div.querySelector('.member-passport-input').value,
@@ -1286,34 +1419,74 @@
                 }
             });
 
+            const teamData = {
+                organization: orgName,
+                city: document.getElementById('editCity').value,
+                region: document.getElementById('editRegion').value,
+                postalCode: document.getElementById('editPostalCode').value,
+                address: document.getElementById('editAddress').value,
+                phone: document.getElementById('editPhone').value,
+                email: document.getElementById('editEmail').value,
+                orgLeader: document.getElementById('editOrgLeader').value,
+                apparatusClass: document.getElementById('editApparatusClass').value,
+                description: document.getElementById('editDescription').value,
+                teamLeader: document.getElementById('editTeamLeader').value,
+                teamLeaderPhone: document.getElementById('editTeamLeaderPhone').value,
+                photos: [...editPhotosArray],
+                members: members
+            };
+
+            if (isNewTeam || !currentTeamId) {
+                // Создаем новую команду
+                const now = new Date();
+                const newTeam = {
+                    id: 'NEW_' + Date.now(),
+                    created: `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()}`,
+                    ...teamData
+                };
+                teamsData.push(newTeam);
+                currentTeamId = newTeam.id;
+                isNewTeam = false;
+            } else {
+                // Обновляем существующую
+                const team = teamsData.find(t => t.id === currentTeamId);
+                if (team) {
+                    Object.assign(team, teamData);
+                }
+            }
+
+            saveToLocalStorage();
             renderTeams(teamsData);
             showTeamDetails(currentTeamId);
         }
 
         function cancelEdit() {
-            showTeamDetails(currentTeamId);
+            if (isNewTeam || !currentTeamId) {
+                showListPage();
+            } else {
+                showTeamDetails(currentTeamId);
+            }
         }
 
-        // ===== Скачивание JSON =====
+        // ===== ЭКСПОРТ JSON =====
         function downloadJSON() {
             if (teamsData.length === 0) {
                 alert('Нет данных для сохранения');
                 return;
             }
-
             const dataStr = JSON.stringify(teamsData, null, 2);
             const blob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-
             const link = document.createElement('a');
             link.href = url;
-            link.download = `teams_backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.download = 'teams.json';
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
         }
 
+        // ===== ЗАГРУЗКА JSON С ГЛАВНОЙ =====
         document.getElementById('fileInput').addEventListener('change', function (event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1323,30 +1496,65 @@
                     const rawData = JSON.parse(e.target.result);
                     teamsData = transformYandexFormsData(rawData);
                     renderTeams(teamsData);
+                    saveToLocalStorage();
+                    showListPage();
                 } catch (err) {
                     alert('Ошибка чтения JSON файла.');
                     console.error(err);
                 }
             };
             reader.readAsText(file);
+            event.target.value = '';
         });
 
+        // ===== ЗАГРУЗКА JSON СО СТРАНИЦЫ РЕДАКТИРОВАНИЯ =====
+        function handleEditPageFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const rawData = JSON.parse(e.target.result);
+                    teamsData = transformYandexFormsData(rawData);
+                    renderTeams(teamsData);
+                    saveToLocalStorage();
+                    showListPage();
+                } catch (err) {
+                    alert('Ошибка чтения JSON файла.');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // ===== ЗАГРУЗКА ДАННЫХ ПРИ СТАРТЕ =====
         async function loadDefaultData() {
+            if (loadFromLocalStorage()) {
+                renderTeams(teamsData);
+                renderHeaderButtons();
+                return;
+            }
+
             try {
                 const response = await fetch('data/teams.json');
                 if (!response.ok) throw new Error('Файл не найден');
                 const rawData = await response.json();
                 teamsData = transformYandexFormsData(rawData);
                 renderTeams(teamsData);
+                saveToLocalStorage();
             } catch (error) {
                 document.getElementById('teamsContainer').innerHTML = `
-                <div class="col-12 text-center text-muted py-5">
-                    <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: #f59e0b;"></i>
-                    <div>Не удалось загрузить <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">data/teams.json</code>.<br>Загрузите файл вручную через кнопку выше.</div>
-                </div>`;
+                    <div class="col-12 text-center text-muted py-5">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color: #f59e0b;"></i>
+                        <div>Не удалось загрузить <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">data/teams.json</code>.<br>Загрузите файл вручную через кнопку выше.</div>
+                    </div>`;
             }
+            renderHeaderButtons();
         }
 
+        // Инициализация
+        renderHeaderButtons();
         loadDefaultData();
     </script>
 
