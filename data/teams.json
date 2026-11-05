@@ -74,28 +74,28 @@
     "protocol": {
       "drawNumber": "",
       "presentation": {
-        "structure": 0.2,
-        "analysis": 0,
-        "novelty": 0,
-        "quality": 0
+        "structure": 1,
+        "analysis": 1,
+        "novelty": 2,
+        "quality": 2
       },
-      "dimensions": 0,
-      "weight": 1,
+      "dimensions": 1500,
+      "weight": 9.2,
       "qualification": {
         "penalty": 0,
-        "completed": false
+        "completed": true
       },
       "competition": {
-        "time": "",
-        "timeScore": 0,
-        "gates": 0.1,
-        "parking": 0,
+        "time": "45.6",
+        "timeScore": 16,
+        "gates": 5,
+        "parking": 5,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 0,
-      "totalScore": 0.3
+      "place": 1,
+      "totalScore": 13833
     }
   },
   {
