@@ -954,43 +954,59 @@
         }
 
         /* ===== Стили для заголовков групп ===== */
+        /* ===== Заголовки групп ===== */
         .group-header {
-            display: grid;
-            /* Левая часть (бейдж + текст) занимает место, но не менее ширины самой длинной фразы. Правая часть (дата) прижата вправо */
-            grid-template-columns: minmax(340px, 1fr) auto;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
             gap: 1rem;
             border-bottom: 2px solid #e2e8f0;
             padding-bottom: 8px;
-            margin-bottom: 16px;
+            margin-top: 32px;
+            margin-bottom: 12px;
         }
 
         .group-header-left {
             display: flex;
             align-items: center;
             gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .group-header-title {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Manrope', sans-serif;
+            color: #0f172a;
         }
 
         .group-date-badge {
             background-color: #f1f5f9;
             color: #475569;
             border: 1px solid #cbd5e1;
-            font-size: 0.85rem;
-            font-weight: 600;
-            padding: 0.35em 0.75em;
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Manrope', sans-serif;
+            padding: 0.2em 0.75em;
             border-radius: 6px;
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         @media (max-width: 768px) {
             .group-header {
-                grid-template-columns: 1fr;
+                flex-direction: column;
+                align-items: flex-start;
                 gap: 8px;
             }
 
+            .group-header-title {
+                font-size: 20px;
+            }
+
             .group-date-badge {
-                justify-self: start;
-                margin-top: 4px;
+                font-size: 18px;
             }
         }
 
@@ -1441,7 +1457,7 @@
         <button class="btn btn-primary btn-upload" onclick="createNewTeam()">
             <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
         </button>
-        <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub для автокоммита">
+        <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Сохранить данные и настройки в GitHub">
             <i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span>
         </button>
     ` : '';
