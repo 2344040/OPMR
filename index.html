@@ -1343,34 +1343,34 @@
         function renderHeaderButtons() {
             const container = document.getElementById('headerButtons');
             const adminButtons = isAdmin ? `
-                <label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
-                    <i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span>
-                </label>
-                <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные и сохранить в папку data/teams.json">
-                    <i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span>
-                </button>
-                <button class="btn btn-primary btn-upload" onclick="createNewTeam()">
-                    <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
-                </button>
-                <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub для автокоммита">
-                    <i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span>
-                </button>
-            ` : '';
+        <label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
+            <i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span>
+        </label>
+        <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные и сохранить в папку data/teams.json">
+            <i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span>
+        </button>
+        <button class="btn btn-primary btn-upload" onclick="createNewTeam()">
+            <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
+        </button>
+        <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub для автокоммита">
+            <i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span>
+        </button>
+    ` : '';
 
             container.innerHTML = `
-                ${adminButtons}
-                <div class="btn-group view-switcher" role="group" style="overflow: hidden; margin-right: auto;">
-                    <button class="btn ${currentView === 'teams' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showTeamsView()" style="border-right: none; border-radius: 8px 0 0 8px;">
-                        <i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span>
-                    </button>
-                    <button class="btn ${currentView === 'competition' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showCompetitionView()" style="border-radius: 0 8px 8px 0;">
-                        <i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span>
-                    </button>
-                </div>
-                <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}" style="margin-left: auto;">
-                    <i class="fas fa-${isAdmin ? 'user-shield' : 'lock'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Admin'}</span>
-                </button>
-            `;
+        ${adminButtons}
+        <div class="btn-group view-switcher" role="group" style="overflow: hidden;">
+            <button class="btn ${currentView === 'teams' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showTeamsView()" style="border-right: none; border-radius: 8px 0 0 8px;">
+                <i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span>
+            </button>
+            <button class="btn ${currentView === 'competition' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showCompetitionView()" style="border-radius: 0 8px 8px 0;">
+                <i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span>
+            </button>
+        </div>
+        <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}" style="margin-left: auto !important;">
+            <i class="fas fa-${isAdmin ? 'user-shield' : 'lock'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Admin'}</span>
+        </button>
+    `;
             renderEditPageAdminButtons();
         }
 
