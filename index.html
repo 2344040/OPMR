@@ -1986,71 +1986,64 @@
                 </div>
             </div>
 
-            <!-- Презентация -->
-            <div class="detail-section">
-                <h5 class="detail-section-title">Презентация</h5>
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Структура</label>
-                        <input type="number" step="0.1" class="form-control proto-calc" id="protoPresStructure" value="${pres.structure || 0}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Сравн. анализ</label>
-                        <input type="number" step="0.1" class="form-control proto-calc" id="protoPresAnalysis" value="${pres.analysis || 0}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Новизна</label>
-                        <input type="number" step="0.1" class="form-control proto-calc" id="protoPresNovelty" value="${pres.novelty || 0}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Качество</label>
-                        <input type="number" step="0.1" class="form-control proto-calc" id="protoPresQuality" value="${pres.quality || 0}">
-                    </div>
-                    <div class="col-12">
-                        <div class="alert alert-info py-2 mb-0">
-                            <strong>Сумма презентации:</strong> <span id="presTotal">${(pres.structure || 0) + (pres.analysis || 0) + (pres.novelty || 0) + (pres.quality || 0)}</span>
-                        </div>
-                    </div>
-                </div>
+           // ===== Презентация (без значений по умолчанию) =====
+<div class="detail-section">
+    <h5 class="detail-section-title">Презентация</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Структура</label>
+            <input type="number" step="1" min="0" class="form-control proto-calc" id="protoPresStructure" value="${pres.structure || ''}" placeholder="0">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Сравн. анализ</label>
+            <input type="number" step="1" min="0" class="form-control proto-calc" id="protoPresAnalysis" value="${pres.analysis || ''}" placeholder="0">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Новизна</label>
+            <input type="number" step="1" min="0" class="form-control proto-calc" id="protoPresNovelty" value="${pres.novelty || ''}" placeholder="0">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Качество</label>
+            <input type="number" step="1" min="0" class="form-control proto-calc" id="protoPresQuality" value="${pres.quality || ''}" placeholder="0">
+        </div>
+        <div class="col-12">
+            <div class="alert alert-info py-2 mb-0">
+                <strong>Сумма презентации:</strong> <span id="presTotal">${(pres.structure || 0) + (pres.analysis || 0) + (pres.novelty || 0) + (pres.quality || 0)}</span>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Размеры и вес -->
-            <div class="detail-section">
-                <h5 class="detail-section-title">Размеры и вес</h5>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Сумма размерений</label>
-                        <input type="number" step="0.01" class="form-control proto-calc" id="protoDimensions" value="${p.dimensions || 0}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Вес (коэффициент)</label>
-                        <input type="number" step="0.01" class="form-control proto-calc" id="protoWeight" value="${p.weight || 1}">
-                    </div>
-                    <div class="col-12">
-                        <div class="alert alert-info py-2 mb-0">
-                            <strong>Баллы за размеры:</strong> <span id="dimTotal">${((p.dimensions || 0) * (p.weight || 1)).toFixed(2)}</span>
-                        </div>
-                    </div>
-                </div>
+            // ===== Квалификация (объединённый блок) =====
+<div class="detail-section">
+    <h5 class="detail-section-title">Квалификация</h5>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">Сумма размерений</label>
+            <input type="number" step="0.01" min="0" class="form-control proto-calc" id="protoDimensions" value="${p.dimensions || ''}" placeholder="0">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Вес (кг)</label>
+            <input type="number" step="0.01" min="0" class="form-control proto-calc" id="protoWeight" value="${p.weight || ''}" placeholder="0">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Штраф. баллы</label>
+            <input type="number" step="1" min="0" class="form-control proto-calc" id="protoQualPenalty" value="${qual.penalty || ''}" placeholder="0">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Квал. задание выполнено</label>
+            <div class="form-check mt-2">
+                <input class="form-check-input proto-calc" type="checkbox" id="protoQualCompleted" ${qual.completed ? 'checked' : ''}>
+                <label class="form-check-label" for="protoQualCompleted">Да</label>
             </div>
-
-            <!-- Квалификация -->
-            <div class="detail-section">
-                <h5 class="detail-section-title">Квалификация</h5>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Штрафные баллы</label>
-                        <input type="number" step="0.1" class="form-control proto-calc" id="protoQualPenalty" value="${qual.penalty || 0}">
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Квал. задание выполнено</label>
-                        <select class="form-select" id="protoQualCompleted">
-                            <option value="false" ${!qual.completed ? 'selected' : ''}>Нет</option>
-                            <option value="true" ${qual.completed ? 'selected' : ''}>Да (+)</option>
-                        </select>
-                    </div>
-                </div>
+        </div>
+        <div class="col-12">
+            <div class="alert alert-info py-2 mb-0">
+                <strong>Баллы за размеры:</strong> <span id="dimTotal">${((p.dimensions || 0) * (p.weight || 1)).toFixed(2)}</span>
             </div>
+        </div>
+    </div>
+</div>
 
             <!-- Конкурсное задание -->
             <div class="detail-section">
@@ -2132,16 +2125,23 @@
         }
 
         function updateProtocolTotals() {
-            const getVal = id => parseFloat(document.getElementById(id)?.value) || 0;
+            const getVal = id => {
+                const el = document.getElementById(id);
+                if (!el) return 0;
+                if (el.type === 'checkbox') return el.checked ? 1 : 0;
+                const val = parseFloat(el.value);
+                return isNaN(val) ? 0 : val;
+            };
 
             const pres = getVal('protoPresStructure') + getVal('protoPresAnalysis') + getVal('protoPresNovelty') + getVal('protoPresQuality');
-            const dim = getVal('protoDimensions') * getVal('protoWeight');
+            const dim = getVal('protoDimensions') * (getVal('protoWeight') || 1);
+            const qualBonus = getVal('protoQualCompleted') > 0 ? 1 : 0;
             const comp = getVal('protoCompTimeScore') + getVal('protoCompGates') + getVal('protoCompParking') + getVal('protoCompGarage');
             const qualPenalty = getVal('protoQualPenalty');
             const compPenalty = getVal('protoCompPenalty');
             const extra = getVal('protoExtraBonus');
 
-            const total = pres + dim + comp + extra - qualPenalty - compPenalty;
+            const total = pres + dim + comp + extra + qualBonus - qualPenalty - compPenalty;
 
             document.getElementById('presTotal').textContent = pres;
             document.getElementById('dimTotal').textContent = dim.toFixed(2);
@@ -2168,7 +2168,7 @@
                 weight: getNum('protoWeight'),
                 qualification: {
                     penalty: getNum('protoQualPenalty'),
-                    completed: getVal('protoQualCompleted') === 'true'
+                    completed: document.getElementById('protoQualCompleted')?.checked || false
                 },
                 competition: {
                     time: getVal('protoCompTime'),
