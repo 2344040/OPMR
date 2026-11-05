@@ -1007,7 +1007,6 @@
             }
         }
 
-        /* ===== Переключатель Команды/Соревнования ===== */
         .view-switcher .btn {
             font-size: 1.1rem !important;
             font-weight: 700 !important;
@@ -1044,7 +1043,6 @@
             border-color: #1d4ed8 !important;
         }
 
-        /* ===== Кнопка группировки ===== */
         .btn-grouping {
             border: 2px solid #2563eb !important;
             color: #2563eb !important;
@@ -1088,7 +1086,7 @@
                 <h2 class="header-title mb-0">Открытое первенство СПб по морской робототехнике</h2>
                 <div class="header-subtitle">27–29 ноября 2026 г. | База данных участников</div>
             </div>
-            <div class="d-flex gap-2 justify-content-between" id="headerButtons"></div>
+            <div class="d-flex gap-2" id="headerButtons"></div>
         </div>
 
         <div id="listPage" class="list-page">
@@ -1343,34 +1341,37 @@
         function renderHeaderButtons() {
             const container = document.getElementById('headerButtons');
             const adminButtons = isAdmin ? `
-        <label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
-            <i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span>
-        </label>
-        <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные и сохранить в папку data/teams.json">
-            <i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span>
-        </button>
-        <button class="btn btn-primary btn-upload" onclick="createNewTeam()">
-            <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
-        </button>
-        <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub для автокоммита">
-            <i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span>
-        </button>
-    ` : '';
+                <label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла">
+                    <i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span>
+                </label>
+                <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные и сохранить в папку data/teams.json">
+                    <i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span>
+                </button>
+                <button class="btn btn-primary btn-upload" onclick="createNewTeam()">
+                    <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
+                </button>
+                <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub для автокоммита">
+                    <i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span>
+                </button>
+            ` : '';
 
+            // flex-grow-1 заставляет этот блок занять всё доступное пространство, прижимая кнопку Admin вправо
             container.innerHTML = `
-        ${adminButtons}
-        <div class="btn-group view-switcher" role="group" style="overflow: hidden;">
-            <button class="btn ${currentView === 'teams' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showTeamsView()" style="border-right: none; border-radius: 8px 0 0 8px;">
-                <i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span>
-            </button>
-            <button class="btn ${currentView === 'competition' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showCompetitionView()" style="border-radius: 0 8px 8px 0;">
-                <i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span>
-            </button>
-        </div>
-        <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}" style="margin-left: auto !important;">
-            <i class="fas fa-${isAdmin ? 'user-shield' : 'lock'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Admin'}</span>
-        </button>
-    `;
+                <div class="d-flex gap-2 flex-grow-1 flex-wrap">
+                    ${adminButtons}
+                    <div class="btn-group view-switcher" role="group" style="overflow: hidden;">
+                        <button class="btn ${currentView === 'teams' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showTeamsView()" style="border-right: none; border-radius: 8px 0 0 8px;">
+                            <i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span>
+                        </button>
+                        <button class="btn ${currentView === 'competition' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showCompetitionView()" style="border-radius: 0 8px 8px 0;">
+                            <i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}">
+                    <i class="fas fa-${isAdmin ? 'user-shield' : 'lock'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Admin'}</span>
+                </button>
+            `;
             renderEditPageAdminButtons();
         }
 
@@ -1419,7 +1420,6 @@
         });
 
         function sortTeamsByName(teams) { return [...teams].sort((a, b) => (a.organization || "").toLowerCase().trim().localeCompare((b.organization || "").toLowerCase().trim(), "ru")); }
-
         function toggleGrouping() { isGrouped = !isGrouped; renderTeams(teamsData); }
 
         function renderTeamCard(team) {
@@ -1632,9 +1632,10 @@
                             <thead class="table-light"><tr><th style="width: 50px;">№</th><th>Команда</th><th style="width: 80px;">№ жребия</th><th style="width: 80px;">Презентация</th><th style="width: 80px;">Размеры</th><th style="width: 80px;">Квалиф.</th><th style="width: 80px;">Конкурс</th><th style="width: 80px;">Доп.</th><th style="width: 80px;">Сумма</th><th style="width: 70px;">Место</th></tr></thead>
                             <tbody>${teams.map((team, i) => {
                     const p = team.protocol || {};
+                    // Суммируем только те баллы, которые идут в зачет
                     const presScore = (p.presentation?.structure || 0) + (p.presentation?.analysis || 0) + (p.presentation?.novelty || 0) + (p.presentation?.quality || 0);
                     const compScore = (p.competition?.timeScore || 0) + (p.competition?.gates || 0) + (p.competition?.parking || 0) + (p.competition?.garage || 0);
-                    const total = presScore + (p.dimensions || 0) * (p.weight || 1) + compScore + (p.extraBonus || 0) - (p.qualification?.penalty || 0) - (p.competition?.penalty || 0);
+                    const total = presScore + compScore + (p.extraBonus || 0);
                     return `<tr style="cursor: pointer;" onclick="showProtocolPage('${team.id}')"><td>${i + 1}</td><td><div class="fw-bold">${team.organization}</div><div class="text-muted small">${team.teamLeader || "—"}</div></td><td>${p.drawNumber || "—"}</td><td>${presScore || "—"}</td><td>${p.dimensions ? (p.dimensions * (p.weight || 1)).toFixed(2) : "—"}</td><td>${p.qualification?.completed ? '<i class="fas fa-check text-success"></i>' : p.qualification?.penalty ? "-" + p.qualification.penalty : "—"}</td><td>${compScore || "—"}</td><td>${p.extraBonus || "—"}</td><td class="fw-bold">${total > 0 ? total.toFixed(1) : "—"}</td><td>${p.place ? `<span class="badge bg-primary">${p.place}</span>` : "—"}</td></tr>`;
                 }).join("")}</tbody>
                         </table>
@@ -1693,7 +1694,6 @@
                                     <label class="form-check-label" for="protoQualCompleted">Да</label>
                                 </div>
                             </div>
-                            <div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Баллы за размеры:</strong> <span id="dimTotal">${((p.dimensions || 0) * (p.weight || 1)).toFixed(2)}</span></div></div>
                         </div>
                     </div>
                     <div class="detail-section">
@@ -1731,17 +1731,21 @@
         }
 
         function updateProtocolTotals() {
-            const getVal = (id) => { const el = document.getElementById(id); if (!el) return 0; if (el.type === "checkbox") return el.checked ? 1 : 0; const val = parseFloat(el.value); return isNaN(val) ? 0 : val; };
+            const getVal = (id) => {
+                const el = document.getElementById(id);
+                if (!el) return 0;
+                const val = parseFloat(el.value);
+                return isNaN(val) ? 0 : val;
+            };
+
+            // Суммируем только баллы, которые идут в зачет (Презентация + Конкурс + Доп)
             const pres = getVal("protoPresStructure") + getVal("protoPresAnalysis") + getVal("protoPresNovelty") + getVal("protoPresQuality");
-            const dim = getVal("protoDimensions") * (getVal("protoWeight") || 1);
-            const qualBonus = getVal("protoQualCompleted") > 0 ? 1 : 0;
             const comp = getVal("protoCompTimeScore") + getVal("protoCompGates") + getVal("protoCompParking") + getVal("protoCompGarage");
-            const qualPenalty = getVal("protoQualPenalty");
-            const compPenalty = getVal("protoCompPenalty");
             const extra = getVal("protoExtraBonus");
-            const total = pres + dim + comp + extra + qualBonus - qualPenalty - compPenalty;
+
+            const total = pres + comp + extra;
+
             document.getElementById("presTotal").textContent = pres;
-            document.getElementById("dimTotal").textContent = dim.toFixed(2);
             document.getElementById("compTotal").textContent = comp;
             document.getElementById("protoTotal").textContent = total.toFixed(1);
         }
