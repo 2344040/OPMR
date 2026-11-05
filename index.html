@@ -951,6 +951,25 @@
             .print-hide-photos {
                 display: none !important;
             }
+
+            /* Печать страницы соревнований */
+            #competitionPage {
+                display: block !important;
+            }
+
+            #competitionPage .detail-section {
+                page-break-inside: avoid;
+                margin-bottom: 16px !important;
+            }
+
+            #competitionPage table {
+                font-size: 8pt !important;
+            }
+
+            #competitionPage table th,
+            #competitionPage table td {
+                padding: 3px 4px !important;
+            }
         }
 
         /* ===== Стили для заголовков групп ===== */
@@ -1154,6 +1173,37 @@
                 </form>
             </div>
         </div>
+
+        <!-- Страница соревнований -->
+        <div id="competitionPage" class="detail-page">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <button class="btn btn-outline-secondary btn-action" onclick="showTeamsView()" title="На главную">
+                    <i class="fas fa-home"></i>
+                </button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-action" onclick="calculatePlaces()">
+                        <i class="fas fa-trophy me-2"></i><span class="btn-text">Рассчитать места</span>
+                    </button>
+                    <button class="btn btn-outline-secondary btn-action" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i><span class="btn-text">Печать</span>
+                    </button>
+                </div>
+            </div>
+            <div id="competitionContent"></div>
+        </div>
+
+        <!-- Страница заполнения протокола -->
+        <div id="protocolPage" class="detail-page">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <button class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">
+                    <i class="fas fa-arrow-left me-2"></i><span class="btn-text">К соревнованиям</span>
+                </button>
+                <button class="btn btn-primary btn-action" onclick="saveProtocol()">
+                    <i class="fas fa-save me-2"></i><span class="btn-text">Сохранить протокол</span>
+                </button>
+            </div>
+            <div id="protocolContent"></div>
+        </div>
     </div>
 
     <!-- Модалка настроек GitHub -->
@@ -1225,6 +1275,8 @@
         const ADMIN_PASSWORD = 'opmr2026';
         let isAdmin = localStorage.getItem(ADMIN_MODE_KEY) === 'true';
         let isGrouped = false;
+        let currentView = 'teams'; // 'teams' или 'competition'
+        let currentProtocolTeamId = null;
 
         // ===== GitHub настройки =====
         function getGitHubSettings() {
@@ -1449,9 +1501,17 @@
             // btn-primary (синий фон, белый текст) для активной, btn-outline-primary (белый фон, синий текст/рамка) для неактивной
             container.innerHTML = `
         ${adminButtons}
-        <button class="btn btn-upload ${isGrouped ? 'btn-grouping active' : 'btn-grouping'}" onclick="toggleGrouping()" title="Группировка по классам аппаратов">
-    <i class="fas fa-layer-group"></i><span class="btn-text ms-2">Группировка</span>
-</button>
+
+        <div class="btn-group btn-upload" role="group">
+    <button class="btn ${currentView === 'teams' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showTeamsView()">
+        <i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span>
+    </button>
+    <button class="btn ${currentView === 'competition' ? 'btn-primary' : 'btn-outline-primary'}" onclick="showCompetitionView()">
+        <i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span>
+    </button>
+</div>
+
+    
         <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}">
             <i class="fas fa-${isAdmin ? 'user-shield' : 'lock'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Admin'}</span>
         </button>
@@ -1578,79 +1638,92 @@
             }
 
             const sortedTeams = sortTeamsByName(teams);
+            let html = '';
 
             if (!isGrouped) {
-                container.innerHTML = `<div class="row g-3">${sortedTeams.map(team => renderTeamCard(team)).join('')}</div>`;
+                html = `<div class="row g-3">${sortedTeams.map(team => renderTeamCard(team)).join('')}</div>`;
             } else {
-                // Структура данных для групп с точными названиями и датами
                 const groups = {
-                    'bek': {
-                        abbr: 'БЭК',
-                        badgeClass: 'badge-bek',
-                        title: 'Безэкипажные катера',
-                        date: '28.11.2026',
-                        teams: []
-                    },
-                    'tnpa': {
-                        abbr: 'ТНПА',
-                        badgeClass: 'badge-tnpa',
-                        title: 'Телеуправляемые необитаемые подводные аппараты',
-                        date: '28.11.2026',
-                        teams: []
-                    },
-                    'anpa': {
-                        abbr: 'АНПА',
-                        badgeClass: 'badge-anpa',
-                        title: 'Автономные необитаемые подводные аппараты',
-                        date: '29.11.2026',
-                        teams: []
-                    },
-                    'other': {
-                        abbr: 'Н/Д',
-                        badgeClass: 'bg-secondary text-white',
-                        title: 'Прочие / Класс не указан',
-                        date: '',
-                        teams: []
-                    }
+                    'bek': { abbr: 'БЭК', badgeClass: 'badge-bek', title: 'Безэкипажные катера', date: '28.11.2026', teams: [] },
+                    'tnpa': { abbr: 'ТНПА', badgeClass: 'badge-tnpa', title: 'Телеуправляемые необитаемые подводные аппараты', date: '28.11.2026', teams: [] },
+                    'anpa': { abbr: 'АНПА', badgeClass: 'badge-anpa', title: 'Автономные необитаемые подводные аппараты', date: '29.11.2026', teams: [] },
+                    'other': { abbr: 'Н/Д', badgeClass: 'bg-secondary text-white', title: 'Прочие / Класс не указан', date: '', teams: [] }
                 };
 
-                // Распределяем команды по группам
                 sortedTeams.forEach(team => {
                     const val = String(team.apparatusClass || "").toLowerCase();
                     let key = 'other';
                     if (val.includes('бэк') || val.includes('безэкипаж')) key = 'bek';
                     else if (val.includes('тнпа') || val.includes('телеуправляем')) key = 'tnpa';
                     else if (val.includes('анпа') || val.includes('автономн')) key = 'anpa';
-
                     groups[key].teams.push(team);
                 });
 
-                // Генерируем HTML
-                let html = '';
                 for (const key in groups) {
                     if (groups[key].teams.length > 0) {
                         const g = groups[key];
                         html += `
-    <div class="col-12">
-        <div class="group-header">
-            <div class="group-header-left">
-                <span class="badge category-badge ${g.badgeClass}" style="font-size: 1rem; padding: 0.5rem 0.85rem;">${g.abbr}</span>
-                <span class="group-header-title">${g.title}</span>
-            </div>
-            ${g.date ? `<span class="group-date-badge">${g.date}</span>` : ''}
-        </div>
-    </div>
-    <div class="row g-3 mb-4">
-        ${g.teams.map(team => renderTeamCard(team)).join('')}
-    </div>
-`;
+                    <div class="col-12 mt-4">
+                        <div class="group-header">
+                            <div class="group-header-left">
+                                <span class="badge category-badge ${g.badgeClass}" style="font-size: 1rem; padding: 0.5rem 0.85rem;">${g.abbr}</span>
+                                <span class="group-header-title">${g.title}</span>
+                            </div>
+                            ${g.date ? `<span class="group-date-badge">${g.date}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        ${g.teams.map(team => renderTeamCard(team)).join('')}
+                    </div>
+                `;
                     }
                 }
-                container.innerHTML = html;
             }
+
+            // Кнопка группировки под карточками
+            html += `
+        <div class="col-12 mt-3 mb-4 d-flex justify-content-center">
+            <button class="btn ${isGrouped ? 'btn-grouping active' : 'btn-grouping'}" onclick="toggleGrouping()">
+                <i class="fas fa-layer-group me-2"></i>${isGrouped ? 'Показать списком' : 'Группировать по классам'}
+            </button>
+        </div>
+    `;
+
+            container.innerHTML = html;
         }
 
         function showListPage() { document.getElementById('listPage').classList.remove('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'flex'; currentTeamId = null; isNewTeam = false; }
+
+        function showTeamsView() {
+            currentView = 'teams';
+            document.getElementById('listPage').classList.remove('hidden');
+            document.getElementById('detailPage').classList.remove('active');
+            document.getElementById('editPage').classList.remove('active');
+            document.getElementById('competitionPage').classList.remove('active');
+            document.getElementById('protocolPage').classList.remove('active');
+            document.getElementById('headerButtons').style.display = 'flex';
+            renderHeaderButtons();
+            renderTeams(teamsData);
+        }
+
+        function showCompetitionView() {
+            currentView = 'competition';
+            document.getElementById('listPage').classList.add('hidden');
+            document.getElementById('detailPage').classList.remove('active');
+            document.getElementById('editPage').classList.remove('active');
+            document.getElementById('competitionPage').classList.add('active');
+            document.getElementById('protocolPage').classList.remove('active');
+            document.getElementById('headerButtons').style.display = 'none';
+            renderCompetition();
+        }
+
+        function showProtocolPage(teamId) {
+            currentProtocolTeamId = teamId;
+            document.getElementById('competitionPage').classList.remove('active');
+            document.getElementById('protocolPage').classList.add('active');
+            renderProtocolForm(teamId);
+        }
+
         function showDetailPage() { document.getElementById('listPage').classList.add('hidden'); document.getElementById('detailPage').classList.add('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'none'; }
         function showEditPage() { document.getElementById('listPage').classList.add('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.add('active'); document.getElementById('headerButtons').style.display = 'none'; }
 
@@ -1794,6 +1867,359 @@
             div.style.borderColor = '#e2e8f0';
             div.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3"><h6 class="mb-0 fw-bold" style="font-family: 'Manrope', sans-serif; color: #0f172a;">Участник ${idx + 1}</h6><button type="button" class="btn btn-outline-danger btn-sm" style="border-radius: 6px;" onclick="this.closest('.border').remove()"><i class="fas fa-trash"></i></button></div><div class="row g-3"><div class="col-md-6"><label class="form-label">ФИО</label><input type="text" class="form-control member-fio-input" value="${member?.fio || ''}"></div><div class="col-md-6"><label class="form-label">Дата рождения</label><input type="date" class="form-control member-birth-input" value="${member?.birth || ''}"></div><div class="col-md-6"><label class="form-label">Паспорт/Св-во</label><input type="text" class="form-control member-passport-input" value="${member?.passport || ''}"></div><div class="col-md-6"><label class="form-label">Студент</label><select class="form-select member-student-input"><option value="Нет" ${member?.isStudent !== 'Да' ? 'selected' : ''}>Нет</option><option value="Да" ${member?.isStudent === 'Да' ? 'selected' : ''}>Да</option></select></div><div class="col-12"><label class="form-label">Приказ о зачислении</label><input type="text" class="form-control member-order-input" value="${member?.order || ''}"></div></div>`;
             container.appendChild(div);
+        }
+
+        function renderCompetition() {
+            const container = document.getElementById('competitionContent');
+            const groups = [
+                { key: 'bek', title: 'БЭК — Безэкипажные катера', date: '28.11.2026', filter: v => v.includes('бэк') || v.includes('безэкипаж') },
+                { key: 'tnpa', title: 'ТНПА — Телеуправляемые необитаемые подводные аппараты', date: '28.11.2026', filter: v => v.includes('тнпа') || v.includes('телеуправляем') },
+                { key: 'anpa', title: 'АНПА — Автономные необитаемые подводные аппараты', date: '29.11.2026', filter: v => v.includes('анпа') || v.includes('автономн') }
+            ];
+
+            let html = '';
+            groups.forEach((g, idx) => {
+                const teams = teamsData.filter(t => g.filter(String(t.apparatusClass || '').toLowerCase()));
+                if (teams.length === 0) return;
+
+                html += `
+            <div class="detail-section mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h4 class="fw-bold mb-0" style="font-family: 'Manrope', sans-serif; color: #0f172a;">
+                        ${g.title}
+                        <span class="badge bg-secondary ms-2" style="font-size: 0.8rem;">${g.date}</span>
+                    </h4>
+                    <span class="text-muted small">${teams.length} команд</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle" style="font-size: 0.9rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 50px;">№</th>
+                                <th>Команда</th>
+                                <th style="width: 80px;">№ жребия</th>
+                                <th style="width: 80px;">Презентация</th>
+                                <th style="width: 80px;">Размеры</th>
+                                <th style="width: 80px;">Квалиф.</th>
+                                <th style="width: 80px;">Конкурс</th>
+                                <th style="width: 80px;">Доп.</th>
+                                <th style="width: 80px;">Сумма</th>
+                                <th style="width: 70px;">Место</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${teams.map((team, i) => {
+                    const p = team.protocol || {};
+                    const presScore = (p.presentation?.structure || 0) + (p.presentation?.analysis || 0) + (p.presentation?.novelty || 0) + (p.presentation?.quality || 0);
+                    const compScore = (p.competition?.timeScore || 0) + (p.competition?.gates || 0) + (p.competition?.parking || 0) + (p.competition?.garage || 0);
+                    const total = presScore + (p.dimensions || 0) * (p.weight || 1) + compScore + (p.extraBonus || 0) - (p.qualification?.penalty || 0) - (p.competition?.penalty || 0);
+                    return `
+                                    <tr style="cursor: pointer;" onclick="showProtocolPage('${team.id}')">
+                                        <td>${i + 1}</td>
+                                        <td>
+                                            <div class="fw-bold">${team.organization}</div>
+                                            <div class="text-muted small">${team.teamLeader || '—'}</div>
+                                        </td>
+                                        <td>${p.drawNumber || '—'}</td>
+                                        <td>${presScore || '—'}</td>
+                                        <td>${p.dimensions ? (p.dimensions * (p.weight || 1)).toFixed(2) : '—'}</td>
+                                        <td>${p.qualification?.completed ? '<i class="fas fa-check text-success"></i>' : (p.qualification?.penalty ? '-' + p.qualification.penalty : '—')}</td>
+                                        <td>${compScore || '—'}</td>
+                                        <td>${p.extraBonus || '—'}</td>
+                                        <td class="fw-bold">${total > 0 ? total.toFixed(1) : '—'}</td>
+                                        <td>${p.place ? `<span class="badge bg-primary">${p.place}</span>` : '—'}</td>
+                                    </tr>
+                                `;
+                }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+            });
+
+            if (html === '') {
+                html = '<div class="col-12 text-center text-muted py-5">Нет команд для соревнований</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderProtocolForm(teamId) {
+            const team = teamsData.find(t => t.id === teamId);
+            if (!team) return;
+
+            const p = team.protocol || {};
+            const pres = p.presentation || {};
+            const qual = p.qualification || {};
+            const comp = p.competition || {};
+
+            const container = document.getElementById('protocolContent');
+            container.innerHTML = `
+        <div class="detail-section">
+            <h4 class="detail-section-title">Протокол команды</h4>
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <div class="detail-label">Команда</div>
+                    <div class="detail-value">${team.organization}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-label">Руководитель</div>
+                    <div class="detail-value">${team.teamLeader || '—'}</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="detail-label">Класс аппарата</div>
+                    <div class="detail-value">${team.apparatusClass || '—'}</div>
+                </div>
+            </div>
+        </div>
+
+        <form id="protocolForm" class="edit-form">
+            <!-- № по жребию -->
+            <div class="detail-section">
+                <h5 class="detail-section-title">Жеребьёвка</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">№ по жребию</label>
+                        <input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber || ''}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Презентация -->
+            <div class="detail-section">
+                <h5 class="detail-section-title">Презентация</h5>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Структура</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoPresStructure" value="${pres.structure || 0}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Сравн. анализ</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoPresAnalysis" value="${pres.analysis || 0}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Новизна</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoPresNovelty" value="${pres.novelty || 0}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Качество</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoPresQuality" value="${pres.quality || 0}">
+                    </div>
+                    <div class="col-12">
+                        <div class="alert alert-info py-2 mb-0">
+                            <strong>Сумма презентации:</strong> <span id="presTotal">${(pres.structure || 0) + (pres.analysis || 0) + (pres.novelty || 0) + (pres.quality || 0)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Размеры и вес -->
+            <div class="detail-section">
+                <h5 class="detail-section-title">Размеры и вес</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Сумма размерений</label>
+                        <input type="number" step="0.01" class="form-control proto-calc" id="protoDimensions" value="${p.dimensions || 0}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Вес (коэффициент)</label>
+                        <input type="number" step="0.01" class="form-control proto-calc" id="protoWeight" value="${p.weight || 1}">
+                    </div>
+                    <div class="col-12">
+                        <div class="alert alert-info py-2 mb-0">
+                            <strong>Баллы за размеры:</strong> <span id="dimTotal">${((p.dimensions || 0) * (p.weight || 1)).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Квалификация -->
+            <div class="detail-section">
+                <h5 class="detail-section-title">Квалификация</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Штрафные баллы</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoQualPenalty" value="${qual.penalty || 0}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Квал. задание выполнено</label>
+                        <select class="form-select" id="protoQualCompleted">
+                            <option value="false" ${!qual.completed ? 'selected' : ''}>Нет</option>
+                            <option value="true" ${qual.completed ? 'selected' : ''}>Да (+)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Конкурсное задание -->
+            <div class="detail-section">
+                <h5 class="detail-section-title">Конкурсное задание</h5>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Время (сек)</label>
+                        <input type="text" class="form-control" id="protoCompTime" value="${comp.time || ''}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Балл за время</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoCompTimeScore" value="${comp.timeScore || 0}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Прохождение ворот</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoCompGates" value="${comp.gates || 0}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Парковка</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoCompParking" value="${comp.parking || 0}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Нужный гараж</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoCompGarage" value="${comp.garage || 0}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Штрафные баллы</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoCompPenalty" value="${comp.penalty || 0}">
+                    </div>
+                    <div class="col-12">
+                        <div class="alert alert-info py-2 mb-0">
+                            <strong>Сумма конкурса:</strong> <span id="compTotal">${(comp.timeScore || 0) + (comp.gates || 0) + (comp.parking || 0) + (comp.garage || 0)}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Доп баллы -->
+            <div class="detail-section">
+                <h5 class="detail-section-title">Дополнительные баллы</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">За внеконкурсное задание</label>
+                        <input type="number" step="0.1" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus || 0}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Итого -->
+            <div class="detail-section" style="background: #f0f9ff; border: 2px solid #3b82f6;">
+                <div class="row g-3 align-items-center">
+                    <div class="col-md-8">
+                        <div class="detail-label" style="font-size: 1rem;">ИТОГО БАЛЛОВ</div>
+                        <div class="detail-value" style="font-size: 2rem; font-weight: 700; color: #1d4ed8;" id="protoTotal">0</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Место</label>
+                        <input type="number" class="form-control" id="protoPlace" value="${p.place || ''}" style="font-size: 1.5rem; font-weight: 700; text-align: center;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+                <button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()">
+                    <i class="fas fa-save me-2"></i>Сохранить протокол
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">
+                    Отмена
+                </button>
+            </div>
+        </form>
+    `;
+
+            // Автоподсчёт при изменении полей
+            document.querySelectorAll('.proto-calc').forEach(input => {
+                input.addEventListener('input', updateProtocolTotals);
+            });
+            updateProtocolTotals();
+        }
+
+        function updateProtocolTotals() {
+            const getVal = id => parseFloat(document.getElementById(id)?.value) || 0;
+
+            const pres = getVal('protoPresStructure') + getVal('protoPresAnalysis') + getVal('protoPresNovelty') + getVal('protoPresQuality');
+            const dim = getVal('protoDimensions') * getVal('protoWeight');
+            const comp = getVal('protoCompTimeScore') + getVal('protoCompGates') + getVal('protoCompParking') + getVal('protoCompGarage');
+            const qualPenalty = getVal('protoQualPenalty');
+            const compPenalty = getVal('protoCompPenalty');
+            const extra = getVal('protoExtraBonus');
+
+            const total = pres + dim + comp + extra - qualPenalty - compPenalty;
+
+            document.getElementById('presTotal').textContent = pres;
+            document.getElementById('dimTotal').textContent = dim.toFixed(2);
+            document.getElementById('compTotal').textContent = comp;
+            document.getElementById('protoTotal').textContent = total.toFixed(1);
+        }
+
+        function saveProtocol() {
+            const team = teamsData.find(t => t.id === currentProtocolTeamId);
+            if (!team) return;
+
+            const getVal = id => document.getElementById(id)?.value;
+            const getNum = id => parseFloat(getVal(id)) || 0;
+
+            team.protocol = {
+                drawNumber: getVal('protoDrawNumber'),
+                presentation: {
+                    structure: getNum('protoPresStructure'),
+                    analysis: getNum('protoPresAnalysis'),
+                    novelty: getNum('protoPresNovelty'),
+                    quality: getNum('protoPresQuality')
+                },
+                dimensions: getNum('protoDimensions'),
+                weight: getNum('protoWeight'),
+                qualification: {
+                    penalty: getNum('protoQualPenalty'),
+                    completed: getVal('protoQualCompleted') === 'true'
+                },
+                competition: {
+                    time: getVal('protoCompTime'),
+                    timeScore: getNum('protoCompTimeScore'),
+                    gates: getNum('protoCompGates'),
+                    parking: getNum('protoCompParking'),
+                    garage: getNum('protoCompGarage'),
+                    penalty: getNum('protoCompPenalty')
+                },
+                extraBonus: getNum('protoExtraBonus'),
+                place: parseInt(getVal('protoPlace')) || 0,
+                totalScore: parseFloat(document.getElementById('protoTotal').textContent) || 0
+            };
+
+            saveToLocalStorage();
+
+            // Автокоммит в GitHub
+            const ghSettings = getGitHubSettings();
+            if (ghSettings && ghSettings.owner && ghSettings.repo && ghSettings.token) {
+                showToast('Сохранение в GitHub...', 'info');
+                commitToGitHub().then(result => {
+                    if (result.success) showToast(result.message, 'success');
+                    else showToast(result.message, 'error');
+                });
+            } else {
+                showToast('Протокол сохранён локально', 'success');
+            }
+
+            showCompetitionView();
+        }
+
+        function calculatePlaces() {
+            if (!confirm('Автоматически рассчитать места по сумме баллов?')) return;
+
+            const groups = [
+                { filter: v => v.includes('бэк') || v.includes('безэкипаж') },
+                { filter: v => v.includes('тнпа') || v.includes('телеуправляем') },
+                { filter: v => v.includes('анпа') || v.includes('автономн') }
+            ];
+
+            groups.forEach(g => {
+                const teams = teamsData.filter(t => g.filter(String(t.apparatusClass || '').toLowerCase()) && t.protocol);
+                teams.sort((a, b) => (b.protocol.totalScore || 0) - (a.protocol.totalScore || 0));
+                teams.forEach((team, idx) => {
+                    team.protocol.place = idx + 1;
+                });
+            });
+
+            saveToLocalStorage();
+            renderCompetition();
+            showToast('Места рассчитаны', 'success');
         }
 
         function saveToLocalStorage() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(teamsData)); } catch (e) { console.warn('Не удалось сохранить в localStorage:', e); } }
