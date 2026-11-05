@@ -1111,6 +1111,7 @@
         const GH_SETTINGS_KEY = 'opmr_gh_settings';
         const ADMIN_PASSWORD = 'opmr2026';
         let isAdmin = localStorage.getItem(ADMIN_MODE_KEY) === 'true';
+        let isGrouped = false;
 
         // ===== GitHub настройки =====
         function getGitHubSettings() {
@@ -1331,10 +1332,16 @@
             <i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span>
         </button>
     ` : '';
-            container.innerHTML = `${adminButtons}
+
+            container.innerHTML = `
+        ${adminButtons}
+        <button class="btn ${isGrouped ? 'btn-info text-white' : 'btn-outline-info'} btn-upload" onclick="toggleGrouping()" title="Группировка по классам аппаратов">
+            <i class="fas fa-layer-group"></i><span class="btn-text ms-2">Группировка</span>
+        </button>
         <button class="btn ${isAdmin ? 'btn-dark' : 'btn-outline-secondary'} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? 'Выйти из режима администратора' : 'Войти в режим администратора'}">
             <i class="fas fa-${isAdmin ? 'user-shield' : 'lock'}"></i><span class="btn-text ms-2">${isAdmin ? 'Админ' : 'Вход'}</span>
-        </button>`;
+        </button>
+    `;
             renderEditPageAdminButtons();
         }
 
@@ -1399,25 +1406,107 @@
             }
         });
 
-        function renderTeams(teams) {
-            const container = document.getElementById('teamsContainer');
-            if (teams.length === 0) { container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет загруженных команд</div>'; return; }
-            container.innerHTML = teams.map(team => `
-                <div class="col-md-6 col-lg-4">
-                    <div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')">
-                        <div class="team-card-head mb-2">
-                            <div class="flex-grow-1"><div class="org-name">${team.organization}</div><div class="team-meta">${team.city || 'Город не указан'}</div></div>
-                            ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
-                        </div>
-                        <div class="mt-auto pt-3 border-top">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members.length} участн.</span>
-                                <span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader.split(' ')[0] || '—'}</span>
-                            </div>
-                        </div>
+        // ===== Сортировка и Группировка =====
+        function sortTeamsByName(teams) {
+            return [...teams].sort((a, b) => {
+                const nameA = (a.organization || "").toLowerCase().trim();
+                const nameB = (b.organization || "").toLowerCase().trim();
+                return nameA.localeCompare(nameB, 'ru');
+            });
+        }
+
+        function getGroupInfo(apparatusClass) {
+            const val = String(apparatusClass || "").toLowerCase();
+            if (val.includes('бэк') || val.includes('безэкипаж')) {
+                return { key: 'bek', title: 'БЭК - безэкипажные катера - 28.11.2026' };
+            }
+            if (val.includes('тнпа') || val.includes('телеуправляем')) {
+                return { key: 'tnpa', title: 'ТНПА - телеуправляемые необитаемые подводные аппараты - 28.11.2026' };
+            }
+            if (val.includes('анпа') || val.includes('автономн')) {
+                return { key: 'anpa', title: 'АНПА - автономные необитаемые подводные аппараты - 29.11.2026' };
+            }
+            return { key: 'other', title: 'Прочие / Класс не указан' };
+        }
+
+        function toggleGrouping() {
+            isGrouped = !isGrouped;
+            renderTeams(teamsData);
+        }
+
+        function renderTeamCard(team) {
+            return `
+        <div class="col-md-6 col-lg-4">
+            <div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')">
+                <div class="team-card-head mb-2">
+                    <div class="flex-grow-1">
+                        <div class="org-name">${team.organization}</div>
+                        <div class="team-meta">${team.city || 'Город не указан'}</div>
+                    </div>
+                    ${getCategoryBadge(team.apparatusClass, 'category-badge-card')}
+                </div>
+                <div class="mt-auto pt-3 border-top">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members.length} участн.</span>
+                        <span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader.split(' ')[0] || '—'}</span>
                     </div>
                 </div>
-            `).join('');
+            </div>
+        </div>
+    `;
+        }
+
+        function renderTeams(teams) {
+            const container = document.getElementById('teamsContainer');
+            if (teams.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет загруженных команд</div>';
+                return;
+            }
+
+            // 1. Всегда сортируем по названию организации
+            const sortedTeams = sortTeamsByName(teams);
+
+            if (!isGrouped) {
+                // Режим обычного списка
+                container.innerHTML = `<div class="row g-3">${sortedTeams.map(team => renderTeamCard(team)).join('')}</div>`;
+            } else {
+                // Режим группировки
+                const groups = {
+                    'bek': { title: 'БЭК - безэкипажные катера - 28.11.2026', teams: [] },
+                    'tnpa': { title: 'ТНПА - телеуправляемые необитаемые подводные аппараты - 28.11.2026', teams: [] },
+                    'anpa': { title: 'АНПА - автономные необитаемые подводные аппараты - 29.11.2026', teams: [] },
+                    'other': { title: 'Прочие / Класс не указан', teams: [] }
+                };
+
+                // Распределяем команды по группам
+                sortedTeams.forEach(team => {
+                    const info = getGroupInfo(team.apparatusClass);
+                    if (groups[info.key]) {
+                        groups[info.key].teams.push(team);
+                    } else {
+                        groups['other'].teams.push(team);
+                    }
+                });
+
+                // Генерируем HTML для групп
+                let html = '';
+                for (const key in groups) {
+                    if (groups[key].teams.length > 0) {
+                        html += `
+                    <div class="col-12 mb-2 mt-3">
+                        <h4 class="fw-bold text-primary border-bottom pb-2 mb-3" style="font-family: 'Manrope', sans-serif; font-size: 1.25rem;">
+                            ${groups[key].title} 
+                            <span class="badge bg-secondary ms-2" style="font-size: 0.8rem; vertical-align: middle;">${groups[key].teams.length}</span>
+                        </h4>
+                    </div>
+                    <div class="row g-3 mb-4">
+                        ${groups[key].teams.map(team => renderTeamCard(team)).join('')}
+                    </div>
+                `;
+                    }
+                }
+                container.innerHTML = html;
+            }
         }
 
         function showListPage() { document.getElementById('listPage').classList.remove('hidden'); document.getElementById('detailPage').classList.remove('active'); document.getElementById('editPage').classList.remove('active'); document.getElementById('headerButtons').style.display = 'flex'; currentTeamId = null; isNewTeam = false; }
