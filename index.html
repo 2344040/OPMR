@@ -1684,8 +1684,8 @@
                     // Суммируем только те баллы, которые идут в зачет
                     const presScore = (p.presentation?.structure || 0) + (p.presentation?.analysis || 0) + (p.presentation?.novelty || 0) + (p.presentation?.quality || 0);
                     const compScore = (p.competition?.timeScore || 0) + (p.competition?.gates || 0) + (p.competition?.parking || 0) + (p.competition?.garage || 0);
-                    const total = presScore + compScore + (p.extraBonus || 0);
-                    return `<tr style="cursor: pointer;" onclick="showProtocolPage('${team.id}')"><td>${i + 1}</td><td><div class="fw-bold">${team.organization}</div><div class="text-muted small">${team.teamLeader || "—"}</div></td><td>${p.drawNumber || "—"}</td><td>${presScore || "—"}</td><td>${p.dimensions ? (p.dimensions * (p.weight || 1)).toFixed(2) : "—"}</td><td>${p.qualification?.completed ? '<i class="fas fa-check text-success"></i>' : p.qualification?.penalty ? "-" + p.qualification.penalty : "—"}</td><td>${compScore || "—"}</td><td>${p.extraBonus || "—"}</td><td class="fw-bold">${total > 0 ? total.toFixed(1) : "—"}</td><td>${p.place ? `<span class="badge bg-primary">${p.place}</span>` : "—"}</td></tr>`;
+                    const total = presScore + compScore + (p.extraBonus || 0) - (p.qualification?.penalty || 0) - (p.competition?.penalty || 0);
+                    return `<tr style="cursor: pointer;" onclick="showProtocolPage('${team.id}')"><td>${i + 1}</td><td><div class="fw-bold">${team.organization}</div><div class="text-muted small">${team.teamLeader || "—"}</div></td><td>${p.drawNumber || "—"}</td><td>${presScore || "—"}</td><td>${p.dimensions || "—"}</td><td>${p.qualification?.completed ? '<i class="fas fa-check text-success"></i>' : p.qualification?.penalty ? "-" + p.qualification.penalty : "—"}</td><td>${compScore || "—"}</td><td>${p.extraBonus || "—"}</td><td class="fw-bold">${total > 0 ? total.toFixed(1) : "—"}</td><td>${p.place ? `<span class="badge bg-primary">${p.place}</span>` : "—"}</td></tr>`;
                 }).join("")}</tbody>
                         </table>
                     </div>
@@ -1787,12 +1787,14 @@
                 return isNaN(val) ? 0 : val;
             };
 
-            // Суммируем только баллы, которые идут в зачет (Презентация + Конкурс + Доп)
+            // Считаем только: Презентация + Конкурс + Доп.баллы - Штрафы
             const pres = getVal("protoPresStructure") + getVal("protoPresAnalysis") + getVal("protoPresNovelty") + getVal("protoPresQuality");
             const comp = getVal("protoCompTimeScore") + getVal("protoCompGates") + getVal("protoCompParking") + getVal("protoCompGarage");
             const extra = getVal("protoExtraBonus");
+            const qualPenalty = getVal("protoQualPenalty");
+            const compPenalty = getVal("protoCompPenalty");
 
-            const total = pres + comp + extra;
+            const total = pres + comp + extra - qualPenalty - compPenalty;
 
             document.getElementById("presTotal").textContent = pres;
             document.getElementById("compTotal").textContent = comp;
