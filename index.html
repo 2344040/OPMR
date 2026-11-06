@@ -1872,7 +1872,7 @@
 
                     const presTotal = (pres.structure || 0) + (pres.analysis || 0) + (pres.novelty || 0) + (pres.quality || 0);
                     const compTotal = (comp.timeScore || 0) + (comp.gates || 0) + (comp.parking || 0) + (comp.garage || 0);
-                    const total = presTotal + compTotal + (p.extraBonus || 0) - (qual.penalty || 0) - (comp.penalty || 0);
+                    const total = Math.round(presTotal + compTotal + (p.extraBonus || 0) - (qual.penalty || 0) - (comp.penalty || 0));
 
                     // Используем краткое название если есть, иначе полное
                     const displayName = team.shortName || team.organization;
@@ -1895,7 +1895,7 @@
                             <td class="bg-comp-light">${comp.garage ?? "—"}</td>
                             <td class="bg-comp-light">${comp.penalty ? "-" + comp.penalty : "—"}</td>
                             <td style="text-align: center;">${p.extraBonus ?? "—"}</td>
-                            <td class="fw-bold" style="text-align: center;">${total > 0 ? total.toFixed(1) : "—"}</td>
+                            <td class="fw-bold" style="text-align: center;">${total > 0 ? total : "—"}</td>
                             <td style="text-align: center;">${p.place ? `<span class="badge bg-primary">${p.place}</span>` : "—"}</td>
                         </tr>`;
                 }).join("")}</tbody>
@@ -1962,18 +1962,18 @@
                         <h5 class="detail-section-title">Конкурсное задание</h5>
                         <div class="row g-3">
                             <div class="col-md-4"><label class="form-label">Время (сек)</label><input type="text" class="form-control" id="protoCompTime" value="${comp.time || ""}"></div>
-                            <div class="col-md-4"><label class="form-label">Балл за время</label><input type="number" step="0.1" class="form-control proto-calc" id="protoCompTimeScore" value="${comp.timeScore || 0}"></div>
-                            <div class="col-md-4"><label class="form-label">Прохождение ворот</label><input type="number" step="0.1" class="form-control proto-calc" id="protoCompGates" value="${comp.gates || 0}"></div>
-                            <div class="col-md-4"><label class="form-label">Парковка</label><input type="number" step="0.1" class="form-control proto-calc" id="protoCompParking" value="${comp.parking || 0}"></div>
-                            <div class="col-md-4"><label class="form-label">Нужный гараж</label><input type="number" step="0.1" class="form-control proto-calc" id="protoCompGarage" value="${comp.garage || 0}"></div>
-                            <div class="col-md-4"><label class="form-label">Штрафные баллы</label><input type="number" step="0.1" class="form-control proto-calc" id="protoCompPenalty" value="${comp.penalty || 0}"></div>
+                            <div class="col-md-4"><label class="form-label">Балл за время</label><input type="number" step="1" class="form-control proto-calc" id="protoCompTimeScore" value="${comp.timeScore || 0}"></div>
+                            <div class="col-md-4"><label class="form-label">Прохождение ворот</label><input type="number" step="1" class="form-control proto-calc" id="protoCompGates" value="${comp.gates || 0}"></div>
+                            <div class="col-md-4"><label class="form-label">Парковка</label><input type="number" step="1" class="form-control proto-calc" id="protoCompParking" value="${comp.parking || 0}"></div>
+                            <div class="col-md-4"><label class="form-label">Нужный гараж</label><input type="number" step="1" class="form-control proto-calc" id="protoCompGarage" value="${comp.garage || 0}"></div>
+                            <div class="col-md-4"><label class="form-label">Штрафные баллы</label><input type="number" step="1" class="form-control proto-calc" id="protoCompPenalty" value="${comp.penalty || 0}"></div>
                             <div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма конкурса:</strong> <span id="compTotal">${(comp.timeScore || 0) + (comp.gates || 0) + (comp.parking || 0) + (comp.garage || 0)}</span></div></div>
                         </div>
                     </div>
                     <div class="detail-section">
                         <h5 class="detail-section-title">Дополнительные баллы</h5>
                         <div class="row g-3">
-                            <div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="0.1" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus || 0}"></div>
+                            <div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="1" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus || 0}"></div>
                         </div>
                     </div>
                     <div class="detail-section" style="background: #f0f9ff; border: 2px solid #3b82f6;">
@@ -2000,18 +2000,17 @@
                 return isNaN(val) ? 0 : val;
             };
 
-            // Считаем только: Презентация + Конкурс + Доп.баллы - Штрафы
             const pres = getVal("protoPresStructure") + getVal("protoPresAnalysis") + getVal("protoPresNovelty") + getVal("protoPresQuality");
             const comp = getVal("protoCompTimeScore") + getVal("protoCompGates") + getVal("protoCompParking") + getVal("protoCompGarage");
             const extra = getVal("protoExtraBonus");
             const qualPenalty = getVal("protoQualPenalty");
             const compPenalty = getVal("protoCompPenalty");
 
-            const total = pres + comp + extra - qualPenalty - compPenalty;
+            const total = Math.round(pres + comp + extra - qualPenalty - compPenalty);
 
             document.getElementById("presTotal").textContent = pres;
             document.getElementById("compTotal").textContent = comp;
-            document.getElementById("protoTotal").textContent = total.toFixed(1);
+            document.getElementById("protoTotal").textContent = total;  // ← без toFixed(1), целое число
         }
 
         function saveProtocol() {
