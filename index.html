@@ -1128,7 +1128,7 @@
             margin-left: auto !important;
         }
 
-        /* Двухуровневая таблица соревнований */
+        /* ===== Двухуровневая таблица соревнований ===== */
         .competition-table {
             table-layout: fixed;
             width: 100%;
@@ -1160,17 +1160,41 @@
             text-align: center !important;
         }
 
-        /* Серый фон только для Суммы и Места (последние 2 колонки) */
-        .competition-table th:nth-last-child(2),
-        .competition-table td:nth-last-child(2),
-        .competition-table th:last-child,
-        .competition-table td:last-child {
-            background-color: #f1f5f9 !important;
+        /* ЦВЕТА ФОНА ДЛЯ БЛОКОВ */
+        /* Презентация — светло-желтый (ivory) */
+        .bg-pres {
+            background-color: #fffbeb !important;
         }
 
-        .competition-table th.bg-comp:nth-last-child(2),
-        .competition-table th.bg-comp:last-child {
-            background-color: white;
+        .bg-pres-light {
+            background-color: #fffbeb !important;
+        }
+
+        /* Квалификация — светло-зеленый */
+        .bg-qual {
+            background-color: #dcfce7 !important;
+        }
+
+        .bg-qual-light {
+            background-color: #f0fdf4 !important;
+        }
+
+        /* Конкурсное задание — светло-голубой */
+        .bg-comp {
+            background-color: #e0f2fe !important;
+        }
+
+        .bg-comp-light {
+            background-color: #f0f9ff !important;
+        }
+
+        /* Сумма и Место — последние 2 колонки (серый фон) */
+        /* Используем nth-child с точными номерами вместо nth-last-child */
+        .competition-table thead tr:last-child th:nth-child(17),
+        .competition-table thead tr:last-child th:nth-child(18),
+        .competition-table tbody td:nth-child(17),
+        .competition-table tbody td:nth-child(18) {
+            background-color: #f1f5f9 !important;
         }
 
         /* Узкий шрифт для заголовков первого уровня таблицы соревнований */
@@ -1182,39 +1206,14 @@
             text-transform: uppercase;
             color: #475569 !important;
         }
+
         /* Узкий шрифт для заголовков второго уровня таблицы соревнований */
         .competition-table thead tr:last-child th {
             font-family: 'Fira Sans Condensed', 'Inter', sans-serif !important;
             font-weight: 400 !important;
             font-size: 0.72rem !important;
             letter-spacing: 0.02em;
-            /* text-transform: uppercase; */
             color: #475569 !important;
-        }
-
-        /* Белый фон для всего остального (включая Доп., Гар., Штраф) */
-        .bg-pres {
-            background-color: white !important;
-        }
-
-        .bg-qual {
-            background-color: #dcfce7 !important;
-        }
-
-        .bg-comp {
-            background-color: white !important;
-        }
-
-        .bg-pres-light {
-            background-color: white !important;
-        }
-
-        .bg-qual-light {
-            background-color: #f0fdf4 !important;
-        }
-
-        .bg-comp-light {
-            background-color: white !important;
         }
 
         .competition-table thead tr:first-child th {
@@ -1240,11 +1239,11 @@
                 background-color: white !important;
             }
 
-            .competition-table th:nth-last-child(2),
-            .competition-table td:nth-last-child(2),
-            .competition-table th:last-child,
-            .competition-table td:last-child {
-                background-color: #f1f5f9;
+            .competition-table thead tr:last-child th:nth-child(17),
+            .competition-table thead tr:last-child th:nth-child(18),
+            .competition-table tbody td:nth-child(17),
+            .competition-table tbody td:nth-child(18) {
+                background-color: #f1f5f9 !important;
             }
         }
     </style>
