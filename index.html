@@ -1942,7 +1942,7 @@
 
                     return `<tr style="cursor: pointer;" onclick="showProtocolPage('${team.id}')">
                             <td style="text-align: center;">${p.drawNumber || "—"}</td>
-                            <td><div class="fw-bold">${displayName}</div></td>
+                            <td title="${team.organization}${team.city ? ', ' + team.city : ''}"><div class="fw-bold">${displayName}</div></td>
                             <td class="bg-pres-light">${pres.structure ?? "—"}</td>
                             <td class="bg-pres-light">${pres.analysis ?? "—"}</td>
                             <td class="bg-pres-light">${pres.novelty ?? "—"}</td>
