@@ -1475,23 +1475,74 @@
 
         async function commitToGitHub() {
             const settings = getGitHubSettings();
-            if (!settings || !settings.owner || !settings.repo || !settings.token) return { success: false, message: "Настройки GitHub не заданы" };
+            if (!settings || !settings.owner || !settings.repo || !settings.token) {
+                return { success: false, message: "Настройки GitHub не заданы" };
+            }
+
             const filePath = "data/teams.json";
             const apiUrl = `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${filePath}`;
-            const headers = { Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json" };
-            try {
-                let sha = null;
-                const getRes = await fetch(`${apiUrl}?ref=${settings.branch}`, { headers });
-                if (getRes.ok) { const getFile = await getRes.json(); sha = getFile.sha; }
-                else if (getRes.status !== 404) { const err = await getRes.json(); return { success: false, message: `Ошибка чтения файла: ${err.message}` }; }
-                const jsonStr = JSON.stringify(teamsData, null, 2);
-                const content = btoa(unescape(encodeURIComponent(jsonStr)));
-                const body = { message: `Обновление базы участников (${new Date().toLocaleString("ru-RU")})`, content: content, branch: settings.branch };
-                if (sha) body.sha = sha;
-                const putRes = await fetch(apiUrl, { method: "PUT", headers: { ...headers, "Content-Type": "application/json" }, body: JSON.stringify(body) });
-                if (putRes.ok) return { success: true, message: "Данные сохранены в GitHub" };
-                else { const err = await putRes.json(); return { success: false, message: `Ошибка коммита: ${err.message}` }; }
-            } catch (e) { return { success: false, message: `Ошибка сети: ${e.message}` }; }
+            const headers = {
+                Authorization: `token ${settings.token}`,
+                Accept: "application/vnd.github.v3+json"
+            };
+
+            const jsonStr = JSON.stringify(teamsData, null, 2);
+            const content = btoa(unescape(encodeURIComponent(jsonStr)));
+
+            // Повторяем до 3 раз, чтобы получить свежий SHA
+            for (let attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    // 1. Получаем свежий SHA файла
+                    let sha = null;
+                    const getRes = await fetch(`${apiUrl}?ref=${settings.branch}`, { headers });
+
+                    if (getRes.ok) {
+                        const getFile = await getRes.json();
+                        sha = getFile.sha;
+                    } else if (getRes.status !== 404) {
+                        const err = await getRes.json();
+                        return { success: false, message: `Ошибка чтения файла: ${err.message}` };
+                    }
+
+                    // 2. Формируем тело запроса
+                    const body = {
+                        message: `Обновление базы участников (${new Date().toLocaleString("ru-RU")})`,
+                        content: content,
+                        branch: settings.branch
+                    };
+                    if (sha) body.sha = sha;
+
+                    // 3. Отправляем PUT
+                    const putRes = await fetch(apiUrl, {
+                        method: "PUT",
+                        headers: { ...headers, "Content-Type": "application/json" },
+                        body: JSON.stringify(body)
+                    });
+
+                    if (putRes.ok) {
+                        return { success: true, message: "Данные сохранены в GitHub" };
+                    } else {
+                        const err = await putRes.json();
+
+                        // Если ошибка рассинхронизации SHA — повторяем попытку
+                        if (err.message && err.message.includes("does not match") && attempt < 3) {
+                            console.log(`Попытка ${attempt}: SHA не совпал, повторяем через 500мс...`);
+                            await new Promise(r => setTimeout(r, 500));
+                            continue;
+                        }
+
+                        return { success: false, message: `Ошибка коммита: ${err.message}` };
+                    }
+                } catch (e) {
+                    if (attempt < 3) {
+                        await new Promise(r => setTimeout(r, 500));
+                        continue;
+                    }
+                    return { success: false, message: `Ошибка сети: ${e.message}` };
+                }
+            }
+
+            return { success: false, message: "Не удалось сохранить после 3 попыток" };
         }
 
         function showToast(message, type = "info") {
@@ -1813,16 +1864,6 @@
             groups.forEach((g) => {
                 const teams = teamsData.filter((t) => g.filter(String(t.apparatusClass || "").toLowerCase()));
                 if (teams.length === 0) return;
-
-                // Вспомогательная функция для корректного парсинга времени (поддерживает и секунды, и мм:сс)
-                const parseTime = (t) => {
-                    if (!t) return 999999;
-                    const parts = String(t).split(':');
-                    if (parts.length === 2) {
-                        return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
-                    }
-                    return parseFloat(t) || 999999;
-                };
 
                 // Вспомогательная функция для корректного парсинга времени (поддерживает и секунды, и мм:сс)
                 const parseTime = (t) => {
