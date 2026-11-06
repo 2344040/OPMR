@@ -72,7 +72,7 @@
       }
     ],
     "protocol": {
-      "drawNumber": "",
+      "drawNumber": "3",
       "presentation": {
         "structure": 1,
         "analysis": 1,
@@ -88,14 +88,14 @@
       "competition": {
         "time": "45.6",
         "timeScore": 10,
-        "gates": 4.9,
-        "parking": 5.1,
+        "gates": 5,
+        "parking": 5,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 1,
-      "totalScore": 26
+      "place": 0,
+      "totalScore": 32
     },
     "shortName": "СПбГМТУ"
   },
