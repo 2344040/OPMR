@@ -94,7 +94,7 @@
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 0,
+      "place": 2,
       "totalScore": 26
     },
     "shortName": "СПбГМТУ"
@@ -218,8 +218,27 @@
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 0,
+      "place": 1,
       "totalScore": 26
     }
+  },
+  {
+    "id": "NEW_1793973152695",
+    "created": "06.11.2026",
+    "organization": "Президентский ФМЛ №239 команда 1",
+    "shortName": "ФМЛ №239 (1)",
+    "city": "Санкт-Петербург",
+    "region": "Санкт-Петербург",
+    "postalCode": "",
+    "address": "",
+    "phone": "",
+    "email": "",
+    "orgLeader": "",
+    "apparatusClass": "БЭК",
+    "description": "",
+    "teamLeader": "",
+    "teamLeaderPhone": "",
+    "photos": [],
+    "members": []
   }
 ]
