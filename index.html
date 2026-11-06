@@ -1724,7 +1724,9 @@
             currentTeamId = teamId; isNewTeam = false;
             document.getElementById("editFormTitle").textContent = "Редактирование команды";
             document.getElementById("editOrganization").value = team.organization;
-            document.getElementById("editShortName").value = team.shortName || "";
+            if (document.getElementById("editShortName")) {
+                document.getElementById("editShortName").value = team.shortName || "";
+            }
             document.getElementById("editCity").value = team.city;
             document.getElementById("editRegion").value = team.region;
             document.getElementById("editPostalCode").value = team.postalCode;
