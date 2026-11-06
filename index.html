@@ -1129,15 +1129,45 @@
         }
 
         /* Двухуровневая таблица соревнований */
-        .competition-table th {
-            font-size: 0.75rem !important;
-            padding: 8px 6px !important;
-            white-space: nowrap;
+        .competition-table {
+            table-layout: fixed;
+            width: 100%;
         }
 
+        .competition-table th,
         .competition-table td {
-            padding: 6px !important;
-            vertical-align: middle;
+            font-size: 0.75rem !important;
+            padding: 6px 4px !important;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Колонка № и жребия */
+        .competition-table th:first-child,
+        .competition-table td:first-child {
+            width: 35px;
+            text-align: center;
+        }
+
+        /* Колонка Команда — 250px (примерно 25 знаков) */
+        .competition-table th:nth-child(2),
+        .competition-table td:nth-child(2) {
+            width: 250px;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: initial;
+        }
+
+        /* Колонки Доп., Сумма, Место — последние 3 */
+        .competition-table th:nth-last-child(3),
+        .competition-table td:nth-last-child(3),
+        .competition-table th:nth-last-child(2),
+        .competition-table td:nth-last-child(2),
+        .competition-table th:last-child,
+        .competition-table td:last-child {
+            width: 43px;
+            text-align: center;
         }
 
         .competition-table thead tr:first-child th {
@@ -1160,35 +1190,41 @@
         }
 
         /* Группировка колонок в таблице соревнований */
+        /* Убираем цвет у Презентации и Конкурса */
         .bg-pres {
-            background-color: #dbeafe !important;
+            background-color: white !important;
         }
 
-        /* Голубой - Презентация */
-        .bg-qual {
-            background-color: #dcfce7 !important;
-        }
-
-        /* Зелёный - Квалификация */
         .bg-comp {
-            background-color: #f3e8ff !important;
+            background-color: white !important;
         }
-
-        /* Фиолетовый - Конкурс */
 
         .bg-pres-light {
-            background-color: #f0f7ff !important;
+            background-color: white !important;
+        }
+
+        .bg-comp-light {
+            background-color: white !important;
+        }
+
+        /* Оставляем зелёный для Квалификации */
+        .bg-qual {
+            background-color: #dcfce7 !important;
         }
 
         .bg-qual-light {
             background-color: #f0fdf4 !important;
         }
 
-        .bg-comp-light {
-            background-color: #faf5ff !important;
+        /* Серый для Сумма и Место (последние 2 колонки) */
+        .competition-table th:nth-last-child(2),
+        .competition-table td:nth-last-child(2),
+        .competition-table th:last-child,
+        .competition-table td:last-child {
+            background-color: #f1f5f9 !important;
         }
 
-        .competition-table th {
+        /* .competition-table th {
             font-size: 0.75rem !important;
             padding: 8px 4px !important;
             white-space: nowrap;
@@ -1207,7 +1243,7 @@
 
         .competition-table thead tr:last-child th {
             border-top: 1px solid #e2e8f0 !important;
-        }
+        } */
 
         @media print {
 
@@ -1723,7 +1759,7 @@
         function createNewTeam() {
             currentTeamId = null; isNewTeam = true;
             document.getElementById("editFormTitle").textContent = "Новая команда";
-            ["editOrganization", "editId", "editCreated", "editShortName", "editCity", "editRegion", "editPostalCode", "editAddress", "editPhone", "editEmail", "editOrgLeader", "editApparatusClass", "editDescription", "editTeamLeader", "editTeamLeaderPhone"].forEach((id) => (document.getElementById(id).value = ""));
+            ["editOrganization", "editShortName", "editId", "editCreated", "editCity", "editRegion", "editPostalCode", "editAddress", "editPhone", "editEmail", "editOrgLeader", "editApparatusClass", "editDescription", "editTeamLeader", "editTeamLeaderPhone"].forEach((id) => (document.getElementById(id).value = ""));
             document.getElementById("photoLinksContainer").innerHTML = "";
             addPhotoLinkField();
             document.getElementById("editMembersContainer").innerHTML = "";
@@ -1737,11 +1773,11 @@
             currentTeamId = teamId; isNewTeam = false;
             document.getElementById("editFormTitle").textContent = "Редактирование команды";
             document.getElementById("editOrganization").value = team.organization;
-            document.getElementById("editId").value = team.id;
-            document.getElementById("editCreated").value = team.created;
             if (document.getElementById("editShortName")) {
                 document.getElementById("editShortName").value = team.shortName || "";
             }
+            document.getElementById("editId").value = team.id;
+            document.getElementById("editCreated").value = team.created;
             document.getElementById("editCity").value = team.city;
             document.getElementById("editRegion").value = team.region;
             document.getElementById("editPostalCode").value = team.postalCode;
