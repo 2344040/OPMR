@@ -241,10 +241,10 @@
     "photos": [],
     "members": [],
     "protocol": {
-      "drawNumber": "6",
+      "drawNumber": "1",
       "presentation": {
-        "structure": 1,
-        "analysis": 2,
+        "structure": 2,
+        "analysis": 1,
         "novelty": 2,
         "quality": 2
       },
