@@ -72,30 +72,30 @@
       }
     ],
     "protocol": {
-      "drawNumber": "3",
+      "drawNumber": "6",
       "presentation": {
-        "structure": 1,
-        "analysis": 1,
-        "novelty": 2,
+        "structure": 3,
+        "analysis": 3,
+        "novelty": 3,
         "quality": 2
       },
       "dimensions": 1500,
-      "weight": 9.2,
+      "weight": 9.8,
       "qualification": {
         "penalty": 0,
         "completed": true
       },
       "competition": {
-        "time": "45.6",
+        "time": "90",
         "timeScore": 10,
         "gates": 5,
-        "parking": 5,
+        "parking": 0,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
       "place": 0,
-      "totalScore": 32
+      "totalScore": 26
     },
     "shortName": "СПбГМТУ"
   },
@@ -180,19 +180,20 @@
   {
     "id": "NEW_1793952065795",
     "created": "06.11.2026",
-    "organization": "Организация",
-    "city": "г. Мурманск",
+    "organization": "ГБУ ДО ДДТ",
+    "city": "г. Петродворец",
     "region": "",
     "postalCode": "",
     "address": "",
     "phone": "",
     "email": "",
     "orgLeader": "",
-    "apparatusClass": "АНПА",
+    "apparatusClass": "БЭК",
     "description": "",
     "teamLeader": "Иванов Иван Иванович",
     "teamLeaderPhone": "",
     "photos": [],
-    "members": []
+    "members": [],
+    "shortName": ""
   }
 ]
