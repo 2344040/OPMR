@@ -87,7 +87,7 @@
       },
       "competition": {
         "time": "90",
-        "timeScore": 9,
+        "timeScore": 8,
         "gates": 5,
         "parking": 0,
         "garage": 0,
@@ -239,6 +239,32 @@
     "teamLeader": "",
     "teamLeaderPhone": "",
     "photos": [],
-    "members": []
+    "members": [],
+    "protocol": {
+      "drawNumber": "6",
+      "presentation": {
+        "structure": 1,
+        "analysis": 2,
+        "novelty": 2,
+        "quality": 2
+      },
+      "dimensions": 1500,
+      "weight": 9.4,
+      "qualification": {
+        "penalty": 0,
+        "completed": true
+      },
+      "competition": {
+        "time": "65",
+        "timeScore": 9,
+        "gates": 5,
+        "parking": 5,
+        "garage": 0,
+        "penalty": 0
+      },
+      "extraBonus": 0,
+      "place": 0,
+      "totalScore": 31
+    }
   }
 ]
