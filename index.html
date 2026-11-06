@@ -1173,13 +1173,22 @@
             background-color: white;
         }
 
-        /* Узкий шрифт для заголовков второго уровня таблицы соревнований */
-        .competition-table thead tr:last-child th {
+        /* Узкий шрифт для заголовков первого уровня таблицы соревнований */
+        .competition-table thead tr:first-child th {
             font-family: 'Fira Sans Condensed', 'Inter', sans-serif !important;
             font-weight: 600 !important;
             font-size: 0.72rem !important;
             letter-spacing: 0.02em;
             text-transform: uppercase;
+            color: #475569 !important;
+        }
+        /* Узкий шрифт для заголовков второго уровня таблицы соревнований */
+        .competition-table thead tr:last-child th {
+            font-family: 'Fira Sans Condensed', 'Inter', sans-serif !important;
+            font-weight: 400 !important;
+            font-size: 0.72rem !important;
+            letter-spacing: 0.02em;
+            /* text-transform: uppercase; */
             color: #475569 !important;
         }
 
