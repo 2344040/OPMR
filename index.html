@@ -1814,19 +1814,41 @@
                 const teams = teamsData.filter((t) => g.filter(String(t.apparatusClass || "").toLowerCase()));
                 if (teams.length === 0) return;
 
-                // Рассчитываем баллы за время
+                // Вспомогательная функция для корректного парсинга времени (поддерживает и секунды, и мм:сс)
+                const parseTime = (t) => {
+                    if (!t) return 999999;
+                    const parts = String(t).split(':');
+                    if (parts.length === 2) {
+                        return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+                    }
+                    return parseFloat(t) || 999999;
+                };
+
+                // Вспомогательная функция для корректного парсинга времени (поддерживает и секунды, и мм:сс)
+                const parseTime = (t) => {
+                    if (!t) return 999999;
+                    const parts = String(t).split(':');
+                    if (parts.length === 2) {
+                        return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
+                    }
+                    return parseFloat(t) || 999999;
+                };
+
+                // Рассчитываем баллы за время для этой категории
                 const teamsWithTime = teams.filter(t => t.protocol?.competition?.time);
                 const sortedByTime = [...teamsWithTime].sort((a, b) => {
-                    const timeA = parseFloat(a.protocol.competition.time) || 999999;
-                    const timeB = parseFloat(b.protocol.competition.time) || 999999;
-                    return timeA - timeB;
+                    return parseTime(a.protocol.competition.time) - parseTime(b.protocol.competition.time);
                 });
 
                 sortedByTime.forEach((team, idx) => {
-                    const timeScore = Math.max(1, 10 - idx);
                     if (!team.protocol) team.protocol = {};
                     if (!team.protocol.competition) team.protocol.competition = {};
-                    team.protocol.competition.timeScore = timeScore;
+
+                    // АВТО-РАСЧЁТ ТОЛЬКО ЕСЛИ ПОЛЕ ПУСТОЕ ИЛИ РАВНО 0
+                    // Это позволяет вам вручную ввести и сохранить своё значение, и оно не будет перезаписано!
+                    if (!team.protocol.competition.timeScore || team.protocol.competition.timeScore === 0) {
+                        team.protocol.competition.timeScore = Math.max(1, 10 - idx);
+                    }
                 });
 
                 html += `<div class="detail-section mb-4">
@@ -2023,7 +2045,14 @@
                 presentation: { structure: getNum("protoPresStructure"), analysis: getNum("protoPresAnalysis"), novelty: getNum("protoPresNovelty"), quality: getNum("protoPresQuality") },
                 dimensions: getNum("protoDimensions"), weight: getNum("protoWeight"),
                 qualification: { penalty: getNum("protoQualPenalty"), completed: document.getElementById("protoQualCompleted")?.checked || false },
-                competition: { time: getVal("protoCompTime"), timeScore: getNum("protoCompTimeScore"), gates: getNum("protoCompGates"), parking: getNum("protoCompParking"), garage: getNum("protoCompGarage"), penalty: getNum("protoCompPenalty") },
+                competition: {
+                    time: getVal("protoCompTime"),
+                    timeScore: getNum("protoCompTimeScore"), // <-- Должно быть именно так
+                    gates: getNum("protoCompGates"),
+                    parking: getNum("protoCompParking"),
+                    garage: getNum("protoCompGarage"),
+                    penalty: getNum("protoCompPenalty"),
+                },
                 extraBonus: getNum("protoExtraBonus"),
                 place: parseInt(getVal("protoPlace")) || 0,
                 totalScore: parseFloat(document.getElementById("protoTotal").textContent) || 0
