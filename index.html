@@ -1116,6 +1116,17 @@
         .btn-grouping-icon.active:hover {
             background: #1d4ed8 !important;
         }
+
+        /* Контейнер кнопок растягивается на всю оставшуюся ширину строки */
+        #headerButtons {
+            flex: 1 1 auto !important;
+            min-width: 0;
+        }
+
+        /* Кнопка группировки и Admin уезжают в правый край */
+        #headerButtons .btn-grouping-icon {
+            margin-left: auto !important;
+        }
     </style>
 </head>
 
