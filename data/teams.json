@@ -87,15 +87,15 @@
       },
       "competition": {
         "time": "90",
-        "timeScore": 8,
+        "timeScore": 7,
         "gates": 5,
         "parking": 0,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 2,
-      "totalScore": 26
+      "place": 4,
+      "totalScore": 23
     },
     "shortName": "СПбГМТУ"
   },
@@ -211,14 +211,14 @@
       },
       "competition": {
         "time": "45.6",
-        "timeScore": 10,
+        "timeScore": 9,
         "gates": 5,
         "parking": 5,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 1,
+      "place": 2,
       "totalScore": 26
     }
   },
@@ -256,14 +256,14 @@
       },
       "competition": {
         "time": "65",
-        "timeScore": 14,
+        "timeScore": 8,
         "gates": 5,
         "parking": 5,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 0,
+      "place": 3,
       "totalScore": 31
     }
   },
@@ -301,14 +301,14 @@
       },
       "competition": {
         "time": "35",
-        "timeScore": 18,
+        "timeScore": 10,
         "gates": 5,
         "parking": 5,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 0,
+      "place": 1,
       "totalScore": 36
     }
   }
