@@ -174,5 +174,23 @@
         "order": "02.22-02.06 №4343 АК"
       }
     ]
+  },
+  {
+    "id": "NEW_1793952065795",
+    "created": "06.11.2026",
+    "organization": "Организация",
+    "city": "г. Мурманск",
+    "region": "",
+    "postalCode": "",
+    "address": "",
+    "phone": "",
+    "email": "",
+    "orgLeader": "",
+    "apparatusClass": "АНПА",
+    "description": "",
+    "teamLeader": "Иванов Иван Иванович",
+    "teamLeaderPhone": "",
+    "photos": [],
+    "members": []
   }
 ]
