@@ -87,7 +87,7 @@
       },
       "competition": {
         "time": "45.6",
-        "timeScore": 16,
+        "timeScore": 10,
         "gates": 5,
         "parking": 5,
         "garage": 0,
@@ -96,7 +96,8 @@
       "extraBonus": 0,
       "place": 1,
       "totalScore": 32
-    }
+    },
+    "shortName": "СПбГМТУ"
   },
   {
     "id": "2564426297",
