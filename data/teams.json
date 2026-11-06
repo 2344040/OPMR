@@ -284,6 +284,32 @@
     "teamLeader": "",
     "teamLeaderPhone": "",
     "photos": [],
-    "members": []
+    "members": [],
+    "protocol": {
+      "drawNumber": "",
+      "presentation": {
+        "structure": 0,
+        "analysis": 0,
+        "novelty": 0,
+        "quality": 0
+      },
+      "dimensions": 0,
+      "weight": 0,
+      "qualification": {
+        "penalty": 0,
+        "completed": false
+      },
+      "competition": {
+        "time": "",
+        "timeScore": 0,
+        "gates": 0,
+        "parking": 0,
+        "garage": 0,
+        "penalty": 0
+      },
+      "extraBonus": 0,
+      "place": 0,
+      "totalScore": 0
+    }
   }
 ]
