@@ -266,5 +266,24 @@
       "place": 0,
       "totalScore": 31
     }
+  },
+  {
+    "id": "NEW_1793973312972",
+    "created": "06.11.2026",
+    "organization": "Президентский ФМЛ №239 команда 2",
+    "shortName": "ФМЛ №239 (2)",
+    "city": "Санкт-Петербург",
+    "region": "Санкт-Петербург",
+    "postalCode": "",
+    "address": "",
+    "phone": "",
+    "email": "",
+    "orgLeader": "",
+    "apparatusClass": "БЭК",
+    "description": "",
+    "teamLeader": "",
+    "teamLeaderPhone": "",
+    "photos": [],
+    "members": []
   }
 ]
