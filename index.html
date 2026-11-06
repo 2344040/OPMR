@@ -1141,33 +1141,56 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            text-align: center !important;
+            vertical-align: middle !important;
         }
 
-        /* Колонка № и жребия */
-        .competition-table th:first-child,
-        .competition-table td:first-child {
-            width: 35px;
-            text-align: center;
-        }
-
-        /* Колонка Команда — 250px (примерно 25 знаков) */
+        /* Колонка Команда — единственная с переносом и левым выравниванием */
         .competition-table th:nth-child(2),
         .competition-table td:nth-child(2) {
             width: 250px;
             white-space: normal;
             overflow: visible;
             text-overflow: initial;
+            text-align: left !important;
         }
 
-        /* Колонки Доп., Сумма, Место — последние 3 */
-        .competition-table th:nth-last-child(3),
-        .competition-table td:nth-last-child(3),
+        /* Колонка Команда — заголовок по центру */
+        .competition-table thead th:nth-child(2) {
+            text-align: center !important;
+        }
+
+        /* Серый фон только для Суммы и Места (последние 2 колонки) */
         .competition-table th:nth-last-child(2),
         .competition-table td:nth-last-child(2),
         .competition-table th:last-child,
         .competition-table td:last-child {
-            width: 43px;
-            text-align: center;
+            background-color: #f1f5f9 !important;
+        }
+
+        /* Белый фон для всего остального (включая Доп., Гар., Штраф) */
+        .bg-pres {
+            background-color: white !important;
+        }
+
+        .bg-qual {
+            background-color: #dcfce7 !important;
+        }
+
+        .bg-comp {
+            background-color: white !important;
+        }
+
+        .bg-pres-light {
+            background-color: white !important;
+        }
+
+        .bg-qual-light {
+            background-color: #f0fdf4 !important;
+        }
+
+        .bg-comp-light {
+            background-color: white !important;
         }
 
         .competition-table thead tr:first-child th {
@@ -1187,73 +1210,17 @@
             .competition-table td {
                 padding: 2px 3px !important;
             }
-        }
 
-        /* Группировка колонок в таблице соревнований */
-        /* Убираем цвет у Презентации и Конкурса */
-        .bg-pres {
-            background-color: white !important;
-        }
-
-        .bg-comp {
-            background-color: white !important;
-        }
-
-        .bg-pres-light {
-            background-color: white !important;
-        }
-
-        .bg-comp-light {
-            background-color: white !important;
-        }
-
-        /* Оставляем зелёный для Квалификации */
-        .bg-qual {
-            background-color: #dcfce7 !important;
-        }
-
-        .bg-qual-light {
-            background-color: #f0fdf4 !important;
-        }
-
-        /* Серый для Сумма и Место (последние 2 колонки) */
-        .competition-table th:nth-last-child(2),
-        .competition-table td:nth-last-child(2),
-        .competition-table th:last-child,
-        .competition-table td:last-child {
-            background-color: #f1f5f9 !important;
-        }
-
-        /* .competition-table th {
-            font-size: 0.75rem !important;
-            padding: 8px 4px !important;
-            white-space: nowrap;
-            font-weight: 600 !important;
-        }
-
-        .competition-table td {
-            padding: 6px 4px !important;
-            vertical-align: middle;
-            font-size: 0.85rem;
-        }
-
-        .competition-table thead tr:first-child th {
-            border-bottom: 2px solid #cbd5e1 !important;
-        }
-
-        .competition-table thead tr:last-child th {
-            border-top: 1px solid #e2e8f0 !important;
-        } */
-
-        @media print {
-
-            .bg-pres,
             .bg-qual,
-            .bg-comp,
-            .bg-pres-light,
-            .bg-qual-light,
-            .bg-comp-light {
+            .bg-qual-light {
                 background-color: white !important;
+            }
+
+            .competition-table th:nth-last-child(2),
+            .competition-table td:nth-last-child(2),
+            .competition-table th:last-child,
+            .competition-table td:last-child {
+                background-color: #f1f5f9 !important;
             }
         }
     </style>
