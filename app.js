@@ -1310,9 +1310,9 @@ function renderMasterTable() {
 function renderOrgManager() {
   const container = document.getElementById("orgManagerContent");
   let html =
-    '<div class="detail-section"><h4 class="detail-section-title">Справочник организаций</h4><p class="text-muted">Всего организаций: ' +
+    '<div class="detail-section"><h4 class="detail-section-title">Справочник организаций</h4><div class="d-flex justify-content-between align-items-center mb-3"><p class="text-muted mb-0">Всего организаций: ' +
     organizations.length +
-    "</p>";
+    '</p><button class="btn btn-outline-warning btn-sm" onclick="mergeDuplicateOrganizations()"><i class="fas fa-code-merge me-1"></i>Убрать дубликаты</button></div>';
   organizations
     .sort((a, b) => a.id.localeCompare(b.id))
     .forEach((org) => {
@@ -1344,6 +1344,87 @@ function deleteOrganization(orgId) {
   renderOrgManager();
   updateOrgDatalist();
   showToast("Организация удалена", "success");
+}
+
+// ===== СЛИЯНИЕ ДУБЛИКАТОВ ОРГАНИЗАЦИЙ =====
+function mergeDuplicateOrganizations() {
+  const norm = (s) =>
+    String(s || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+  const n = organizations.length;
+  const parent = organizations.map((_, i) => i);
+  const find = (i) => {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
+    }
+    return i;
+  };
+  const union = (a, b) => {
+    parent[find(a)] = find(b);
+  };
+
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = organizations[i],
+        b = organizations[j];
+      const af = norm(a.fullName),
+        bf = norm(b.fullName);
+      const as = norm(a.shortName),
+        bs = norm(b.shortName);
+      const isDup =
+        (af && af === bf) || // одинаковые полные названия
+        (as && bs && as === bs) || // одинаковые краткие названия
+        (as && as === bf) || // краткое одной = полное другой
+        (bs && bs === af);
+      if (isDup) union(i, j);
+    }
+  }
+
+  const clusters = {};
+  for (let i = 0; i < n; i++) {
+    const r = find(i);
+    (clusters[r] = clusters[r] || []).push(i);
+  }
+  const merges = Object.values(clusters).filter((c) => c.length > 1);
+  if (merges.length === 0) {
+    showToast("Дубликаты не найдены", "info");
+    return;
+  }
+
+  const report = merges.map((c) => c.map((i) => `«${organizations[i].fullName}»`).join("  =  ")).join("\n");
+  if (
+    !confirm(
+      `Будут объединены дубликаты:\n\n${report}\n\nОстанется запись с самым полным названием, все команды будут привязаны к ней. Продолжить?`,
+    )
+  )
+    return;
+
+  const removeIds = new Set();
+  merges.forEach((c) => {
+    const keepIdx = c.reduce(
+      (best, i) => (organizations[i].fullName.length > organizations[best].fullName.length ? i : best),
+      c[0],
+    );
+    const keep = organizations[keepIdx];
+    c.forEach((i) => {
+      if (i === keepIdx) return;
+      const dup = organizations[i];
+      teamsData.forEach((t) => {
+        if (t.orgId === dup.id) t.orgId = keep.id;
+      });
+      if (!keep.shortName && dup.shortName) keep.shortName = dup.shortName;
+      if (!keep.city && dup.city) keep.city = dup.city;
+      removeIds.add(dup.id);
+    });
+  });
+  organizations = organizations.filter((o) => !removeIds.has(o.id));
+  saveData();
+  renderOrgManager();
+  updateOrgDatalist();
+  showToast("Дубликаты объединены", "success");
 }
 
 // ===== СТРАНИЦА НАСТРОЕК СОРЕВНОВАНИЙ (НОВЫЙ ВИД) =====
