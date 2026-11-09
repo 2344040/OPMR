@@ -1159,26 +1159,75 @@ const CRITERIA_LIBRARY = {
     {
       id: "qualification",
       name: "Квалификация",
-      fields: ["Сумма размерений", "Штрафные баллы", "Вес (кг)", "Бонусные баллы"],
+      short: "Квал.",
+      fields: [
+        {name: "Сумма размерений", short: "Разм."},
+        {name: "Штрафные баллы", short: "Штраф"},
+        {name: "Вес (кг)", short: "Вес"},
+        {name: "Бонусные баллы", short: "Бонус"},
+      ],
     },
     {
       id: "presentation",
       name: "Презентация",
-      fields: ["Структура", "Эффективность", "Новизна", "Перспектива", "Качество"],
+      short: "През.",
+      fields: [
+        {name: "Структура", short: "Структ."},
+        {name: "Эффективность", short: "Эффект."},
+        {name: "Новизна", short: "Нов."},
+        {name: "Перспектива", short: "Персп."},
+        {name: "Качество", short: "Кач."},
+      ],
     },
-    {id: "task2", name: "Задание 2 (движение по траектории)", fields: ["Среднее отклонение", "Баллы"]},
-    {id: "task3", name: "Задание 3 (растения на островах)", fields: ["Остров 1", "Остров 2", "Остров 3", "Баллы"]},
+    {
+      id: "task2",
+      name: "Задание 2 (движение по траектории)",
+      short: "Зад. 2",
+      fields: [
+        {name: "Среднее отклонение", short: "Отклон."},
+        {name: "Баллы", short: "Баллы"},
+      ],
+    },
+    {
+      id: "task3",
+      name: "Задание 3 (растения на островах)",
+      short: "Зад. 3",
+      fields: [
+        {name: "Остров 1", short: "Остр. 1"},
+        {name: "Остров 2", short: "Остр. 2"},
+        {name: "Остров 3", short: "Остр. 3"},
+        {name: "Баллы", short: "Баллы"},
+      ],
+    },
     {
       id: "task4",
       name: "Задание 4 (подводные объекты)",
-      fields: ["Кол-во объектов", "Баллы", "Бонус за непрерывность"],
+      short: "Зад. 4",
+      fields: [
+        {name: "Кол-во объектов", short: "Объекты"},
+        {name: "Баллы", short: "Баллы"},
+        {name: "Бонус за непрерывность", short: "Бонус"},
+      ],
     },
     {
       id: "competition",
       name: "Конкурсное задание",
-      fields: ["Время (сек)", "Балл за время", "Прохождение ворот", "Парковка", "Нужный гараж", "Штрафные баллы"],
+      short: "Конкурс",
+      fields: [
+        {name: "Время (сек)", short: "Время"},
+        {name: "Балл за время", short: "Б. времени"},
+        {name: "Прохождение ворот", short: "Ворота"},
+        {name: "Парковка", short: "Парковка"},
+        {name: "Нужный гараж", short: "Гараж"},
+        {name: "Штрафные баллы", short: "Штраф"},
+      ],
     },
-    {id: "extra", name: "Дополнительные баллы", fields: ["За внеконкурсное задание"]},
+    {
+      id: "extra",
+      name: "Дополнительные баллы",
+      short: "Доп.",
+      fields: [{name: "За внеконкурсное задание", short: "Внеконкурс"}],
+    },
   ],
 };
 
@@ -1186,175 +1235,141 @@ let currentCriteriaYear = null;
 let currentCriteriaClass = null;
 let tempCriteria = [];
 
-function addGroupFromLibrary(libGroupId) {
-  const libGroup = CRITERIA_LIBRARY.groups.find((g) => g.id === libGroupId);
-  if (!libGroup) return;
-  if (tempCriteria.some((g) => g.section === libGroup.name)) {
-    showToast("Эта группа уже добавлена", "info");
-    return;
-  }
-  tempCriteria.push({section: libGroup.name, fields: [...libGroup.fields]});
-  renderCriteriaModal();
+// Вспомогательная функция для преобразования старых строковых данных в новый формат
+function normalizeCriteria(criteria) {
+  if (!Array.isArray(criteria)) return [];
+  return criteria.map(g => {
+    const isObj = typeof g === 'object' && g !== null;
+    const section = isObj ? (g.section || g.name || "Группа") : String(g);
+    const sectionShort = isObj ? (g.sectionShort || g.short || "") : "";
+    const rawFields = isObj ? (g.fields || []) : [];
+    const fields = rawFields.map(f => {
+      if (typeof f === 'object' && f !== null) {
+        return { name: f.name || String(f), short: f.short || "" };
+      }
+      return { name: String(f), short: "" };
+    });
+    return { section, sectionShort, fields };
+  });
 }
 
-function addCustomGroup() {
-  const name = prompt("Название новой группы критериев:");
-  if (!name || !name.trim()) return;
-  tempCriteria.push({section: name.trim(), fields: []});
-  renderCriteriaModal();
-}
-
-function removeGroup(gIdx) {
-  if (!confirm(`Удалить группу "${tempCriteria[gIdx].section}" со всеми полями?`)) return;
-  tempCriteria.splice(gIdx, 1);
-  renderCriteriaModal();
-}
-
-function moveGroup(gIdx, direction) {
-  const newIdx = gIdx + direction;
-  if (newIdx < 0 || newIdx >= tempCriteria.length) return;
-  const temp = tempCriteria[gIdx];
-  tempCriteria[gIdx] = tempCriteria[newIdx];
-  tempCriteria[newIdx] = temp;
-  renderCriteriaModal();
-}
-
-function addFieldToGroup(gIdx) {
-  const group = tempCriteria[gIdx];
-  const libGroup = CRITERIA_LIBRARY.groups.find((lg) => lg.name === group.section);
-  let availableFields = libGroup ? libGroup.fields.filter((f) => !group.fields.includes(f)) : [];
-
-  let optionsHtml = "";
-  if (availableFields.length > 0) {
-    optionsHtml = `\n\nДоступные поля из библиотеки:\n${availableFields.map((f, i) => `${i + 1}. ${f}`).join("\n")}\n0 — ввести своё название`;
-  }
-
-  const fieldName = prompt(`Добавить поле в группу "${group.section}":${optionsHtml}`);
-  if (!fieldName || !fieldName.trim()) return;
-
-  const num = parseInt(fieldName);
-  if (!isNaN(num) && num > 0 && num <= availableFields.length) {
-    group.fields.push(availableFields[num - 1]);
-  } else if (num === 0) {
-    const customName = prompt("Введите название поля:");
-    if (customName && customName.trim()) group.fields.push(customName.trim());
-  } else {
-    group.fields.push(fieldName.trim());
-  }
-  renderCriteriaModal();
-}
-
-function removeField(gIdx, fIdx) {
-  tempCriteria[gIdx].fields.splice(fIdx, 1);
-  renderCriteriaModal();
-}
-
-// ===== ОТКРЫТИЕ OFFCANVAS ВМЕСТО МОДАЛКИ =====
 function openCriteriaEditor(year, classId) {
   currentCriteriaYear = year;
   currentCriteriaClass = classId;
   const config = competitionSettings[year]?.[classId];
-  tempCriteria = config?.criteria ? JSON.parse(JSON.stringify(config.criteria)) : [];
-
+  // Нормализуем данные, чтобы они точно были в формате { name, short }
+  tempCriteria = normalizeCriteria(config?.criteria || []);
+  
   renderCriteriaOffcanvas();
-  const offcanvas = new bootstrap.Offcanvas(document.getElementById("criteriaOffcanvas"));
+  const offcanvas = new bootstrap.Offcanvas(document.getElementById('criteriaOffcanvas'));
   offcanvas.show();
 }
 
 function renderCriteriaOffcanvas() {
   const body = document.getElementById("criteriaOffcanvasBody");
   const title = `${currentCriteriaClass.toUpperCase()} — ${currentCriteriaYear} год`;
-
+  
   let html = `
-    <div class="alert alert-info d-flex align-items-center">
-      <i class="fas fa-info-circle me-2"></i>
-      <div>
-        <strong>Настройка критериев для:</strong> ${title}<br>
-        <small>Добавляйте группы критериев и поля для оценки. Используйте библиотеку готовых групп или создавайте свои.</small>
+    <div class="alert alert-info d-flex align-items-start py-2">
+      <i class="fas fa-info-circle me-2 mt-1"></i>
+      <div class="small">
+        <strong>Настройка критериев:</strong> ${title}<br>
+        Вы можете редактировать названия групп и полей, а также указывать сокращения для компактного отображения в таблицах (полное название будет показано в подсказке при наведении).
       </div>
     </div>
   `;
-
+  
   if (tempCriteria.length === 0) {
-    html += `<div class="alert alert-light text-center py-4"><i class="fas fa-clipboard-list fa-3x text-muted mb-3 d-block"></i><p class="mb-0">Критерии не заданы. Добавьте группы критериев ниже.</p></div>`;
+    html += `<div class="alert alert-light text-center py-4"><i class="fas fa-clipboard-list fa-2x text-muted mb-2 d-block"></i><p class="mb-0 small">Критерии не заданы. Добавьте группы ниже.</p></div>`;
   }
-
+  
   tempCriteria.forEach((group, gIdx) => {
     html += `
       <div class="card mb-3 border shadow-sm">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-          <div class="d-flex align-items-center gap-3 flex-grow-1">
-            <span class="badge bg-primary rounded-pill px-3 py-2">${gIdx + 1}</span>
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+          <div class="d-flex align-items-center gap-2 flex-grow-1 me-3">
+            <span class="badge bg-primary rounded-pill">${gIdx + 1}</span>
             <div class="flex-grow-1">
-              <strong class="fs-6">${group.section}</strong>
-              <div class="text-muted small">${group.fields.length} полей</div>
+              <input type="text" class="form-control form-control-sm fw-bold border-0 bg-transparent p-0" 
+                value="${group.section}" 
+                oninput="tempCriteria[${gIdx}].section = this.value" 
+                placeholder="Название группы">
+              <input type="text" class="form-control form-control-sm text-muted border-0 bg-transparent p-0" 
+                value="${group.sectionShort || ''}" 
+                oninput="tempCriteria[${gIdx}].sectionShort = this.value" 
+                placeholder="Сокращение группы (необязательно)">
             </div>
           </div>
           <div class="d-flex gap-1">
-            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, -1)" ${gIdx === 0 ? "disabled" : ""} title="Вверх">
-              <i class="fas fa-chevron-up"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, 1)" ${gIdx === tempCriteria.length - 1 ? "disabled" : ""} title="Вниз">
-              <i class="fas fa-chevron-down"></i>
-            </button>
-            <button class="btn btn-sm btn-outline-danger" onclick="removeGroup(${gIdx})" title="Удалить группу">
-              <i class="fas fa-trash"></i>
-            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, -1)" ${gIdx === 0 ? 'disabled' : ''} title="Вверх"><i class="fas fa-chevron-up"></i></button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, 1)" ${gIdx === tempCriteria.length - 1 ? 'disabled' : ''} title="Вниз"><i class="fas fa-chevron-down"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeGroup(${gIdx})" title="Удалить группу"><i class="fas fa-trash"></i></button>
           </div>
         </div>
         <div class="card-body p-0">
           <div class="list-group list-group-flush">`;
-
+    
     group.fields.forEach((field, fIdx) => {
+      const fName = typeof field === 'object' ? (field.name || '') : String(field);
+      const fShort = typeof field === 'object' ? (field.short || '') : '';
+      
       html += `
-            <div class="list-group-item d-flex justify-content-between align-items-center py-3 px-3">
-              <div class="d-flex align-items-center gap-3">
-                <span class="badge bg-light text-dark rounded-circle" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:0.75rem">${fIdx + 1}</span>
-                <span class="fw-medium">${field}</span>
+            <div class="list-group-item d-flex align-items-center gap-2 py-2 px-3">
+              <span class="badge bg-light text-dark rounded-circle flex-shrink-0" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem">${fIdx + 1}</span>
+              <div class="flex-grow-1 row g-1">
+                <div class="col-8">
+                  <input type="text" class="form-control form-control-sm" 
+                    value="${fName}" 
+                    oninput="updateFieldName(${gIdx}, ${fIdx}, this.value)" 
+                    placeholder="Полное название поля">
+                </div>
+                <div class="col-3">
+                  <input type="text" class="form-control form-control-sm" 
+                    value="${fShort}" 
+                    oninput="updateFieldShort(${gIdx}, ${fIdx}, this.value)" 
+                    placeholder="Сокр.">
+                </div>
+                <div class="col-1 text-end">
+                  <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeField(${gIdx}, ${fIdx})" title="Удалить">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
               </div>
-              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeField(${gIdx}, ${fIdx})" title="Удалить поле">
-                <i class="fas fa-times"></i>
-              </button>
             </div>`;
     });
-
+    
     html += `
           </div>
-          <div class="p-3 bg-light border-top">
+          <div class="p-2 bg-light border-top">
             <button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})">
-              <i class="fas fa-plus me-1"></i>Добавить поле в эту группу
+              <i class="fas fa-plus me-1"></i>Добавить поле
             </button>
           </div>
         </div>
       </div>`;
   });
-
-  // Кнопка добавления группы
+  
   html += `
     <div class="card border-dashed border-2 bg-light">
-      <div class="card-body text-center py-4">
-        <h6 class="text-muted mb-3"><i class="fas fa-folder-plus me-2"></i>Добавить группу критериев</h6>
+      <div class="card-body text-center py-3">
         <div class="row g-2 justify-content-center">
           <div class="col-md-8">
             <div class="dropdown w-100">
-              <button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-book me-2"></i>Выбрать из библиотеки
+              <button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-book me-2"></i>Добавить из библиотеки
               </button>
-              <ul class="dropdown-menu w-100" style="max-height: 300px; overflow-y: auto;">`;
-
-  CRITERIA_LIBRARY.groups.forEach((libGroup) => {
-    const alreadyAdded = tempCriteria.some((g) => g.section === libGroup.name);
+              <ul class="dropdown-menu w-100" style="max-height: 250px; overflow-y: auto;">`;
+  
+  CRITERIA_LIBRARY.groups.forEach(libGroup => {
     html += `
         <li>
-          <a class="dropdown-item ${alreadyAdded ? "disabled text-muted" : ""}" 
-             href="#" 
-             onclick="${alreadyAdded ? "return false;" : `addGroupFromLibrary('${libGroup.id}'); return false;`}">
+          <a class="dropdown-item" href="#" onclick="addGroupFromLibrary('${libGroup.id}'); return false;">
             <i class="fas fa-folder me-2 text-primary"></i>${libGroup.name}
-            ${alreadyAdded ? '<span class="badge bg-secondary ms-2">уже добавлено</span>' : `<span class="badge bg-light text-dark ms-2">${libGroup.fields.length} полей</span>`}
+            <span class="badge bg-light text-dark ms-2">${libGroup.fields.length} полей</span>
           </a>
         </li>`;
   });
-
+  
   html += `
               </ul>
             </div>
@@ -1367,23 +1382,83 @@ function renderCriteriaOffcanvas() {
         </div>
       </div>
     </div>`;
-
+  
   body.innerHTML = html;
+}
+
+// ===== ОБНОВЛЕННЫЕ ОБРАБОТЧИКИ =====
+
+function updateFieldName(gIdx, fIdx, value) {
+  if (typeof tempCriteria[gIdx].fields[fIdx] === 'string') {
+    tempCriteria[gIdx].fields[fIdx] = { name: value, short: "" };
+  } else {
+    tempCriteria[gIdx].fields[fIdx].name = value;
+  }
+}
+
+function updateFieldShort(gIdx, fIdx, value) {
+  if (typeof tempCriteria[gIdx].fields[fIdx] === 'string') {
+    tempCriteria[gIdx].fields[fIdx] = { name: tempCriteria[gIdx].fields[fIdx], short: value };
+  } else {
+    tempCriteria[gIdx].fields[fIdx].short = value;
+  }
+}
+
+function addGroupFromLibrary(libGroupId) {
+  const libGroup = CRITERIA_LIBRARY.groups.find(g => g.id === libGroupId);
+  if (!libGroup) return;
+  // Клонируем поля, чтобы они были независимыми объектами
+  const newFields = libGroup.fields.map(f => ({ name: f.name, short: f.short }));
+  tempCriteria.push({ 
+    section: libGroup.name, 
+    sectionShort: libGroup.short || "", 
+    fields: newFields 
+  });
+  renderCriteriaOffcanvas();
+}
+
+function addCustomGroup() {
+  tempCriteria.push({ section: "Новая группа", sectionShort: "", fields: [] });
+  renderCriteriaOffcanvas();
+}
+
+function removeGroup(gIdx) {
+  if (!confirm(`Удалить группу "${tempCriteria[gIdx].section}" со всеми полями?`)) return;
+  tempCriteria.splice(gIdx, 1);
+  renderCriteriaOffcanvas();
+}
+
+function moveGroup(gIdx, direction) {
+  const newIdx = gIdx + direction;
+  if (newIdx < 0 || newIdx >= tempCriteria.length) return;
+  const temp = tempCriteria[gIdx];
+  tempCriteria[gIdx] = tempCriteria[newIdx];
+  tempCriteria[newIdx] = temp;
+  renderCriteriaOffcanvas();
+}
+
+function addFieldToGroup(gIdx) {
+  tempCriteria[gIdx].fields.push({ name: "Новое поле", short: "" });
+  renderCriteriaOffcanvas();
+}
+
+function removeField(gIdx, fIdx) {
+  tempCriteria[gIdx].fields.splice(fIdx, 1);
+  renderCriteriaOffcanvas();
 }
 
 function saveCriteriaFromOffcanvas() {
   if (!competitionSettings[currentCriteriaYear]) competitionSettings[currentCriteriaYear] = {};
   if (!competitionSettings[currentCriteriaYear][currentCriteriaClass]) {
-    competitionSettings[currentCriteriaYear][currentCriteriaClass] = {date: "", color: "badge-gray", criteria: []};
+    competitionSettings[currentCriteriaYear][currentCriteriaClass] = { date: "", color: "badge-gray", criteria: [] };
   }
   competitionSettings[currentCriteriaYear][currentCriteriaClass].criteria = tempCriteria;
   saveData();
-
-  // Закрываем offcanvas
-  const offcanvasEl = document.getElementById("criteriaOffcanvas");
+  
+  const offcanvasEl = document.getElementById('criteriaOffcanvas');
   const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
   if (offcanvas) offcanvas.hide();
-
+  
   renderApparatusManager();
   showToast("Критерии сохранены", "success");
 }
