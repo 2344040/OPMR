@@ -1,6 +1,6 @@
 let teamsData = [];
 let organizations = [];
-let apparatusClasses = [];
+let competitionSettings = {};
 let currentTeamId = null;
 let isNewTeam = false;
 const STORAGE_KEY = "opmr_teams_data_v2";
@@ -16,32 +16,34 @@ let returnToView = "list";
 let returnToTeamId = null;
 let currentProtocolTeamId = null;
 
-function getDefaultApparatusClasses() {
-  const y = currentYear || 2026;
-  return [
-    {id: "bek", name: "БЭК", fullName: "Безэкипажные катера", color: "badge-bek", date: `28.11.${y}`},
-    {
-      id: "tnpa",
-      name: "ТНПА",
-      fullName: "Телеуправляемые необитаемые подводные аппараты",
-      color: "badge-tnpa",
-      date: `28.11.${y}`,
+// ===== НАСТРОЙКИ СОРЕВНОВАНИЙ ПО УМОЛЧАНИЮ =====
+function getDefaultCompetitionSettings() {
+  return {
+    2026: {
+      bek: {date: "28.11.2026", color: "badge-bek", criteria: []},
+      tnpa: {date: "28.11.2026", color: "badge-tnpa", criteria: []},
+      anpa: {date: "29.11.2026", color: "badge-anpa", criteria: []},
+      anna: {date: "29.11.2026", color: "badge-anna", criteria: []},
     },
-    {
-      id: "anpa",
-      name: "АНПА",
-      fullName: "Автономные необитаемые подводные аппараты",
-      color: "badge-anpa",
-      date: `29.11.${y}`,
+    2025: {
+      bek: {date: "28.11.2025", color: "badge-bek", criteria: []},
+      tnpa: {date: "28.11.2025", color: "badge-tnpa", criteria: []},
+      anpa: {date: "29.11.2025", color: "badge-anpa", criteria: []},
     },
-    {
-      id: "anna",
-      name: "АННА",
-      fullName: "Автономные необитаемые надводные аппараты",
-      color: "badge-anna",
-      date: `29.11.${y}`,
+    2024: {
+      anna: {
+        date: "01.11.2024",
+        color: "badge-anna",
+        criteria: [
+          {section: "Квалификация", fields: ["Сумма размерений", "Штрафные баллы", "Вес (кг)", "Бонусные баллы"]},
+          {section: "Презентация", fields: ["Структура", "Эффективность", "Новизна", "Перспектива", "Качество"]},
+          {section: "Задание 2 (траектория)", fields: ["Среднее отклонение", "Баллы"]},
+          {section: "Задание 3 (растения)", fields: ["Остров 1", "Остров 2", "Остров 3", "Баллы"]},
+          {section: "Задание 4 (объекты)", fields: ["Кол-во объектов", "Баллы", "Бонус за непрерывность"]},
+        ],
+      },
     },
-  ];
+  };
 }
 
 function getGitHubSettings() {
@@ -52,6 +54,7 @@ function getGitHubSettings() {
     return null;
   }
 }
+
 function saveGitHubSettings() {
   const settings = {
     owner: document.getElementById("ghOwner").value.trim(),
@@ -68,6 +71,7 @@ function saveGitHubSettings() {
   showToast("Настройки GitHub сохранены", "success");
   renderHeaderButtons();
 }
+
 function openGitHubSettings() {
   const settings = getGitHubSettings();
   if (settings) {
@@ -83,6 +87,7 @@ function openGitHubSettings() {
   }
   new bootstrap.Modal(document.getElementById("githubSettingsModal")).show();
 }
+
 function toggleTokenVisibility() {
   const input = document.getElementById("ghToken");
   const icon = document.getElementById("tokenToggleIcon");
@@ -94,6 +99,7 @@ function toggleTokenVisibility() {
     icon.className = "fas fa-eye";
   }
 }
+
 async function testGitHubConnection() {
   const settings = {
     owner: document.getElementById("ghOwner").value.trim(),
@@ -120,6 +126,7 @@ async function testGitHubConnection() {
     showToast(`✗ Ошибка сети: ${e.message}`, "error");
   }
 }
+
 async function commitToGitHub() {
   const settings = getGitHubSettings();
   if (!settings || !settings.owner || !settings.repo || !settings.token)
@@ -127,7 +134,7 @@ async function commitToGitHub() {
   const filePath = "data/teams.json";
   const apiUrl = `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${filePath}`;
   const headers = {Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json"};
-  const dataToSave = {organizations: organizations, apparatusClasses: apparatusClasses, teams: teamsData};
+  const dataToSave = {organizations, competitionSettings, teams: teamsData};
   const jsonStr = JSON.stringify(dataToSave, null, 2);
   const content = btoa(unescape(encodeURIComponent(jsonStr)));
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -135,15 +142,14 @@ async function commitToGitHub() {
       let sha = null;
       const getRes = await fetch(`${apiUrl}?ref=${settings.branch}`, {headers});
       if (getRes.ok) {
-        const getFile = await getRes.json();
-        sha = getFile.sha;
+        sha = (await getRes.json()).sha;
       } else if (getRes.status !== 404) {
         const err = await getRes.json();
         return {success: false, message: `Ошибка чтения файла: ${err.message}`};
       }
       const body = {
         message: `Обновление базы участников (${new Date().toLocaleString("ru-RU")})`,
-        content: content,
+        content,
         branch: settings.branch,
       };
       if (sha) body.sha = sha;
@@ -155,8 +161,7 @@ async function commitToGitHub() {
       if (putRes.ok) return {success: true, message: "Данные сохранены в GitHub"};
       else {
         const err = await putRes.json();
-        if (err.message && err.message.includes("does not match") && attempt < 3) {
-          console.log(`Попытка ${attempt}: SHA не совпал, повторяем...`);
+        if (err.message?.includes("does not match") && attempt < 3) {
           await new Promise((r) => setTimeout(r, 500));
           continue;
         }
@@ -172,6 +177,7 @@ async function commitToGitHub() {
   }
   return {success: false, message: "Не удалось сохранить после 3 попыток"};
 }
+
 function showToast(message, type = "info") {
   const container = document.getElementById("toastContainer");
   const toast = document.createElement("div");
@@ -185,12 +191,14 @@ function showToast(message, type = "info") {
     setTimeout(() => toast.remove(), 300);
   }, 4000);
 }
+
 function formatDate(dateStr) {
   if (!dateStr) return "—";
   const parts = String(dateStr).trim().split("-");
   if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
   return dateStr;
 }
+
 function formatFio(fio) {
   if (!fio) return "—";
   const parts = fio.trim().split(/\s+/);
@@ -198,6 +206,7 @@ function formatFio(fio) {
     return `<span class="fio-cell"><span class="fio-surname">${parts[0]}</span> <span class="fio-name-patronymic">${parts.slice(1).join(" ")}</span></span>`;
   return `<span class="fio-cell"><span class="fio-surname">${fio}</span></span>`;
 }
+
 function formatDescription(desc) {
   if (!desc || desc.trim() === "") return '<div class="detail-value text-muted">—</div>';
   return desc
@@ -216,18 +225,25 @@ function formatDescription(desc) {
     })
     .join("");
 }
-function getCategoryBadge(apparatusClass, extraClass = "") {
+
+// ===== ДИНАМИЧЕСКИЙ БЕЙДЖ КЛАССА =====
+function getCategoryBadge(apparatusClass, extraClass = "", year = currentYear) {
   const value = String(apparatusClass || "")
     .trim()
     .toLowerCase();
-  const cls = apparatusClasses.find(
-    (c) => value.includes(c.id) || value.includes(c.name.toLowerCase()) || value.includes(c.fullName.toLowerCase()),
-  );
-  if (cls) {
-    return `<span class="badge category-badge ${extraClass} ${cls.color}">${cls.name}</span>`;
+  const yearSettings = competitionSettings[year] || {};
+  let foundId = null;
+  for (const key in yearSettings) {
+    if (value.includes(key.toLowerCase())) {
+      foundId = key;
+      break;
+    }
   }
-  return `<span class="badge category-badge ${extraClass} bg-secondary text-white">Н/Д</span>`;
+  if (!foundId) return `<span class="badge category-badge ${extraClass} bg-secondary text-white">Н/Д</span>`;
+  const config = yearSettings[foundId];
+  return `<span class="badge category-badge ${extraClass} ${config.color}">${foundId.toUpperCase()}</span>`;
 }
+
 function parsePhotosField(value) {
   if (!value) return [];
   if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter((v) => v.length > 0);
@@ -236,9 +252,11 @@ function parsePhotosField(value) {
     .map((s) => s.trim())
     .filter((s) => s.length > 0);
 }
+
 function isDirectImageLink(url) {
   return /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url);
 }
+
 function transformYandexFormsData(rawArray) {
   return rawArray
     .map((teamArr) => {
@@ -279,7 +297,7 @@ function transformYandexFormsData(rawArray) {
         photos: parsePhotosField(obj["Фото аппарата"]),
         teamLeader: obj["ФИО руководителя команды"] || "",
         teamLeaderPhone: obj["Контактный телефон руководителя команды"] || "",
-        members: members,
+        members,
       };
     })
     .filter((team) => (team.organization || "").toLowerCase().trim() !== "тест");
@@ -290,10 +308,11 @@ function getNextOrgId() {
   const maxId = Math.max(...organizations.map((o) => parseInt(o.id)));
   return String(maxId + 1).padStart(3, "0");
 }
+
 function findOrCreateOrg(fullName, shortName, city) {
   let org = organizations.find((o) => o.fullName.toLowerCase() === fullName.toLowerCase());
   if (!org) {
-    org = {id: getNextOrgId(), fullName: fullName, shortName: shortName || fullName, city: city || ""};
+    org = {id: getNextOrgId(), fullName, shortName: shortName || fullName, city: city || ""};
     organizations.push(org);
   } else {
     if (shortName && !org.shortName) org.shortName = shortName;
@@ -302,6 +321,7 @@ function findOrCreateOrg(fullName, shortName, city) {
   return org;
 }
 
+// ===== МИГРАЦИЯ =====
 function migrateData() {
   const oldData = localStorage.getItem(STORAGE_KEY_OLD);
   if (!oldData) return false;
@@ -309,7 +329,7 @@ function migrateData() {
     const oldTeams = JSON.parse(oldData);
     if (!Array.isArray(oldTeams) || oldTeams.length === 0) return false;
     organizations = [];
-    apparatusClasses = getDefaultApparatusClasses();
+    competitionSettings = getDefaultCompetitionSettings();
     teamsData = [];
     const orgMap = {};
     oldTeams.forEach((team) => {
@@ -328,18 +348,10 @@ function migrateData() {
       }
       const hasProtocol =
         team.protocol && (team.protocol.totalScore > 0 || team.protocol.place > 0 || team.protocol.competition);
-      teamsData.push({
-        ...team,
-        orgId: orgMap[orgName.toLowerCase()],
-        year: hasProtocol ? 2025 : 2026,
-        shortName: shortName,
-      });
+      teamsData.push({...team, orgId: orgMap[orgName.toLowerCase()], year: hasProtocol ? 2025 : 2026, shortName});
       delete teamsData[teamsData.length - 1].organization;
     });
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({organizations: organizations, apparatusClasses: apparatusClasses, teams: teamsData}),
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({organizations, competitionSettings, teams: teamsData}));
     localStorage.removeItem(STORAGE_KEY_OLD);
     return true;
   } catch (e) {
@@ -350,21 +362,19 @@ function migrateData() {
 
 function saveData() {
   try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({organizations: organizations, apparatusClasses: apparatusClasses, teams: teamsData}),
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({organizations, competitionSettings, teams: teamsData}));
   } catch (e) {
     console.warn("Не удалось сохранить:", e);
   }
 }
+
 function loadData() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
       const parsed = JSON.parse(data);
       organizations = parsed.organizations || [];
-      apparatusClasses = parsed.apparatusClasses || getDefaultApparatusClasses();
+      competitionSettings = parsed.competitionSettings || getDefaultCompetitionSettings();
       teamsData = parsed.teams || [];
       return true;
     }
@@ -374,12 +384,24 @@ function loadData() {
   return false;
 }
 
+// ===== ШАПКА =====
 function renderHeaderButtons() {
   const container = document.getElementById("headerButtons");
   const adminButtons = isAdmin
-    ? `<label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла"><i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span></label><button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные"><i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span></button><button class="btn btn-primary btn-upload" onclick="createNewTeam()"><i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span></button><button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub"><i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span></button><button class="btn btn-outline-info btn-upload" onclick="showOrgManager()" title="Справочник организаций"><i class="fas fa-building"></i><span class="btn-text ms-2">Организации</span></button><button class="btn btn-outline-info btn-upload" onclick="showApparatusManager()" title="Управление классами аппаратов"><i class="fas fa-robot"></i><span class="btn-text ms-2">Классы</span></button>`
+    ? `<label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла"><i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span></label>
+       <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные"><i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span></button>
+       <button class="btn btn-primary btn-upload" onclick="createNewTeam()"><i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span></button>
+       <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub"><i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span></button>
+       <button class="btn btn-outline-info btn-upload" onclick="showOrgManager()" title="Справочник организаций"><i class="fas fa-building"></i><span class="btn-text ms-2">Организации</span></button>
+       <button class="btn btn-outline-warning btn-upload" onclick="showApparatusManager()" title="Настройки соревнований"><i class="fas fa-cogs"></i><span class="btn-text ms-2">Соревнования</span></button>`
     : "";
-  container.innerHTML = `${adminButtons}<div class="btn-group view-switcher" role="group" style="overflow:hidden"><button class="btn ${currentView === "teams" ? "btn-primary" : "btn-outline-primary"}" onclick="showTeamsView()" style="border-right:none;border-radius:8px 0 0 8px"><i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span></button><button class="btn ${currentView === "competition" ? "btn-primary" : "btn-outline-primary"}" onclick="showCompetitionView()" style="border-radius:0 8px 8px 0"><i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span></button></div><button class="btn btn-grouping-icon ${isGrouped ? "active" : ""}" onclick="toggleGrouping()" title="${isGrouped ? "Показать списком" : "Группировать по классам"}"><i class="fas fa-layer-group"></i></button><button class="btn ${isAdmin ? "btn-dark" : "btn-outline-secondary"} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? "Выйти из режима администратора" : "Войти в режим администратора"}"><i class="fas fa-${isAdmin ? "user-shield" : "lock"}"></i><span class="btn-text ms-2">${isAdmin ? "Админ" : "Admin"}</span></button>`;
+  container.innerHTML = `${adminButtons}
+    <div class="btn-group view-switcher" role="group" style="overflow:hidden">
+      <button class="btn ${currentView === "teams" ? "btn-primary" : "btn-outline-primary"}" onclick="showTeamsView()" style="border-right:none;border-radius:8px 0 0 8px"><i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span></button>
+      <button class="btn ${currentView === "competition" ? "btn-primary" : "btn-outline-primary"}" onclick="showCompetitionView()" style="border-radius:0 8px 8px 0"><i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span></button>
+    </div>
+    <button class="btn btn-grouping-icon ${isGrouped ? "active" : ""}" onclick="toggleGrouping()" title="${isGrouped ? "Показать списком" : "Группировать по классам"}"><i class="fas fa-layer-group"></i></button>
+    <button class="btn ${isAdmin ? "btn-dark" : "btn-outline-secondary"} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? "Выйти из режима администратора" : "Войти в режим администратора"}"><i class="fas fa-${isAdmin ? "user-shield" : "lock"}"></i><span class="btn-text ms-2">${isAdmin ? "Админ" : "Admin"}</span></button>`;
   renderEditPageAdminButtons();
 }
 
@@ -396,6 +418,7 @@ function renderYearSwitcher() {
   container.innerHTML = html;
   container.style.display = "flex";
 }
+
 function switchYear(y) {
   currentYear = y;
   renderYearSwitcher();
@@ -428,6 +451,7 @@ function toggleAdminMode() {
     setTimeout(() => document.getElementById("adminPasswordInput").focus(), 300);
   }
 }
+
 function checkAdminPassword() {
   const input = document.getElementById("adminPasswordInput");
   const error = document.getElementById("adminPasswordError");
@@ -445,6 +469,7 @@ function checkAdminPassword() {
     input.focus();
   }
 }
+
 document.addEventListener("DOMContentLoaded", function () {
   const pwdInput = document.getElementById("adminPasswordInput");
   if (pwdInput)
@@ -453,47 +478,45 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+// ===== УТИЛИТЫ КОМАНД =====
 function sortTeamsByName(teams) {
-  return [...teams].sort((a, b) => {
-    const nameA = getTeamDisplayName(a).toLowerCase().trim();
-    const nameB = getTeamDisplayName(b).toLowerCase().trim();
-    return nameA.localeCompare(nameB, "ru");
-  });
+  return [...teams].sort((a, b) =>
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru"),
+  );
 }
 function getTeamDisplayName(team) {
   const org = organizations.find((o) => o.id === team.orgId);
-  if (org && org.shortName) return org.shortName;
+  if (org?.shortName) return org.shortName;
   if (team.shortName) return team.shortName;
   if (org) return org.fullName;
   return team.organization || "Без названия";
 }
 function getTeamFullName(team) {
   const org = organizations.find((o) => o.id === team.orgId);
-  if (org) return org.fullName;
-  return team.organization || "Без названия";
+  return org?.fullName || team.organization || "Без названия";
 }
 function getTeamCity(team) {
   const org = organizations.find((o) => o.id === team.orgId);
-  if (org && org.city) return org.city;
-  return team.city || "";
+  return org?.city || team.city || "";
 }
 
 function toggleGrouping() {
   isGrouped = !isGrouped;
   renderTeams(teamsData);
 }
+
 function renderTeamCard(team) {
   const displayName = getTeamDisplayName(team);
   const city = getTeamCity(team);
-  return `<div class="col-md-6 col-lg-4"><div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')"><div class="team-card-head mb-2"><div class="flex-grow-1"><div class="org-name">${displayName}</div><div class="team-meta">${city || "Город не указан"}</div></div>${getCategoryBadge(team.apparatusClass, "category-badge-card")}</div><div class="mt-auto pt-3 border-top"><div class="d-flex justify-content-between align-items-center"><span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members ? team.members.length : 0} участн.</span><span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader ? team.teamLeader.split(" ")[0] : "—"}</span></div></div></div></div>`;
+  return `<div class="col-md-6 col-lg-4"><div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')"><div class="team-card-head mb-2"><div class="flex-grow-1"><div class="org-name">${displayName}</div><div class="team-meta">${city || "Город не указан"}</div></div>${getCategoryBadge(team.apparatusClass, "category-badge-card")}</div><div class="mt-auto pt-3 border-top"><div class="d-flex justify-content-between align-items-center"><span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members?.length || 0} участн.</span><span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader?.split(" ")[0] || "—"}</span></div></div></div></div>`;
 }
 
+// ===== СПИСКИ КОМАНД =====
 function renderTeams(teams) {
   const container = document.getElementById("teamsContainer");
   const filtered = teams.filter((t) => t.year === currentYear);
   if (filtered.length === 0) {
-    container.innerHTML =
-      '<div class="col-12 text-center text-muted py-5">Нет команд для ' + currentYear + " года</div>";
+    container.innerHTML = `<div class="col-12 text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
     return;
   }
   const sortedTeams = sortTeamsByName(filtered);
@@ -501,37 +524,35 @@ function renderTeams(teams) {
   if (!isGrouped) {
     html += `<div class="row g-3">${sortedTeams.map((team) => renderTeamCard(team)).join("")}</div>`;
   } else {
+    const yearSettings = competitionSettings[currentYear] || {};
     const groups = {};
-    apparatusClasses.forEach((c) => {
-      groups[c.id] = {...c, teams: []};
-    });
-    groups["other"] = {
-      name: "Н/Д",
-      fullName: "Прочие / Класс не указан",
-      color: "bg-secondary text-white",
-      date: "",
-      teams: [],
-    };
+    for (const key in yearSettings) groups[key] = {...yearSettings[key], id: key, teams: []};
+    groups["other"] = {name: "Н/Д", color: "bg-secondary text-white", date: "", teams: []};
 
     sortedTeams.forEach((team) => {
       const val = String(team.apparatusClass || "").toLowerCase();
-      const found = apparatusClasses.find(
-        (c) => val.includes(c.id) || val.includes(c.name.toLowerCase()) || val.includes(c.fullName.toLowerCase()),
-      );
-      const key = found ? found.id : "other";
-      groups[key].teams.push(team);
+      let foundKey = null;
+      for (const key in yearSettings) {
+        if (val.includes(key.toLowerCase())) {
+          foundKey = key;
+          break;
+        }
+      }
+      groups[foundKey || "other"].teams.push(team);
     });
 
     for (const key in groups) {
       if (groups[key].teams.length > 0) {
         const g = groups[key];
-        html += `<div class="col-12 mt-4"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.fullName}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
+        const title = g.fullName || key.toUpperCase();
+        html += `<div class="col-12 mt-4"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${key.toUpperCase()}</span><span class="group-header-title">${title}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
       }
     }
   }
   container.innerHTML = html;
 }
 
+// ===== НАВИГАЦИЯ =====
 function hideAllPages() {
   [
     "listPage",
@@ -559,6 +580,7 @@ function showListPage() {
   currentTeamId = null;
   isNewTeam = false;
 }
+
 function showTeamsView() {
   currentView = "teams";
   returnToView = "list";
@@ -570,6 +592,7 @@ function showTeamsView() {
   renderYearSwitcher();
   renderTeams(teamsData);
 }
+
 function showCompetitionView() {
   currentView = "competition";
   returnToView = "competition";
@@ -581,6 +604,7 @@ function showCompetitionView() {
   renderYearSwitcher();
   renderCompetition();
 }
+
 function showProtocolPage(teamId) {
   currentProtocolTeamId = teamId;
   hideAllPages();
@@ -588,18 +612,21 @@ function showProtocolPage(teamId) {
   document.getElementById("yearSwitcher").style.display = "none";
   renderProtocolForm(teamId);
 }
+
 function showDetailPage() {
   hideAllPages();
   document.getElementById("detailPage").classList.add("active");
   document.getElementById("headerButtons").style.display = "none";
   document.getElementById("yearSwitcher").style.display = "none";
 }
+
 function showEditPage() {
   hideAllPages();
   document.getElementById("editPage").classList.add("active");
   document.getElementById("headerButtons").style.display = "none";
   document.getElementById("yearSwitcher").style.display = "none";
 }
+
 function showMasterTable() {
   currentView = "master";
   hideAllPages();
@@ -609,6 +636,7 @@ function showMasterTable() {
   renderYearSwitcher();
   renderMasterTable();
 }
+
 function showOrgManager() {
   if (!isAdmin) {
     showToast("Доступно только администратору", "error");
@@ -621,6 +649,7 @@ function showOrgManager() {
   document.getElementById("yearSwitcher").style.display = "none";
   renderOrgManager();
 }
+
 function showApparatusManager() {
   if (!isAdmin) {
     showToast("Доступно только администратору", "error");
@@ -633,11 +662,13 @@ function showApparatusManager() {
   document.getElementById("yearSwitcher").style.display = "none";
   renderApparatusManager();
 }
+
 function goBack() {
   if (returnToView === "competition") showCompetitionView();
   else showTeamsView();
 }
 
+// ===== ДЕТАЛИ КОМАНДЫ =====
 function showTeamDetails(teamId) {
   returnToView = currentView;
   returnToTeamId = teamId;
@@ -651,8 +682,7 @@ function showTeamDetails(teamId) {
   const leaderFio = (team.teamLeader || "").trim().toLowerCase();
   const captainIdx = sortedMembers.findIndex((m) => (m.fio || "").trim().toLowerCase() === leaderFio);
   if (captainIdx > 0) {
-    const captain = sortedMembers.splice(captainIdx, 1)[0];
-    sortedMembers.unshift(captain);
+    sortedMembers.unshift(sortedMembers.splice(captainIdx, 1)[0]);
   }
   const membersTableHtml =
     sortedMembers.length > 0
@@ -681,9 +711,9 @@ function showTeamDetails(teamId) {
   const descHtml = formatDescription(team.description);
   const photos = team.photos || [];
   let photosHtml;
-  if (photos.length === 0) {
+  if (photos.length === 0)
     photosHtml = `<div class="detail-value text-muted" style="font-size:1rem">Фото не загружено</div>`;
-  } else {
+  else {
     const gridClass = photos.length === 1 ? "apparatus-photo-grid single-photo" : "apparatus-photo-grid";
     const items = photos
       .map((src, idx) => {
@@ -718,6 +748,7 @@ function closeLightbox() {
   document.getElementById("lightboxImg").src = "";
   document.body.style.overflow = "";
 }
+
 function addPhotoLinkField(url = "") {
   const container = document.getElementById("photoLinksContainer");
   const field = document.createElement("div");
@@ -742,11 +773,12 @@ function getPhotoLinks() {
     .filter((url) => url.length > 0);
 }
 
+// ===== РЕДАКТИРОВАНИЕ КОМАНДЫ =====
 function createNewTeam() {
   currentTeamId = null;
   isNewTeam = true;
   returnToView = "list";
-  document.getElementById("editFormTitle").textContent = "Новая команда (" + currentYear + ")";
+  document.getElementById("editFormTitle").textContent = `Новая команда (${currentYear})`;
   [
     "editOrgSearch",
     "editShortName",
@@ -790,13 +822,13 @@ function editTeam(teamId) {
   returnToTeamId = teamId;
   document.getElementById("editFormTitle").textContent = "Редактирование команды";
   const org = organizations.find((o) => o.id === team.orgId);
-  document.getElementById("editOrgSearch").value = org ? org.fullName : team.organization || "";
+  document.getElementById("editOrgSearch").value = org?.fullName || team.organization || "";
   document.getElementById("editOrgId").value = team.orgId || "";
-  document.getElementById("editShortName").value = team.shortName || (org ? org.shortName : "");
+  document.getElementById("editShortName").value = team.shortName || org?.shortName || "";
   document.getElementById("editYear").value = team.year || 2026;
   document.getElementById("editId").value = team.id;
   document.getElementById("editCreated").value = team.created;
-  document.getElementById("editCity").value = team.city || (org ? org.city : "");
+  document.getElementById("editCity").value = team.city || org?.city || "";
   document.getElementById("editRegion").value = team.region;
   document.getElementById("editPostalCode").value = team.postalCode;
   document.getElementById("editAddress").value = team.address;
@@ -809,9 +841,7 @@ function editTeam(teamId) {
   document.getElementById("editTeamLeader").value = team.teamLeader;
   document.getElementById("editTeamLeaderPhone").value = team.teamLeaderPhone;
   document.getElementById("photoLinksContainer").innerHTML = "";
-  const photos = team.photos || [];
-  if (photos.length === 0) addPhotoLinkField();
-  else photos.forEach((url) => addPhotoLinkField(url));
+  (team.photos || []).length === 0 ? addPhotoLinkField() : team.photos.forEach((url) => addPhotoLinkField(url));
   document.getElementById("editMembersContainer").innerHTML = "";
   (team.members || []).forEach((m) => addMemberField(m));
   document.getElementById("btnDeleteTeam").style.display = "inline-flex";
@@ -848,25 +878,21 @@ function addMemberField(member = null) {
   container.appendChild(div);
 }
 
+// ===== СОРЕВНОВАНИЯ =====
 function renderCompetition() {
   const container = document.getElementById("competitionContent");
-  const activeClasses = apparatusClasses;
+  const yearSettings = competitionSettings[currentYear] || {};
   let html = "";
-  activeClasses.forEach((g) => {
+  for (const classId in yearSettings) {
+    const g = yearSettings[classId];
     const teams = teamsData.filter(
       (t) =>
         t.year === currentYear &&
-        (String(t.apparatusClass || "")
+        String(t.apparatusClass || "")
           .toLowerCase()
-          .includes(g.id) ||
-          String(t.apparatusClass || "")
-            .toLowerCase()
-            .includes(g.name.toLowerCase()) ||
-          String(t.apparatusClass || "")
-            .toLowerCase()
-            .includes(g.fullName.toLowerCase())),
+          .includes(classId.toLowerCase()),
     );
-    if (teams.length === 0) return;
+    if (teams.length === 0) continue;
     const parseTime = (t) => {
       if (!t) return 999999;
       const parts = String(t).split(":");
@@ -884,8 +910,9 @@ function renderCompetition() {
         team.protocol.competition.timeScore = Math.max(1, 10 - idx);
       }
     });
-    html += `<div class="detail-section mb-4"><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><h4 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a">${g.fullName} <span class="badge bg-secondary ms-2" style="font-size:0.8rem">${g.date}</span></h4><span class="text-muted small">${teams.length} команд</span></div><div class="table-responsive"><table class="table table-hover align-middle competition-table" style="font-size:0.8rem"><thead class="table-light"><tr><th rowspan="2" style="width:35px;vertical-align:middle;text-align:center">№</th><th rowspan="2" style="vertical-align:middle;min-width:180px">Команда</th><th colspan="4" class="text-center bg-pres">Презентация</th><th colspan="4" class="text-center bg-qual">Квалификация</th><th colspan="6" class="text-center bg-comp">Конкурсное задание</th><th rowspan="2" style="vertical-align:middle;text-align:center">Доп.</th><th rowspan="2" style="vertical-align:middle;text-align:center">Σ</th><th rowspan="2" style="vertical-align:middle;text-align:center">🏆</th></tr><tr><th class="bg-pres" title="Структура">Структ.</th><th class="bg-pres" title="Сравнительный анализ">СА</th><th class="bg-pres" title="Новизна">Нов.</th><th class="bg-pres" title="Качество">Кач.</th><th class="bg-qual" title="Сумма размерений">Разм.</th><th class="bg-qual" title="Вес (кг)">Вес</th><th class="bg-qual" title="Штрафные баллы">Штраф</th><th class="bg-qual" title="Квалификационное задание выполнено">Квал. ✓</th><th class="bg-comp" title="Время (сек)">Т сек</th><th class="bg-comp" title="Балл за время">Т балл</th><th class="bg-comp" title="Прохождение ворот">Вор.</th><th class="bg-comp" title="Парковка">Парк.</th><th class="bg-comp" title="Нужный гараж">Гар.</th><th class="bg-comp" title="Штрафные баллы">Штраф</th></tr></thead><tbody>${teams
-      .map((team, i) => {
+    const title = g.fullName || classId.toUpperCase();
+    html += `<div class="detail-section mb-4"><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><h4 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a">${title} <span class="badge bg-secondary ms-2" style="font-size:0.8rem">${g.date}</span></h4><span class="text-muted small">${teams.length} команд</span></div><div class="table-responsive"><table class="table table-hover align-middle competition-table" style="font-size:0.8rem"><thead class="table-light"><tr><th rowspan="2" style="width:35px;vertical-align:middle;text-align:center">№</th><th rowspan="2" style="vertical-align:middle;min-width:180px">Команда</th><th colspan="4" class="text-center bg-pres">Презентация</th><th colspan="4" class="text-center bg-qual">Квалификация</th><th colspan="6" class="text-center bg-comp">Конкурсное задание</th><th rowspan="2" style="vertical-align:middle;text-align:center">Доп.</th><th rowspan="2" style="vertical-align:middle;text-align:center">Σ</th><th rowspan="2" style="vertical-align:middle;text-align:center">🏆</th></tr><tr><th class="bg-pres" title="Структура">Структ.</th><th class="bg-pres" title="Сравнительный анализ">СА</th><th class="bg-pres" title="Новизна">Нов.</th><th class="bg-pres" title="Качество">Кач.</th><th class="bg-qual" title="Сумма размерений">Разм.</th><th class="bg-qual" title="Вес (кг)">Вес</th><th class="bg-qual" title="Штрафные баллы">Штраф</th><th class="bg-qual" title="Квалификационное задание выполнено">Квал. ✓</th><th class="bg-comp" title="Время (сек)">Т сек</th><th class="bg-comp" title="Балл за время">Т балл</th><th class="bg-comp" title="Прохождение ворот">Вор.</th><th class="bg-comp" title="Парковка">Парк.</th><th class="bg-comp" title="Нужный гараж">Гар.</th><th class="bg-comp" title="Штрафные баллы">Штраф</th></tr></thead><tbody>${teams
+      .map((team) => {
         const p = team.protocol || {};
         const pres = p.presentation || {};
         const qual = p.qualification || {};
@@ -901,12 +928,12 @@ function renderCompetition() {
         return `<tr style="cursor:pointer" onclick="showProtocolPage('${team.id}')"><td style="text-align:center">${p.drawNumber || "—"}</td><td title="${fullName}${city ? ", " + city : ""}"><div class="fw-bold">${displayName}</div></td><td class="bg-pres-light">${pres.structure ?? "—"}</td><td class="bg-pres-light">${pres.analysis ?? "—"}</td><td class="bg-pres-light">${pres.novelty ?? "—"}</td><td class="bg-pres-light">${pres.quality ?? "—"}</td><td class="bg-qual-light">${p.dimensions ?? "—"}</td><td class="bg-qual-light">${p.weight ?? "—"}</td><td class="bg-qual-light">${qual.penalty ? "-" + qual.penalty : "—"}</td><td class="bg-qual-light" style="text-align:center">${qual.completed ? '<i class="fas fa-check text-success"></i>' : "—"}</td><td class="bg-comp-light">${comp.time ?? "—"}</td><td class="bg-comp-light">${comp.timeScore ?? "—"}</td><td class="bg-comp-light">${comp.gates ?? "—"}</td><td class="bg-comp-light">${comp.parking ?? "—"}</td><td class="bg-comp-light">${comp.garage ?? "—"}</td><td class="bg-comp-light">${comp.penalty ? "-" + comp.penalty : "—"}</td><td style="text-align:center">${p.extraBonus ?? "—"}</td><td class="fw-bold" style="text-align:center">${total > 0 ? total : "—"}</td><td style="text-align:center">${p.place ? `<span class="badge bg-primary">${p.place}</span>` : "—"}</td></tr>`;
       })
       .join("")}</tbody></table></div></div>`;
-  });
-  if (html === "")
-    html = '<div class="col-12 text-center text-muted py-5">Нет команд для ' + currentYear + " года</div>";
+  }
+  if (html === "") html = `<div class="col-12 text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
   container.innerHTML = html;
 }
 
+// ===== ПРОТОКОЛ =====
 function renderProtocolForm(teamId) {
   const team = teamsData.find((t) => t.id === teamId);
   if (!team) return;
@@ -979,11 +1006,10 @@ function saveProtocol() {
   };
   saveData();
   const ghSettings = getGitHubSettings();
-  if (ghSettings && ghSettings.owner && ghSettings.repo && ghSettings.token) {
+  if (ghSettings?.owner && ghSettings?.repo && ghSettings?.token) {
     showToast("Сохранение в GitHub...", "info");
     commitToGitHub().then((result) => {
-      if (result.success) showToast(result.message, "success");
-      else showToast(result.message, "error");
+      showToast(result.message, result.success ? "success" : "error");
     });
   } else {
     showToast("Протокол сохранён локально", "success");
@@ -993,9 +1019,10 @@ function saveProtocol() {
 
 function calculatePlaces() {
   if (!confirm("Автоматически рассчитать места по сумме баллов?")) return;
-  const groups = apparatusClasses.map((c) => ({
-    id: c.id,
-    filter: (v) => v.includes(c.id) || v.includes(c.name.toLowerCase()) || v.includes(c.fullName.toLowerCase()),
+  const yearSettings = competitionSettings[currentYear] || {};
+  const groups = Object.keys(yearSettings).map((classId) => ({
+    classId,
+    filter: (v) => v.includes(classId.toLowerCase()),
   }));
   groups.forEach((g) => {
     const teams = teamsData.filter(
@@ -1015,41 +1042,26 @@ function calculatePlaces() {
       team.protocol.competition.timeScore = Math.max(1, 10 - idx);
     });
     teams.sort((a, b) => {
-      const presA =
-        (a.protocol.presentation?.structure || 0) +
-        (a.protocol.presentation?.analysis || 0) +
-        (a.protocol.presentation?.novelty || 0) +
-        (a.protocol.presentation?.quality || 0);
-      const compA =
-        (a.protocol.competition?.timeScore || 0) +
-        (a.protocol.competition?.gates || 0) +
-        (a.protocol.competition?.parking || 0) +
-        (a.protocol.competition?.garage || 0);
-      const totalA = Math.round(
-        presA +
-          compA +
-          (a.protocol.extraBonus || 0) -
-          (a.protocol.qualification?.penalty || 0) -
-          (a.protocol.competition?.penalty || 0),
-      );
-      const presB =
-        (b.protocol.presentation?.structure || 0) +
-        (b.protocol.presentation?.analysis || 0) +
-        (b.protocol.presentation?.novelty || 0) +
-        (b.protocol.presentation?.quality || 0);
-      const compB =
-        (b.protocol.competition?.timeScore || 0) +
-        (b.protocol.competition?.gates || 0) +
-        (b.protocol.competition?.parking || 0) +
-        (b.protocol.competition?.garage || 0);
-      const totalB = Math.round(
-        presB +
-          compB +
-          (b.protocol.extraBonus || 0) -
-          (b.protocol.qualification?.penalty || 0) -
-          (b.protocol.competition?.penalty || 0),
-      );
-      return totalB - totalA;
+      const calc = (t) => {
+        const pres =
+          (t.protocol.presentation?.structure || 0) +
+          (t.protocol.presentation?.analysis || 0) +
+          (t.protocol.presentation?.novelty || 0) +
+          (t.protocol.presentation?.quality || 0);
+        const comp =
+          (t.protocol.competition?.timeScore || 0) +
+          (t.protocol.competition?.gates || 0) +
+          (t.protocol.competition?.parking || 0) +
+          (t.protocol.competition?.garage || 0);
+        return Math.round(
+          pres +
+            comp +
+            (t.protocol.extraBonus || 0) -
+            (t.protocol.qualification?.penalty || 0) -
+            (t.protocol.competition?.penalty || 0),
+        );
+      };
+      return calc(b) - calc(a);
     });
     teams.forEach((team, idx) => {
       team.protocol.place = idx + 1;
@@ -1060,6 +1072,7 @@ function calculatePlaces() {
   showToast("Места рассчитаны", "success");
 }
 
+// ===== СВОДНАЯ ТАБЛИЦА =====
 function renderMasterTable() {
   const container = document.getElementById("masterContent");
   const years = [2026, 2025, 2024];
@@ -1068,12 +1081,12 @@ function renderMasterTable() {
     if (!team.orgId) return;
     const org = organizations.find((o) => o.id === team.orgId);
     if (!org) return;
-    if (!orgStats[team.orgId]) orgStats[team.orgId] = {org: org, years: {}};
+    if (!orgStats[team.orgId]) orgStats[team.orgId] = {org, years: {}};
     const yearData = orgStats[team.orgId].years[team.year];
     const place = team.protocol?.place || null;
     const score = team.protocol?.totalScore || null;
     if (!yearData || place < yearData.place || (place && yearData.place === null)) {
-      orgStats[team.orgId].years[team.year] = {place: place, score: score};
+      orgStats[team.orgId].years[team.year] = {place, score};
     }
   });
   let html =
@@ -1104,6 +1117,7 @@ function renderMasterTable() {
   container.innerHTML = html;
 }
 
+// ===== СПРАВОЧНИК ОРГАНИЗАЦИЙ =====
 function renderOrgManager() {
   const container = document.getElementById("orgManagerContent");
   let html =
@@ -1134,14 +1148,8 @@ function addOrganization() {
 
 function deleteOrganization(orgId) {
   const teamCount = teamsData.filter((t) => t.orgId === orgId).length;
-  if (teamCount > 0) {
-    if (
-      !confirm(
-        `Эта организация используется в ${teamCount} командах. Удалить справочную запись? Команды не будут удалены.`,
-      )
-    )
-      return;
-  }
+  if (teamCount > 0 && !confirm(`Эта организация используется в ${teamCount} командах. Удалить справочную запись?`))
+    return;
   organizations = organizations.filter((o) => o.id !== orgId);
   saveData();
   renderOrgManager();
@@ -1149,64 +1157,117 @@ function deleteOrganization(orgId) {
   showToast("Организация удалена", "success");
 }
 
-// ===== УПРАВЛЕНИЕ КЛАССАМИ АППАРАТОВ =====
+// ===== НАСТРОЙКИ СОРЕВНОВАНИЙ =====
 function renderApparatusManager() {
   const container = document.getElementById("apparatusContent");
-  let html =
-    '<div class="detail-section"><h4 class="detail-section-title">Справочник классов аппаратов</h4><p class="text-muted">Всего классов: ' +
-    apparatusClasses.length +
-    "</p>";
-  apparatusClasses.forEach((c, index) => {
-    html += `<div class="org-manager-item">
-        <div class="org-info" style="flex:2">
-            <div class="full-name"><span class="badge category-badge ${c.color} me-2">${c.name}</span> ${c.fullName}</div>
-            <div class="meta">Дата соревнований: ${c.date || "Не указана"}</div>
-        </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm" onclick="editApparatusClass(${index})"><i class="fas fa-edit"></i></button>
-            <button class="btn btn-outline-danger btn-sm" onclick="deleteApparatusClass(${index})"><i class="fas fa-trash"></i></button>
-        </div>
-    </div>`;
+  let html = '<div class="detail-section"><h4 class="detail-section-title">Настройки соревнований по годам</h4>';
+  const years = Object.keys(competitionSettings).sort((a, b) => b - a);
+  const colorOptions = [
+    {val: "badge-bek", label: "🔵 Синий"},
+    {val: "badge-tnpa", label: "🟢 Зелёный"},
+    {val: "badge-anpa", label: "🟣 Фиолетовый"},
+    {val: "badge-anna", label: "🟠 Оранжевый"},
+    {val: "badge-red", label: "🔴 Красный"},
+    {val: "badge-yellow", label: "🟡 Жёлтый"},
+    {val: "badge-gray", label: "⚪ Серый"},
+  ];
+  years.forEach((year) => {
+    html += `<h5 class="mt-4 mb-3 text-primary"><i class="fas fa-calendar me-2"></i>${year} год</h5><div class="row g-3">`;
+    const classes = competitionSettings[year];
+    for (const [classId, config] of Object.entries(classes)) {
+      const teamCount = teamsData.filter(
+        (t) => t.year == year && String(t.apparatusClass).toLowerCase().includes(classId),
+      ).length;
+      const colorSelect = `<select class="form-select form-select-sm" onchange="updateClassConfig('${year}', '${classId}', 'color', this.value)">${colorOptions.map((opt) => `<option value="${opt.val}" ${config.color === opt.val ? "selected" : ""}>${opt.label}</option>`).join("")}</select>`;
+      html += `
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h6 class="card-title fw-bold mb-0">${classId.toUpperCase()}</h6>
+                <span class="badge ${config.color}">${classId.toUpperCase()}</span>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small text-muted mb-1">Дата соревнований</label>
+                <input type="text" class="form-control form-control-sm" value="${config.date}" onchange="updateClassConfig('${year}', '${classId}', 'date', this.value)" placeholder="ДД.ММ.ГГГГ">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small text-muted mb-1">Цвет бейджа</label>
+                ${colorSelect}
+              </div>
+              <div class="mt-3 pt-2 border-top">
+                <small class="text-muted d-block mb-2">Команд в базе: ${teamCount}</small>
+                <button class="btn btn-outline-primary btn-sm w-100" onclick="editClassCriteria('${year}', '${classId}')">
+                  <i class="fas fa-list-check me-1"></i> Критерии оценки
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+    html += `</div>`;
   });
-  html += "</div>";
+  html += `<div class="mt-4 pt-3 border-top"><button class="btn btn-success" onclick="addNewClassToYear()"><i class="fas fa-plus me-2"></i>Добавить новый класс аппаратов</button></div></div>`;
   container.innerHTML = html;
 }
 
-function addApparatusClass() {
-  const name = prompt("Короткое название (аббревиатура, например: АННА):");
-  if (!name) return;
-  const fullName = prompt("Полное название (например: Автономные необитаемые надводные аппараты):") || name;
-  const date = prompt("Дата соревнований (ДД.ММ.ГГГГ):") || "";
-  const color = "badge-anna"; // По умолчанию оранжевый для новых
-
-  apparatusClasses.push({id: name.toLowerCase(), name: name.toUpperCase(), fullName, color, date});
+function updateClassConfig(year, classId, field, value) {
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  if (!competitionSettings[year][classId])
+    competitionSettings[year][classId] = {date: "", color: "badge-gray", criteria: []};
+  competitionSettings[year][classId][field] = value;
   saveData();
-  renderApparatusManager();
-  showToast(`Класс "${name}" добавлен`, "success");
+  showToast("Настройки сохранены", "success");
 }
 
-function editApparatusClass(index) {
-  const c = apparatusClasses[index];
-  const newFullName = prompt("Полное название:", c.fullName);
-  if (newFullName === null) return;
-  const newDate = prompt("Дата соревнований (ДД.ММ.ГГГГ):", c.date);
-  if (newDate === null) return;
-
-  c.fullName = newFullName;
-  c.date = newDate;
-  saveData();
-  renderApparatusManager();
-  showToast("Данные обновлены", "success");
+function editClassCriteria(year, classId) {
+  const config = competitionSettings[year]?.[classId];
+  if (!config) return;
+  const currentCriteria = JSON.stringify(config.criteria, null, 2);
+  const newCriteriaStr = prompt(
+    `Критерии оценки для ${classId.toUpperCase()} (${year} год).\n\nФормат JSON-массива:\n[\n  {"section": "Квалификация", "fields": ["Вес", "Штраф"]},\n  {"section": "Презентация", "fields": ["Структура", "Новизна"]}\n]`,
+    currentCriteria,
+  );
+  if (newCriteriaStr !== null) {
+    try {
+      const parsed = JSON.parse(newCriteriaStr);
+      if (Array.isArray(parsed)) {
+        competitionSettings[year][classId].criteria = parsed;
+        saveData();
+        renderApparatusManager();
+        showToast("Критерии обновлены", "success");
+      } else {
+        alert("Ошибка: данные должны быть массивом [...]");
+      }
+    } catch (e) {
+      alert("Ошибка синтаксиса JSON. Проверьте кавычки и запятые.");
+    }
+  }
 }
 
-function deleteApparatusClass(index) {
-  if (!confirm("Удалить этот класс из справочника? Команды не будут удалены, но потеряют привязку к цвету.")) return;
-  apparatusClasses.splice(index, 1);
+function addNewClassToYear() {
+  const year = prompt("Введите год (например, 2024):");
+  if (!year || !/^\d{4}$/.test(year)) {
+    alert("Некорректный год");
+    return;
+  }
+  const classId = prompt("Введите ID класса (латиницей, без пробелов, например: anna):");
+  if (!classId || !/^[a-z]+$/.test(classId)) {
+    alert("Некорректный ID");
+    return;
+  }
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  if (competitionSettings[year][classId]) {
+    alert("Такой класс уже есть в этом году");
+    return;
+  }
+  competitionSettings[year][classId] = {date: "", color: "badge-gray", criteria: []};
   saveData();
   renderApparatusManager();
-  showToast("Класс удален", "success");
+  showToast(`Класс ${classId.toUpperCase()} добавлен на ${year} год`, "success");
 }
 
+// ===== СОХРАНЕНИЕ / УДАЛЕНИЕ =====
 async function saveEdit() {
   const orgSearch = document.getElementById("editOrgSearch").value.trim();
   if (!orgSearch) {
@@ -1216,8 +1277,7 @@ async function saveEdit() {
   const orgId = document.getElementById("editOrgId").value;
   const shortName = document.getElementById("editShortName").value.trim();
   const city = document.getElementById("editCity").value.trim();
-  let org;
-  if (orgId) org = organizations.find((o) => o.id === orgId);
+  let org = orgId ? organizations.find((o) => o.id === orgId) : null;
   if (!org) org = findOrCreateOrg(orgSearch, shortName, city);
   else {
     if (shortName) org.shortName = shortName;
@@ -1231,7 +1291,7 @@ async function saveEdit() {
     const fio = div.querySelector(".member-fio-input").value.trim();
     if (fio)
       members.push({
-        fio: fio,
+        fio,
         birth: div.querySelector(".member-birth-input").value,
         passport: div.querySelector(".member-passport-input").value,
         isStudent: div.querySelector(".member-student-input").value,
@@ -1240,9 +1300,9 @@ async function saveEdit() {
   });
   const teamData = {
     orgId: org.id,
-    year: year,
-    shortName: shortName,
-    city: city,
+    year,
+    shortName,
+    city,
     region: document.getElementById("editRegion").value,
     postalCode: document.getElementById("editPostalCode").value,
     address: document.getElementById("editAddress").value,
@@ -1255,7 +1315,7 @@ async function saveEdit() {
     teamLeader: document.getElementById("editTeamLeader").value,
     teamLeaderPhone: document.getElementById("editTeamLeaderPhone").value,
     photos: photoLinks,
-    members: members,
+    members,
   };
   if (isNewTeam || !currentTeamId) {
     const newTeam = {
@@ -1272,11 +1332,10 @@ async function saveEdit() {
   }
   saveData();
   const ghSettings = getGitHubSettings();
-  if (ghSettings && ghSettings.owner && ghSettings.repo && ghSettings.token) {
+  if (ghSettings?.owner && ghSettings?.repo && ghSettings?.token) {
     showToast("Сохранение в GitHub...", "info");
     const result = await commitToGitHub();
-    if (result.success) showToast(result.message, "success");
-    else showToast(result.message + " (сохранено локально)", "error");
+    showToast(result.message, result.success ? "success" : "error");
   } else {
     showToast("Данные сохранены локально", "success");
   }
@@ -1296,11 +1355,13 @@ function deleteTeam() {
   teamsData = teamsData.filter((t) => t.id !== currentTeamId);
   saveData();
   const ghSettings = getGitHubSettings();
-  if (ghSettings && ghSettings.owner && ghSettings.repo && ghSettings.token) {
+  if (ghSettings?.owner && ghSettings?.repo && ghSettings?.token) {
     showToast("Удаление команды...", "info");
     commitToGitHub().then((result) => {
-      if (result.success) showToast(`Команда "${displayName}" удалена`, "success");
-      else showToast(result.message + " (удалено локально)", "error");
+      showToast(
+        result.success ? `Команда "${displayName}" удалена` : result.message + " (удалено локально)",
+        result.success ? "success" : "error",
+      );
     });
   } else {
     showToast(`Команда "${displayName}" удалена`, "success");
@@ -1308,12 +1369,13 @@ function deleteTeam() {
   showTeamsView();
 }
 
+// ===== ЭКСПОРТ / ИМПОРТ =====
 function downloadJSON() {
   if (teamsData.length === 0 && organizations.length === 0) {
     showToast("Нет данных", "error");
     return;
   }
-  const dataToSave = {organizations: organizations, apparatusClasses: apparatusClasses, teams: teamsData};
+  const dataToSave = {organizations, competitionSettings, teams: teamsData};
   const dataStr = JSON.stringify(dataToSave, null, 2);
   const blob = new Blob([dataStr], {type: "application/json"});
   const url = URL.createObjectURL(blob);
@@ -1338,7 +1400,7 @@ function attachFileInputListener() {
         const rawData = JSON.parse(e.target.result);
         if (rawData.organizations && rawData.teams) {
           organizations = rawData.organizations || [];
-          apparatusClasses = rawData.apparatusClasses || getDefaultApparatusClasses();
+          competitionSettings = rawData.competitionSettings || getDefaultCompetitionSettings();
           teamsData = rawData.teams || [];
           showToast("Данные загружены", "success");
         } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
@@ -1377,7 +1439,7 @@ function handleEditPageFileUpload(event) {
       const rawData = JSON.parse(e.target.result);
       if (rawData.organizations && rawData.teams) {
         organizations = rawData.organizations || [];
-        apparatusClasses = rawData.apparatusClasses || getDefaultApparatusClasses();
+        competitionSettings = rawData.competitionSettings || getDefaultCompetitionSettings();
         teamsData = rawData.teams || [];
         showToast("Данные загружены", "success");
       } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
@@ -1438,7 +1500,7 @@ async function loadDefaultData() {
     const rawData = await response.json();
     if (rawData.organizations && rawData.teams) {
       organizations = rawData.organizations || [];
-      apparatusClasses = rawData.apparatusClasses || getDefaultApparatusClasses();
+      competitionSettings = rawData.competitionSettings || getDefaultCompetitionSettings();
       teamsData = rawData.teams || [];
     } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
       teamsData = transformYandexFormsData(rawData);
