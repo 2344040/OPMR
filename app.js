@@ -467,12 +467,24 @@ function loadData() {
 function renderHeaderButtons() {
   const container = document.getElementById("headerButtons");
   const adminButtons = isAdmin
-    ? `<label for="fileInput" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла"><i class="fas fa-file-upload"></i><span class="btn-text ms-2">Загрузить JSON</span></label>
-       <button class="btn btn-success btn-upload" onclick="downloadJSON()" title="Скачать текущие данные"><i class="fas fa-download"></i><span class="btn-text ms-2">Скачать JSON</span></button>
-       <button class="btn btn-primary btn-upload" onclick="createNewTeam()"><i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span></button>
-       <button class="btn btn-outline-dark btn-upload" onclick="openGitHubSettings()" title="Настройки GitHub"><i class="fab fa-github"></i><span class="btn-text ms-2">GitHub</span></button>
-       <button class="btn btn-outline-info btn-upload" onclick="showOrgManager()" title="Справочник организаций"><i class="fas fa-building"></i><span class="btn-text ms-2">Организации</span></button>
-       <button class="btn btn-outline-warning btn-upload" onclick="showApparatusManager()" title="Настройки соревнований"><i class="fas fa-cogs"></i><span class="btn-text ms-2">Соревнования</span></button>`
+    ? `<div class="dropdown">
+         <button class="btn btn-outline-primary btn-upload dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-folder-open"></i><span class="btn-text ms-2">Проект</span></button>
+         <ul class="dropdown-menu dropdown-menu-end">
+           <li><label for="fileInput" class="dropdown-item" style="cursor:pointer"><i class="fas fa-file-upload me-2 text-primary"></i>Загрузить JSON</label></li>
+           <li><a class="dropdown-item" href="#" onclick="downloadJSON(); return false;"><i class="fas fa-download me-2 text-success"></i>Скачать JSON</a></li>
+           <li><hr class="dropdown-divider"></li>
+           <li><a class="dropdown-item" href="#" onclick="commitToGitHubManual(); return false;"><i class="fab fa-github me-2"></i>Отправить данные на GitHub</a></li>
+           <li><a class="dropdown-item" href="#" onclick="openGitHubSettings(); return false;"><i class="fas fa-cog me-2 text-muted"></i>Настройки GitHub…</a></li>
+         </ul>
+       </div>
+       <div class="dropdown">
+         <button class="btn btn-outline-info btn-upload dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-book"></i><span class="btn-text ms-2">Справочники</span></button>
+         <ul class="dropdown-menu dropdown-menu-end">
+           <li><a class="dropdown-item" href="#" onclick="showOrgManager(); return false;"><i class="fas fa-building me-2 text-primary"></i>Организации</a></li>
+           <li><a class="dropdown-item" href="#" onclick="showApparatusManager(); return false;"><i class="fas fa-robot me-2 text-warning"></i>Классы аппаратов</a></li>
+         </ul>
+       </div>
+       <button class="btn btn-primary btn-upload" onclick="createNewTeam()"><i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span></button>`
     : "";
   container.innerHTML = `${adminButtons}
     <div class="btn-group view-switcher" role="group" style="overflow:hidden">
@@ -482,6 +494,18 @@ function renderHeaderButtons() {
     <button class="btn btn-grouping-icon ${isGrouped ? "active" : ""}" onclick="toggleGrouping()" title="${isGrouped ? "Показать списком" : "Группировать по классам"}"><i class="fas fa-layer-group"></i></button>
     <button class="btn ${isAdmin ? "btn-dark" : "btn-outline-secondary"} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? "Выйти из режима администратора" : "Войти в режим администратора"}"><i class="fas fa-${isAdmin ? "user-shield" : "lock"}"></i><span class="btn-text ms-2">${isAdmin ? "Админ" : "Admin"}</span></button>`;
   renderEditPageAdminButtons();
+}
+
+async function commitToGitHubManual() {
+  const settings = getGitHubSettings();
+  if (!settings?.owner || !settings?.repo || !settings?.token) {
+    showToast("Сначала настройте подключение к GitHub", "error");
+    openGitHubSettings();
+    return;
+  }
+  showToast("Отправка данных на GitHub...", "info");
+  const result = await commitToGitHub();
+  showToast(result.message, result.success ? "success" : "error");
 }
 
 function renderYearSwitcher() {
@@ -1323,12 +1347,47 @@ function deleteOrganization(orgId) {
 }
 
 // ===== СТРАНИЦА НАСТРОЕК СОРЕВНОВАНИЙ (НОВЫЙ ВИД) =====
+
 function renderApparatusManager() {
   const container = document.getElementById("apparatusContent");
-  const years = Object.keys(competitionSettings).sort((a, b) => b - a);
-  let html =
-    '<div class="detail-section"><h4 class="detail-section-title">Настройки соревнований по годам</h4><p class="text-muted small">Отметьте классы аппаратов, участвующие в соревнованиях каждого года, и укажите даты проведения. Цвет и название класса задаются в справочнике ниже и здесь не редактируются.</p>';
+  let html = `
+    <div class="detail-section">
+      <h4 class="detail-section-title">Справочник классов аппаратов</h4>
+      <p class="text-muted small">Название и цвет бейджа задаются здесь и используются во всех карточках и таблицах. ID класса (латиницей) входит в состав ID команд.</p>
+      <div class="table-responsive">
+        <table class="table align-middle mb-0" style="font-size:0.9rem">
+          <thead>
+            <tr>
+              <th style="width:80px">ID</th>
+              <th>Название класса</th>
+              <th style="width:200px">Цвет бейджа</th>
+              <th style="width:110px">Команд</th>
+              <th style="width:60px"></th>
+            </tr>
+          </thead>
+          <tbody>`;
+  apparatusClasses.forEach((info, idx) => {
+    const totalTeams = teamsData.filter((t) => getClassIdByValue(t.apparatusClass, t.year) === info.id).length;
+    html += `
+            <tr>
+              <td><code>${info.id}</code></td>
+              <td><input type="text" class="form-control form-control-sm" value="${info.name}" onchange="updateApparatusClass(${idx}, 'name', this.value)"></td>
+              <td><select class="form-select form-select-sm" onchange="updateApparatusClass(${idx}, 'color', this.value)">${classColorOptions(info.color)}</select></td>
+              <td class="text-muted">${totalTeams}</td>
+              <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="deleteApparatusClass(${idx})" title="Удалить класс"><i class="fas fa-trash"></i></button></td>
+            </tr>`;
+  });
+  html += `
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-success btn-sm mt-3" onclick="addApparatusClass()"><i class="fas fa-plus me-2"></i>Добавить класс</button>
+    </div>
+    <div class="detail-section">
+      <h4 class="detail-section-title">Участие классов в соревнованиях по годам</h4>
+      <p class="text-muted small">Отметьте классы, участвующие в каждом году, и укажите даты проведения. Критерии оценки настраиваются отдельно.</p>`;
 
+  const years = Object.keys(competitionSettings).sort((a, b) => b - a);
   years.forEach((year) => {
     html += `<h5 class="mt-4 mb-2 text-primary"><i class="fas fa-calendar me-2"></i>${year} год</h5><div class="list-group mb-4 shadow-sm">`;
     apparatusClasses.forEach((info) => {
@@ -1357,17 +1416,7 @@ function renderApparatusManager() {
     });
     html += `</div>`;
   });
-
-  html += `
-    <div class="mt-4 pt-3 border-top">
-      <h5 class="mb-3"><i class="fas fa-book me-2"></i>Справочник классов аппаратов</h5>
-      <div class="row g-2">`;
-  apparatusClasses.forEach((info) => {
-    html += `<div class="col-md-3"><div class="d-flex align-items-center gap-2 border rounded p-2 bg-white"><span class="badge category-badge ${info.color}">${info.name}</span><span class="small text-muted">${info.id}</span></div></div>`;
-  });
-  html += `</div>
-      <button class="btn btn-success mt-3" onclick="addNewClassToYear()"><i class="fas fa-plus me-2"></i>Добавить класс в справочник</button>
-    </div></div>`;
+  html += `</div>`;
   container.innerHTML = html;
 }
 
@@ -1403,39 +1452,82 @@ function updateYearClassDate(year, classId, value) {
 }
 
 // Добавление класса в глобальный справочник (цвет закрепляется здесь один раз)
-function addNewClassToYear() {
-  const classId = prompt("ID класса (латиницей, без пробелов, например: mrs):");
-  if (!classId || !/^[a-z]+$/.test(classId)) {
-    alert("Некорректный ID");
-    return;
-  }
-  if (apparatusClasses.some((c) => c.id === classId)) {
-    alert("Такой класс уже есть в справочнике");
-    return;
-  }
-  const name = prompt("Название класса (например: МРС):");
-  if (!name || !name.trim()) {
-    alert("Некорректное название");
-    return;
-  }
-  const colorChoice = prompt(
-    "Номер цвета бейджа:\n1. Синий\n2. Зелёный\n3. Фиолетовый\n4. Оранжевый\n5. Красный\n6. Жёлтый\n7. Серый",
-    "1",
-  );
-  const colorOptions = [
-    "badge-bek",
-    "badge-tnpa",
-    "badge-anpa",
-    "badge-anna",
-    "badge-red",
-    "badge-yellow",
-    "badge-gray",
+function classColorOptions(selected) {
+  const opts = [
+    {val: "badge-bek", label: "Синий"},
+    {val: "badge-tnpa", label: "Зелёный"},
+    {val: "badge-anpa", label: "Фиолетовый"},
+    {val: "badge-anna", label: "Оранжевый"},
+    {val: "badge-red", label: "Красный"},
+    {val: "badge-yellow", label: "Жёлтый"},
+    {val: "badge-gray", label: "Серый"},
   ];
-  const colorIdx = parseInt(colorChoice) - 1;
-  apparatusClasses.push({id: classId, name: name.trim().toUpperCase(), color: colorOptions[colorIdx] || "badge-gray"});
+  return opts
+    .map((o) => `<option value="${o.val}" ${o.val === selected ? "selected" : ""}>${o.label}</option>`)
+    .join("");
+}
+
+function updateApparatusClass(idx, field, value) {
+  const info = apparatusClasses[idx];
+  if (!info) return;
+  if (field === "name") {
+    const v = value.trim();
+    if (!v) {
+      renderApparatusManager();
+      return;
+    }
+    info.name = v.toUpperCase();
+  } else {
+    info[field] = value;
+  }
   saveData();
   renderApparatusManager();
-  showToast(`Класс ${name.trim().toUpperCase()} добавлен в справочник`, "success");
+  showToast("Справочник классов обновлён", "success");
+}
+
+function addApparatusClass() {
+  const rawId = prompt(
+    "ID нового класса (латинскими буквами, без пробелов,\nнапример: mrs — будет использоваться в ID команд):",
+  );
+  if (!rawId) return;
+  const id = rawId.trim().toLowerCase();
+  if (!/^[a-z]+$/.test(id)) {
+    alert("ID должен состоять только из латинских букв без пробелов");
+    return;
+  }
+  if (apparatusClasses.some((c) => c.id === id)) {
+    alert("Класс с таким ID уже существует");
+    return;
+  }
+  apparatusClasses.push({id, name: id.toUpperCase(), color: "badge-gray"});
+  saveData();
+  renderApparatusManager();
+  showToast(`Класс "${id.toUpperCase()}" добавлен — укажите название и цвет в таблице`, "success");
+}
+
+function deleteApparatusClass(idx) {
+  const info = apparatusClasses[idx];
+  if (!info) return;
+  const usedYears = Object.keys(competitionSettings).filter((y) => competitionSettings[y][info.id]);
+  const teamCount = teamsData.filter((t) => getClassIdByValue(t.apparatusClass, t.year) === info.id).length;
+  if (usedYears.length > 0 || teamCount > 0) {
+    if (
+      !confirm(
+        `Класс "${info.name}" используется:\n· настройки годов: ${usedYears.join(", ") || "—"}\n· команд в базе: ${teamCount}\n\nУдалить класс из справочника и из настроек годов?`,
+      )
+    )
+      return;
+    usedYears.forEach((y) => delete competitionSettings[y][info.id]);
+  }
+  apparatusClasses.splice(idx, 1);
+  saveData();
+  renderApparatusManager();
+  showToast("Класс удалён из справочника", "success");
+}
+
+// Алиас для кнопки в шапке страницы настроек
+function addNewClassToYear() {
+  addApparatusClass();
 }
 
 // ===== РЕДАКТОР КРИТЕРИЕВ (OFFCANVAS) =====
