@@ -226,7 +226,6 @@ function formatDescription(desc) {
     .join("");
 }
 
-// ===== ДИНАМИЧЕСКИЙ БЕЙДЖ КЛАССА =====
 function getCategoryBadge(apparatusClass, extraClass = "", year = currentYear) {
   const value = String(apparatusClass || "")
     .trim()
@@ -321,7 +320,6 @@ function findOrCreateOrg(fullName, shortName, city) {
   return org;
 }
 
-// ===== МИГРАЦИЯ =====
 function migrateData() {
   const oldData = localStorage.getItem(STORAGE_KEY_OLD);
   if (!oldData) return false;
@@ -384,7 +382,6 @@ function loadData() {
   return false;
 }
 
-// ===== ШАПКА =====
 function renderHeaderButtons() {
   const container = document.getElementById("headerButtons");
   const adminButtons = isAdmin
@@ -478,7 +475,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-// ===== УТИЛИТЫ КОМАНД =====
 function sortTeamsByName(teams) {
   return [...teams].sort((a, b) =>
     getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru"),
@@ -511,7 +507,6 @@ function renderTeamCard(team) {
   return `<div class="col-md-6 col-lg-4"><div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')"><div class="team-card-head mb-2"><div class="flex-grow-1"><div class="org-name">${displayName}</div><div class="team-meta">${city || "Город не указан"}</div></div>${getCategoryBadge(team.apparatusClass, "category-badge-card")}</div><div class="mt-auto pt-3 border-top"><div class="d-flex justify-content-between align-items-center"><span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members?.length || 0} участн.</span><span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader?.split(" ")[0] || "—"}</span></div></div></div></div>`;
 }
 
-// ===== СПИСКИ КОМАНД =====
 function renderTeams(teams) {
   const container = document.getElementById("teamsContainer");
   const filtered = teams.filter((t) => t.year === currentYear);
@@ -552,7 +547,6 @@ function renderTeams(teams) {
   container.innerHTML = html;
 }
 
-// ===== НАВИГАЦИЯ =====
 function hideAllPages() {
   [
     "listPage",
@@ -668,7 +662,6 @@ function goBack() {
   else showTeamsView();
 }
 
-// ===== ДЕТАЛИ КОМАНДЫ =====
 function showTeamDetails(teamId) {
   returnToView = currentView;
   returnToTeamId = teamId;
@@ -684,6 +677,7 @@ function showTeamDetails(teamId) {
   if (captainIdx > 0) {
     sortedMembers.unshift(sortedMembers.splice(captainIdx, 1)[0]);
   }
+
   const membersTableHtml =
     sortedMembers.length > 0
       ? `<table class="members-table"><thead><tr><th class="col-fio">ФИО</th><th class="col-birth">Дата рождения</th><th class="col-passport">Паспорт/Св-во</th><th class="col-student">Студент</th><th class="col-order">Приказ о зачислении</th></tr></thead><tbody>${sortedMembers
@@ -696,6 +690,7 @@ function showTeamDetails(teamId) {
           })
           .join("")}</tbody></table>`
       : '<div class="text-muted py-3">Состав команды не указан</div>';
+
   const membersCardsHtml =
     sortedMembers.length > 0
       ? sortedMembers
@@ -708,6 +703,7 @@ function showTeamDetails(teamId) {
           })
           .join("")
       : '<div class="text-muted py-3">Состав команды не указан</div>';
+
   const descHtml = formatDescription(team.description);
   const photos = team.photos || [];
   let photosHtml;
@@ -726,6 +722,7 @@ function showTeamDetails(teamId) {
       .join("");
     photosHtml = `<div style="width:100%;max-width:100%;overflow:hidden;box-sizing:border-box"><div class="${gridClass}" style="width:100%;max-width:100%;overflow:hidden">${items}</div></div>`;
   }
+
   const displayName = getTeamDisplayName(team);
   const editButtonDesktop = isAdmin
     ? `<button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')"><i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span></button>`
@@ -733,6 +730,7 @@ function showTeamDetails(teamId) {
   const editButtonMobile = isAdmin
     ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display:none"><i class="fas fa-edit"></i></button>`
     : "";
+
   document.getElementById("detailContent").innerHTML =
     `<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2 print-header"><div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a;font-size:1.75rem">${displayName}</h3>${getCategoryBadge(team.apparatusClass, "category-badge-card")}<span class="badge bg-secondary ms-2">${team.year}</span></div><div class="d-flex gap-2">${editButtonDesktop}<button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()"><i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span></button></div></div><div class="d-flex gap-1 mb-2 print-header-mobile">${editButtonMobile}<button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display:none"><i class="fas fa-print"></i></button></div><div class="detail-section print-section-info"><div class="row g-4"><div class="col-md-6"><div class="detail-label">ID заявки</div><div class="detail-value">${team.id}</div></div><div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div><div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${getTeamCity(team) || "—"}</div></div><div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || "—"}</div></div><div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || "—"}</div></div><div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || "—"}</div></div><div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div><div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div><div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || "—"}</div></div></div></div><div class="detail-section print-section-apparatus"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, "category-badge-xl")}</div><div class="row g-4"><div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div><div class="col-12"><div class="detail-label">Название аппарата</div><div class="detail-value">${team.apparatusName || "—"}</div></div><div class="col-12 print-hide-desc"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div><div class="col-12 print-hide-photos"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div></div></div><div class="detail-section print-section-team"><h5 class="detail-section-title">Команда</h5><div class="row g-4"><div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${(team.teamLeaderPhone || "").replace(/\s/g, "")}">${team.teamLeaderPhone || "—"}</a></div></div></div></div><div class="detail-section print-section-members"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>`;
   showDetailPage();
@@ -773,7 +771,6 @@ function getPhotoLinks() {
     .filter((url) => url.length > 0);
 }
 
-// ===== РЕДАКТИРОВАНИЕ КОМАНДЫ =====
 function createNewTeam() {
   currentTeamId = null;
   isNewTeam = true;
@@ -878,7 +875,6 @@ function addMemberField(member = null) {
   container.appendChild(div);
 }
 
-// ===== СОРЕВНОВАНИЯ =====
 function renderCompetition() {
   const container = document.getElementById("competitionContent");
   const yearSettings = competitionSettings[currentYear] || {};
@@ -933,7 +929,6 @@ function renderCompetition() {
   container.innerHTML = html;
 }
 
-// ===== ПРОТОКОЛ =====
 function renderProtocolForm(teamId) {
   const team = teamsData.find((t) => t.id === teamId);
   if (!team) return;
@@ -1072,7 +1067,6 @@ function calculatePlaces() {
   showToast("Места рассчитаны", "success");
 }
 
-// ===== СВОДНАЯ ТАБЛИЦА =====
 function renderMasterTable() {
   const container = document.getElementById("masterContent");
   const years = [2026, 2025, 2024];
@@ -1117,7 +1111,6 @@ function renderMasterTable() {
   container.innerHTML = html;
 }
 
-// ===== СПРАВОЧНИК ОРГАНИЗАЦИЙ =====
 function renderOrgManager() {
   const container = document.getElementById("orgManagerContent");
   let html =
@@ -1157,7 +1150,206 @@ function deleteOrganization(orgId) {
   showToast("Организация удалена", "success");
 }
 
-// ===== НАСТРОЙКИ СОРЕВНОВАНИЙ =====
+// =====================================================================
+// ===== НОВЫЙ ВИЗУАЛЬНЫЙ РЕДАКТОР КРИТЕРИЕВ (БЕЗ JSON) =====
+// =====================================================================
+
+const CRITERIA_LIBRARY = {
+  groups: [
+    {
+      id: "qualification",
+      name: "Квалификация",
+      fields: ["Сумма размерений", "Штрафные баллы", "Вес (кг)", "Бонусные баллы"],
+    },
+    {
+      id: "presentation",
+      name: "Презентация",
+      fields: ["Структура", "Эффективность", "Новизна", "Перспектива", "Качество"],
+    },
+    {id: "task2", name: "Задание 2 (движение по траектории)", fields: ["Среднее отклонение", "Баллы"]},
+    {id: "task3", name: "Задание 3 (растения на островах)", fields: ["Остров 1", "Остров 2", "Остров 3", "Баллы"]},
+    {
+      id: "task4",
+      name: "Задание 4 (подводные объекты)",
+      fields: ["Кол-во объектов", "Баллы", "Бонус за непрерывность"],
+    },
+    {
+      id: "competition",
+      name: "Конкурсное задание",
+      fields: ["Время (сек)", "Балл за время", "Прохождение ворот", "Парковка", "Нужный гараж", "Штрафные баллы"],
+    },
+    {id: "extra", name: "Дополнительные баллы", fields: ["За внеконкурсное задание"]},
+  ],
+};
+
+let currentCriteriaYear = null;
+let currentCriteriaClass = null;
+let tempCriteria = [];
+
+function openCriteriaEditor(year, classId) {
+  currentCriteriaYear = year;
+  currentCriteriaClass = classId;
+  const config = competitionSettings[year]?.[classId];
+  tempCriteria = config?.criteria ? JSON.parse(JSON.stringify(config.criteria)) : [];
+  renderCriteriaModal();
+  new bootstrap.Modal(document.getElementById("criteriaModal")).show();
+}
+
+function renderCriteriaModal() {
+  const body = document.getElementById("criteriaModalBody");
+  let html = `<h6 class="text-muted mb-3">${currentCriteriaClass.toUpperCase()} — ${currentCriteriaYear} год</h6>`;
+
+  if (tempCriteria.length === 0) {
+    html += `<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>Критерии не заданы. Добавьте группы критериев ниже.</div>`;
+  }
+
+  tempCriteria.forEach((group, gIdx) => {
+    html += `
+      <div class="card mb-3 border-0 shadow-sm">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2 flex-grow-1">
+            <span class="badge bg-primary">${gIdx + 1}</span>
+            <strong>${group.section}</strong>
+          </div>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, -1)" ${gIdx === 0 ? "disabled" : ""}><i class="fas fa-chevron-up"></i></button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, 1)" ${gIdx === tempCriteria.length - 1 ? "disabled" : ""}><i class="fas fa-chevron-down"></i></button>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeGroup(${gIdx})"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="card-body p-2">
+          <div class="list-group list-group-flush">`;
+
+    group.fields.forEach((field, fIdx) => {
+      html += `<div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+              <span><i class="fas fa-circle text-muted me-2" style="font-size:0.5rem"></i>${field}</span>
+              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeField(${gIdx}, ${fIdx})"><i class="fas fa-times"></i></button>
+            </div>`;
+    });
+
+    html += `</div><div class="mt-2"><button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})"><i class="fas fa-plus me-1"></i>Добавить поле</button></div></div></div>`;
+  });
+
+  html += `<div class="dropdown w-100"><button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-plus me-2"></i>Добавить группу критериев</button><ul class="dropdown-menu w-100">`;
+
+  CRITERIA_LIBRARY.groups.forEach((libGroup) => {
+    const alreadyAdded = tempCriteria.some((g) => g.section === libGroup.name);
+    html += `<li><a class="dropdown-item ${alreadyAdded ? "text-muted" : ""}" onclick="${alreadyAdded ? "" : `addGroupFromLibrary('${libGroup.id}')`}" ${alreadyAdded ? 'style="pointer-events:none"' : ""}><i class="fas fa-folder me-2"></i>${libGroup.name}${alreadyAdded ? '<span class="badge bg-secondary ms-2">добавлено</span>' : ""}</a></li>`;
+  });
+
+  html += `<li><hr class="dropdown-divider"></li><li><a class="dropdown-item" onclick="addCustomGroup()"><i class="fas fa-folder-plus me-2 text-success"></i>Создать свою группу...</a></li></ul></div>`;
+  body.innerHTML = html;
+}
+
+function addGroupFromLibrary(libGroupId) {
+  const libGroup = CRITERIA_LIBRARY.groups.find((g) => g.id === libGroupId);
+  if (!libGroup) return;
+  if (tempCriteria.some((g) => g.section === libGroup.name)) {
+    showToast("Эта группа уже добавлена", "info");
+    return;
+  }
+  tempCriteria.push({section: libGroup.name, fields: [...libGroup.fields]});
+  renderCriteriaModal();
+}
+
+function addCustomGroup() {
+  const name = prompt("Название новой группы критериев:");
+  if (!name || !name.trim()) return;
+  tempCriteria.push({section: name.trim(), fields: []});
+  renderCriteriaModal();
+}
+
+function removeGroup(gIdx) {
+  if (!confirm(`Удалить группу "${tempCriteria[gIdx].section}" со всеми полями?`)) return;
+  tempCriteria.splice(gIdx, 1);
+  renderCriteriaModal();
+}
+
+function moveGroup(gIdx, direction) {
+  const newIdx = gIdx + direction;
+  if (newIdx < 0 || newIdx >= tempCriteria.length) return;
+  const temp = tempCriteria[gIdx];
+  tempCriteria[gIdx] = tempCriteria[newIdx];
+  tempCriteria[newIdx] = temp;
+  renderCriteriaModal();
+}
+
+function addFieldToGroup(gIdx) {
+  const group = tempCriteria[gIdx];
+  const libGroup = CRITERIA_LIBRARY.groups.find((lg) => lg.name === group.section);
+  let availableFields = libGroup ? libGroup.fields.filter((f) => !group.fields.includes(f)) : [];
+
+  let optionsHtml = "";
+  if (availableFields.length > 0) {
+    optionsHtml = `\n\nДоступные поля из библиотеки:\n${availableFields.map((f, i) => `${i + 1}. ${f}`).join("\n")}\n0 — ввести своё название`;
+  }
+
+  const fieldName = prompt(`Добавить поле в группу "${group.section}":${optionsHtml}`);
+  if (!fieldName || !fieldName.trim()) return;
+
+  const num = parseInt(fieldName);
+  if (!isNaN(num) && num > 0 && num <= availableFields.length) {
+    group.fields.push(availableFields[num - 1]);
+  } else if (num === 0) {
+    const customName = prompt("Введите название поля:");
+    if (customName && customName.trim()) group.fields.push(customName.trim());
+  } else {
+    group.fields.push(fieldName.trim());
+  }
+  renderCriteriaModal();
+}
+
+function removeField(gIdx, fIdx) {
+  tempCriteria[gIdx].fields.splice(fIdx, 1);
+  renderCriteriaModal();
+}
+
+function saveCriteriaFromModal() {
+  if (!competitionSettings[currentCriteriaYear]) competitionSettings[currentCriteriaYear] = {};
+  if (!competitionSettings[currentCriteriaYear][currentCriteriaClass]) {
+    competitionSettings[currentCriteriaYear][currentCriteriaClass] = {date: "", color: "badge-gray", criteria: []};
+  }
+  competitionSettings[currentCriteriaYear][currentCriteriaClass].criteria = tempCriteria;
+  saveData();
+  bootstrap.Modal.getInstance(document.getElementById("criteriaModal")).hide();
+  renderApparatusManager();
+  showToast("Критерии сохранены", "success");
+}
+
+function updateClassConfig(year, classId, field, value) {
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  if (!competitionSettings[year][classId])
+    competitionSettings[year][classId] = {date: "", color: "badge-gray", criteria: []};
+  competitionSettings[year][classId][field] = value;
+  saveData();
+  showToast("Настройки сохранены", "success");
+}
+
+function addNewClassToYear() {
+  const year = prompt("Введите год (например, 2024):");
+  if (!year || !/^\d{4}$/.test(year)) {
+    alert("Некорректный год");
+    return;
+  }
+  const classId = prompt("Введите ID класса (латиницей, без пробелов, например: anna):");
+  if (!classId || !/^[a-z]+$/.test(classId)) {
+    alert("Некорректный ID");
+    return;
+  }
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  if (competitionSettings[year][classId]) {
+    alert("Такой класс уже есть в этом году");
+    return;
+  }
+  competitionSettings[year][classId] = {date: "", color: "badge-gray", criteria: []};
+  saveData();
+  renderApparatusManager();
+  showToast(`Класс ${classId.toUpperCase()} добавлен на ${year} год`, "success");
+}
+
+// =====================================================================
+// ===== ФУНКЦИЯ ОТРИСОВКИ СТРАНИЦЫ НАСТРОЕК (С НОВОЙ КНОПКОЙ) =====
+// =====================================================================
 function renderApparatusManager() {
   const container = document.getElementById("apparatusContent");
   let html = '<div class="detail-section"><h4 class="detail-section-title">Настройки соревнований по годам</h4>';
@@ -1197,7 +1389,7 @@ function renderApparatusManager() {
               </div>
               <div class="mt-3 pt-2 border-top">
                 <small class="text-muted d-block mb-2">Команд в базе: ${teamCount}</small>
-                <button class="btn btn-outline-primary btn-sm w-100" onclick="editClassCriteria('${year}', '${classId}')">
+                <button class="btn btn-outline-primary btn-sm w-100" onclick="openCriteriaEditor('${year}', '${classId}')">
                   <i class="fas fa-list-check me-1"></i> Критерии оценки
                 </button>
               </div>
@@ -1211,63 +1403,9 @@ function renderApparatusManager() {
   container.innerHTML = html;
 }
 
-function updateClassConfig(year, classId, field, value) {
-  if (!competitionSettings[year]) competitionSettings[year] = {};
-  if (!competitionSettings[year][classId])
-    competitionSettings[year][classId] = {date: "", color: "badge-gray", criteria: []};
-  competitionSettings[year][classId][field] = value;
-  saveData();
-  showToast("Настройки сохранены", "success");
-}
-
-function editClassCriteria(year, classId) {
-  const config = competitionSettings[year]?.[classId];
-  if (!config) return;
-  const currentCriteria = JSON.stringify(config.criteria, null, 2);
-  const newCriteriaStr = prompt(
-    `Критерии оценки для ${classId.toUpperCase()} (${year} год).\n\nФормат JSON-массива:\n[\n  {"section": "Квалификация", "fields": ["Вес", "Штраф"]},\n  {"section": "Презентация", "fields": ["Структура", "Новизна"]}\n]`,
-    currentCriteria,
-  );
-  if (newCriteriaStr !== null) {
-    try {
-      const parsed = JSON.parse(newCriteriaStr);
-      if (Array.isArray(parsed)) {
-        competitionSettings[year][classId].criteria = parsed;
-        saveData();
-        renderApparatusManager();
-        showToast("Критерии обновлены", "success");
-      } else {
-        alert("Ошибка: данные должны быть массивом [...]");
-      }
-    } catch (e) {
-      alert("Ошибка синтаксиса JSON. Проверьте кавычки и запятые.");
-    }
-  }
-}
-
-function addNewClassToYear() {
-  const year = prompt("Введите год (например, 2024):");
-  if (!year || !/^\d{4}$/.test(year)) {
-    alert("Некорректный год");
-    return;
-  }
-  const classId = prompt("Введите ID класса (латиницей, без пробелов, например: anna):");
-  if (!classId || !/^[a-z]+$/.test(classId)) {
-    alert("Некорректный ID");
-    return;
-  }
-  if (!competitionSettings[year]) competitionSettings[year] = {};
-  if (competitionSettings[year][classId]) {
-    alert("Такой класс уже есть в этом году");
-    return;
-  }
-  competitionSettings[year][classId] = {date: "", color: "badge-gray", criteria: []};
-  saveData();
-  renderApparatusManager();
-  showToast(`Класс ${classId.toUpperCase()} добавлен на ${year} год`, "success");
-}
-
-// ===== СОХРАНЕНИЕ / УДАЛЕНИЕ =====
+// =====================================================================
+// ===== СОХРАНЕНИЕ / УДАЛЕНИЕ / ЭКСПОРТ / ИМПОРТ =====
+// =====================================================================
 async function saveEdit() {
   const orgSearch = document.getElementById("editOrgSearch").value.trim();
   if (!orgSearch) {
@@ -1369,7 +1507,6 @@ function deleteTeam() {
   showTeamsView();
 }
 
-// ===== ЭКСПОРТ / ИМПОРТ =====
 function downloadJSON() {
   if (teamsData.length === 0 && organizations.length === 0) {
     showToast("Нет данных", "error");
