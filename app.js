@@ -1,6 +1,7 @@
 let teamsData = [];
 let organizations = [];
 let competitionSettings = {};
+let apparatusClasses = [];
 let currentTeamId = null;
 let isNewTeam = false;
 const STORAGE_KEY = "opmr_teams_data_v2";
@@ -20,31 +21,109 @@ let currentProtocolTeamId = null;
 function getDefaultCompetitionSettings() {
   return {
     2026: {
-      bek: {date: "28.11.2026", color: "badge-bek", name: "БЭК", criteria: []},
-      tnpa: {date: "28.11.2026", color: "badge-tnpa", name: "ТНПА", criteria: []},
-      anpa: {date: "29.11.2026", color: "badge-anpa", name: "АНПА", criteria: []},
-      anna: {date: "29.11.2026", color: "badge-anna", name: "АННА", criteria: []},
+      bek: {date: "28.11.2026", criteria: []},
+      tnpa: {date: "28.11.2026", criteria: []},
+      anpa: {date: "29.11.2026", criteria: []},
+      anna: {date: "29.11.2026", criteria: []},
     },
     2025: {
-      bek: {date: "28.11.2025", color: "badge-bek", name: "БЭК", criteria: []},
-      tnpa: {date: "28.11.2025", color: "badge-tnpa", name: "ТНПА", criteria: []},
-      anpa: {date: "29.11.2025", color: "badge-anpa", name: "АНПА", criteria: []},
+      bek: {date: "28.11.2025", criteria: []},
+      tnpa: {date: "28.11.2025", criteria: []},
+      anpa: {date: "29.11.2025", criteria: []},
     },
     2024: {
       anna: {
         date: "01.11.2024",
-        color: "badge-anna",
-        name: "АННА",
         criteria: [
-          {section: "Квалификация", fields: ["Сумма размерений", "Штрафные баллы", "Вес (кг)", "Бонусные баллы"]},
-          {section: "Презентация", fields: ["Структура", "Эффективность", "Новизна", "Перспектива", "Качество"]},
-          {section: "Задание 2 (траектория)", fields: ["Среднее отклонение", "Баллы"]},
-          {section: "Задание 3 (растения)", fields: ["Остров 1", "Остров 2", "Остров 3", "Баллы"]},
-          {section: "Задание 4 (объекты)", fields: ["Кол-во объектов", "Баллы", "Бонус за непрерывность"]},
+          {
+            section: "Квалификация",
+            fields: [
+              {name: "Сумма размерений", short: "Разм."},
+              {name: "Штрафные баллы", short: "Штраф"},
+              {name: "Вес (кг)", short: "Вес"},
+              {name: "Бонусные баллы", short: "Бонус"},
+            ],
+          },
+          {
+            section: "Презентация",
+            fields: [
+              {name: "Структура", short: "Структ."},
+              {name: "Эффективность", short: "Эффект."},
+              {name: "Новизна", short: "Нов."},
+              {name: "Перспектива", short: "Персп."},
+              {name: "Качество", short: "Кач."},
+            ],
+          },
+          {
+            section: "Задание 2 (траектория)",
+            fields: [
+              {name: "Среднее отклонение", short: "Отклон."},
+              {name: "Баллы", short: "Баллы"},
+            ],
+          },
+          {
+            section: "Задание 3 (растения)",
+            fields: [
+              {name: "Остров 1", short: "Остр. 1"},
+              {name: "Остров 2", short: "Остр. 2"},
+              {name: "Остров 3", short: "Остр. 3"},
+              {name: "Баллы", short: "Баллы"},
+            ],
+          },
+          {
+            section: "Задание 4 (объекты)",
+            fields: [
+              {name: "Кол-во объектов", short: "Объекты"},
+              {name: "Баллы", short: "Баллы"},
+              {name: "Бонус за непрерывность", short: "Бонус"},
+            ],
+          },
         ],
       },
     },
   };
+}
+
+// ===== СПРАВОЧНИК КЛАССОВ: СПРАВОЧНЫЕ ДАННЫЕ =====
+const DEFAULT_CLASS_NAMES = {bek: "БЭК", tnpa: "ТНПА", anpa: "АНПА", anna: "АННА"};
+const DEFAULT_CLASS_COLORS = {bek: "badge-bek", tnpa: "badge-tnpa", anpa: "badge-anpa", anna: "badge-anna"};
+
+// Собирает справочник классов из сохранённых данных или из настроек по умолчанию
+function ensureApparatusClasses() {
+  if (Array.isArray(apparatusClasses) && apparatusClasses.length > 0) {
+    apparatusClasses.forEach((c) => {
+      if (!c.name) c.name = DEFAULT_CLASS_NAMES[c.id] || c.id.toUpperCase();
+      if (!c.color) c.color = "badge-gray";
+    });
+    return;
+  }
+  const map = {};
+  Object.entries(DEFAULT_CLASS_NAMES).forEach(([id, name]) => {
+    map[id] = {id, name, color: DEFAULT_CLASS_COLORS[id] || "badge-gray"};
+  });
+  for (const year in competitionSettings) {
+    for (const key in competitionSettings[year]) {
+      if (!map[key]) {
+        const cfg = competitionSettings[year][key];
+        map[key] = {
+          id: key,
+          name: cfg.name || DEFAULT_CLASS_NAMES[key] || key.toUpperCase(),
+          color: cfg.color || "badge-gray",
+        };
+      }
+    }
+  }
+  apparatusClasses = Object.values(map);
+}
+
+function getClassInfo(classId) {
+  return (
+    apparatusClasses.find((c) => c.id === classId) || {
+      id: classId,
+      name: DEFAULT_CLASS_NAMES[classId] || String(classId).toUpperCase(),
+      color: "badge-gray",
+    }
+  );
 }
 
 function getGitHubSettings() {
@@ -117,11 +196,9 @@ async function testGitHubConnection() {
       headers: {Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json"},
     });
     if (res.ok) {
-      const data = await res.json();
-      showToast(`✓ Подключено: ${data.full_name}`, "success");
+      showToast(`✓ Подключено: ${(await res.json()).full_name}`, "success");
     } else {
-      const err = await res.json();
-      showToast(`✗ Ошибка: ${err.message}`, "error");
+      showToast(`✗ Ошибка: ${(await res.json()).message}`, "error");
     }
   } catch (e) {
     showToast(`✗ Ошибка сети: ${e.message}`, "error");
@@ -135,7 +212,7 @@ async function commitToGitHub() {
   const filePath = "data/teams.json";
   const apiUrl = `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${filePath}`;
   const headers = {Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json"};
-  const dataToSave = {organizations, competitionSettings, teams: teamsData};
+  const dataToSave = {organizations, apparatusClasses, competitionSettings, teams: teamsData};
   const jsonStr = JSON.stringify(dataToSave, null, 2);
   const content = btoa(unescape(encodeURIComponent(jsonStr)));
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -145,8 +222,7 @@ async function commitToGitHub() {
       if (getRes.ok) {
         sha = (await getRes.json()).sha;
       } else if (getRes.status !== 404) {
-        const err = await getRes.json();
-        return {success: false, message: `Ошибка чтения файла: ${err.message}`};
+        return {success: false, message: `Ошибка чтения файла: ${(await getRes.json()).message}`};
       }
       const body = {
         message: `Обновление базы участников (${new Date().toLocaleString("ru-RU")})`,
@@ -227,29 +303,14 @@ function formatDescription(desc) {
     .join("");
 }
 
+// ===== БЕЙДЖ КЛАССА (берёт имя и цвет из справочника классов) =====
 function getCategoryBadge(apparatusClass, extraClass = "", year = currentYear) {
   const value = String(apparatusClass || "")
     .trim()
     .toLowerCase();
-  const yearSettings = competitionSettings[year] || {};
-  let foundId = null;
-
-  for (const key in yearSettings) {
-    const config = yearSettings[key];
-    const latinKey = key.toLowerCase();
-    const russianName = (config.name || key).toLowerCase();
-
-    // Ищем по латинскому ключу или русскому названию
-    if (value.includes(latinKey) || value.includes(russianName)) {
-      foundId = key;
-      break;
-    }
-  }
-
-  if (!foundId) return `<span class="badge category-badge ${extraClass} bg-secondary text-white">Н/Д</span>`;
-  const config = yearSettings[foundId];
-  const displayName = config.name || foundId.toUpperCase();
-  return `<span class="badge category-badge ${extraClass} ${config.color}">${displayName}</span>`;
+  const info = apparatusClasses.find((c) => value.includes(c.id) || value.includes(c.name.toLowerCase()));
+  if (!info) return `<span class="badge category-badge ${extraClass} bg-secondary text-white">Н/Д</span>`;
+  return `<span class="badge category-badge ${extraClass} ${info.color}">${info.name}</span>`;
 }
 
 function parsePhotosField(value) {
@@ -329,6 +390,7 @@ function findOrCreateOrg(fullName, shortName, city) {
   return org;
 }
 
+// ===== МИГРАЦИЯ СТАРЫХ ДАННЫХ =====
 function migrateData() {
   const oldData = localStorage.getItem(STORAGE_KEY_OLD);
   if (!oldData) return false;
@@ -337,6 +399,8 @@ function migrateData() {
     if (!Array.isArray(oldTeams) || oldTeams.length === 0) return false;
     organizations = [];
     competitionSettings = getDefaultCompetitionSettings();
+    apparatusClasses = [];
+    ensureApparatusClasses();
     teamsData = [];
     const orgMap = {};
     oldTeams.forEach((team) => {
@@ -358,7 +422,10 @@ function migrateData() {
       teamsData.push({...team, orgId: orgMap[orgName.toLowerCase()], year: hasProtocol ? 2025 : 2026, shortName});
       delete teamsData[teamsData.length - 1].organization;
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({organizations, competitionSettings, teams: teamsData}));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}),
+    );
     localStorage.removeItem(STORAGE_KEY_OLD);
     return true;
   } catch (e) {
@@ -369,7 +436,10 @@ function migrateData() {
 
 function saveData() {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({organizations, competitionSettings, teams: teamsData}));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}),
+    );
   } catch (e) {
     console.warn("Не удалось сохранить:", e);
   }
@@ -382,6 +452,8 @@ function loadData() {
       const parsed = JSON.parse(data);
       organizations = parsed.organizations || [];
       competitionSettings = normalizeCompetitionSettings(parsed.competitionSettings || getDefaultCompetitionSettings());
+      apparatusClasses = parsed.apparatusClasses || [];
+      ensureApparatusClasses();
       teamsData = parsed.teams || [];
       return true;
     }
@@ -391,6 +463,7 @@ function loadData() {
   return false;
 }
 
+// ===== ШАПКА =====
 function renderHeaderButtons() {
   const container = document.getElementById("headerButtons");
   const adminButtons = isAdmin
@@ -484,6 +557,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
+// ===== УТИЛИТЫ КОМАНД =====
 function sortTeamsByName(teams) {
   return [...teams].sort((a, b) =>
     getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru"),
@@ -516,6 +590,7 @@ function renderTeamCard(team) {
   return `<div class="col-md-6 col-lg-4"><div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')"><div class="team-card-head mb-2"><div class="flex-grow-1"><div class="org-name">${displayName}</div><div class="team-meta">${city || "Город не указан"}</div></div>${getCategoryBadge(team.apparatusClass, "category-badge-card")}</div><div class="mt-auto pt-3 border-top"><div class="d-flex justify-content-between align-items-center"><span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members?.length || 0} участн.</span><span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader?.split(" ")[0] || "—"}</span></div></div></div></div>`;
 }
 
+// ===== СПИСКИ КОМАНД =====
 function renderTeams(teams) {
   const container = document.getElementById("teamsContainer");
   const filtered = teams.filter((t) => t.year === currentYear);
@@ -530,14 +605,18 @@ function renderTeams(teams) {
   } else {
     const yearSettings = competitionSettings[currentYear] || {};
     const groups = {};
-    for (const key in yearSettings) groups[key] = {...yearSettings[key], id: key, teams: []};
+    for (const key in yearSettings) {
+      const info = getClassInfo(key);
+      groups[key] = {...yearSettings[key], id: key, name: info.name, color: info.color, teams: []};
+    }
     groups["other"] = {name: "Н/Д", color: "bg-secondary text-white", date: "", teams: []};
 
     sortedTeams.forEach((team) => {
       const val = String(team.apparatusClass || "").toLowerCase();
       let foundKey = null;
       for (const key in yearSettings) {
-        if (val.includes(key.toLowerCase())) {
+        const info = getClassInfo(key);
+        if (val.includes(key.toLowerCase()) || val.includes(info.name.toLowerCase())) {
           foundKey = key;
           break;
         }
@@ -548,14 +627,14 @@ function renderTeams(teams) {
     for (const key in groups) {
       if (groups[key].teams.length > 0) {
         const g = groups[key];
-        const title = g.name || key.toUpperCase();
-        html += `<div class="col-12 mt-4"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${key.toUpperCase()}</span><span class="group-header-title">${title}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
+        html += `<div class="col-12 mt-4"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.name}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
       }
     }
   }
   container.innerHTML = html;
 }
 
+// ===== НАВИГАЦИЯ =====
 function hideAllPages() {
   [
     "listPage",
@@ -671,6 +750,7 @@ function goBack() {
   else showTeamsView();
 }
 
+// ===== ДЕТАЛИ КОМАНДЫ =====
 function showTeamDetails(teamId) {
   returnToView = currentView;
   returnToTeamId = teamId;
@@ -780,6 +860,7 @@ function getPhotoLinks() {
     .filter((url) => url.length > 0);
 }
 
+// ===== РЕДАКТИРОВАНИЕ КОМАНДЫ =====
 function createNewTeam() {
   currentTeamId = null;
   isNewTeam = true;
@@ -806,8 +887,6 @@ function createNewTeam() {
   });
   document.getElementById("editOrgId").value = "";
   document.getElementById("editYear").value = currentYear;
-  updateClassDatalist();
-  updateTeamIdPreview();
   const now = new Date();
   document.getElementById("editCreated").value =
     `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
@@ -817,6 +896,8 @@ function createNewTeam() {
   addMemberField();
   document.getElementById("btnDeleteTeam").style.display = "none";
   updateOrgDatalist();
+  updateClassDatalist();
+  updateTeamIdPreview();
   showEditPage();
 }
 
@@ -874,10 +955,7 @@ document.addEventListener("input", function (e) {
     const val = e.target.value.trim();
     const org = organizations.find((o) => o.fullName.toLowerCase() === val.toLowerCase());
     document.getElementById("editOrgId").value = org ? org.id : "";
-    // Автоподстановка краткого названия из справочника
-    if (org && org.shortName) {
-      document.getElementById("editShortName").value = org.shortName;
-    }
+    if (org && org.shortName) document.getElementById("editShortName").value = org.shortName;
     updateTeamIdPreview();
   }
   if (e.target.id === "editApparatusClass") {
@@ -885,16 +963,13 @@ document.addEventListener("input", function (e) {
   }
 });
 
-// ===== ID КОМАНДЫ, СПИСКИ ПОДСТАНОВКИ, НОРМАЛИЗАЦИЯ НАСТРОЕК =====
-const DEFAULT_CLASS_NAMES = {bek: "БЭК", tnpa: "ТНПА", anpa: "АНПА", anna: "АННА"};
-
-// Восстанавливает русские названия классов, если в сохранённых данных их нет
+// ===== ID КОМАНДЫ И СПИСКИ ПОДСТАНОВКИ =====
 function normalizeCompetitionSettings(settings) {
   for (const year in settings) {
     for (const key in settings[year]) {
       const cfg = settings[year][key];
       if (!cfg.name) cfg.name = DEFAULT_CLASS_NAMES[key] || key.toUpperCase();
-      if (!cfg.color) cfg.color = "badge-gray";
+      if (!cfg.color) cfg.color = DEFAULT_CLASS_COLORS[key] || "badge-gray";
       if (!Array.isArray(cfg.criteria)) cfg.criteria = [];
     }
   }
@@ -907,8 +982,8 @@ function getClassIdByValue(apparatusClass, year = currentYear) {
     .toLowerCase();
   const yearSettings = competitionSettings[year] || {};
   for (const key in yearSettings) {
-    const cfg = yearSettings[key];
-    if (value.includes(key.toLowerCase()) || value.includes((cfg.name || key).toLowerCase())) return key;
+    const info = getClassInfo(key);
+    if (value.includes(key.toLowerCase()) || value.includes(info.name.toLowerCase())) return key;
   }
   return "na";
 }
@@ -943,8 +1018,8 @@ function updateClassDatalist() {
   if (!datalist) return;
   const year = parseInt(document.getElementById("editYear").value) || currentYear;
   const yearSettings = competitionSettings[year] || {};
-  datalist.innerHTML = Object.entries(yearSettings)
-    .map(([key, cfg]) => `<option value="${cfg.name || key.toUpperCase()}"></option>`)
+  datalist.innerHTML = Object.keys(yearSettings)
+    .map((key) => `<option value="${getClassInfo(key).name}"></option>`)
     .join("");
 }
 
@@ -963,18 +1038,24 @@ function addMemberField(member = null) {
   container.appendChild(div);
 }
 
+// ===== СОРЕВНОВАНИЯ =====
 function renderCompetition() {
   const container = document.getElementById("competitionContent");
   const yearSettings = competitionSettings[currentYear] || {};
   let html = "";
   for (const classId in yearSettings) {
     const g = yearSettings[classId];
+    const info = getClassInfo(classId);
     const teams = teamsData.filter(
       (t) =>
-        t.year === currentYear &&
-        String(t.apparatusClass || "")
-          .toLowerCase()
-          .includes(classId.toLowerCase()),
+        (t.year === currentYear &&
+          String(t.apparatusClass || "")
+            .toLowerCase()
+            .includes(classId.toLowerCase())) ||
+        (t.year === currentYear &&
+          String(t.apparatusClass || "")
+            .toLowerCase()
+            .includes(info.name.toLowerCase())),
     );
     if (teams.length === 0) continue;
     const parseTime = (t) => {
@@ -994,7 +1075,7 @@ function renderCompetition() {
         team.protocol.competition.timeScore = Math.max(1, 10 - idx);
       }
     });
-    const title = g.name || classId.toUpperCase();
+    const title = info.name;
     html += `<div class="detail-section mb-4"><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><h4 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a">${title} <span class="badge bg-secondary ms-2" style="font-size:0.8rem">${g.date}</span></h4><span class="text-muted small">${teams.length} команд</span></div><div class="table-responsive"><table class="table table-hover align-middle competition-table" style="font-size:0.8rem"><thead class="table-light"><tr><th rowspan="2" style="width:35px;vertical-align:middle;text-align:center">№</th><th rowspan="2" style="vertical-align:middle;min-width:180px">Команда</th><th colspan="4" class="text-center bg-pres">Презентация</th><th colspan="4" class="text-center bg-qual">Квалификация</th><th colspan="6" class="text-center bg-comp">Конкурсное задание</th><th rowspan="2" style="vertical-align:middle;text-align:center">Доп.</th><th rowspan="2" style="vertical-align:middle;text-align:center">Σ</th><th rowspan="2" style="vertical-align:middle;text-align:center">🏆</th></tr><tr><th class="bg-pres" title="Структура">Структ.</th><th class="bg-pres" title="Сравнительный анализ">СА</th><th class="bg-pres" title="Новизна">Нов.</th><th class="bg-pres" title="Качество">Кач.</th><th class="bg-qual" title="Сумма размерений">Разм.</th><th class="bg-qual" title="Вес (кг)">Вес</th><th class="bg-qual" title="Штрафные баллы">Штраф</th><th class="bg-qual" title="Квалификационное задание выполнено">Квал. ✓</th><th class="bg-comp" title="Время (сек)">Т сек</th><th class="bg-comp" title="Балл за время">Т балл</th><th class="bg-comp" title="Прохождение ворот">Вор.</th><th class="bg-comp" title="Парковка">Парк.</th><th class="bg-comp" title="Нужный гараж">Гар.</th><th class="bg-comp" title="Штрафные баллы">Штраф</th></tr></thead><tbody>${teams
       .map((team) => {
         const p = team.protocol || {};
@@ -1017,6 +1098,7 @@ function renderCompetition() {
   container.innerHTML = html;
 }
 
+// ===== ПРОТОКОЛ =====
 function renderProtocolForm(teamId) {
   const team = teamsData.find((t) => t.id === teamId);
   if (!team) return;
@@ -1103,10 +1185,10 @@ function saveProtocol() {
 function calculatePlaces() {
   if (!confirm("Автоматически рассчитать места по сумме баллов?")) return;
   const yearSettings = competitionSettings[currentYear] || {};
-  const groups = Object.keys(yearSettings).map((classId) => ({
-    classId,
-    filter: (v) => v.includes(classId.toLowerCase()),
-  }));
+  const groups = Object.keys(yearSettings).map((classId) => {
+    const info = getClassInfo(classId);
+    return {classId, filter: (v) => v.includes(classId.toLowerCase()) || v.includes(info.name.toLowerCase())};
+  });
   groups.forEach((g) => {
     const teams = teamsData.filter(
       (t) => t.year === currentYear && g.filter(String(t.apparatusClass || "").toLowerCase()) && t.protocol,
@@ -1155,6 +1237,7 @@ function calculatePlaces() {
   showToast("Места рассчитаны", "success");
 }
 
+// ===== СВОДНАЯ ТАБЛИЦА =====
 function renderMasterTable() {
   const container = document.getElementById("masterContent");
   const years = [2026, 2025, 2024];
@@ -1199,6 +1282,7 @@ function renderMasterTable() {
   container.innerHTML = html;
 }
 
+// ===== СПРАВОЧНИК ОРГАНИЗАЦИЙ =====
 function renderOrgManager() {
   const container = document.getElementById("orgManagerContent");
   let html =
@@ -1238,10 +1322,123 @@ function deleteOrganization(orgId) {
   showToast("Организация удалена", "success");
 }
 
-// =====================================================================
-// ===== НОВЫЙ ВИЗУАЛЬНЫЙ РЕДАКТОР КРИТЕРИЕВ (БЕЗ JSON) =====
-// =====================================================================
+// ===== СТРАНИЦА НАСТРОЕК СОРЕВНОВАНИЙ (НОВЫЙ ВИД) =====
+function renderApparatusManager() {
+  const container = document.getElementById("apparatusContent");
+  const years = Object.keys(competitionSettings).sort((a, b) => b - a);
+  let html =
+    '<div class="detail-section"><h4 class="detail-section-title">Настройки соревнований по годам</h4><p class="text-muted small">Отметьте классы аппаратов, участвующие в соревнованиях каждого года, и укажите даты проведения. Цвет и название класса задаются в справочнике ниже и здесь не редактируются.</p>';
 
+  years.forEach((year) => {
+    html += `<h5 class="mt-4 mb-2 text-primary"><i class="fas fa-calendar me-2"></i>${year} год</h5><div class="list-group mb-4 shadow-sm">`;
+    apparatusClasses.forEach((info) => {
+      const cfg = competitionSettings[year]?.[info.id];
+      const active = !!cfg;
+      const teamCount = teamsData.filter(
+        (t) => t.year == year && getClassIdByValue(t.apparatusClass, year) === info.id,
+      ).length;
+      html += `
+        <div class="list-group-item d-flex align-items-center gap-3 py-3">
+          <div class="form-check form-switch mb-0" style="min-width:44px">
+            <input class="form-check-input" type="checkbox" role="switch" ${active ? "checked" : ""} onchange="toggleYearClass('${year}', '${info.id}', this.checked)">
+          </div>
+          <span class="badge category-badge ${info.color}" style="min-width:70px">${info.name}</span>
+          <div class="flex-grow-1">
+            <div class="fw-semibold ${active ? "" : "text-muted"}">${info.name}</div>
+            <div class="small text-muted">${active ? `Участвует · команд в базе: ${teamCount}` : "Не участвует в этом году"}</div>
+          </div>
+          ${
+            active
+              ? `<div style="width:170px"><label class="form-label small mb-1">Дата соревнований</label><input type="text" class="form-control form-control-sm" value="${cfg.date || ""}" placeholder="ДД.ММ.ГГГГ" onchange="updateYearClassDate('${year}', '${info.id}', this.value)"></div>
+               <button class="btn btn-outline-primary btn-sm" style="min-width:180px" onclick="openCriteriaEditor('${year}', '${info.id}')"><i class="fas fa-list-check me-1"></i>Критерии оценки</button>`
+              : `<span class="text-muted small me-2">—</span>`
+          }
+        </div>`;
+    });
+    html += `</div>`;
+  });
+
+  html += `
+    <div class="mt-4 pt-3 border-top">
+      <h5 class="mb-3"><i class="fas fa-book me-2"></i>Справочник классов аппаратов</h5>
+      <div class="row g-2">`;
+  apparatusClasses.forEach((info) => {
+    html += `<div class="col-md-3"><div class="d-flex align-items-center gap-2 border rounded p-2 bg-white"><span class="badge category-badge ${info.color}">${info.name}</span><span class="small text-muted">${info.id}</span></div></div>`;
+  });
+  html += `</div>
+      <button class="btn btn-success mt-3" onclick="addNewClassToYear()"><i class="fas fa-plus me-2"></i>Добавить класс в справочник</button>
+    </div></div>`;
+  container.innerHTML = html;
+}
+
+function toggleYearClass(year, classId, checked) {
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  if (checked) {
+    if (!competitionSettings[year][classId]) competitionSettings[year][classId] = {date: "", criteria: []};
+  } else {
+    const teamCount = teamsData.filter(
+      (t) => t.year == year && getClassIdByValue(t.apparatusClass, year) === classId,
+    ).length;
+    if (
+      teamCount > 0 &&
+      !confirm(
+        `За ${year} год в классе ${getClassInfo(classId).name} есть команды (${teamCount}). Отключить класс? Команды останутся в базе, но класс исчезнет из таблиц этого года.`,
+      )
+    ) {
+      renderApparatusManager();
+      return;
+    }
+    delete competitionSettings[year][classId];
+  }
+  saveData();
+  renderApparatusManager();
+}
+
+function updateYearClassDate(year, classId, value) {
+  if (competitionSettings[year]?.[classId]) {
+    competitionSettings[year][classId].date = value;
+    saveData();
+    showToast("Дата сохранена", "success");
+  }
+}
+
+// Добавление класса в глобальный справочник (цвет закрепляется здесь один раз)
+function addNewClassToYear() {
+  const classId = prompt("ID класса (латиницей, без пробелов, например: mrs):");
+  if (!classId || !/^[a-z]+$/.test(classId)) {
+    alert("Некорректный ID");
+    return;
+  }
+  if (apparatusClasses.some((c) => c.id === classId)) {
+    alert("Такой класс уже есть в справочнике");
+    return;
+  }
+  const name = prompt("Название класса (например: МРС):");
+  if (!name || !name.trim()) {
+    alert("Некорректное название");
+    return;
+  }
+  const colorChoice = prompt(
+    "Номер цвета бейджа:\n1. Синий\n2. Зелёный\n3. Фиолетовый\n4. Оранжевый\n5. Красный\n6. Жёлтый\n7. Серый",
+    "1",
+  );
+  const colorOptions = [
+    "badge-bek",
+    "badge-tnpa",
+    "badge-anpa",
+    "badge-anna",
+    "badge-red",
+    "badge-yellow",
+    "badge-gray",
+  ];
+  const colorIdx = parseInt(colorChoice) - 1;
+  apparatusClasses.push({id: classId, name: name.trim().toUpperCase(), color: colorOptions[colorIdx] || "badge-gray"});
+  saveData();
+  renderApparatusManager();
+  showToast(`Класс ${name.trim().toUpperCase()} добавлен в справочник`, "success");
+}
+
+// ===== РЕДАКТОР КРИТЕРИЕВ (OFFCANVAS) =====
 const CRITERIA_LIBRARY = {
   groups: [
     {
@@ -1323,7 +1520,6 @@ let currentCriteriaYear = null;
 let currentCriteriaClass = null;
 let tempCriteria = [];
 
-// Вспомогательная функция для преобразования старых строковых данных в новый формат
 function normalizeCriteria(criteria) {
   if (!Array.isArray(criteria)) return [];
   return criteria.map((g) => {
@@ -1331,12 +1527,11 @@ function normalizeCriteria(criteria) {
     const section = isObj ? g.section || g.name || "Группа" : String(g);
     const sectionShort = isObj ? g.sectionShort || g.short || "" : "";
     const rawFields = isObj ? g.fields || [] : [];
-    const fields = rawFields.map((f) => {
-      if (typeof f === "object" && f !== null) {
-        return {name: f.name || String(f), short: f.short || ""};
-      }
-      return {name: String(f), short: ""};
-    });
+    const fields = rawFields.map((f) =>
+      typeof f === "object" && f !== null
+        ? {name: f.name || String(f), short: f.short || ""}
+        : {name: String(f), short: ""},
+    );
     return {section, sectionShort, fields};
   });
 }
@@ -1345,27 +1540,23 @@ function openCriteriaEditor(year, classId) {
   currentCriteriaYear = year;
   currentCriteriaClass = classId;
   const config = competitionSettings[year]?.[classId];
-  // Нормализуем данные, чтобы они точно были в формате { name, short }
   tempCriteria = normalizeCriteria(config?.criteria || []);
-
   renderCriteriaOffcanvas();
-  const offcanvas = new bootstrap.Offcanvas(document.getElementById("criteriaOffcanvas"));
-  offcanvas.show();
+  new bootstrap.Offcanvas(document.getElementById("criteriaOffcanvas")).show();
 }
 
 function renderCriteriaOffcanvas() {
   const body = document.getElementById("criteriaOffcanvasBody");
-  const title = `${currentCriteriaClass.toUpperCase()} — ${currentCriteriaYear} год`;
+  const title = `${getClassInfo(currentCriteriaClass).name} — ${currentCriteriaYear} год`;
 
   let html = `
     <div class="alert alert-info d-flex align-items-start py-2">
       <i class="fas fa-info-circle me-2 mt-1"></i>
       <div class="small">
         <strong>Настройка критериев:</strong> ${title}<br>
-        Вы можете редактировать названия групп и полей, а также указывать сокращения для компактного отображения в таблицах (полное название будет показано в подсказке при наведении).
+        Редактируйте названия групп и полей, указывайте сокращения для компактных таблиц (полное название появится в подсказке при наведении).
       </div>
-    </div>
-  `;
+    </div>`;
 
   if (tempCriteria.length === 0) {
     html += `<div class="alert alert-light text-center py-4"><i class="fas fa-clipboard-list fa-2x text-muted mb-2 d-block"></i><p class="mb-0 small">Критерии не заданы. Добавьте группы ниже.</p></div>`;
@@ -1378,14 +1569,8 @@ function renderCriteriaOffcanvas() {
           <div class="d-flex align-items-center gap-2 flex-grow-1 me-3">
             <span class="badge bg-primary rounded-pill">${gIdx + 1}</span>
             <div class="flex-grow-1">
-              <input type="text" class="form-control form-control-sm fw-bold border-0 bg-transparent p-0" 
-                value="${group.section}" 
-                oninput="tempCriteria[${gIdx}].section = this.value" 
-                placeholder="Название группы">
-              <input type="text" class="form-control form-control-sm text-muted border-0 bg-transparent p-0" 
-                value="${group.sectionShort || ""}" 
-                oninput="tempCriteria[${gIdx}].sectionShort = this.value" 
-                placeholder="Сокращение группы (необязательно)">
+              <input type="text" class="form-control form-control-sm fw-bold border-0 bg-transparent p-0" value="${group.section}" oninput="tempCriteria[${gIdx}].section = this.value" placeholder="Название группы">
+              <input type="text" class="form-control form-control-sm text-muted border-0 bg-transparent p-0" value="${group.sectionShort || ""}" oninput="tempCriteria[${gIdx}].sectionShort = this.value" placeholder="Сокращение группы (необязательно)">
             </div>
           </div>
           <div class="d-flex gap-1">
@@ -1400,41 +1585,24 @@ function renderCriteriaOffcanvas() {
     group.fields.forEach((field, fIdx) => {
       const fName = typeof field === "object" ? field.name || "" : String(field);
       const fShort = typeof field === "object" ? field.short || "" : "";
-
       html += `
             <div class="list-group-item d-flex align-items-center gap-2 py-2 px-3">
               <span class="badge bg-light text-dark rounded-circle flex-shrink-0" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem">${fIdx + 1}</span>
               <div class="flex-grow-1 row g-1">
                 <div class="col-8">
-                  <input type="text" class="form-control form-control-sm" 
-                    value="${fName}" 
-                    oninput="updateFieldName(${gIdx}, ${fIdx}, this.value)" 
-                    placeholder="Полное название поля">
+                  <input type="text" class="form-control form-control-sm" value="${fName}" oninput="updateFieldName(${gIdx}, ${fIdx}, this.value)" placeholder="Полное название поля">
                 </div>
                 <div class="col-3">
-                  <input type="text" class="form-control form-control-sm" 
-                    value="${fShort}" 
-                    oninput="updateFieldShort(${gIdx}, ${fIdx}, this.value)" 
-                    placeholder="Сокр.">
+                  <input type="text" class="form-control form-control-sm" value="${fShort}" oninput="updateFieldShort(${gIdx}, ${fIdx}, this.value)" placeholder="Сокр.">
                 </div>
                 <div class="col-1 text-end">
-                  <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeField(${gIdx}, ${fIdx})" title="Удалить">
-                    <i class="fas fa-times"></i>
-                  </button>
+                  <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeField(${gIdx}, ${fIdx})" title="Удалить"><i class="fas fa-times"></i></button>
                 </div>
               </div>
             </div>`;
     });
 
-    html += `
-          </div>
-          <div class="p-2 bg-light border-top">
-            <button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})">
-              <i class="fas fa-plus me-1"></i>Добавить поле
-            </button>
-          </div>
-        </div>
-      </div>`;
+    html += `</div><div class="p-2 bg-light border-top"><button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})"><i class="fas fa-plus me-1"></i>Добавить поле</button></div></div></div>`;
   });
 
   html += `
@@ -1443,30 +1611,15 @@ function renderCriteriaOffcanvas() {
         <div class="row g-2 justify-content-center">
           <div class="col-md-8">
             <div class="dropdown w-100">
-              <button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-book me-2"></i>Добавить из библиотеки
-              </button>
-              <ul class="dropdown-menu w-100" style="max-height: 250px; overflow-y: auto;">`;
+              <button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-book me-2"></i>Добавить из библиотеки</button>
+              <ul class="dropdown-menu w-100" style="max-height:250px;overflow-y:auto">`;
 
   CRITERIA_LIBRARY.groups.forEach((libGroup) => {
-    html += `
-        <li>
-          <a class="dropdown-item" href="#" onclick="addGroupFromLibrary('${libGroup.id}'); return false;">
-            <i class="fas fa-folder me-2 text-primary"></i>${libGroup.name}
-            <span class="badge bg-light text-dark ms-2">${libGroup.fields.length} полей</span>
-          </a>
-        </li>`;
+    html += `<li><a class="dropdown-item" href="#" onclick="addGroupFromLibrary('${libGroup.id}'); return false;"><i class="fas fa-folder me-2 text-primary"></i>${libGroup.name}<span class="badge bg-light text-dark ms-2">${libGroup.fields.length} полей</span></a></li>`;
   });
 
-  html += `
-              </ul>
-            </div>
-          </div>
-          <div class="col-md-4">
-            <button class="btn btn-outline-primary w-100" onclick="addCustomGroup()">
-              <i class="fas fa-folder-plus me-2"></i>Своя группа
-            </button>
-          </div>
+  html += `</ul></div></div>
+          <div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="addCustomGroup()"><i class="fas fa-folder-plus me-2"></i>Своя группа</button></div>
         </div>
       </div>
     </div>`;
@@ -1474,30 +1627,25 @@ function renderCriteriaOffcanvas() {
   body.innerHTML = html;
 }
 
-// ===== ОБНОВЛЕННЫЕ ОБРАБОТЧИКИ =====
-
 function updateFieldName(gIdx, fIdx, value) {
-  if (typeof tempCriteria[gIdx].fields[fIdx] === "string") {
-    tempCriteria[gIdx].fields[fIdx] = {name: value, short: ""};
-  } else {
-    tempCriteria[gIdx].fields[fIdx].name = value;
-  }
+  if (typeof tempCriteria[gIdx].fields[fIdx] === "string") tempCriteria[gIdx].fields[fIdx] = {name: value, short: ""};
+  else tempCriteria[gIdx].fields[fIdx].name = value;
 }
 
 function updateFieldShort(gIdx, fIdx, value) {
-  if (typeof tempCriteria[gIdx].fields[fIdx] === "string") {
+  if (typeof tempCriteria[gIdx].fields[fIdx] === "string")
     tempCriteria[gIdx].fields[fIdx] = {name: tempCriteria[gIdx].fields[fIdx], short: value};
-  } else {
-    tempCriteria[gIdx].fields[fIdx].short = value;
-  }
+  else tempCriteria[gIdx].fields[fIdx].short = value;
 }
 
 function addGroupFromLibrary(libGroupId) {
   const libGroup = CRITERIA_LIBRARY.groups.find((g) => g.id === libGroupId);
   if (!libGroup) return;
-  // Клонируем поля, чтобы они были независимыми объектами
-  const newFields = libGroup.fields.map((f) => ({name: f.name, short: f.short}));
-  tempCriteria.push({section: libGroup.name, sectionShort: libGroup.short || "", fields: newFields});
+  tempCriteria.push({
+    section: libGroup.name,
+    sectionShort: libGroup.short || "",
+    fields: libGroup.fields.map((f) => ({name: f.name, short: f.short})),
+  });
   renderCriteriaOffcanvas();
 }
 
@@ -1534,124 +1682,17 @@ function removeField(gIdx, fIdx) {
 function saveCriteriaFromOffcanvas() {
   if (!competitionSettings[currentCriteriaYear]) competitionSettings[currentCriteriaYear] = {};
   if (!competitionSettings[currentCriteriaYear][currentCriteriaClass]) {
-    competitionSettings[currentCriteriaYear][currentCriteriaClass] = {date: "", color: "badge-gray", criteria: []};
+    competitionSettings[currentCriteriaYear][currentCriteriaClass] = {date: "", criteria: []};
   }
   competitionSettings[currentCriteriaYear][currentCriteriaClass].criteria = tempCriteria;
   saveData();
-
-  const offcanvasEl = document.getElementById("criteriaOffcanvas");
-  const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+  const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById("criteriaOffcanvas"));
   if (offcanvas) offcanvas.hide();
-
   renderApparatusManager();
   showToast("Критерии сохранены", "success");
 }
 
-function updateClassConfig(year, classId, field, value) {
-  if (!competitionSettings[year]) competitionSettings[year] = {};
-  if (!competitionSettings[year][classId])
-    competitionSettings[year][classId] = {date: "", color: "badge-gray", criteria: []};
-  competitionSettings[year][classId][field] = value;
-  saveData();
-  showToast("Настройки сохранены", "success");
-}
-
-function addNewClassToYear() {
-  const year = prompt("Введите год (например, 2024):");
-  if (!year || !/^\d{4}$/.test(year)) {
-    alert("Некорректный год");
-    return;
-  }
-
-  const classId = prompt("Введите ID класса (латиницей, без пробелов, например: anna):");
-  if (!classId || !/^[a-z]+$/.test(classId)) {
-    alert("Некорректный ID");
-    return;
-  }
-
-  const className = prompt("Введите название класса (например: АННА):");
-  if (!className || !className.trim()) {
-    alert("Некорректное название");
-    return;
-  }
-
-  if (!competitionSettings[year]) competitionSettings[year] = {};
-  if (competitionSettings[year][classId]) {
-    alert("Такой класс уже есть в этом году");
-    return;
-  }
-
-  competitionSettings[year][classId] = {
-    date: "",
-    color: "badge-gray",
-    name: className.trim().toUpperCase(),
-    criteria: [],
-  };
-
-  saveData();
-  renderApparatusManager();
-  showToast(`Класс ${className.trim().toUpperCase()} добавлен на ${year} год`, "success");
-}
-
-// =====================================================================
-// ===== ФУНКЦИЯ ОТРИСОВКИ СТРАНИЦЫ НАСТРОЕК (С НОВОЙ КНОПКОЙ) =====
-// =====================================================================
-function renderApparatusManager() {
-  const container = document.getElementById("apparatusContent");
-  let html = '<div class="detail-section"><h4 class="detail-section-title">Настройки соревнований по годам</h4>';
-  const years = Object.keys(competitionSettings).sort((a, b) => b - a);
-  const colorOptions = [
-    {val: "badge-bek", label: "🔵 Синий"},
-    {val: "badge-tnpa", label: "🟢 Зелёный"},
-    {val: "badge-anpa", label: "🟣 Фиолетовый"},
-    {val: "badge-anna", label: "🟠 Оранжевый"},
-    {val: "badge-red", label: "🔴 Красный"},
-    {val: "badge-yellow", label: "🟡 Жёлтый"},
-    {val: "badge-gray", label: "⚪ Серый"},
-  ];
-  years.forEach((year) => {
-    html += `<h5 class="mt-4 mb-3 text-primary"><i class="fas fa-calendar me-2"></i>${year} год</h5><div class="row g-3">`;
-    const classes = competitionSettings[year];
-    for (const [classId, config] of Object.entries(classes)) {
-      const teamCount = teamsData.filter(
-        (t) => t.year == year && String(t.apparatusClass).toLowerCase().includes(classId),
-      ).length;
-      const colorSelect = `<select class="form-select form-select-sm" onchange="updateClassConfig('${year}', '${classId}', 'color', this.value)">${colorOptions.map((opt) => `<option value="${opt.val}" ${config.color === opt.val ? "selected" : ""}>${opt.label}</option>`).join("")}</select>`;
-      html += `
-        <div class="col-md-6 col-lg-4">
-          <div class="card h-100 border-0 shadow-sm">
-            <div class="card-body">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h6 class="card-title fw-bold mb-0">${config.name || classId.toUpperCase()}</h6>
-<span class="badge ${config.color}">${config.name || classId.toUpperCase()}</span>
-              </div>
-              <div class="mb-2">
-                <label class="form-label small text-muted mb-1">Дата соревнований</label>
-                <input type="text" class="form-control form-control-sm" value="${config.date}" onchange="updateClassConfig('${year}', '${classId}', 'date', this.value)" placeholder="ДД.ММ.ГГГГ">
-              </div>
-              <div class="mb-2">
-                <label class="form-label small text-muted mb-1">Цвет бейджа</label>
-                ${colorSelect}
-              </div>
-              <div class="mt-3 pt-2 border-top">
-                <small class="text-muted d-block mb-2">Команд в базе: ${teamCount}</small>
-                <button class="btn btn-outline-primary btn-sm w-100" onclick="openCriteriaEditor('${year}', '${classId}')">
-                  <i class="fas fa-list-check me-1"></i> Критерии оценки
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>`;
-    }
-    html += `</div>`;
-  });
-  html += `<div class="mt-4 pt-3 border-top"><button class="btn btn-success" onclick="addNewClassToYear()"><i class="fas fa-plus me-2"></i>Добавить новый класс аппаратов</button></div></div>`;
-  container.innerHTML = html;
-}
-
-// =====================================================================
-// ===== СОХРАНЕНИЕ / УДАЛЕНИЕ / ЭКСПОРТ / ИМПОРТ =====
-// =====================================================================
+// ===== СОХРАНЕНИЕ / УДАЛЕНИЕ =====
 async function saveEdit() {
   const orgSearch = document.getElementById("editOrgSearch").value.trim();
   if (!orgSearch) {
@@ -1753,12 +1794,13 @@ function deleteTeam() {
   showTeamsView();
 }
 
+// ===== ЭКСПОРТ / ИМПОРТ =====
 function downloadJSON() {
   if (teamsData.length === 0 && organizations.length === 0) {
     showToast("Нет данных", "error");
     return;
   }
-  const dataToSave = {organizations, competitionSettings, teams: teamsData};
+  const dataToSave = {organizations, apparatusClasses, competitionSettings, teams: teamsData};
   const dataStr = JSON.stringify(dataToSave, null, 2);
   const blob = new Blob([dataStr], {type: "application/json"});
   const url = URL.createObjectURL(blob);
@@ -1786,6 +1828,8 @@ function attachFileInputListener() {
           competitionSettings = normalizeCompetitionSettings(
             rawData.competitionSettings || getDefaultCompetitionSettings(),
           );
+          apparatusClasses = rawData.apparatusClasses || [];
+          ensureApparatusClasses();
           teamsData = rawData.teams || [];
           showToast("Данные загружены", "success");
         } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
@@ -1827,6 +1871,8 @@ function handleEditPageFileUpload(event) {
         competitionSettings = normalizeCompetitionSettings(
           rawData.competitionSettings || getDefaultCompetitionSettings(),
         );
+        apparatusClasses = rawData.apparatusClasses || [];
+        ensureApparatusClasses();
         teamsData = rawData.teams || [];
         showToast("Данные загружены", "success");
       } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
@@ -1890,6 +1936,8 @@ async function loadDefaultData() {
       competitionSettings = normalizeCompetitionSettings(
         rawData.competitionSettings || getDefaultCompetitionSettings(),
       );
+      apparatusClasses = rawData.apparatusClasses || [];
+      ensureApparatusClasses();
       teamsData = rawData.teams || [];
     } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
       teamsData = transformYandexFormsData(rawData);
