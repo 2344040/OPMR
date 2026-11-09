@@ -548,7 +548,7 @@ function renderTeams(teams) {
     for (const key in groups) {
       if (groups[key].teams.length > 0) {
         const g = groups[key];
-        const title = g.fullName || key.toUpperCase();
+        const title = g.name || key.toUpperCase();
         html += `<div class="col-12 mt-4"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${key.toUpperCase()}</span><span class="group-header-title">${title}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
       }
     }
@@ -806,7 +806,8 @@ function createNewTeam() {
   });
   document.getElementById("editOrgId").value = "";
   document.getElementById("editYear").value = currentYear;
-  document.getElementById("editId").value = "NEW_" + Date.now();
+  updateClassDatalist();
+  updateTeamIdPreview();
   const now = new Date();
   document.getElementById("editCreated").value =
     `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
@@ -852,6 +853,7 @@ function editTeam(teamId) {
   (team.members || []).forEach((m) => addMemberField(m));
   document.getElementById("btnDeleteTeam").style.display = "inline-flex";
   updateOrgDatalist();
+  updateClassDatalist();
   showEditPage();
 }
 
@@ -871,8 +873,48 @@ document.addEventListener("input", function (e) {
     const val = e.target.value.trim();
     const org = organizations.find((o) => o.fullName.toLowerCase() === val.toLowerCase());
     document.getElementById("editOrgId").value = org ? org.id : "";
+    // Автоподстановка краткого названия из справочника
+    if (org && org.shortName) {
+      document.getElementById("editShortName").value = org.shortName;
+    }
+    updateTeamIdPreview();
   }
 });
+
+// ===== ID КОМАНДЫ И СПИСКИ ПОДСТАНОВКИ =====
+function generateTeamId(orgId, year) {
+  let id = `${orgId}-${year}`;
+  let n = 2;
+  while (teamsData.some((t) => t.id === id)) {
+    id = `${orgId}-${year}-${n}`;
+    n++;
+  }
+  return id;
+}
+
+function updateTeamIdPreview() {
+  const el = document.getElementById("editId");
+  if (!el) return;
+  if (!isNewTeam && currentTeamId) return; // при редактировании существующей команды ID не меняем
+  const year = parseInt(document.getElementById("editYear").value) || currentYear;
+  const orgId = document.getElementById("editOrgId").value || getNextOrgId();
+  el.value = generateTeamId(orgId, year);
+}
+
+function updateClassDatalist() {
+  const datalist = document.getElementById("classDatalist");
+  if (!datalist) return;
+  const year = parseInt(document.getElementById("editYear").value) || currentYear;
+  const yearSettings = competitionSettings[year] || {};
+  datalist.innerHTML = Object.entries(yearSettings)
+    .map(([key, cfg]) => `<option value="${cfg.name || key.toUpperCase()}"></option>`)
+    .join("");
+}
+
+function onEditYearChange() {
+  updateClassDatalist();
+  updateTeamIdPreview();
+}
 
 function addMemberField(member = null) {
   const container = document.getElementById("editMembersContainer");
@@ -915,7 +957,7 @@ function renderCompetition() {
         team.protocol.competition.timeScore = Math.max(1, 10 - idx);
       }
     });
-    const title = g.fullName || classId.toUpperCase();
+    const title = g.name || classId.toUpperCase();
     html += `<div class="detail-section mb-4"><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><h4 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a">${title} <span class="badge bg-secondary ms-2" style="font-size:0.8rem">${g.date}</span></h4><span class="text-muted small">${teams.length} команд</span></div><div class="table-responsive"><table class="table table-hover align-middle competition-table" style="font-size:0.8rem"><thead class="table-light"><tr><th rowspan="2" style="width:35px;vertical-align:middle;text-align:center">№</th><th rowspan="2" style="vertical-align:middle;min-width:180px">Команда</th><th colspan="4" class="text-center bg-pres">Презентация</th><th colspan="4" class="text-center bg-qual">Квалификация</th><th colspan="6" class="text-center bg-comp">Конкурсное задание</th><th rowspan="2" style="vertical-align:middle;text-align:center">Доп.</th><th rowspan="2" style="vertical-align:middle;text-align:center">Σ</th><th rowspan="2" style="vertical-align:middle;text-align:center">🏆</th></tr><tr><th class="bg-pres" title="Структура">Структ.</th><th class="bg-pres" title="Сравнительный анализ">СА</th><th class="bg-pres" title="Новизна">Нов.</th><th class="bg-pres" title="Качество">Кач.</th><th class="bg-qual" title="Сумма размерений">Разм.</th><th class="bg-qual" title="Вес (кг)">Вес</th><th class="bg-qual" title="Штрафные баллы">Штраф</th><th class="bg-qual" title="Квалификационное задание выполнено">Квал. ✓</th><th class="bg-comp" title="Время (сек)">Т сек</th><th class="bg-comp" title="Балл за время">Т балл</th><th class="bg-comp" title="Прохождение ворот">Вор.</th><th class="bg-comp" title="Парковка">Парк.</th><th class="bg-comp" title="Нужный гараж">Гар.</th><th class="bg-comp" title="Штрафные баллы">Штраф</th></tr></thead><tbody>${teams
       .map((team) => {
         const p = team.protocol || {};
@@ -1624,7 +1666,7 @@ async function saveEdit() {
   };
   if (isNewTeam || !currentTeamId) {
     const newTeam = {
-      id: document.getElementById("editId").value,
+      id: generateTeamId(org.id, year),
       created: document.getElementById("editCreated").value,
       ...teamData,
     };
