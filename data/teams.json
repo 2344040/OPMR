@@ -87,15 +87,15 @@
       },
       "competition": {
         "time": "90",
-        "timeScore": 8,
+        "timeScore": 7,
         "gates": 5,
         "parking": 0,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 2,
-      "totalScore": 26
+      "place": 4,
+      "totalScore": 23
     },
     "shortName": "СПбГМТУ"
   },
@@ -211,14 +211,14 @@
       },
       "competition": {
         "time": "45.6",
-        "timeScore": 10,
+        "timeScore": 9,
         "gates": 5,
         "parking": 5,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 1,
+      "place": 2,
       "totalScore": 26
     }
   },
@@ -256,14 +256,14 @@
       },
       "competition": {
         "time": "65",
-        "timeScore": 9,
+        "timeScore": 8,
         "gates": 5,
         "parking": 5,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 0,
+      "place": 3,
       "totalScore": 31
     }
   },
@@ -286,30 +286,30 @@
     "photos": [],
     "members": [],
     "protocol": {
-      "drawNumber": "",
+      "drawNumber": "3",
       "presentation": {
-        "structure": 0,
-        "analysis": 0,
-        "novelty": 0,
-        "quality": 0
+        "structure": 3,
+        "analysis": 1,
+        "novelty": 2,
+        "quality": 2
       },
-      "dimensions": 0,
-      "weight": 0,
+      "dimensions": 1500,
+      "weight": 9.4,
       "qualification": {
         "penalty": 0,
-        "completed": false
+        "completed": true
       },
       "competition": {
-        "time": "",
-        "timeScore": 0,
-        "gates": 0,
-        "parking": 0,
+        "time": "35",
+        "timeScore": 10,
+        "gates": 5,
+        "parking": 5,
         "garage": 0,
         "penalty": 0
       },
       "extraBonus": 0,
-      "place": 0,
-      "totalScore": 0
+      "place": 1,
+      "totalScore": 36
     }
   }
 ]
