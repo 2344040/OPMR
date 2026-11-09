@@ -1186,61 +1186,6 @@ let currentCriteriaYear = null;
 let currentCriteriaClass = null;
 let tempCriteria = [];
 
-function openCriteriaEditor(year, classId) {
-  currentCriteriaYear = year;
-  currentCriteriaClass = classId;
-  const config = competitionSettings[year]?.[classId];
-  tempCriteria = config?.criteria ? JSON.parse(JSON.stringify(config.criteria)) : [];
-  renderCriteriaModal();
-  new bootstrap.Modal(document.getElementById("criteriaModal")).show();
-}
-
-function renderCriteriaModal() {
-  const body = document.getElementById("criteriaModalBody");
-  let html = `<h6 class="text-muted mb-3">${currentCriteriaClass.toUpperCase()} — ${currentCriteriaYear} год</h6>`;
-
-  if (tempCriteria.length === 0) {
-    html += `<div class="alert alert-info"><i class="fas fa-info-circle me-2"></i>Критерии не заданы. Добавьте группы критериев ниже.</div>`;
-  }
-
-  tempCriteria.forEach((group, gIdx) => {
-    html += `
-      <div class="card mb-3 border-0 shadow-sm">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-          <div class="d-flex align-items-center gap-2 flex-grow-1">
-            <span class="badge bg-primary">${gIdx + 1}</span>
-            <strong>${group.section}</strong>
-          </div>
-          <div class="d-flex gap-1">
-            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, -1)" ${gIdx === 0 ? "disabled" : ""}><i class="fas fa-chevron-up"></i></button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, 1)" ${gIdx === tempCriteria.length - 1 ? "disabled" : ""}><i class="fas fa-chevron-down"></i></button>
-            <button class="btn btn-sm btn-outline-danger" onclick="removeGroup(${gIdx})"><i class="fas fa-trash"></i></button>
-          </div>
-        </div>
-        <div class="card-body p-2">
-          <div class="list-group list-group-flush">`;
-
-    group.fields.forEach((field, fIdx) => {
-      html += `<div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
-              <span><i class="fas fa-circle text-muted me-2" style="font-size:0.5rem"></i>${field}</span>
-              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeField(${gIdx}, ${fIdx})"><i class="fas fa-times"></i></button>
-            </div>`;
-    });
-
-    html += `</div><div class="mt-2"><button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})"><i class="fas fa-plus me-1"></i>Добавить поле</button></div></div></div>`;
-  });
-
-  html += `<div class="dropdown w-100"><button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-plus me-2"></i>Добавить группу критериев</button><ul class="dropdown-menu w-100">`;
-
-  CRITERIA_LIBRARY.groups.forEach((libGroup) => {
-    const alreadyAdded = tempCriteria.some((g) => g.section === libGroup.name);
-    html += `<li><a class="dropdown-item ${alreadyAdded ? "text-muted" : ""}" onclick="${alreadyAdded ? "" : `addGroupFromLibrary('${libGroup.id}')`}" ${alreadyAdded ? 'style="pointer-events:none"' : ""}><i class="fas fa-folder me-2"></i>${libGroup.name}${alreadyAdded ? '<span class="badge bg-secondary ms-2">добавлено</span>' : ""}</a></li>`;
-  });
-
-  html += `<li><hr class="dropdown-divider"></li><li><a class="dropdown-item" onclick="addCustomGroup()"><i class="fas fa-folder-plus me-2 text-success"></i>Создать свою группу...</a></li></ul></div>`;
-  body.innerHTML = html;
-}
-
 function addGroupFromLibrary(libGroupId) {
   const libGroup = CRITERIA_LIBRARY.groups.find((g) => g.id === libGroupId);
   if (!libGroup) return;
@@ -1304,14 +1249,141 @@ function removeField(gIdx, fIdx) {
   renderCriteriaModal();
 }
 
-function saveCriteriaFromModal() {
+// ===== ОТКРЫТИЕ OFFCANVAS ВМЕСТО МОДАЛКИ =====
+function openCriteriaEditor(year, classId) {
+  currentCriteriaYear = year;
+  currentCriteriaClass = classId;
+  const config = competitionSettings[year]?.[classId];
+  tempCriteria = config?.criteria ? JSON.parse(JSON.stringify(config.criteria)) : [];
+
+  renderCriteriaOffcanvas();
+  const offcanvas = new bootstrap.Offcanvas(document.getElementById("criteriaOffcanvas"));
+  offcanvas.show();
+}
+
+function renderCriteriaOffcanvas() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  const title = `${currentCriteriaClass.toUpperCase()} — ${currentCriteriaYear} год`;
+
+  let html = `
+    <div class="alert alert-info d-flex align-items-center">
+      <i class="fas fa-info-circle me-2"></i>
+      <div>
+        <strong>Настройка критериев для:</strong> ${title}<br>
+        <small>Добавляйте группы критериев и поля для оценки. Используйте библиотеку готовых групп или создавайте свои.</small>
+      </div>
+    </div>
+  `;
+
+  if (tempCriteria.length === 0) {
+    html += `<div class="alert alert-light text-center py-4"><i class="fas fa-clipboard-list fa-3x text-muted mb-3 d-block"></i><p class="mb-0">Критерии не заданы. Добавьте группы критериев ниже.</p></div>`;
+  }
+
+  tempCriteria.forEach((group, gIdx) => {
+    html += `
+      <div class="card mb-3 border shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+          <div class="d-flex align-items-center gap-3 flex-grow-1">
+            <span class="badge bg-primary rounded-pill px-3 py-2">${gIdx + 1}</span>
+            <div class="flex-grow-1">
+              <strong class="fs-6">${group.section}</strong>
+              <div class="text-muted small">${group.fields.length} полей</div>
+            </div>
+          </div>
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, -1)" ${gIdx === 0 ? "disabled" : ""} title="Вверх">
+              <i class="fas fa-chevron-up"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, 1)" ${gIdx === tempCriteria.length - 1 ? "disabled" : ""} title="Вниз">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="removeGroup(${gIdx})" title="Удалить группу">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">`;
+
+    group.fields.forEach((field, fIdx) => {
+      html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center py-3 px-3">
+              <div class="d-flex align-items-center gap-3">
+                <span class="badge bg-light text-dark rounded-circle" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:0.75rem">${fIdx + 1}</span>
+                <span class="fw-medium">${field}</span>
+              </div>
+              <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="removeField(${gIdx}, ${fIdx})" title="Удалить поле">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>`;
+    });
+
+    html += `
+          </div>
+          <div class="p-3 bg-light border-top">
+            <button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})">
+              <i class="fas fa-plus me-1"></i>Добавить поле в эту группу
+            </button>
+          </div>
+        </div>
+      </div>`;
+  });
+
+  // Кнопка добавления группы
+  html += `
+    <div class="card border-dashed border-2 bg-light">
+      <div class="card-body text-center py-4">
+        <h6 class="text-muted mb-3"><i class="fas fa-folder-plus me-2"></i>Добавить группу критериев</h6>
+        <div class="row g-2 justify-content-center">
+          <div class="col-md-8">
+            <div class="dropdown w-100">
+              <button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-book me-2"></i>Выбрать из библиотеки
+              </button>
+              <ul class="dropdown-menu w-100" style="max-height: 300px; overflow-y: auto;">`;
+
+  CRITERIA_LIBRARY.groups.forEach((libGroup) => {
+    const alreadyAdded = tempCriteria.some((g) => g.section === libGroup.name);
+    html += `
+        <li>
+          <a class="dropdown-item ${alreadyAdded ? "disabled text-muted" : ""}" 
+             href="#" 
+             onclick="${alreadyAdded ? "return false;" : `addGroupFromLibrary('${libGroup.id}'); return false;`}">
+            <i class="fas fa-folder me-2 text-primary"></i>${libGroup.name}
+            ${alreadyAdded ? '<span class="badge bg-secondary ms-2">уже добавлено</span>' : `<span class="badge bg-light text-dark ms-2">${libGroup.fields.length} полей</span>`}
+          </a>
+        </li>`;
+  });
+
+  html += `
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <button class="btn btn-outline-primary w-100" onclick="addCustomGroup()">
+              <i class="fas fa-folder-plus me-2"></i>Своя группа
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  body.innerHTML = html;
+}
+
+function saveCriteriaFromOffcanvas() {
   if (!competitionSettings[currentCriteriaYear]) competitionSettings[currentCriteriaYear] = {};
   if (!competitionSettings[currentCriteriaYear][currentCriteriaClass]) {
     competitionSettings[currentCriteriaYear][currentCriteriaClass] = {date: "", color: "badge-gray", criteria: []};
   }
   competitionSettings[currentCriteriaYear][currentCriteriaClass].criteria = tempCriteria;
   saveData();
-  bootstrap.Modal.getInstance(document.getElementById("criteriaModal")).hide();
+
+  // Закрываем offcanvas
+  const offcanvasEl = document.getElementById("criteriaOffcanvas");
+  const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+  if (offcanvas) offcanvas.hide();
+
   renderApparatusManager();
   showToast("Критерии сохранены", "success");
 }

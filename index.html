@@ -318,20 +318,30 @@
       </div>
     </div>
 
-    <div class="modal fade" id="criteriaModal" tabindex="-1">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title"><i class="fas fa-list-check me-2"></i>Критерии оценки</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body" id="criteriaModalBody"></div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Закрыть</button>
-            <button type="button" class="btn btn-primary" onclick="saveCriteriaFromModal()">
-              <i class="fas fa-save me-1"></i>Сохранить
-            </button>
-          </div>
+    <!-- Выезжающая панель редактора критериев -->
+    <div
+      class="offcanvas offcanvas-end"
+      tabindex="-1"
+      id="criteriaOffcanvas"
+      aria-labelledby="criteriaOffcanvasLabel"
+      style="width: 800px">
+      <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="criteriaOffcanvasLabel">
+          <i class="fas fa-list-check me-2"></i>Критерии оценки
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body" id="criteriaOffcanvasBody" style="overflow-y: auto; max-height: calc(100vh - 140px)">
+        <!-- Сюда JS вставит интерфейс -->
+      </div>
+      <div class="offcanvas-footer border-top p-3 bg-light">
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">
+            <i class="fas fa-times me-1"></i>Закрыть
+          </button>
+          <button type="button" class="btn btn-primary" onclick="saveCriteriaFromOffcanvas()">
+            <i class="fas fa-save me-1"></i>Сохранить изменения
+          </button>
         </div>
       </div>
     </div>
