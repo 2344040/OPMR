@@ -8,32 +8,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&family=Fira+Sans+Condensed:wght@500;600;700&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"
-      rel="stylesheet"
-    />
+      rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
 
   <body>
     <div class="toast-container" id="toastContainer"></div>
     <div class="container py-4">
-      <div
-        class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3"
-      >
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3">
         <div>
-          <h2 class="header-title mb-0">
-            Открытое первенство СПб по морской робототехнике
-          </h2>
-          <div class="header-subtitle">
-            27–29 ноября 2026 г. | База данных участников
-          </div>
+          <h2 class="header-title mb-0">Открытое первенство СПб по морской робототехнике</h2>
+          <div class="header-subtitle">27–29 ноября 2026 г. | База данных участников</div>
         </div>
         <div class="d-flex gap-2 align-items-center" id="headerButtons"></div>
       </div>
@@ -47,32 +34,20 @@
         </div>
       </div>
       <div id="detailPage" class="detail-page">
-        <button
-          class="btn btn-outline-secondary mb-3 btn-action"
-          onclick="goBack()"
-          title="Назад"
-        >
+        <button class="btn btn-outline-secondary mb-3 btn-action" onclick="goBack()" title="Назад">
           <i class="fas fa-arrow-left"></i>
         </button>
         <div id="detailContent"></div>
       </div>
       <div id="editPage" class="detail-page">
-        <div
-          class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
-        >
-          <button
-            class="btn btn-outline-secondary btn-action"
-            onclick="goBack()"
-            title="Назад"
-          >
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <button class="btn btn-outline-secondary btn-action" onclick="goBack()" title="Назад">
             <i class="fas fa-arrow-left"></i>
           </button>
           <div id="editPageAdminButtons"></div>
         </div>
         <div class="detail-section">
-          <h4 class="detail-section-title" id="editFormTitle">
-            Редактирование команды
-          </h4>
+          <h4 class="detail-section-title" id="editFormTitle">Редактирование команды</h4>
           <form id="editForm" class="edit-form">
             <div class="row g-3">
               <div class="col-md-6">
@@ -83,12 +58,9 @@
                   id="editOrgSearch"
                   list="orgDatalist"
                   placeholder="Начните вводить название..."
-                  autocomplete="off"
-                />
+                  autocomplete="off" />
                 <datalist id="orgDatalist"></datalist>
-                <div class="form-text">
-                  Выберите из справочника или введите новое название
-                </div>
+                <div class="form-text">Выберите из справочника или введите новое название</div>
                 <input type="hidden" id="editOrgId" />
               </div>
               <div class="col-md-6">
@@ -98,8 +70,7 @@
                   class="form-control"
                   id="editShortName"
                   placeholder="(добавьте краткое название организации)"
-                  style="font-size: 0.85rem; font-style: italic"
-                />
+                  style="font-size: 0.85rem; font-style: italic" />
               </div>
               <div class="col-md-6">
                 <label class="form-label">Год</label>
@@ -111,27 +82,14 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label">ID заявки</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="editId"
-                  readonly
-                  style="background-color: #f8fafc"
-                />
+                <input type="text" class="form-control" id="editId" readonly style="background-color: #f8fafc" />
               </div>
               <div class="col-md-6">
                 <label class="form-label">Дата заявки</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="editCreated"
-                  readonly
-                  style="background-color: #f8fafc"
-                />
+                <input type="text" class="form-control" id="editCreated" readonly style="background-color: #f8fafc" />
               </div>
               <div class="col-md-6">
-                <label class="form-label">Город</label
-                ><input type="text" class="form-control" id="editCity" />
+                <label class="form-label">Город</label><input type="text" class="form-control" id="editCity" />
               </div>
               <div class="col-md-6">
                 <label class="form-label">Республика/край/область</label
@@ -142,82 +100,45 @@
                 ><input type="text" class="form-control" id="editPostalCode" />
               </div>
               <div class="col-12">
-                <label class="form-label">Адрес</label
-                ><input type="text" class="form-control" id="editAddress" />
+                <label class="form-label">Адрес</label><input type="text" class="form-control" id="editAddress" />
               </div>
               <div class="col-md-6">
-                <label class="form-label">Телефон/факс</label
-                ><input type="tel" class="form-control" id="editPhone" />
+                <label class="form-label">Телефон/факс</label><input type="tel" class="form-control" id="editPhone" />
               </div>
               <div class="col-md-6">
-                <label class="form-label">Email</label
-                ><input type="email" class="form-control" id="editEmail" />
+                <label class="form-label">Email</label><input type="email" class="form-control" id="editEmail" />
               </div>
               <div class="col-12">
                 <label class="form-label">ФИО руководителя организации</label
                 ><input type="text" class="form-control" id="editOrgLeader" />
               </div>
               <div class="col-12 mt-4">
-                <h5
-                  class="fw-bold"
-                  style="
-                    font-family: &quot;Manrope&quot;, sans-serif;
-                    color: #0f172a;
-                  "
-                >
-                  Аппарат
-                </h5>
+                <h5 class="fw-bold" style="font-family: &quot;Manrope&quot;, sans-serif; color: #0f172a">Аппарат</h5>
               </div>
               <div class="col-md-6">
                 <label class="form-label">Класс аппарата</label
-                ><input
-                  type="text"
-                  class="form-control"
-                  id="editApparatusClass"
-                />
+                ><input type="text" class="form-control" id="editApparatusClass" />
               </div>
               <div class="col-md-6">
                 <label class="form-label">Название аппарата</label
-                ><input
-                  type="text"
-                  class="form-control"
-                  id="editApparatusName"
-                  placeholder="Например: 'Посейдон-1'"
-                />
+                ><input type="text" class="form-control" id="editApparatusName" placeholder="Например: 'Посейдон-1'" />
               </div>
               <div class="col-12">
                 <label class="form-label">Ссылки на фото аппарата</label>
                 <div id="photoLinksContainer"></div>
-                <button
-                  type="button"
-                  class="btn btn-outline-primary btn-sm mt-2"
-                  onclick="addPhotoLinkField()"
-                >
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="addPhotoLinkField()">
                   <i class="fas fa-plus me-1"></i>Добавить ссылку
                 </button>
                 <div class="form-text mt-2">
-                  <i class="fas fa-info-circle me-1"></i>Вставьте прямые ссылки
-                  на изображения (.jpg, .png, .webp).
+                  <i class="fas fa-info-circle me-1"></i>Вставьте прямые ссылки на изображения (.jpg, .png, .webp).
                 </div>
               </div>
               <div class="col-12">
                 <label class="form-label">Краткое описание аппарата</label
-                ><textarea
-                  class="form-control"
-                  id="editDescription"
-                  rows="4"
-                ></textarea>
+                ><textarea class="form-control" id="editDescription" rows="4"></textarea>
               </div>
               <div class="col-12 mt-4">
-                <h5
-                  class="fw-bold"
-                  style="
-                    font-family: &quot;Manrope&quot;, sans-serif;
-                    color: #0f172a;
-                  "
-                >
-                  Команда
-                </h5>
+                <h5 class="fw-bold" style="font-family: &quot;Manrope&quot;, sans-serif; color: #0f172a">Команда</h5>
               </div>
               <div class="col-md-6">
                 <label class="form-label">ФИО руководителя команды</label
@@ -225,46 +146,20 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label">Контактный телефон</label
-                ><input
-                  type="tel"
-                  class="form-control"
-                  id="editTeamLeaderPhone"
-                />
+                ><input type="tel" class="form-control" id="editTeamLeaderPhone" />
               </div>
               <div class="col-12 mt-4">
-                <h5
-                  class="fw-bold"
-                  style="
-                    font-family: &quot;Manrope&quot;, sans-serif;
-                    color: #0f172a;
-                  "
-                >
-                  Участники
-                </h5>
+                <h5 class="fw-bold" style="font-family: &quot;Manrope&quot;, sans-serif; color: #0f172a">Участники</h5>
                 <div id="editMembersContainer"></div>
-                <button
-                  type="button"
-                  class="btn btn-outline-primary btn-sm mt-2 btn-action"
-                  onclick="addMemberField()"
-                >
-                  <i class="fas fa-plus me-1"></i
-                  ><span class="btn-text">Добавить участника</span>
+                <button type="button" class="btn btn-outline-primary btn-sm mt-2 btn-action" onclick="addMemberField()">
+                  <i class="fas fa-plus me-1"></i><span class="btn-text">Добавить участника</span>
                 </button>
               </div>
               <div class="col-12 mt-4 pt-3 border-top">
-                <button
-                  type="button"
-                  class="btn btn-primary btn-action px-4"
-                  onclick="saveEdit()"
-                >
-                  <i class="fas fa-save me-2"></i
-                  ><span class="btn-text">Сохранить изменения</span>
+                <button type="button" class="btn btn-primary btn-action px-4" onclick="saveEdit()">
+                  <i class="fas fa-save me-2"></i><span class="btn-text">Сохранить изменения</span>
                 </button>
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary btn-action ms-2"
-                  onclick="goBack()"
-                >
+                <button type="button" class="btn btn-outline-secondary btn-action ms-2" onclick="goBack()">
                   <span class="btn-text">Отмена</span>
                 </button>
                 <button
@@ -272,10 +167,8 @@
                   class="btn btn-danger btn-action ms-auto"
                   onclick="deleteTeam()"
                   id="btnDeleteTeam"
-                  style="display: none"
-                >
-                  <i class="fas fa-trash-alt me-2"></i
-                  ><span class="btn-text">Удалить команду</span>
+                  style="display: none">
+                  <i class="fas fa-trash-alt me-2"></i><span class="btn-text">Удалить команду</span>
                 </button>
               </div>
             </div>
@@ -283,190 +176,110 @@
         </div>
       </div>
       <div id="competitionPage" class="detail-page">
-        <div
-          class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
-        >
-          <button
-            class="btn btn-outline-secondary btn-action"
-            onclick="goBack()"
-            title="Назад"
-          >
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <button class="btn btn-outline-secondary btn-action" onclick="goBack()" title="Назад">
             <i class="fas fa-arrow-left"></i>
           </button>
           <div class="d-flex gap-2">
-            <button
-              class="btn btn-outline-primary btn-action"
-              onclick="calculatePlaces()"
-            >
-              <i class="fas fa-trophy me-2"></i
-              ><span class="btn-text">Рассчитать места</span>
+            <button class="btn btn-outline-primary btn-action" onclick="calculatePlaces()">
+              <i class="fas fa-trophy me-2"></i><span class="btn-text">Рассчитать места</span>
             </button>
-            <button
-              class="btn btn-outline-secondary btn-action"
-              onclick="window.print()"
-            >
-              <i class="fas fa-print me-2"></i
-              ><span class="btn-text">Печать</span>
+            <button class="btn btn-outline-secondary btn-action" onclick="window.print()">
+              <i class="fas fa-print me-2"></i><span class="btn-text">Печать</span>
             </button>
           </div>
         </div>
         <div id="competitionContent"></div>
       </div>
       <div id="protocolPage" class="detail-page">
-        <div
-          class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
-        >
-          <button
-            class="btn btn-outline-secondary btn-action"
-            onclick="showCompetitionView()"
-          >
-            <i class="fas fa-arrow-left me-2"></i
-            ><span class="btn-text">К соревнованиям</span>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <button class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">
+            <i class="fas fa-arrow-left me-2"></i><span class="btn-text">К соревнованиям</span>
           </button>
           <button class="btn btn-primary btn-action" onclick="saveProtocol()">
-            <i class="fas fa-save me-2"></i
-            ><span class="btn-text">Сохранить протокол</span>
+            <i class="fas fa-save me-2"></i><span class="btn-text">Сохранить протокол</span>
           </button>
         </div>
         <div id="protocolContent"></div>
       </div>
       <div id="masterPage" class="detail-page">
-        <div
-          class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
-        >
-          <button
-            class="btn btn-outline-secondary btn-action"
-            onclick="showTeamsView()"
-          >
-            <i class="fas fa-arrow-left me-2"></i
-            ><span class="btn-text">Назад</span>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <button class="btn btn-outline-secondary btn-action" onclick="showTeamsView()">
+            <i class="fas fa-arrow-left me-2"></i><span class="btn-text">Назад</span>
           </button>
-          <button
-            class="btn btn-outline-secondary btn-action"
-            onclick="window.print()"
-          >
-            <i class="fas fa-print me-2"></i
-            ><span class="btn-text">Печать</span>
+          <button class="btn btn-outline-secondary btn-action" onclick="window.print()">
+            <i class="fas fa-print me-2"></i><span class="btn-text">Печать</span>
           </button>
         </div>
         <div id="masterContent"></div>
       </div>
       <div id="orgManagerPage" class="detail-page">
-        <div
-          class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"
-        >
-          <button
-            class="btn btn-outline-secondary btn-action"
-            onclick="showTeamsView()"
-          >
-            <i class="fas fa-arrow-left me-2"></i
-            ><span class="btn-text">Назад</span>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <button class="btn btn-outline-secondary btn-action" onclick="showTeamsView()">
+            <i class="fas fa-arrow-left me-2"></i><span class="btn-text">Назад</span>
           </button>
-          <button
-            class="btn btn-primary btn-action"
-            onclick="addOrganization()"
-          >
-            <i class="fas fa-plus me-2"></i
-            ><span class="btn-text">Добавить организацию</span>
+          <button class="btn btn-primary btn-action" onclick="addOrganization()">
+            <i class="fas fa-plus me-2"></i><span class="btn-text">Добавить организацию</span>
           </button>
         </div>
         <div id="orgManagerContent"></div>
+      </div>
+      <div id="apparatusPage" class="detail-page">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <button class="btn btn-outline-secondary btn-action" onclick="showTeamsView()">
+            <i class="fas fa-arrow-left me-2"></i><span class="btn-text">Назад</span>
+          </button>
+          <button class="btn btn-primary btn-action" onclick="addApparatusClass()">
+            <i class="fas fa-plus me-2"></i><span class="btn-text">Добавить класс</span>
+          </button>
+        </div>
+        <div id="apparatusContent"></div>
       </div>
     </div>
     <div class="modal fade" id="githubSettingsModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="fab fa-github me-2"></i>Настройки GitHub
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
+            <h5 class="modal-title"><i class="fab fa-github me-2"></i>Настройки GitHub</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
             <div class="mb-3">
               <label class="form-label">Владелец репозитория (owner)</label
-              ><input
-                type="text"
-                class="form-control"
-                id="ghOwner"
-                placeholder="например: your-username"
-              />
-              <div class="form-text">
-                Имя пользователя или организации на GitHub
-              </div>
+              ><input type="text" class="form-control" id="ghOwner" placeholder="например: your-username" />
+              <div class="form-text">Имя пользователя или организации на GitHub</div>
             </div>
             <div class="mb-3">
               <label class="form-label">Название репозитория (repo)</label
-              ><input
-                type="text"
-                class="form-control"
-                id="ghRepo"
-                placeholder="например: opmr-website"
-              />
+              ><input type="text" class="form-control" id="ghRepo" placeholder="например: opmr-website" />
             </div>
             <div class="mb-3">
               <label class="form-label">Ветка (branch)</label
-              ><input
-                type="text"
-                class="form-control"
-                id="ghBranch"
-                placeholder="main"
-                value="main"
-              />
+              ><input type="text" class="form-control" id="ghBranch" placeholder="main" value="main" />
             </div>
             <div class="mb-3">
               <label class="form-label">Personal Access Token</label>
               <div class="input-group">
-                <input
-                  type="password"
-                  class="form-control"
-                  id="ghToken"
-                  placeholder="ghp_..."
-                />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  onclick="toggleTokenVisibility()"
-                >
+                <input type="password" class="form-control" id="ghToken" placeholder="ghp_..." />
+                <button class="btn btn-outline-secondary" type="button" onclick="toggleTokenVisibility()">
                   <i class="fas fa-eye" id="tokenToggleIcon"></i>
                 </button>
               </div>
               <div class="form-text">
                 Токен с правами <code>repo</code> или <code>contents</code>.
-                <a href="https://github.com/settings/tokens/new" target="_blank"
-                  >Создать токен →</a
-                >
+                <a href="https://github.com/settings/tokens/new" target="_blank">Создать токен →</a>
               </div>
             </div>
             <div class="alert alert-info small mb-0">
-              <i class="fas fa-info-circle me-1"></i>Данные сохраняются только в
-              вашем браузере (localStorage).
+              <i class="fas fa-info-circle me-1"></i>Данные сохраняются только в вашем браузере (localStorage).
             </div>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              data-bs-dismiss="modal"
-            >
-              Отмена
-            </button>
-            <button
-              type="button"
-              class="btn btn-outline-primary"
-              onclick="testGitHubConnection()"
-            >
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-outline-primary" onclick="testGitHubConnection()">
               <i class="fas fa-plug me-1"></i>Проверить соединение
             </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              onclick="saveGitHubSettings()"
-            >
+            <button type="button" class="btn btn-primary" onclick="saveGitHubSettings()">
               <i class="fas fa-check me-1"></i>Сохранить
             </button>
           </div>
@@ -481,14 +294,8 @@
       <div class="modal-dialog modal-sm modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header border-0 pb-0">
-            <h6 class="modal-title">
-              <i class="fas fa-lock me-2"></i>Вход в режим администратора
-            </h6>
-            <button
-              type="button"
-              class="btn-close"
-              data-bs-dismiss="modal"
-            ></button>
+            <h6 class="modal-title"><i class="fas fa-lock me-2"></i>Вход в режим администратора</h6>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
             <input
@@ -496,29 +303,14 @@
               class="form-control"
               id="adminPasswordInput"
               placeholder="Введите пароль"
-              autocomplete="off"
-            />
-            <div
-              id="adminPasswordError"
-              class="text-danger small mt-2"
-              style="display: none"
-            >
+              autocomplete="off" />
+            <div id="adminPasswordError" class="text-danger small mt-2" style="display: none">
               <i class="fas fa-exclamation-circle me-1"></i>Неверный пароль
             </div>
           </div>
           <div class="modal-footer border-0 pt-0">
-            <button
-              type="button"
-              class="btn btn-outline-secondary btn-sm"
-              data-bs-dismiss="modal"
-            >
-              Отмена
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary btn-sm"
-              onclick="checkAdminPassword()"
-            >
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="checkAdminPassword()">
               <i class="fas fa-sign-in-alt me-1"></i>Войти
             </button>
           </div>
@@ -529,37 +321,22 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="fas fa-database me-2"></i>Миграция данных
-            </h5>
+            <h5 class="modal-title"><i class="fas fa-database me-2"></i>Миграция данных</h5>
           </div>
           <div class="modal-body">
             <p>Обнаружен старый формат данных. Система автоматически:</p>
             <ul>
               <li>Создаст справочник организаций из существующих названий</li>
               <li>Присвоит каждой команде ID организации и год</li>
-              <li>
-                Команды с протоколами → 2025 год, без протоколов → 2026 год
-              </li>
+              <li>Команды с протоколами → 2025 год, без протоколов → 2026 год</li>
             </ul>
             <p class="text-muted small">
-              Ваши данные не будут потеряны. Рекомендуется сделать резервную
-              копию через "Скачать JSON" перед миграцией.
+              Ваши данные не будут потеряны. Рекомендуется сделать резервную копию через "Скачать JSON" перед миграцией.
             </p>
           </div>
           <div class="modal-footer">
-            <button
-              type="button"
-              class="btn btn-outline-secondary"
-              data-bs-dismiss="modal"
-            >
-              Отмена
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              onclick="runMigration()"
-            >
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-primary" onclick="runMigration()">
               <i class="fas fa-check me-1"></i>Начать миграцию
             </button>
           </div>
