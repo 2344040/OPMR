@@ -381,7 +381,7 @@ function loadData() {
     if (data) {
       const parsed = JSON.parse(data);
       organizations = parsed.organizations || [];
-      competitionSettings = parsed.competitionSettings || getDefaultCompetitionSettings();
+      competitionSettings = normalizeCompetitionSettings(parsed.competitionSettings || getDefaultCompetitionSettings());
       teamsData = parsed.teams || [];
       return true;
     }
@@ -854,6 +854,7 @@ function editTeam(teamId) {
   document.getElementById("btnDeleteTeam").style.display = "inline-flex";
   updateOrgDatalist();
   updateClassDatalist();
+  updateTeamIdPreview();
   showEditPage();
 }
 
@@ -879,26 +880,62 @@ document.addEventListener("input", function (e) {
     }
     updateTeamIdPreview();
   }
+  if (e.target.id === "editApparatusClass") {
+    updateTeamIdPreview();
+  }
 });
 
-// ===== ID КОМАНДЫ И СПИСКИ ПОДСТАНОВКИ =====
-function generateTeamId(orgId, year) {
-  let id = `${orgId}-${year}`;
+// ===== ID КОМАНДЫ, СПИСКИ ПОДСТАНОВКИ, НОРМАЛИЗАЦИЯ НАСТРОЕК =====
+const DEFAULT_CLASS_NAMES = {bek: "БЭК", tnpa: "ТНПА", anpa: "АНПА", anna: "АННА"};
+
+// Восстанавливает русские названия классов, если в сохранённых данных их нет
+function normalizeCompetitionSettings(settings) {
+  for (const year in settings) {
+    for (const key in settings[year]) {
+      const cfg = settings[year][key];
+      if (!cfg.name) cfg.name = DEFAULT_CLASS_NAMES[key] || key.toUpperCase();
+      if (!cfg.color) cfg.color = "badge-gray";
+      if (!Array.isArray(cfg.criteria)) cfg.criteria = [];
+    }
+  }
+  return settings;
+}
+
+function getClassIdByValue(apparatusClass, year = currentYear) {
+  const value = String(apparatusClass || "")
+    .trim()
+    .toLowerCase();
+  const yearSettings = competitionSettings[year] || {};
+  for (const key in yearSettings) {
+    const cfg = yearSettings[key];
+    if (value.includes(key.toLowerCase()) || value.includes((cfg.name || key).toLowerCase())) return key;
+  }
+  return "na";
+}
+
+// Формат: IDорг-Год-Класс(лат)-[номер при дубле]
+function generateTeamId(orgId, year, classId) {
+  const base = `${orgId}-${year}-${classId || "na"}`;
+  let id = base;
   let n = 2;
   while (teamsData.some((t) => t.id === id)) {
-    id = `${orgId}-${year}-${n}`;
+    id = `${base}-${n}`;
     n++;
   }
   return id;
 }
 
 function updateTeamIdPreview() {
-  const el = document.getElementById("editId");
-  if (!el) return;
-  if (!isNewTeam && currentTeamId) return; // при редактировании существующей команды ID не меняем
+  const idEl = document.getElementById("editId");
+  const orgViewEl = document.getElementById("editOrgIdView");
+  if (!idEl) return;
   const year = parseInt(document.getElementById("editYear").value) || currentYear;
-  const orgId = document.getElementById("editOrgId").value || getNextOrgId();
-  el.value = generateTeamId(orgId, year);
+  const orgId = document.getElementById("editOrgId").value;
+  const displayOrgId = orgId || getNextOrgId();
+  if (orgViewEl) orgViewEl.value = displayOrgId;
+  if (!isNewTeam && currentTeamId) return; // при редактировании существующей команды ID не меняем
+  const classId = getClassIdByValue(document.getElementById("editApparatusClass").value, year);
+  idEl.value = generateTeamId(displayOrgId, year, classId);
 }
 
 function updateClassDatalist() {
@@ -1666,7 +1703,7 @@ async function saveEdit() {
   };
   if (isNewTeam || !currentTeamId) {
     const newTeam = {
-      id: generateTeamId(org.id, year),
+      id: generateTeamId(org.id, year, getClassIdByValue(teamData.apparatusClass, year)),
       created: document.getElementById("editCreated").value,
       ...teamData,
     };
@@ -1746,7 +1783,9 @@ function attachFileInputListener() {
         const rawData = JSON.parse(e.target.result);
         if (rawData.organizations && rawData.teams) {
           organizations = rawData.organizations || [];
-          competitionSettings = rawData.competitionSettings || getDefaultCompetitionSettings();
+          competitionSettings = normalizeCompetitionSettings(
+            rawData.competitionSettings || getDefaultCompetitionSettings(),
+          );
           teamsData = rawData.teams || [];
           showToast("Данные загружены", "success");
         } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
@@ -1785,7 +1824,9 @@ function handleEditPageFileUpload(event) {
       const rawData = JSON.parse(e.target.result);
       if (rawData.organizations && rawData.teams) {
         organizations = rawData.organizations || [];
-        competitionSettings = rawData.competitionSettings || getDefaultCompetitionSettings();
+        competitionSettings = normalizeCompetitionSettings(
+          rawData.competitionSettings || getDefaultCompetitionSettings(),
+        );
         teamsData = rawData.teams || [];
         showToast("Данные загружены", "success");
       } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
@@ -1846,7 +1887,9 @@ async function loadDefaultData() {
     const rawData = await response.json();
     if (rawData.organizations && rawData.teams) {
       organizations = rawData.organizations || [];
-      competitionSettings = rawData.competitionSettings || getDefaultCompetitionSettings();
+      competitionSettings = normalizeCompetitionSettings(
+        rawData.competitionSettings || getDefaultCompetitionSettings(),
+      );
       teamsData = rawData.teams || [];
     } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
       teamsData = transformYandexFormsData(rawData);

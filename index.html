@@ -50,7 +50,7 @@
           <h4 class="detail-section-title" id="editFormTitle">Редактирование команды</h4>
           <form id="editForm" class="edit-form">
             <div class="row g-3">
-              <div class="col-md-5">
+              <div class="col-md-4">
                 <label class="form-label">Организация</label>
                 <input
                   type="text"
@@ -63,7 +63,7 @@
                 <div class="form-text">Выберите из справочника или введите новое</div>
                 <input type="hidden" id="editOrgId" />
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label">Краткое название</label>
                 <input
                   type="text"
@@ -71,6 +71,15 @@
                   id="editShortName"
                   placeholder="(подставится из справочника)"
                   style="font-size: 0.85rem; font-style: italic" />
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">ID орг.</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="editOrgIdView"
+                  readonly
+                  style="background-color: #f8fafc; font-weight: 600; text-align: center" />
               </div>
               <div class="col-md-3">
                 <label class="form-label">ID команды</label>
