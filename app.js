@@ -2359,11 +2359,11 @@ function parseTextApplication() {
   }
 
   const footerIdx = raw.indexOf("Это письмо содержит ответы");
-  const body = (footerIdx >= 0 ? raw.substring(0, footerIdx) : raw).trim();
+  const body = (footerIdx >= 0 ? raw.substring(0, footerIdx) : raw).replace(/\r\n?/g, "\n").trim();
 
-  let orgFromTitle = "",
+  let id = "",
     created = "",
-    id = "";
+    orgFromTitle = "";
   const titleMatch = body.match(/Заявка\s+на\s+\S+\s+от\s+(.+)/i);
   if (titleMatch) orgFromTitle = titleMatch[1].trim();
   const numMatch = body.match(/Заявка\s+№(\d+)\s+от\s+(\d{2}\.\d{2}\.\d{4})/);
@@ -2372,108 +2372,173 @@ function parseTextApplication() {
     created = numMatch[2];
   }
 
+  // Заголовок поля = строка, целиком заканчивающаяся на «:» (без переносов внутри)
+  const headerRe = /^([A-Za-zА-Яа-яЁё0-9 \/.\-()№]+?):\s*$/;
   const fields = {};
-  const fieldRe = /^([A-Za-zА-Яа-яЁё0-9\s\/\.\-\(\)]+?):\s*$/gm;
-  let m;
-  const positions = [];
-  while ((m = fieldRe.exec(body)) !== null) {
-    positions.push({name: m[1].trim(), start: m.index + m[0].length});
-  }
-  positions.forEach((p, i) => {
-    const end = positions[i + 1] ? positions[i + 1].start - p.name.length - 2 : body.length;
-    let value = body.substring(p.start, end).trim();
-    value = value.replace(/\nУчастник команды\s*$/i, "").trim();
-    fields[p.name] = value;
-  });
+  let memberBlocks = [];
+  let curKey = null;
+  let curBlock = null;
+  let inMembers = false;
 
-  const members = [];
-  const memBlocks = body.split(/(?:^|\n)Участник команды:?\s*\n/i);
-  memBlocks.slice(1).forEach((block) => {
-    const f = {};
-    block.split("\n").forEach((line) => {
-      const dash = line.indexOf(" - ");
-      if (dash < 0) return;
-      const k = line
-        .substring(0, dash)
-        .trim()
-        .replace(/^Ф\.И\.О\.?/, "Ф.И.О.");
-      const v = line.substring(dash + 3).trim();
-      f[k] = v;
-    });
-    if (f["Ф.И.О."]) {
-      members.push({
-        fio: f["Ф.И.О."] || "",
-        birth: f["Дата рождения"] || "",
-        passport: f["Паспорт/Свидетельство о рождении"] || "",
-        isStudent: (f["Студент"] || "Нет").trim(),
-        order: f["Приказ о зачислении (для студентов)"] || "",
-      });
+  body.split("\n").forEach((line) => {
+    const t = line.trim();
+    if (/^Участник команды:?$/.test(t)) {
+      inMembers = true;
+      curKey = null;
+      if (t.endsWith(":")) return; // заголовок секции
+      curBlock = {}; // строка без двоеточия = новый участник
+      memberBlocks.push(curBlock);
+      return;
     }
+    const hm = t.match(headerRe);
+    if (hm) {
+      // любое поле «Название:» завершает секцию участников
+      inMembers = false;
+      curBlock = null;
+      curKey = hm[1].trim();
+      fields[curKey] = "";
+      return;
+    }
+    if (inMembers) {
+      const dash = t.indexOf(" - ");
+      if (dash > 0) {
+        if (!curBlock) {
+          curBlock = {};
+          memberBlocks.push(curBlock);
+        }
+        curBlock[t.substring(0, dash).trim()] = t.substring(dash + 3).trim();
+      }
+      return;
+    }
+    if (curKey && t) fields[curKey] = fields[curKey] ? fields[curKey] + "\n" + t : t;
   });
 
-  const photosRaw = fields["Фото аппарата"] || "";
-  const photos = photosRaw
-    .split(/[\s,]+/)
+  memberBlocks = memberBlocks.filter((b) => Object.keys(b).length > 0);
+  const get = (...keys) => {
+    for (const k of keys) if (fields[k]) return fields[k];
+    return "";
+  };
+
+  // Нераспознанные блоки (например, «Характеристики:») доклеиваем в описание
+  const known = [
+    "Организация",
+    "Город (населённый пункт)",
+    "Город",
+    "Республика/край/область",
+    "Регион",
+    "Почтовый индекс",
+    "Индекс",
+    "Адрес",
+    "Телефон/факс",
+    "Телефон",
+    "Email",
+    "E-mail",
+    "ФИО руководителя организации",
+    "Класс аппарата",
+    "Краткое описание аппарата",
+    "Фото аппарата",
+    "ФИО руководителя команды",
+    "Контактный телефон руководителя команды",
+    "Даю согласие на обработку персональных данных",
+  ];
+  let description = get("Краткое описание аппарата");
+  const extras = [];
+  for (const k in fields) {
+    if (!known.includes(k) && fields[k] && k !== "Краткое описание аппарата") extras.push(k + ":\n" + fields[k]);
+  }
+  if (extras.length) description = (description ? description + "\n\n" : "") + extras.join("\n\n");
+
+  const members = memberBlocks
+    .map((b) => ({
+      fio: b["Ф.И.О."] || b["ФИО"] || "",
+      birth: b["Дата рождения"] || "",
+      passport: b["Паспорт/Свидетельство о рождении"] || b["Паспорт"] || "",
+      isStudent: (b["Студент"] || "Нет").trim(),
+      order: b["Приказ о зачислении (для студентов)"] || b["Приказ о зачислении"] || "",
+    }))
+    .filter((m) => m.fio);
+
+  const photos = (get("Фото аппарата") || "")
+    .split(/\s+/)
     .map((s) => s.trim())
     .filter((s) => /^https?:\/\//i.test(s));
 
   pendingTextImport = {
-    id: id || "",
+    id,
     created: created || new Date().toLocaleDateString("ru-RU"),
     year: currentYear,
-    organization: fields["Организация"] || orgFromTitle,
+    organization: get("Организация") || orgFromTitle,
     shortName: "",
-    city: fields["Город (населённый пункт)"] || "",
-    region: fields["Республика/край/область"] || "",
-    postalCode: fields["Почтовый индекс"] || "",
-    address: fields["Адрес"] || "",
-    phone: fields["Телефон/факс"] || "",
-    email: fields["Email"] || "",
-    orgLeader: fields["ФИО руководителя организации"] || "",
-    apparatusClass: fields["Класс аппарата"] || "",
-    apparatusName: (fields["Краткое описание аппарата"] || "").split("\n")[0].trim(),
-    description: fields["Краткое описание аппарата"] || "",
+    city: get("Город (населённый пункт)", "Город"),
+    region: get("Республика/край/область", "Регион"),
+    postalCode: get("Почтовый индекс", "Индекс"),
+    address: get("Адрес"),
+    phone: get("Телефон/факс", "Телефон"),
+    email: get("Email", "E-mail"),
+    orgLeader: get("ФИО руководителя организации"),
+    apparatusClass: get("Класс аппарата"),
+    apparatusName: description.split("\n")[0].trim(),
+    description,
     photos,
-    teamLeader: fields["ФИО руководителя команды"] || "",
-    teamLeaderPhone: fields["Контактный телефон руководителя команды"] || "",
+    teamLeader: get("ФИО руководителя команды"),
+    teamLeaderPhone: get("Контактный телефон руководителя команды"),
     members,
   };
   renderTextImportPreview();
   document.getElementById("textImportFooter").style.display = "flex";
 }
 
+// ===== ПРЕДПРОСМОТР С ВОЗМОЖНОСТЬЮ ПРАВКИ НА МЕСТЕ =====
 function renderTextImportPreview() {
   const t = pendingTextImport;
   if (!t) return;
-  const rows = [
-    ["Организация", t.organization],
-    ["Город", t.city],
-    ["Регион", t.region],
-    ["Индекс", t.postalCode],
-    ["Адрес", t.address],
-    ["Телефон", t.phone],
-    ["Email", t.email],
-    ["Руководитель организации", t.orgLeader],
-    ["Класс аппарата", t.apparatusClass],
-    ["Название аппарата", t.apparatusName],
-    ["Руководитель команды", t.teamLeader],
-    ["Телефон руководителя", t.teamLeaderPhone],
-    ["Фото", t.photos.length ? t.photos.join(", ") : "—"],
-    ["Участников", String(t.members.length)],
-  ];
-  let html = `<div class="alert alert-info small mb-2"><i class="fas fa-check-circle me-1"></i>Заявка разобрана. Проверьте поля и нажмите «Добавить в базу».</div>`;
-  html += `<div class="table-responsive"><table class="table table-sm align-middle"><tbody>`;
-  rows.forEach(([k, v]) => {
-    html += `<tr><th style="width:220px;color:#475569">${k}</th><td>${v || '<span class="text-muted">—</span>'}</td></tr>`;
+  const esc = (s) =>
+    String(s == null ? "" : s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  const input = (label, key, cls) => `
+    <div class="${cls || "col-md-6"}">
+      <label class="form-label small mb-1">${label}</label>
+      <input type="text" class="form-control form-control-sm" value="${esc(t[key])}" oninput="pendingTextImport.${key} = this.value">
+    </div>`;
+
+  let html = `<div class="alert alert-info small mb-2"><i class="fas fa-pen me-1"></i>Заявка разобрана. Поля можно исправить прямо здесь, затем «Добавить в базу». Год: <strong>${t.year}</strong> (меняется кнопкой года в шапке).</div>
+    <div class="border rounded p-3 mb-3" style="background:#f8fafc"><div class="row g-2">`;
+  html += input("Организация", "organization", "col-12");
+  html += input("Город", "city") + input("Регион", "region");
+  html += input("Индекс", "postalCode") + input("Телефон/факс", "phone");
+  html += input("Email", "email", "col-12");
+  html += input("ФИО руководителя организации", "orgLeader", "col-12");
+  html += input("Класс аппарата", "apparatusClass") + input("Название аппарата", "apparatusName");
+  html += input("ФИО руководителя команды", "teamLeader") + input("Телефон руководителя", "teamLeaderPhone");
+  html += input("Дата заявки", "created") + input("ID заявки из письма", "id");
+  html += `
+      <div class="col-12">
+        <label class="form-label small mb-1">Краткое описание аппарата</label>
+        <textarea class="form-control form-control-sm" rows="4" oninput="pendingTextImport.description = this.value">${esc(t.description)}</textarea>
+      </div>
+      <div class="col-12">
+        <label class="form-label small mb-1">Фото (по одной ссылке в строке)</label>
+        <textarea class="form-control form-control-sm" rows="2" oninput="pendingTextImport.photos = this.value.split(/\\s+/).map(s => s.trim()).filter(s => s)">${esc(t.photos.join("\n"))}</textarea>
+      </div>
+    </div></div>`;
+
+  html += `<h6 class="mb-2">Участники (${t.members.length}):</h6>`;
+  t.members.forEach((m, i) => {
+    html += `<div class="border rounded p-2 mb-2 bg-white">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-4"><label class="form-label small mb-1">ФИО</label><input type="text" class="form-control form-control-sm" value="${esc(m.fio)}" oninput="pendingTextImport.members[${i}].fio = this.value"></div>
+        <div class="col-md-2"><label class="form-label small mb-1">Дата рождения</label><input type="text" class="form-control form-control-sm" value="${esc(m.birth)}" oninput="pendingTextImport.members[${i}].birth = this.value"></div>
+        <div class="col-md-2"><label class="form-label small mb-1">Паспорт/св-во</label><input type="text" class="form-control form-control-sm" value="${esc(m.passport)}" oninput="pendingTextImport.members[${i}].passport = this.value"></div>
+        <div class="col-md-1"><label class="form-label small mb-1">Студент</label><select class="form-select form-select-sm" onchange="pendingTextImport.members[${i}].isStudent = this.value"><option value="Нет" ${m.isStudent !== "Да" ? "selected" : ""}>Нет</option><option value="Да" ${m.isStudent === "Да" ? "selected" : ""}>Да</option></select></div>
+        <div class="col-md-2"><label class="form-label small mb-1">Приказ</label><input type="text" class="form-control form-control-sm" value="${esc(m.order)}" oninput="pendingTextImport.members[${i}].order = this.value"></div>
+        <div class="col-md-1 text-end"><button type="button" class="btn btn-sm btn-outline-danger" onclick="pendingTextImport.members.splice(${i}, 1); renderTextImportPreview();" title="Убрать участника"><i class="fas fa-times"></i></button></div>
+      </div>
+    </div>`;
   });
-  html += `</tbody></table></div>`;
-  if (t.members.length > 0) {
-    html += `<h6 class="mt-3">Участники (${t.members.length}):</h6><ul class="list-group list-group-flush small">`;
-    t.members.forEach((m) => {
-      html += `<li class="list-group-item px-2 py-1"><strong>${m.fio}</strong> · ${m.birth || "—"}${m.isStudent === "Да" ? ' · <span class="badge bg-success">студент</span>' : ""}</li>`;
-    });
-    html += `</ul>`;
-  }
+
   document.getElementById("textImportPreview").innerHTML = html;
 }
 
