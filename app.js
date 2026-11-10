@@ -2353,7 +2353,10 @@ async function loadDefaultData() {
     return;
   }
   try {
-    const response = await fetch("data/teams.json");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const response = await fetch("data/teams.json", {signal: controller.signal});
+    clearTimeout(timer);
     if (!response.ok) throw new Error("Файл не найден");
     const rawData = await response.json();
     if (rawData.organizations && rawData.teams) {
@@ -2379,13 +2382,17 @@ async function loadDefaultData() {
     saveData();
     renderTeams(teamsData);
   } catch (error) {
+    const reason =
+      error.name === "AbortError"
+        ? "сервер не ответил за 12 секунд. Если сайт открыт без VPN — включите VPN и обновите страницу"
+        : "файл не найден или недоступен";
     document.getElementById("teamsContainer").innerHTML =
-      `<div class="col-12 text-center text-muted py-5"><i class="fas fa-exclamation-triangle fa-2x mb-2" style="color:#f59e0b"></i><div>Не удалось загрузить <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px">data/teams.json</code>.<br>Войдите в режим Админ и загрузите файл вручную.</div></div>`;
+      `<div class="col-12 text-center text-muted py-5"><i class="fas fa-exclamation-triangle fa-2x mb-2" style="color:#f59e0b"></i><div>Не удалось загрузить <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px">data/teams.json</code>: ${reason}.<br>Войдите в режим Админ и загрузите файл вручную.</div></div>`;
   }
   renderHeaderButtons();
+  renderYearSwitcher();
   attachFileInputListener();
 }
 
 renderHeaderButtons();
-renderYearSwitcher();
-attachFileInputListener();
+loadDefaultData();
