@@ -493,8 +493,8 @@ function renderHeaderButtons() {
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header">Импорт</h6></li>
     <li><a class="dropdown-item" href="#" onclick="openTextImportModal(); return false;"><i class="fas fa-file-lines me-2 text-info"></i>Из текста (Яндекс.Формы)</a></li>
-    <li><a class="dropdown-item disabled" href="#" onclick="showToast('Будет добавлено в следующей версии', 'info'); return false;"><i class="fas fa-file-code me-2 text-muted"></i>Из JSON <span class="badge bg-secondary ms-2">скоро</span></a></li>
-    <li><a class="dropdown-item disabled" href="#" onclick="showToast('Будет добавлено в следующей версии', 'info'); return false;"><i class="fas fa-file-excel me-2 text-muted"></i>Из Excel <span class="badge bg-secondary ms-2">скоро</span></a></li>
+    <li><a class="dropdown-item" href="#" onclick="importTeamsFromJSONPick(); return false;"><i class="fas fa-file-code me-2 text-success"></i>Из JSON (файл)</a></li>
+<li><a class="dropdown-item" href="#" onclick="importTeamsFromExcelPick(); return false;"><i class="fas fa-file-excel me-2 text-success"></i>Из Excel / CSV (файл)</a></li>
   </ul>
 </div>
 `
@@ -2420,6 +2420,295 @@ async function loadDefaultData() {
   renderHeaderButtons();
   renderYearSwitcher();
   attachFileInputListener();
+}
+
+// ===== ИМПОРТ ЗАЯВКИ ИЗ ТЕКСТА (письмо Яндекс.Форм) =====
+let pendingTextImport = null;
+
+function openTextImportModal() {
+  if (!isAdmin) {
+    showToast("Доступно только администратору", "error");
+    return;
+  }
+  document.getElementById("textImportInput").value = "";
+  document.getElementById("textImportPreview").innerHTML = "";
+  document.getElementById("textImportFooter").style.display = "none";
+  pendingTextImport = null;
+  new bootstrap.Modal(document.getElementById("textImportModal")).show();
+}
+
+function parseTextApplication() {
+  const raw = document.getElementById("textImportInput").value.trim();
+  if (!raw) {
+    showToast("Вставьте текст письма", "error");
+    return;
+  }
+
+  const footerIdx = raw.indexOf("Это письмо содержит ответы");
+  const body = (footerIdx >= 0 ? raw.substring(0, footerIdx) : raw).trim();
+
+  let orgFromTitle = "",
+    created = "",
+    id = "";
+  const titleMatch = body.match(/Заявка\s+на\s+\S+\s+от\s+(.+)/i);
+  if (titleMatch) orgFromTitle = titleMatch[1].trim();
+  const numMatch = body.match(/Заявка\s+№(\d+)\s+от\s+(\d{2}\.\d{2}\.\d{4})/);
+  if (numMatch) {
+    id = numMatch[1];
+    created = numMatch[2];
+  }
+
+  const fields = {};
+  const fieldRe = /^([A-Za-zА-Яа-яЁё0-9\s\/\.\-\(\)]+?):\s*$/gm;
+  let m;
+  const positions = [];
+  while ((m = fieldRe.exec(body)) !== null) {
+    positions.push({name: m[1].trim(), start: m.index + m[0].length});
+  }
+  positions.forEach((p, i) => {
+    const end = positions[i + 1] ? positions[i + 1].start - p.name.length - 2 : body.length;
+    let value = body.substring(p.start, end).trim();
+    value = value.replace(/\nУчастник команды\s*$/i, "").trim();
+    fields[p.name] = value;
+  });
+
+  const members = [];
+  const memBlocks = body.split(/(?:^|\n)Участник команды:?\s*\n/i);
+  memBlocks.slice(1).forEach((block) => {
+    const f = {};
+    block.split("\n").forEach((line) => {
+      const dash = line.indexOf(" - ");
+      if (dash < 0) return;
+      const k = line
+        .substring(0, dash)
+        .trim()
+        .replace(/^Ф\.И\.О\.?/, "Ф.И.О.");
+      const v = line.substring(dash + 3).trim();
+      f[k] = v;
+    });
+    if (f["Ф.И.О."]) {
+      members.push({
+        fio: f["Ф.И.О."] || "",
+        birth: f["Дата рождения"] || "",
+        passport: f["Паспорт/Свидетельство о рождении"] || "",
+        isStudent: (f["Студент"] || "Нет").trim(),
+        order: f["Приказ о зачислении (для студентов)"] || "",
+      });
+    }
+  });
+
+  const photosRaw = fields["Фото аппарата"] || "";
+  const photos = photosRaw
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter((s) => /^https?:\/\//i.test(s));
+
+  pendingTextImport = {
+    id: id || "",
+    created: created || new Date().toLocaleDateString("ru-RU"),
+    year: currentYear,
+    organization: fields["Организация"] || orgFromTitle,
+    shortName: "",
+    city: fields["Город (населённый пункт)"] || "",
+    region: fields["Республика/край/область"] || "",
+    postalCode: fields["Почтовый индекс"] || "",
+    address: fields["Адрес"] || "",
+    phone: fields["Телефон/факс"] || "",
+    email: fields["Email"] || "",
+    orgLeader: fields["ФИО руководителя организации"] || "",
+    apparatusClass: fields["Класс аппарата"] || "",
+    apparatusName: (fields["Краткое описание аппарата"] || "").split("\n")[0].trim(),
+    description: fields["Краткое описание аппарата"] || "",
+    photos,
+    teamLeader: fields["ФИО руководителя команды"] || "",
+    teamLeaderPhone: fields["Контактный телефон руководителя команды"] || "",
+    members,
+  };
+  renderTextImportPreview();
+  document.getElementById("textImportFooter").style.display = "flex";
+}
+
+function renderTextImportPreview() {
+  const t = pendingTextImport;
+  if (!t) return;
+  const rows = [
+    ["Организация", t.organization],
+    ["Город", t.city],
+    ["Регион", t.region],
+    ["Индекс", t.postalCode],
+    ["Адрес", t.address],
+    ["Телефон", t.phone],
+    ["Email", t.email],
+    ["Руководитель организации", t.orgLeader],
+    ["Класс аппарата", t.apparatusClass],
+    ["Название аппарата", t.apparatusName],
+    ["Руководитель команды", t.teamLeader],
+    ["Телефон руководителя", t.teamLeaderPhone],
+    ["Фото", t.photos.length ? t.photos.join(", ") : "—"],
+    ["Участников", String(t.members.length)],
+  ];
+  let html = `<div class="alert alert-info small mb-2"><i class="fas fa-check-circle me-1"></i>Заявка разобрана. Проверьте поля и нажмите «Добавить в базу».</div>`;
+  html += `<div class="table-responsive"><table class="table table-sm align-middle"><tbody>`;
+  rows.forEach(([k, v]) => {
+    html += `<tr><th style="width:220px;color:#475569">${k}</th><td>${v || '<span class="text-muted">—</span>'}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  if (t.members.length > 0) {
+    html += `<h6 class="mt-3">Участники (${t.members.length}):</h6><ul class="list-group list-group-flush small">`;
+    t.members.forEach((m) => {
+      html += `<li class="list-group-item px-2 py-1"><strong>${m.fio}</strong> · ${m.birth || "—"}${m.isStudent === "Да" ? ' · <span class="badge bg-success">студент</span>' : ""}</li>`;
+    });
+    html += `</ul>`;
+  }
+  document.getElementById("textImportPreview").innerHTML = html;
+}
+
+function applyTextImport() {
+  if (!pendingTextImport) return;
+  const t = pendingTextImport;
+  const org = findOrCreateOrg(t.organization, t.shortName, t.city);
+  const finalId =
+    t.id && !teamsData.some((x) => x.id === t.id)
+      ? t.id
+      : generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
+  const team = {...t, orgId: org.id, id: finalId};
+  delete team.organization;
+  teamsData.push(team);
+  saveData();
+  bootstrap.Modal.getInstance(document.getElementById("textImportModal")).hide();
+  showTeamsView();
+  showToast(`Команда «${org.shortName || org.fullName}» добавлена в ${t.year} год (ID: ${finalId})`, "success");
+  pendingTextImport = null;
+}
+
+// ===== ИМПОРТ КОМАНД ИЗ ФАЙЛОВ (.txt / JSON / Excel) =====
+function loadTextFileIntoModal(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById("textImportInput").value = e.target.result;
+    parseTextApplication();
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+function pickFile(accept, onFile) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = accept;
+  input.style.display = "none";
+  input.addEventListener("change", () => {
+    const f = input.files[0];
+    input.remove();
+    if (f) onFile(f);
+  });
+  document.body.appendChild(input);
+  input.click();
+}
+
+function transformObjectRows(rows) {
+  return rows
+    .map((obj) => {
+      const members = [];
+      for (let i = 1; i <= 10; i++) {
+        const fio = obj[`Ф.И.О. [${i}]`];
+        if (fio)
+          members.push({
+            fio: String(fio).trim(),
+            birth: obj[`Дата рождения [${i}]`] || "",
+            passport: obj[`Паспорт/Свидетельство о рождении [${i}]`] || "",
+            isStudent: obj[`Студент [${i}]`] || "Нет",
+            order: obj[`Приказ о зачислении (для студентов) [${i}]`] || "",
+          });
+      }
+      return {
+        id: String(obj["ID"] || ""),
+        created: obj["Время создания"] ? String(obj["Время создания"]).trim().split(" ")[0] : "",
+        organization: obj["Организация"] || "",
+        city: obj["Город (населённый пункт)"] || "",
+        region: obj["Республика/край/область"] || "",
+        postalCode: obj["Почтовый индекс"] || "",
+        address: obj["Адрес"] || "",
+        phone: obj["Телефон/факс"] || "",
+        email: obj["Email"] || "",
+        orgLeader: obj["ФИО руководителя организации"] || "",
+        apparatusClass: obj["Класс аппарата"] || "",
+        description: obj["Краткое описание аппарата"] || "",
+        photos: parsePhotosField(obj["Фото аппарата"]),
+        teamLeader: obj["ФИО руководителя команды"] || "",
+        teamLeaderPhone: obj["Контактный телефон руководителя команды"] || "",
+        members,
+      };
+    })
+    .filter((t) => t.organization);
+}
+
+function appendTeamsFromData(rawData, label) {
+  let list = null;
+  if (Array.isArray(rawData)) list = rawData;
+  else if (rawData && Array.isArray(rawData.teams)) list = rawData.teams;
+  else if (rawData && (rawData.organization || rawData.orgId)) list = [rawData];
+  else throw new Error("ожидалась команда, массив команд или объект с полем teams");
+  if (list.length && Array.isArray(list[0])) list = transformYandexFormsData(list);
+  else if (list.length && typeof list[0] === "object" && ("Организация" in list[0] || "Ф.И.О. [1]" in list[0]))
+    list = transformObjectRows(list);
+  const incoming = normalizeImportedTeams(list, currentYear);
+  let added = 0;
+  incoming.forEach((t) => {
+    if (!teamsData.some((x) => x.id === t.id)) {
+      teamsData.push(t);
+      added++;
+    }
+  });
+  saveData();
+  showTeamsView();
+  showToast(
+    `Добавлено команд из ${label}: ${added} (год ${currentYear}). Пропущено: ${incoming.length - added}.`,
+    "success",
+  );
+}
+
+function importTeamsFromJSONPick() {
+  pickFile(".json,application/json", (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        appendTeamsFromData(JSON.parse(e.target.result), "JSON");
+      } catch (err) {
+        showToast("Ошибка чтения JSON: " + err.message, "error");
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+function importTeamsFromExcelPick() {
+  if (typeof XLSX === "undefined") {
+    showToast(
+      "Библиотека Excel не подключена: положите xlsx.full.min.js в lib/ и добавьте script в index.html",
+      "error",
+    );
+    return;
+  }
+  pickFile(".xlsx,.xls,.csv", (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type: "array"});
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ""});
+        if (!rows.length) {
+          showToast("Файл пуст или заголовки не распознаны", "error");
+          return;
+        }
+        appendTeamsFromData(rows, "Excel");
+      } catch (err) {
+        showToast("Ошибка чтения Excel: " + err.message, "error");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
 }
 
 renderHeaderButtons();

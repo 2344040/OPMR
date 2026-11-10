@@ -398,9 +398,62 @@
         </div>
       </div>
     </div>
+
+    <!-- Модалка импорта заявки из текста -->
+    <div class="modal fade" id="textImportModal" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="fas fa-file-import me-2"></i>Импорт заявки из текста</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label fw-bold"
+                >Вставьте текст письма из Яндекс.Форм целиком (или загрузите файл .txt):</label
+              >
+              <textarea
+                class="form-control font-monospace"
+                id="textImportInput"
+                rows="14"
+                style="font-size: 0.85rem"
+                placeholder="Заявка на ОПМР-2026 от ..."></textarea>
+            </div>
+            <div class="d-flex gap-2 mb-3">
+              <label class="btn btn-outline-primary mb-0"
+                ><i class="fas fa-upload me-1"></i>Загрузить файл .txt<input
+                  type="file"
+                  accept=".txt,.text,text/plain"
+                  class="d-none"
+                  onchange="loadTextFileIntoModal(event)"
+              /></label>
+              <button class="btn btn-primary" onclick="parseTextApplication()">
+                <i class="fas fa-magnifying-glass me-1"></i>Разобрать
+              </button>
+              <button
+                class="btn btn-outline-secondary"
+                onclick="
+                  document.getElementById('textImportInput').value = '';
+                  document.getElementById('textImportPreview').innerHTML = '';
+                  document.getElementById('textImportFooter').style.display = 'none';
+                ">
+                <i class="fas fa-eraser me-1"></i>Очистить
+              </button>
+            </div>
+            <div id="textImportPreview"></div>
+          </div>
+          <div class="modal-footer" id="textImportFooter" style="display: none">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button class="btn btn-success" onclick="applyTextImport()">
+              <i class="fas fa-plus me-1"></i>Добавить в базу
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> -->
     <script src="lib/bootstrap.bundle.min.js"></script>
     <!-- * версия -->
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=8"></script>
   </body>
 </html>
