@@ -1028,7 +1028,7 @@ body {
   --tb-active-text: #0f172a; */
 
   /* Палитра №2 «Мягкий синий» — чтобы включить, раскомментируйте блок ниже */
-    /* --tb-bg: #f5f8ff;
+  /* --tb-bg: #f5f8ff;
     --tb-border: #dbe6fb;
     --tb-hover: #eaf1ff;
     --tb-text: #51607a;
@@ -1038,14 +1038,13 @@ body {
     */
 
   /* Палитра №3 «Графит» — чтобы включить, раскомментируйте блок ниже */
-    --tb-bg: #f1f5f9;
-    --tb-border: #e2e8f0;
-    --tb-hover: #e2e8e0;
-    --tb-text: #64748b;
-    --tb-active-bg: #334155;
-    --tb-active-border: #334155;
-    --tb-active-text: #ffffff;
-   
+  --tb-bg: #f1f5f9;
+  --tb-border: #e2e8f0;
+  --tb-hover: #e2e8e0;
+  --tb-text: #64748b;
+  --tb-active-bg: #334155;
+  --tb-active-border: #334155;
+  --tb-active-text: #ffffff;
 }
 
 .view-switcher {
@@ -1411,4 +1410,58 @@ body {
 .org-manager-item .org-info .meta {
   font-size: 0.85rem;
   color: #64748b;
+}
+
+/* ===== КНОПКА ГОДА В ШАПКЕ ===== */
+#yearSwitcher {
+  display: none !important;
+}
+
+.year-dropdown-btn {
+  border: 1px solid var(--tb-border) !important;
+  border-radius: 10px !important;
+  background: var(--tb-bg) !important;
+  color: var(--tb-active-text) !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  padding: 0.45rem 1rem !important;
+  box-shadow: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.year-dropdown-btn:hover {
+  background: var(--tb-hover) !important;
+}
+
+.year-dropdown .dropdown-menu {
+  border: 1px solid var(--tb-border);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  padding: 6px;
+  min-width: 230px;
+}
+.year-dropdown .dropdown-header {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--tb-text);
+  font-weight: 700;
+  padding: 0.4rem 0.8rem 0.2rem;
+}
+.year-dropdown .dropdown-item {
+  border-radius: 8px;
+  font-weight: 500;
+  color: var(--tb-text);
+  padding: 0.45rem 0.8rem;
+}
+.year-dropdown .dropdown-item:hover {
+  background: var(--tb-hover);
+  color: var(--tb-active-text);
+}
+.year-dropdown .dropdown-item.active,
+.year-dropdown .dropdown-item:active {
+  background: var(--tb-active-bg);
+  color: var(--tb-active-text);
+  box-shadow: inset 0 0 0 1px var(--tb-active-border);
 }

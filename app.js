@@ -491,6 +491,7 @@ function renderHeaderButtons() {
       <button class="btn ${currentView === "teams" ? "btn-primary" : "btn-outline-primary"}" onclick="showTeamsView()" style="border-right:none;border-radius:8px 0 0 8px"><i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span></button>
       <button class="btn ${currentView === "competition" ? "btn-primary" : "btn-outline-primary"}" onclick="showCompetitionView()" style="border-radius:0 8px 8px 0"><i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span></button>
     </div>
+        <span id="yearDropdownContainer" class="ms-2"></span>
     <button class="btn btn-grouping-icon ${isGrouped ? "active" : ""}" onclick="toggleGrouping()" title="${isGrouped ? "Показать списком" : "Группировать по классам"}"><i class="fas fa-layer-group"></i></button>
     <button class="btn ${isAdmin ? "btn-dark" : "btn-outline-secondary"} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? "Выйти из режима администратора" : "Войти в режим администратора"}"><i class="fas fa-${isAdmin ? "user-shield" : "lock"}"></i><span class="btn-text ms-2">${isAdmin ? "Админ" : "Admin"}</span></button>`;
   renderEditPageAdminButtons();
@@ -509,19 +510,26 @@ async function commitToGitHubManual() {
 }
 
 function renderYearSwitcher() {
-  const container = document.getElementById("yearSwitcher");
+  const container = document.getElementById("yearDropdownContainer");
+  if (!container) return;
   const isMaster = currentView === "master";
   const years = [2026, 2025, 2024];
-  container.innerHTML = `<div class="toolbar-row">
-    <span class="toolbar-label">Год</span>
-    <select class="form-select year-select" onchange="switchYear(parseInt(this.value, 10))" ${isMaster ? "disabled" : ""}>
-      ${years.map((y) => `<option value="${y}" ${currentYear === y ? "selected" : ""}>${y}</option>`).join("")}
-    </select>
-    <button type="button" class="toolbar-master ${isMaster ? "active" : ""}" onclick="showMasterTable()">
-      <i class="fas fa-table me-1"></i>Сводная таблица
-    </button>
+  const label = isMaster
+    ? `<i class="fas fa-table me-1"></i>Сводная`
+    : `<i class="fas fa-calendar-day me-1"></i>${currentYear}`;
+
+  let items = `<h6 class="dropdown-header">Год соревнований</h6>`;
+  years.forEach((y) => {
+    const active = !isMaster && currentYear === y;
+    items += `<li><a class="dropdown-item d-flex align-items-center justify-content-between ${active ? "active" : ""}" href="#" onclick="switchYear(${y}); return false;">${y}${active ? '<i class="fas fa-check"></i>' : ""}</a></li>`;
+  });
+  items += `<li><hr class="dropdown-divider"></li>`;
+  items += `<li><a class="dropdown-item d-flex align-items-center justify-content-between ${isMaster ? "active" : ""}" href="#" onclick="showMasterTable(); return false;"><span><i class="fas fa-table me-2"></i>Сводная таблица</span>${isMaster ? '<i class="fas fa-check"></i>' : ""}</a></li>`;
+
+  container.innerHTML = `<div class="dropdown year-dropdown">
+    <button class="btn year-dropdown-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">${label}</button>
+    <ul class="dropdown-menu dropdown-menu-end">${items}</ul>
   </div>`;
-  container.style.display = "block";
 }
 
 function switchYear(y) {
