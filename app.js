@@ -512,14 +512,16 @@ function renderYearSwitcher() {
   const container = document.getElementById("yearSwitcher");
   const isMaster = currentView === "master";
   const years = [2026, 2025, 2024];
-  let html = '<div class="d-flex gap-2 flex-wrap">';
-  years.forEach((y) => {
-    html += `<button class="btn ${currentYear === y && !isMaster ? "active" : ""}" onclick="switchYear(${y})">${y}</button>`;
-  });
-  html += `<button class="btn ${isMaster ? "active" : ""}" onclick="showMasterTable()"><i class="fas fa-table me-1"></i>Сводная</button>`;
-  html += "</div>";
-  container.innerHTML = html;
-  container.style.display = "flex";
+  container.innerHTML = `<div class="toolbar-row">
+    <span class="toolbar-label">Год</span>
+    <select class="form-select year-select" onchange="switchYear(parseInt(this.value, 10))" ${isMaster ? "disabled" : ""}>
+      ${years.map((y) => `<option value="${y}" ${currentYear === y ? "selected" : ""}>${y}</option>`).join("")}
+    </select>
+    <button type="button" class="toolbar-master ${isMaster ? "active" : ""}" onclick="showMasterTable()">
+      <i class="fas fa-table me-1"></i>Сводная таблица
+    </button>
+  </div>`;
+  container.style.display = "block";
 }
 
 function switchYear(y) {
@@ -2334,6 +2336,7 @@ async function loadDefaultData() {
   if (loadData()) {
     renderTeams(teamsData);
     renderHeaderButtons();
+    renderYearSwitcher();
     attachFileInputListener();
     return;
   }
@@ -2376,4 +2379,5 @@ async function loadDefaultData() {
 }
 
 renderHeaderButtons();
-loadDefaultData();
+renderYearSwitcher();
+attachFileInputListener();
