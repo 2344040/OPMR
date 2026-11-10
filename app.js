@@ -2712,31 +2712,66 @@ function importTeamsFromPDFPick() {
 
 function parsePDFOrganizationApplication(text) {
   try {
-    console.log("PDF текст (первые 1000 символов):", text.substring(0, 1000));
+    console.log("PDF текст (первые 1500 символов):", text.substring(0, 1500));
     
-    // Нормализация переносов
-    text = text.replace(/\r\n?/g, "\n");
+    // Нормализация
+    text = text.replace(/\r\n?/g, "\n").replace(/[ \t]+/g, " ").trim();
     
     // 1. Направление
     const directionMatch = text.match(/по\s+направлению\s+[_\s]*(БЭК|ТНПА|АНПА|АННА|BEK|TNPA|ANPA|ANNA)[_\s]*/i);
     const direction = directionMatch ? directionMatch[1].toUpperCase() : "";
     console.log("Направление:", direction);
     
-    // 2. Разбиение на блоки по вертикальным чертам
-    // Формат: | N\n|Название поля\n|Значение\n|
+    // 2. Разбиение по номерам полей 1-10
+    // Формат в тексте: "1 Название поля значение поля 2 Название поля..."
     const fields = {};
-    const fieldRegex = /\|\s*(\d{1,2})\s*\n\|([^|]+)\n\|([^|]+)\n\|/g;
-    let m;
-    while ((m = fieldRegex.exec(text)) !== null) {
-      const num = parseInt(m[1]);
-      const name = m[2].trim();
-      const value = m[3].trim();
-      fields[num] = {name, value};
-      console.log(`Поле ${num}: ${name} = ${value}`);
+    const fieldNames = {
+      1: "Республика/край/область",
+      2: "Город",
+      3: "Организация",
+      4: "ФИО руководителя организации",
+      5: "Почтовый индекс",
+      6: "Рабочий телефон",
+      7: "E-mail",
+      8: "ФИО руководителя команды",
+      9: "Контактные телефоны",
+      10: "Предлагаемый к соревнованиям аппарат",
+    };
+    
+    // Находим позиции номеров 1-10 в тексте
+    const positions = [];
+    for (let i = 1; i <= 10; i++) {
+      // Ищем " i " или "\n i " — номер поля, окружённый пробелами
+      const regex = new RegExp(`(?:^|\\s)${i}(?:\\s|$)`);
+      const match = text.match(regex);
+      if (match) {
+        positions.push({num: i, pos: match.index});
+      }
     }
     
+    console.log("Найденные позиции полей:", positions);
+    
+    // Извлекаем значения между номерами
+    positions.forEach((p, idx) => {
+      const start = p.pos + String(p.num).length;
+      const end = idx < positions.length - 1 ? positions[idx + 1].pos : text.indexOf("Список участников");
+      const block = text.substring(start, end > 0 ? end : text.length).trim();
+      
+      // Первое слово/фраза — название поля, остальное — значение
+      // Название поля обычно до 3-4 слов, затем идёт значение
+      const valueMatch = block.match(/^[A-Za-zА-Яа-яЁё\s\/\-()]+?\s{2,}(.+)$/);
+      if (valueMatch) {
+        fields[p.num] = valueMatch[1].trim();
+        console.log(`Поле ${p.num} (${fieldNames[p.num] || "?"}): ${fields[p.num]}`);
+      } else {
+        // Если не удалось разделить — берём всё как значение
+        fields[p.num] = block;
+        console.log(`Поле ${p.num} (всё как значение): ${block}`);
+      }
+    });
+    
     // 3. Маппинг
-    const getField = (num) => fields[num]?.value || "";
+    const getField = (num) => fields[num] || "";
     
     const region = getField(1);
     const city = getField(2);
@@ -2756,13 +2791,14 @@ function parsePDFOrganizationApplication(text) {
     const postalCode = postalCodeMatch ? postalCodeMatch[1] : "";
     const address = addressBlock.replace(/^\d{6}\s*,?\s*/, "").trim();
     
-    // 5. Участники — ищем таблицу после "Список участников"
+    // 5. Участники — ищем после "Список участников"
     const participants = [];
     const participantsStart = text.indexOf("Список участников");
     if (participantsStart > 0) {
       const participantsText = text.substring(participantsStart);
-      // Формат: | N\n|ФИО\n|Дата\n|Паспорт\n||
-      const rowRegex = /\|\s*(\d{1,2})\s*\n\|([^|]+)\n\|([^|]+)\n\|([^|]*)\n\|/g;
+      // Ищем строки: "1 ФИО дата рождения паспорт"
+      // Формат: номер, затем ФИО (3+ слова), затем дата (дд.мм.гггг), затем паспорт
+      const rowRegex = /(?:^|\s)(\d{1,2})\s+([А-Яа-яЁё]+\s+[А-Яа-яЁё]+\s+[А-Яа-яЁё]+)\s+(\d{2}\.\d{2}\.\d{4})\s+([^0-9]{5,100}?)(?=\s+(?:\d{1,2}\s+[А-Я]|Всего к|$))/gi;
       let rm;
       while ((rm = rowRegex.exec(participantsText)) !== null) {
         const num = parseInt(rm[1]);
@@ -2778,7 +2814,7 @@ function parsePDFOrganizationApplication(text) {
             fio,
             birth,
             passport,
-            order: "", // В PDF приказа нет, только паспорт
+            order: "",
             isStudent: "Нет",
           });
           console.log(`Участник ${num}: ${fio}, ${birth}, ${passport}`);
@@ -2811,9 +2847,12 @@ function parsePDFOrganizationApplication(text) {
       members: participants,
     };
     
+    // 7. Открываем модальное окно предпросмотра
+    const modal = new bootstrap.Modal(document.getElementById("textImportModal"));
+    modal.show();
     renderTextImportPreview();
     document.getElementById("textImportFooter").style.display = "flex";
-    showToast(`PDF разобран: ${participants.length} участников`, "success");
+    showToast(`PDF разобран: ${participants.length} участников. Проверьте поля.`, "success");
     
   } catch (err) {
     console.error("Ошибка парсинга PDF:", err);
