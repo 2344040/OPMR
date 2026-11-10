@@ -2711,37 +2711,52 @@ function importTeamsFromPDFPick() {
 }
 
 function parsePDFOrganizationApplication(text) {
-  console.log("PDF текст:", text.substring(0, 500)); // Отладка
+  console.log("PDF текст:", text.substring(0, 500));
 
-  // Очистка
-  text = text.replace(/\s+/g, " ").trim();
+  // Очистка: убираем лишние пробелы, но сохраняем переносы между смысловыми блоками
+  text = text
+    .replace(/[ \t]+/g, " ")
+    .replace(/\r\n?/g, "\n")
+    .trim();
 
-  // Направление
-  const directionMatch = text.match(/по\s+направлению\s+[_]*(БЭК|ТНПА|АНПА|АННА|BEK|TNPA|ANPA|ANNA)[_]*/i);
+  // 1. Направление
+  const directionMatch = text.match(/по\s+направлению\s+[_\s]*(БЭК|ТНПА|АНПА|АННА|BEK|TNPA|ANPA|ANNA)[_\s]*/i);
   const direction = directionMatch ? directionMatch[1].toUpperCase() : "";
   console.log("Направление:", direction);
 
-  // Простой поиск полей по ключевым словам
-  const findField = (keywords) => {
-    for (const kw of keywords) {
-      const regex = new RegExp(kw + "[^|]*\\|([^|]+)", "i");
-      const match = text.match(regex);
-      if (match) return match[1].trim();
-    }
-    return "";
-  };
+  // 2. Разбиение на блоки по номерам полей 1-10
+  // Формат в тексте: "\n| N\n|Название поля\n|Значение\n|" или "N Название поля Значение"
+  const fields = {};
 
-  const city = findField(["Город\\(населенный пункт\\)", "Город"]);
-  const organization = findField(["Организация"]);
-  const orgLeader = findField(["ФИО руководителя организации"]);
-  const addressBlock = findField(["Почтовый индекс, адрес", "Адрес"]);
-  const phone = findField(["Рабочий телефон/факс", "Телефон"]);
-  const email = findField(["E\\s*–\\s*mail", "Email"]).replace(/\s+/g, "");
-  const teamLeader = findField(["ФИО руководителя команды"]);
-  const teamLeaderPhone = findField(["Контактные телефоны руководителя команды", "Телефон руководителя"]);
-  const apparatus = findField(["Предлагаемый к соревнованиям аппарат", "аппарат"]);
+  // Ищем паттерн: номер поля, затем название, затем значение до следующего номера
+  const fieldPattern =
+    /(?:^|\n)\s*(\d{1,2})\s*\n?\s*([^0-9\n]{3,80}?)\s*\n?\s*([^0-9\n]{3,500}?)(?=\s*(?:\n\s*\d{1,2}\s*\n|\nСписок участников|$))/gi;
+  let m;
+  while ((m = fieldPattern.exec(text)) !== null) {
+    const num = parseInt(m[1]);
+    const name = m[2].trim();
+    const value = m[3].trim();
+    fields[num] = {name, value};
+  }
+
+  console.log("Найденные поля:", fields);
+
+  // 3. Маппинг номеров на наши поля
+  const getField = (num) => fields[num]?.value || "";
+
+  const region = getField(1);
+  const city = getField(2);
+  const organization = getField(3);
+  const orgLeader = getField(4);
+  const addressBlock = getField(5);
+  const phone = getField(6);
+  const email = getField(7).replace(/\s+/g, "");
+  const teamLeader = getField(8);
+  const teamLeaderPhone = getField(9);
+  const apparatus = getField(10);
 
   console.log("Поля:", {
+    region,
     city,
     organization,
     orgLeader,
@@ -2753,64 +2768,52 @@ function parsePDFOrganizationApplication(text) {
     apparatus,
   });
 
-  // Адрес и индекс
+  // 4. Адрес и индекс
   const postalCodeMatch = addressBlock.match(/^(\d{6})/);
   const postalCode = postalCodeMatch ? postalCodeMatch[1] : "";
   const address = addressBlock.replace(/^\d{6}\s*,?\s*/, "").trim();
 
-  // Регион и город
-  let region = "";
-  let cityName = city;
-  if (city.includes("г.") || city.includes("г ")) {
-    const cityParts = city.split(/г\.|г\s/);
-    if (cityParts.length > 1) {
-      region = "г. " + cityParts[1].trim();
-      cityName = cityParts[0].trim();
-    }
-  }
-
-  // Участники — ищем таблицу после "Список участников"
+  // 5. Участники — ищем блок "Список участников"
   const participants = [];
   const participantsStart = text.indexOf("Список участников");
   if (participantsStart > 0) {
     const participantsText = text.substring(participantsStart);
-    // Ищем строки с номерами и ФИО
-    const rows = participantsText.match(/\|\s*(\d+)\s*\|([^|]+)\|([^|]+)\|([^|]*)\|([^|]*)\|/g) || [];
-    console.log("Строки участников:", rows);
+    // Паттерн: номер строки, ФИО, дата рождения, паспорт, приказ
+    const rowPattern =
+      /(?:^|\n)\s*(\d{1,2})\s*\n?\s*([^\n]{5,80}?)\s*\n?\s*([^\n]{5,30}?)\s*\n?\s*([^\n]{5,100}?)\s*\n?\s*([^\n]{0,200}?)(?=\s*(?:\n\s*\d{1,2}\s*\n|\nВсего к соревнованиям|$))/gi;
+    let rm;
+    while ((rm = rowPattern.exec(participantsText)) !== null) {
+      const fio = rm[2].trim();
+      const birth = rm[3].trim();
+      const passport = rm[4].trim();
+      const order = rm[5]?.trim() || "";
 
-    rows.forEach((row) => {
-      const cols = row.split("|").filter((c) => c.trim());
-      if (cols.length >= 4) {
-        const fio = cols[1]?.trim() || "";
-        const birthDate = cols[2]?.trim() || "";
-        const passport = cols[3]?.trim() || "";
-        const order = cols[4]?.trim() || "";
+      // Пропускаем заголовок таблицы
+      if (fio.includes("Фамилия") || fio.includes("Отчество")) continue;
 
-        if (fio && !fio.includes("Фамилия")) {
-          // Пропускаем заголовок
-          participants.push({
-            fio,
-            birth: birthDate,
-            passport,
-            order,
-            isStudent: order ? "Да" : "Нет",
-          });
-        }
+      if (fio && birth) {
+        participants.push({
+          fio,
+          birth,
+          passport,
+          order,
+          isStudent: order ? "Да" : "Нет",
+        });
       }
-    });
+    }
   }
 
   console.log("Участники:", participants);
 
-  // Данные для предпросмотра
+  // 6. Данные для предпросмотра
   pendingTextImport = {
     id: "",
     created: new Date().toLocaleDateString("ru-RU"),
     year: currentYear,
     organization,
     shortName: "",
-    city: cityName || "",
-    region: region || "",
+    city,
+    region,
     postalCode,
     address,
     phone,
