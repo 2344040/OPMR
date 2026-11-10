@@ -1330,8 +1330,6 @@ function renderMasterTable() {
   container.innerHTML = html;
 }
 
-
-
 // ===== РУЧНОЕ ОБЪЕДИНЕНИЕ ОРГАНИЗАЦИЙ =====
 let mergeMode = false;
 let mergeSelectedIds = [];
@@ -2464,7 +2462,7 @@ function parseTextApplication() {
     .filter((s) => /^https?:\/\//i.test(s));
 
   pendingTextImport = {
-    id,
+    id: id || "",
     created: created || new Date().toLocaleDateString("ru-RU"),
     year: currentYear,
     organization: get("Организация") || orgFromTitle,
@@ -2513,7 +2511,7 @@ function renderTextImportPreview() {
   html += input("ФИО руководителя организации", "orgLeader", "col-12");
   html += input("Класс аппарата", "apparatusClass") + input("Название аппарата", "apparatusName");
   html += input("ФИО руководителя команды", "teamLeader") + input("Телефон руководителя", "teamLeaderPhone");
-  html += input("Дата заявки", "created") + input("ID заявки из письма", "id");
+  html += input("Дата заявки", "created") + input("Номер заявки", "id");
   html += `
       <div class="col-12">
         <label class="form-label small mb-1">Краткое описание аппарата</label>
@@ -2546,11 +2544,9 @@ function applyTextImport() {
   if (!pendingTextImport) return;
   const t = pendingTextImport;
   const org = findOrCreateOrg(t.organization, t.shortName, t.city);
-  const finalId =
-    t.id && !teamsData.some((x) => x.id === t.id)
-      ? t.id
-      : generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
-  const team = {...t, orgId: org.id, id: finalId};
+   const finalId = generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
+  const team = {...t, orgId: org.id, id: finalId, applicationNumber: t.id || ""};
+  delete team.id; // удаляем старое поле id, чтобы не конфликтовало с новым ID команды
   delete team.organization;
   teamsData.push(team);
   saveData();
