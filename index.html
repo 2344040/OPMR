@@ -451,11 +451,38 @@
         </div>
       </div>
     </div>
+
+    <!-- Модалка импорта заявки из PDF -->
+    <div class="modal fade" id="pdfImportModal" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="fas fa-file-pdf me-2 text-danger"></i>Импорт заявки из PDF</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-info small mb-3">
+              <i class="fas fa-info-circle me-1"></i>Данные извлечены из PDF-файла. Проверьте и при необходимости
+              отредактируйте поля перед добавлением в базу. Год: <strong id="pdfImportYear">2026</strong> (меняется
+              кнопкой года в шапке).
+            </div>
+            <div id="pdfImportPreview"></div>
+          </div>
+          <div class="modal-footer" id="pdfImportFooter">
+            <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button class="btn btn-success" onclick="applyPDFImport()">
+              <i class="fas fa-plus me-1"></i>Добавить в базу
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> -->
     <script src="lib/bootstrap.bundle.min.js"></script>
     <script src="lib/xlsx.full.min.js"></script>
     <script src="lib/pdf.min.js"></script>
     <!-- * версия -->
-    <script src="app.js?v=23"></script>
+    <script src="app.js?v=26"></script>
   </body>
 </html>
