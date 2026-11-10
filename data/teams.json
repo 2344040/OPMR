@@ -35,6 +35,34 @@
       "fullName": "ГБУ ДО Дом детского творчества г.Петродворец",
       "shortName": "ГБУ ДО ДДТ (Петродворец)",
       "city": ""
+    },
+    {
+      "id": "007",
+      "fullName": "Университет ИТМО",
+      "shortName": "ИТМО",
+      "city": "Санкт-Петербург"
+    }
+  ],
+  "apparatusClasses": [
+    {
+      "id": "bek",
+      "name": "БЭК",
+      "color": "badge-bek"
+    },
+    {
+      "id": "tnpa",
+      "name": "ТНПА",
+      "color": "badge-tnpa"
+    },
+    {
+      "id": "anpa",
+      "name": "АНПА",
+      "color": "badge-anpa"
+    },
+    {
+      "id": "anna",
+      "name": "АННА",
+      "color": "badge-anna"
     }
   ],
   "competitionSettings": {
@@ -145,46 +173,54 @@
               }
             ]
           }
-        ]
+        ],
+        "name": "АННА"
       }
     },
     "2025": {
       "bek": {
         "date": "28.11.2025",
         "color": "badge-bek",
-        "criteria": []
+        "criteria": [],
+        "name": "БЭК"
       },
       "tnpa": {
         "date": "28.11.2025",
         "color": "badge-tnpa",
-        "criteria": []
+        "criteria": [],
+        "name": "ТНПА"
       },
       "anpa": {
         "date": "29.11.2025",
         "color": "badge-anpa",
-        "criteria": []
+        "criteria": [],
+        "name": "АНПА"
       }
     },
     "2026": {
       "bek": {
         "date": "28.11.2026",
         "color": "badge-red",
-        "criteria": []
+        "criteria": [],
+        "name": "БЭК"
       },
       "tnpa": {
         "date": "28.11.2026",
         "color": "badge-tnpa",
-        "criteria": []
+        "criteria": [],
+        "name": "ТНПА"
       },
       "anpa": {
         "date": "29.11.2026",
         "color": "badge-anpa",
-        "criteria": []
+        "criteria": [],
+        "name": "АНПА"
       },
       "anna": {
         "date": "29.11.2026",
         "color": "badge-anna",
-        "criteria": []
+        "criteria": [],
+        "name": "АННА"
       }
     }
   },
@@ -582,6 +618,65 @@
       "shortName": "СПбГМТУ",
       "orgId": "001",
       "year": 2026
+    },
+    {
+      "id": "006-2024",
+      "created": "09.11.2026",
+      "orgId": "006",
+      "year": 2024,
+      "shortName": "ГБУ ДО ДДТ (Петродворец)",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "2586051111",
+      "created": "08.11.2026",
+      "year": 2026,
+      "shortName": "ИТМО",
+      "city": "Санкт-Петербург",
+      "region": "Ленинградская область",
+      "postalCode": "197198",
+      "address": "Санкт-Петербург, Кронверкский проспект, 49",
+      "phone": "+7 812 480-04-80",
+      "email": "advokatw25@gmail.com",
+      "orgLeader": "Васильев Владимир Николаевич",
+      "apparatusClass": "Автономный необитаемый подводный аппарат (АНПА)",
+      "apparatusName": "АНПА \"ГУППИ 2.0\"",
+      "description": "АНПА \"ГУППИ 2.0\"\nТип конструкции: торпедообразный автономный подводный аппарат.\n\nХарактеристики:\n- Габариты (Д × Ш × В): 890 × 121 × 176 мм\n- Масса: 4,0 кг\n- Глубина погружения: до 10 м\n- Время работы: 1,5 ч\n- Камера: 720p\n- Связь: Wi-Fi\n- ПО: Linux, ROS",
+      "photos": [
+        "https://forms.yandex.ru/cloud/files?path=%2F6456219%2F6af047a897a3774b8dc60d15_guppy.jpg"
+      ],
+      "teamLeader": "Одышев Артемий Сергеевич",
+      "teamLeaderPhone": "+ 7 913 855-81-04",
+      "members": [
+        {
+          "fio": "Одышев Артемий Сергеевич",
+          "birth": "2007-07-28",
+          "passport": "6921 980884",
+          "isStudent": "Да",
+          "order": "Приказ номер 3171-уч от 03.08.2026 о зачислении по программам бакалавриата на бюджетной основе без вступительных испытаний"
+        },
+        {
+          "fio": "Колпакова Дарья Сергеевна",
+          "birth": "2008-01-30",
+          "passport": "0521 946855",
+          "isStudent": "Да",
+          "order": "Приказ номер 3171-уч от 03.08.2026 о зачислении по программам бакалавриата на бюджетной основе без вступительных испытаний"
+        }
+      ],
+      "orgId": "007"
     }
   ]
 }
