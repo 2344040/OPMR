@@ -1307,6 +1307,94 @@ function renderMasterTable() {
 }
 
 // ===== РУЧНОЕ ОБЪЕДИНЕНИЕ ОРГАНИЗАЦИЙ =====
+
+function toggleMergeMode() {
+  mergeMode = !mergeMode;
+  mergeSelectedIds = [];
+  mergeEditor = null;
+  renderOrgManager();
+}
+
+function toggleMergeSelection(orgId) {
+  const i = mergeSelectedIds.indexOf(orgId);
+  if (i >= 0) mergeSelectedIds.splice(i, 1);
+  else mergeSelectedIds.push(orgId);
+  renderOrgManager();
+}
+
+function openMergeEditor() {
+  if (mergeSelectedIds.length < 2) {
+    showToast("Отметьте минимум две записи", "error");
+    return;
+  }
+  const orgs = mergeSelectedIds.map((id) => organizations.find((o) => o.id === id)).filter(Boolean);
+  const longest = orgs.reduce((a, b) => ((b.fullName || "").length > (a.fullName || "").length ? b : a));
+  const firstNonEmpty = (f) => {
+    for (const o of orgs) {
+      if (o[f]) return o[f];
+    }
+    return "";
+  };
+  mergeEditor = {
+    ids: mergeSelectedIds.slice(),
+    keepId: longest.id,
+    choices: {fullName: longest.fullName || "", shortName: firstNonEmpty("shortName"), city: firstNonEmpty("city")},
+  };
+  renderOrgManager();
+}
+
+function cancelMergeEditor() {
+  mergeEditor = null;
+  renderOrgManager();
+}
+
+function setMergeChoice(field, value) {
+  if (mergeEditor) mergeEditor.choices[field] = value;
+}
+
+function setMergeKeep(id) {
+  if (mergeEditor) {
+    mergeEditor.keepId = id;
+    renderOrgManager();
+  }
+}
+
+function applyMerge() {
+  if (!mergeEditor) return;
+  const kept = organizations.find((o) => o.id === mergeEditor.keepId);
+  if (!kept) {
+    showToast("Оставляемая запись не найдена", "error");
+    return;
+  }
+  if (!mergeEditor.choices.fullName || !mergeEditor.choices.fullName.trim()) {
+    showToast("Укажите полное название", "error");
+    return;
+  }
+  const removeIds = mergeEditor.ids.filter((id) => id !== mergeEditor.keepId);
+  const moved = removeIds.reduce((s, id) => s + teamsData.filter((t) => t.orgId === id).length, 0);
+  if (
+    !confirm(
+      `Объединить записи?\n\nОстанется: ${mergeEditor.keepId} — «${mergeEditor.choices.fullName}»\nБудут удалены: ${removeIds.join(", ") || "—"}\nКоманд будет перенесено: ${moved}\n\nПродолжить?`,
+    )
+  )
+    return;
+  kept.fullName = mergeEditor.choices.fullName.trim();
+  kept.shortName = (mergeEditor.choices.shortName || "").trim();
+  kept.city = (mergeEditor.choices.city || "").trim();
+  teamsData.forEach((t) => {
+    if (removeIds.includes(t.orgId)) t.orgId = kept.id;
+  });
+  organizations = organizations.filter((o) => !removeIds.includes(o.id));
+  mergeEditor = null;
+  mergeMode = false;
+  mergeSelectedIds = [];
+  saveData();
+  renderOrgManager();
+  updateOrgDatalist();
+  showToast(`Записи объединены. Команд перенесено: ${moved}.`, "success");
+}
+
+// ===== РУЧНОЕ ОБЪЕДИНЕНИЕ ОРГАНИЗАЦИЙ =====
 let mergeMode = false;
 let mergeSelectedIds = [];
 let mergeEditor = null;
@@ -1326,14 +1414,22 @@ function toggleMergeSelection(orgId) {
 }
 
 function openMergeEditor() {
-  if (mergeSelectedIds.length < 2) { showToast("Отметьте минимум две записи", "error"); return; }
+  if (mergeSelectedIds.length < 2) {
+    showToast("Отметьте минимум две записи", "error");
+    return;
+  }
   const orgs = mergeSelectedIds.map((id) => organizations.find((o) => o.id === id)).filter(Boolean);
   const longest = orgs.reduce((a, b) => ((b.fullName || "").length > (a.fullName || "").length ? b : a));
-  const firstNonEmpty = (f) => { for (const o of orgs) { if (o[f]) return o[f]; } return ""; };
+  const firstNonEmpty = (f) => {
+    for (const o of orgs) {
+      if (o[f]) return o[f];
+    }
+    return "";
+  };
   mergeEditor = {
     ids: mergeSelectedIds.slice(),
     keepId: longest.id,
-    choices: { fullName: longest.fullName || "", shortName: firstNonEmpty("shortName"), city: firstNonEmpty("city") },
+    choices: {fullName: longest.fullName || "", shortName: firstNonEmpty("shortName"), city: firstNonEmpty("city")},
   };
   renderOrgManager();
 }
@@ -1348,25 +1444,124 @@ function setMergeChoice(field, value) {
 }
 
 function setMergeKeep(id) {
-  if (mergeEditor) { mergeEditor.keepId = id; renderOrgManager(); }
+  if (mergeEditor) {
+    mergeEditor.keepId = id;
+    renderOrgManager();
+  }
 }
 
 function applyMerge() {
   if (!mergeEditor) return;
   const kept = organizations.find((o) => o.id === mergeEditor.keepId);
-  if (!kept) { showToast("Оставляемая запись не найдена", "error"); return; }
-  if (!mergeEditor.choices.fullName || !mergeEditor.choices.fullName.trim()) { showToast("Укажите полное название", "error"); return; }
+  if (!kept) {
+    showToast("Оставляемая запись не найдена", "error");
+    return;
+  }
+  if (!mergeEditor.choices.fullName || !mergeEditor.choices.fullName.trim()) {
+    showToast("Укажите полное название", "error");
+    return;
+  }
   const removeIds = mergeEditor.ids.filter((id) => id !== mergeEditor.keepId);
   const moved = removeIds.reduce((s, id) => s + teamsData.filter((t) => t.orgId === id).length, 0);
-  if (!confirm(`Объединить записи?\n\nОстанется: ${mergeEditor.keepId} — «${mergeEditor.choices.fullName}»\nБудут удалены: ${removeIds.join(", ") || "—"}\nКоманд будет перенесено: ${moved}\n\nПродолжить?`)) return;
+  if (
+    !confirm(
+      `Объединить записи?\n\nОстанется: ${mergeEditor.keepId} — «${mergeEditor.choices.fullName}»\nБудут удалены: ${removeIds.join(", ") || "—"}\nКоманд будет перенесено: ${moved}\n\nПродолжить?`,
+    )
+  )
+    return;
   kept.fullName = mergeEditor.choices.fullName.trim();
   kept.shortName = (mergeEditor.choices.shortName || "").trim();
   kept.city = (mergeEditor.choices.city || "").trim();
-  teamsData.forEach((t) => { if (removeIds.includes(t.orgId)) t.orgId = kept.id; });
+  teamsData.forEach((t) => {
+    if (removeIds.includes(t.orgId)) t.orgId = kept.id;
+  });
   organizations = organizations.filter((o) => !removeIds.includes(o.id));
-  mergeEditor = null; mergeMode = false; mergeSelectedIds = [];
-  saveData(); renderOrgManager(); updateOrgDatalist();
+  mergeEditor = null;
+  mergeMode = false;
+  mergeSelectedIds = [];
+  saveData();
+  renderOrgManager();
+  updateOrgDatalist();
   showToast(`Записи объединены. Команд перенесено: ${moved}.`, "success");
+}
+
+function renderOrgManager() {
+  const container = document.getElementById("orgManagerContent");
+
+  // ----- Режим редактора объединения -----
+  if (mergeEditor) {
+    const orgs = mergeEditor.ids.map((id) => organizations.find((o) => o.id === id)).filter(Boolean);
+    let html = `<div class="detail-section"><h4 class="detail-section-title">Объединение записей организаций</h4>
+      <p class="text-muted small">Выберите, какие значения сохранить в каждом поле. Запись с выбранным ID останется, остальные будут удалены, а их команды привязаны к оставленной.</p>`;
+
+    html += `<h6 class="mb-2">Оставить ID записи:</h6><div class="mb-3">`;
+    orgs.forEach((o) => {
+      const cnt = teamsData.filter((t) => t.orgId === o.id).length;
+      html += `<div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="mergeKeep" id="keep_${o.id}" ${mergeEditor.keepId === o.id ? "checked" : ""} onchange="setMergeKeep('${o.id}')">
+        <label class="form-check-label" for="keep_${o.id}"><code>${o.id}</code> (команд: ${cnt})</label>
+      </div>`;
+    });
+    html += `</div>`;
+
+    const fields = [
+      {key: "fullName", label: "Полное название", required: true},
+      {key: "shortName", label: "Краткое название", required: false},
+      {key: "city", label: "Город", required: false},
+    ];
+    fields.forEach((f) => {
+      const values = [];
+      orgs.forEach((o) => {
+        const v = o[f.key] || "";
+        if (!values.includes(v)) values.push(v);
+      });
+      if (!f.required && !values.includes("")) values.push("");
+      html += `<div class="mb-3"><h6 class="mb-2">${f.label}:</h6>`;
+      values.forEach((v, i) => {
+        html += `<div class="form-check">
+          <input class="form-check-input" type="radio" name="merge_${f.key}" id="mf_${f.key}_${i}" ${mergeEditor.choices[f.key] === v ? "checked" : ""} onchange="setMergeChoice('${f.key}', this.value)" value="${v.replace(/"/g, "&quot;")}">
+          <label class="form-check-label" for="mf_${f.key}_${i}">${v ? v : "<em class='text-muted'>(не указано)</em>"}</label>
+        </div>`;
+      });
+      html += `</div>`;
+    });
+
+    const removeIds = mergeEditor.ids.filter((id) => id !== mergeEditor.keepId);
+    const movedPreview = removeIds.reduce((s, id) => s + teamsData.filter((t) => t.orgId === id).length, 0);
+    html += `<div class="alert alert-warning small"><i class="fas fa-exclamation-triangle me-2"></i>Будет удалено записей: <strong>${removeIds.length}</strong> (${removeIds.map((id) => `<code>${id}</code>`).join(", ") || "—"}). Команд будет привязано к оставленной записи: <strong>${movedPreview}</strong>.</div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" onclick="applyMerge()"><i class="fas fa-code-merge me-2"></i>Объединить</button>
+        <button class="btn btn-outline-secondary" onclick="cancelMergeEditor()">Отмена</button>
+      </div></div>`;
+    container.innerHTML = html;
+    return;
+  }
+
+  // ----- Обычный список -----
+  let html =
+    '<div class="detail-section"><h4 class="detail-section-title">Справочник организаций</h4><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><p class="text-muted mb-0">Всего организаций: ' +
+    organizations.length +
+    '</p><div class="d-flex gap-2"><button class="btn btn-outline-warning btn-sm" onclick="mergeDuplicateOrganizations()"><i class="fas fa-wand-magic-sparkles me-1"></i>Убрать дубликаты (авто)</button><button class="btn btn-outline-secondary btn-sm" onclick="toggleMergeMode()"><i class="fas fa-code-merge me-1"></i>' +
+    (mergeMode ? "Отменить объединение" : "Объединить записи…") +
+    "</button></div></div>";
+
+  if (mergeMode) {
+    html += `<div class="alert alert-info py-2 small"><i class="fas fa-info-circle me-2"></i>Отметьте галочками записи, которые нужно объединить.${mergeSelectedIds.length >= 2 ? ` <button class="btn btn-primary btn-sm ms-2" onclick="openMergeEditor()">Объединить выбранные (${mergeSelectedIds.length})</button>` : ""}</div>`;
+  }
+
+  organizations
+    .slice()
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .forEach((org) => {
+      const teamCount = teamsData.filter((t) => t.orgId === org.id).length;
+      const checked = mergeSelectedIds.includes(org.id);
+      const checkbox = mergeMode
+        ? `<input class="form-check-input me-2" type="checkbox" style="min-width:20px" ${checked ? "checked" : ""} onchange="toggleMergeSelection('${org.id}')">`
+        : "";
+      html += `<div class="org-manager-item" ${checked ? 'style="border-color:#0d6efd;background:#f8f9ff"' : ""}><span class="org-id">${org.id}</span>${checkbox}<div class="org-info"><div class="full-name">${org.fullName}</div><div class="meta">${org.shortName || "—"} | ${org.city || "—"} | Команд: ${teamCount}</div></div><button class="btn btn-outline-danger btn-sm" onclick="deleteOrganization('${org.id}')"><i class="fas fa-trash"></i></button></div>`;
+    });
+  html += "</div>";
+  container.innerHTML = html;
 }
 
 function addOrganization() {
