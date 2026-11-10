@@ -495,6 +495,7 @@ function renderHeaderButtons() {
     <li><a class="dropdown-item" href="#" onclick="openTextImportModal(); return false;"><i class="fas fa-file-lines me-2 text-info"></i>Из текста (Яндекс.Формы)</a></li>
     <li><a class="dropdown-item" href="#" onclick="importTeamsFromJSONPick(); return false;"><i class="fas fa-file-code me-2 text-success"></i>Из JSON (файл)</a></li>
 <li><a class="dropdown-item" href="#" onclick="importTeamsFromExcelPick(); return false;"><i class="fas fa-file-excel me-2 text-success"></i>Из Excel / CSV (файл)</a></li>
+<li><a class="dropdown-item" href="#" onclick="importTeamsFromPDFPick(); return false;"><i class="fas fa-file-pdf me-2 text-danger"></i>Из PDF (файл)</a></li>
   </ul>
 </div>
 `
@@ -2544,7 +2545,7 @@ function applyTextImport() {
   if (!pendingTextImport) return;
   const t = pendingTextImport;
   const org = findOrCreateOrg(t.organization, t.shortName, t.city);
-   const finalId = generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
+  const finalId = generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
   const team = {...t, orgId: org.id, id: finalId, applicationNumber: t.id || ""};
   delete team.id; // удаляем старое поле id, чтобы не конфликтовало с новым ID команды
   delete team.organization;
@@ -2684,6 +2685,124 @@ function importTeamsFromExcelPick() {
     };
     reader.readAsArrayBuffer(file);
   });
+}
+
+function importTeamsFromPDFPick() {
+  pickFile(".pdf,application/pdf", async (file) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+      let fullText = "";
+      
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(" ");
+        fullText += pageText + "\n";
+      }
+      
+      parsePDFOrganizationApplication(fullText);
+    } catch (err) {
+      showToast("Ошибка чтения PDF: " + err.message, "error");
+      console.error(err);
+    }
+  });
+}
+
+function parsePDFOrganizationApplication(text) {
+  // Очистка текста от лишних пробелов и переносов
+  text = text.replace(/\s+/g, " ").trim();
+  
+  // Извлечение направления (БЭК, ТНПА, АНПА, АННА)
+  const directionMatch = text.match(/по\s+направлению\s+[_]*(БЭК|ТНПА|АНПА|АННА|BEK|TNPA|ANPA|ANNA)[_]*/i);
+  const direction = directionMatch ? directionMatch[1].toUpperCase() : "";
+  
+  // Извлечение полей по номерам
+  const getField = (num) => {
+    const regex = new RegExp(`\\|\\s*${num}\\s*\\|[^|]+\\|([^|]+)\\|`, "i");
+    const match = text.match(regex);
+    return match ? match[1].trim() : "";
+  };
+  
+  const city = getField(2);
+  const organization = getField(3);
+  const orgLeader = getField(4);
+  const addressBlock = getField(5);
+  const phone = getField(6);
+  const email = getField(7).replace(/\s+/g, ""); // Убираем пробелы из email
+  const teamLeader = getField(8);
+  const teamLeaderPhone = getField(9);
+  const apparatus = getField(10);
+  
+  // Разбор адреса и индекса
+  const postalCodeMatch = addressBlock.match(/^(\d{6})/);
+  const postalCode = postalCodeMatch ? postalCodeMatch[1] : "";
+  const address = addressBlock.replace(/^\d{6}\s*,?\s*/, "").trim();
+  
+  // Разбор региона и города
+  let region = "";
+  let cityName = city;
+  if (city.includes("г.") || city.includes("г ")) {
+    const cityParts = city.split(/г\.|г\s/);
+    if (cityParts.length > 1) {
+      region = "г. " + cityParts[1].trim();
+      cityName = cityParts[0].trim();
+    }
+  }
+  
+  // Извлечение списка участников
+  const participantsSection = text.match(/Список\s+участников[\s\S]+?Всего\s+к\s+соревнованиям\s+допущено/i);
+  const participantsText = participantsSection ? participantsSection[0] : "";
+  
+  const participants = [];
+  const participantRows = participantsText.match(/\|\s*\d+\s*\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]*)\|/g) || [];
+  
+  participantRows.forEach((row) => {
+    const cols = row.split("|").filter(c => c.trim());
+    if (cols.length >= 4) {
+      const fio = cols[1]?.trim() || "";
+      const birthDate = cols[2]?.trim() || "";
+      const passport = cols[3]?.trim() || "";
+      const order = cols[4]?.trim() || "";
+      
+      if (fio) {
+        participants.push({
+          fio,
+          birth: birthDate,
+          passport,
+          order,
+          isStudent: order ? "Да" : "Нет",
+        });
+      }
+    }
+  });
+  
+  // Подготовка данных для предпросмотра
+  pendingTextImport = {
+    id: "", // Номер заявки будет сгенерирован при сохранении
+    created: new Date().toLocaleDateString("ru-RU"),
+    year: currentYear,
+    organization,
+    shortName: "",
+    city: cityName || "",
+    region: region || "",
+    postalCode,
+    address,
+    phone,
+    email,
+    orgLeader,
+    apparatusClass: direction,
+    apparatusName: apparatus.split("\n")[0].trim(),
+    description: apparatus,
+    photos: [],
+    teamLeader,
+    teamLeaderPhone,
+    members: participants,
+  };
+  
+  renderTextImportPreview();
+  document.getElementById("textImportFooter").style.display = "flex";
+  showToast(`PDF разобран: ${participants.length} участников`, "success");
 }
 
 renderHeaderButtons();
