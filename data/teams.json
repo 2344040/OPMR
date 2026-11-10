@@ -59,6 +59,12 @@
       "fullName": "ВУЦ СПБГМТУ",
       "shortName": "ВУЦ СПбГМТУ",
       "city": "Санкт-Петербург"
+    },
+    {
+      "id": "011",
+      "fullName": "Филиал САФУ в г.Северодвинске",
+      "shortName": "САФУ",
+      "city": "Северодвинск"
     }
   ],
   "apparatusClasses": [
@@ -812,6 +818,27 @@
           "order": ""
         }
       ]
+    },
+    {
+      "id": "011-2026-anpa",
+      "created": "10.11.2026",
+      "orgId": "011",
+      "year": 2026,
+      "shortName": "САФУ",
+      "city": "Северодвинск",
+      "region": "Архангельская область",
+      "postalCode": "164500",
+      "address": "Архангельская область, г. Северодвинск, ул. Капитана Воронина, д. 6",
+      "phone": "+7 8184 53-95-70",
+      "email": "sev.filial@narfu.ru",
+      "orgLeader": "Ивлев Марк Леонидович",
+      "apparatusClass": "АНПА",
+      "apparatusName": "АНПА MiddleAUV",
+      "description": "АНПА MiddleAUV, размер 300x200x100, вес 1 кг.",
+      "teamLeader": "",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
