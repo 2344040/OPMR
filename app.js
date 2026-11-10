@@ -2711,36 +2711,54 @@ function importTeamsFromPDFPick() {
 }
 
 function parsePDFOrganizationApplication(text) {
-  // Очистка текста от лишних пробелов и переносов
+  console.log("PDF текст:", text.substring(0, 500)); // Отладка
+
+  // Очистка
   text = text.replace(/\s+/g, " ").trim();
 
-  // Извлечение направления (БЭК, ТНПА, АНПА, АННА)
+  // Направление
   const directionMatch = text.match(/по\s+направлению\s+[_]*(БЭК|ТНПА|АНПА|АННА|BEK|TNPA|ANPA|ANNA)[_]*/i);
   const direction = directionMatch ? directionMatch[1].toUpperCase() : "";
+  console.log("Направление:", direction);
 
-  // Извлечение полей по номерам
-  const getField = (num) => {
-    const regex = new RegExp(`\\|\\s*${num}\\s*\\|[^|]+\\|([^|]+)\\|`, "i");
-    const match = text.match(regex);
-    return match ? match[1].trim() : "";
+  // Простой поиск полей по ключевым словам
+  const findField = (keywords) => {
+    for (const kw of keywords) {
+      const regex = new RegExp(kw + "[^|]*\\|([^|]+)", "i");
+      const match = text.match(regex);
+      if (match) return match[1].trim();
+    }
+    return "";
   };
 
-  const city = getField(2);
-  const organization = getField(3);
-  const orgLeader = getField(4);
-  const addressBlock = getField(5);
-  const phone = getField(6);
-  const email = getField(7).replace(/\s+/g, ""); // Убираем пробелы из email
-  const teamLeader = getField(8);
-  const teamLeaderPhone = getField(9);
-  const apparatus = getField(10);
+  const city = findField(["Город\\(населенный пункт\\)", "Город"]);
+  const organization = findField(["Организация"]);
+  const orgLeader = findField(["ФИО руководителя организации"]);
+  const addressBlock = findField(["Почтовый индекс, адрес", "Адрес"]);
+  const phone = findField(["Рабочий телефон/факс", "Телефон"]);
+  const email = findField(["E\\s*–\\s*mail", "Email"]).replace(/\s+/g, "");
+  const teamLeader = findField(["ФИО руководителя команды"]);
+  const teamLeaderPhone = findField(["Контактные телефоны руководителя команды", "Телефон руководителя"]);
+  const apparatus = findField(["Предлагаемый к соревнованиям аппарат", "аппарат"]);
 
-  // Разбор адреса и индекса
+  console.log("Поля:", {
+    city,
+    organization,
+    orgLeader,
+    addressBlock,
+    phone,
+    email,
+    teamLeader,
+    teamLeaderPhone,
+    apparatus,
+  });
+
+  // Адрес и индекс
   const postalCodeMatch = addressBlock.match(/^(\d{6})/);
   const postalCode = postalCodeMatch ? postalCodeMatch[1] : "";
   const address = addressBlock.replace(/^\d{6}\s*,?\s*/, "").trim();
 
-  // Разбор региона и города
+  // Регион и город
   let region = "";
   let cityName = city;
   if (city.includes("г.") || city.includes("г ")) {
@@ -2751,36 +2769,42 @@ function parsePDFOrganizationApplication(text) {
     }
   }
 
-  // Извлечение списка участников
-  const participantsSection = text.match(/Список\s+участников[\s\S]+?Всего\s+к\s+соревнованиям\s+допущено/i);
-  const participantsText = participantsSection ? participantsSection[0] : "";
-
+  // Участники — ищем таблицу после "Список участников"
   const participants = [];
-  const participantRows = participantsText.match(/\|\s*\d+\s*\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]*)\|/g) || [];
+  const participantsStart = text.indexOf("Список участников");
+  if (participantsStart > 0) {
+    const participantsText = text.substring(participantsStart);
+    // Ищем строки с номерами и ФИО
+    const rows = participantsText.match(/\|\s*(\d+)\s*\|([^|]+)\|([^|]+)\|([^|]*)\|([^|]*)\|/g) || [];
+    console.log("Строки участников:", rows);
 
-  participantRows.forEach((row) => {
-    const cols = row.split("|").filter((c) => c.trim());
-    if (cols.length >= 4) {
-      const fio = cols[1]?.trim() || "";
-      const birthDate = cols[2]?.trim() || "";
-      const passport = cols[3]?.trim() || "";
-      const order = cols[4]?.trim() || "";
+    rows.forEach((row) => {
+      const cols = row.split("|").filter((c) => c.trim());
+      if (cols.length >= 4) {
+        const fio = cols[1]?.trim() || "";
+        const birthDate = cols[2]?.trim() || "";
+        const passport = cols[3]?.trim() || "";
+        const order = cols[4]?.trim() || "";
 
-      if (fio) {
-        participants.push({
-          fio,
-          birth: birthDate,
-          passport,
-          order,
-          isStudent: order ? "Да" : "Нет",
-        });
+        if (fio && !fio.includes("Фамилия")) {
+          // Пропускаем заголовок
+          participants.push({
+            fio,
+            birth: birthDate,
+            passport,
+            order,
+            isStudent: order ? "Да" : "Нет",
+          });
+        }
       }
-    }
-  });
+    });
+  }
 
-  // Подготовка данных для предпросмотра
+  console.log("Участники:", participants);
+
+  // Данные для предпросмотра
   pendingTextImport = {
-    id: "", // Номер заявки будет сгенерирован при сохранении
+    id: "",
     created: new Date().toLocaleDateString("ru-RU"),
     year: currentYear,
     organization,
