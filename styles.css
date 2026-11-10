@@ -1028,16 +1028,16 @@ body {
   --tb-active-text: #0f172a; */
 
   /* Палитра №2 «Мягкий синий» — чтобы включить, раскомментируйте блок ниже */
-    --tb-bg: #f5f8ff;
+    /* --tb-bg: #f5f8ff;
     --tb-border: #dbe6fb;
     --tb-hover: #eaf1ff;
     --tb-text: #51607a;
     --tb-active-bg: #e3edff;
     --tb-active-border: #b9d2f8;
     --tb-active-text: #1d4ed8;
-   
+    */
 
-  /* Палитра №3 «Графит» — чтобы включить, раскомментируйте блок ниже
+  /* Палитра №3 «Графит» — чтобы включить, раскомментируйте блок ниже */
     --tb-bg: #f1f5f9;
     --tb-border: #e2e8f0;
     --tb-hover: #e2e8e0;
@@ -1045,7 +1045,7 @@ body {
     --tb-active-bg: #334155;
     --tb-active-border: #334155;
     --tb-active-text: #ffffff;
-    */
+   
 }
 
 .view-switcher {
