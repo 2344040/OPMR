@@ -1023,11 +1023,12 @@ function getClassIdByValue(apparatusClass, year = currentYear) {
 }
 
 // Формат: IDорг-Год-Класс(лат)-[номер при дубле]
-function generateTeamId(orgId, year, classId) {
+function generateTeamId(orgId, year, classId, extra) {
   const base = `${orgId}-${year}-${classId || "na"}`;
   let id = base;
   let n = 2;
-  while (teamsData.some((t) => t.id === id)) {
+  const exists = (x) => teamsData.some((t) => t.id === x) || (extra && extra.has(x));
+  while (exists(id)) {
     id = `${base}-${n}`;
     n++;
   }
@@ -2237,6 +2238,72 @@ function downloadJSON() {
   URL.revokeObjectURL(url);
 }
 
+// ===== ИМПОРТ JSON =====
+function normalizeImportedTeams(teams, defaultYear, base) {
+  const baseTeams = base !== undefined ? base : teamsData;
+  const seen = new Set(baseTeams.map((t) => t.id));
+  teams.forEach((t) => {
+    if (!t.year) t.year = defaultYear;
+    if (!t.orgId) {
+      const name = t.organization || t.shortName || "Без названия";
+      const org = findOrCreateOrg(name, t.shortName || "", t.city || "");
+      t.orgId = org.id;
+      delete t.organization;
+    }
+    if (!t.id || seen.has(t.id) || baseTeams.some((x) => x.id === t.id)) {
+      t.id = generateTeamId(t.orgId, t.year, getClassIdByValue(t.apparatusClass, t.year), seen);
+    }
+    seen.add(t.id);
+    if (!Array.isArray(t.members)) t.members = [];
+    if (!Array.isArray(t.photos)) t.photos = parsePhotosField(t.photos || "");
+    if (!t.created) t.created = new Date().toLocaleDateString("ru-RU");
+  });
+  return teams;
+}
+
+function importRawData(rawData) {
+  // Полный формат (резервная копия) — замещает базу
+  if (rawData && rawData.organizations && rawData.teams) {
+    organizations = rawData.organizations || [];
+    competitionSettings = normalizeCompetitionSettings(rawData.competitionSettings || getDefaultCompetitionSettings());
+    apparatusClasses = rawData.apparatusClasses || [];
+    ensureApparatusClasses();
+    teamsData = normalizeImportedTeams(rawData.teams || [], currentYear, []);
+    saveData();
+    showTeamsView();
+    showToast(`Данные загружены: ${teamsData.length} команд (полное замещение)`, "success");
+    return;
+  }
+  // Массив заявок — добавляется к текущей базе
+  let incoming;
+  if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+    incoming = transformYandexFormsData(rawData);
+  } else if (
+    Array.isArray(rawData) &&
+    rawData.length > 0 &&
+    typeof rawData[0] === "object" &&
+    rawData[0].organization
+  ) {
+    incoming = rawData;
+  } else {
+    throw new Error("Неизвестный формат данных");
+  }
+  incoming = normalizeImportedTeams(incoming, currentYear);
+  let added = 0;
+  incoming.forEach((t) => {
+    if (!teamsData.some((x) => x.id === t.id)) {
+      teamsData.push(t);
+      added++;
+    }
+  });
+  saveData();
+  showTeamsView();
+  showToast(
+    `Добавлено команд: ${added} (год ${currentYear}). Пропущено дубликатов: ${incoming.length - added}.`,
+    "success",
+  );
+}
+
 function attachFileInputListener() {
   const input = document.getElementById("fileInput");
   if (!input) return;
@@ -2246,33 +2313,7 @@ function attachFileInputListener() {
     const reader = new FileReader();
     reader.onload = function (e) {
       try {
-        const rawData = JSON.parse(e.target.result);
-        if (rawData.organizations && rawData.teams) {
-          organizations = rawData.organizations || [];
-          competitionSettings = normalizeCompetitionSettings(
-            rawData.competitionSettings || getDefaultCompetitionSettings(),
-          );
-          apparatusClasses = rawData.apparatusClasses || [];
-          ensureApparatusClasses();
-          teamsData = rawData.teams || [];
-          showToast("Данные загружены", "success");
-        } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
-          teamsData = transformYandexFormsData(rawData);
-          showToast("Данные загружены из формата Яндекс.Форм", "success");
-        } else if (
-          Array.isArray(rawData) &&
-          rawData.length > 0 &&
-          typeof rawData[0] === "object" &&
-          rawData[0].organization
-        ) {
-          teamsData = rawData;
-          showToast("Данные загружены", "success");
-        } else {
-          throw new Error("Неизвестный формат данных");
-        }
-        saveData();
-        renderTeams(teamsData);
-        showTeamsView();
+        importRawData(JSON.parse(e.target.result));
       } catch (err) {
         showToast("Ошибка чтения JSON: " + err.message, "error");
         console.error(err);
@@ -2289,33 +2330,7 @@ function handleEditPageFileUpload(event) {
   const reader = new FileReader();
   reader.onload = function (e) {
     try {
-      const rawData = JSON.parse(e.target.result);
-      if (rawData.organizations && rawData.teams) {
-        organizations = rawData.organizations || [];
-        competitionSettings = normalizeCompetitionSettings(
-          rawData.competitionSettings || getDefaultCompetitionSettings(),
-        );
-        apparatusClasses = rawData.apparatusClasses || [];
-        ensureApparatusClasses();
-        teamsData = rawData.teams || [];
-        showToast("Данные загружены", "success");
-      } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
-        teamsData = transformYandexFormsData(rawData);
-        showToast("Данные загружены из формата Яндекс.Форм", "success");
-      } else if (
-        Array.isArray(rawData) &&
-        rawData.length > 0 &&
-        typeof rawData[0] === "object" &&
-        rawData[0].organization
-      ) {
-        teamsData = rawData;
-        showToast("Данные загружены", "success");
-      } else {
-        throw new Error("Неизвестный формат данных");
-      }
-      saveData();
-      renderTeams(teamsData);
-      showTeamsView();
+      importRawData(JSON.parse(e.target.result));
     } catch (err) {
       showToast("Ошибка чтения JSON: " + err.message, "error");
       console.error(err);
