@@ -484,7 +484,20 @@ function renderHeaderButtons() {
            <li><a class="dropdown-item" href="#" onclick="showApparatusManager(); return false;"><i class="fas fa-robot me-2 text-warning"></i>Классы аппаратов</a></li>
          </ul>
        </div>
-       <button class="btn btn-primary btn-upload" onclick="createNewTeam()"><i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span></button>`
+       <div class="dropdown">
+  <button class="btn btn-primary btn-upload dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><a class="dropdown-item" href="#" onclick="createNewTeam(); return false;"><i class="fas fa-pen-to-square me-2 text-primary"></i>Создать вручную</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header">Импорт</h6></li>
+    <li><a class="dropdown-item" href="#" onclick="openTextImportModal(); return false;"><i class="fas fa-file-lines me-2 text-info"></i>Из текста (Яндекс.Формы)</a></li>
+    <li><a class="dropdown-item disabled" href="#" onclick="showToast('Будет добавлено в следующей версии', 'info'); return false;"><i class="fas fa-file-code me-2 text-muted"></i>Из JSON <span class="badge bg-secondary ms-2">скоро</span></a></li>
+    <li><a class="dropdown-item disabled" href="#" onclick="showToast('Будет добавлено в следующей версии', 'info'); return false;"><i class="fas fa-file-excel me-2 text-muted"></i>Из Excel <span class="badge bg-secondary ms-2">скоро</span></a></li>
+  </ul>
+</div>
+`
     : "";
   container.innerHTML = `${adminButtons}
     <div class="btn-group view-switcher" role="group" style="overflow:hidden">
