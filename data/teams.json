@@ -835,10 +835,46 @@
       "apparatusClass": "АНПА",
       "apparatusName": "АНПА MiddleAUV",
       "description": "АНПА MiddleAUV, размер 300x200x100, вес 1 кг.",
-      "teamLeader": "",
-      "teamLeaderPhone": "",
+      "teamLeader": "Ивлев Марк Леонидович",
+      "teamLeaderPhone": "+7911 560-46-93",
       "photos": [],
-      "members": []
+      "members": [
+        {
+          "fio": "Ивлев Марк Леонидович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Соколов Арсений Александрович",
+          "birth": "2006-03-10",
+          "passport": "1125 625191",
+          "isStudent": "Да",
+          "order": "09.08.2024 №2255"
+        },
+        {
+          "fio": "Прошкина Анастасия Сергеевна",
+          "birth": "2006-07-05",
+          "passport": "1126 639324",
+          "isStudent": "Да",
+          "order": "30.07.2024 №2219"
+        },
+        {
+          "fio": "Савин Алексей Владимирович",
+          "birth": "2007-11-22",
+          "passport": "1121 402351",
+          "isStudent": "Да",
+          "order": "07.08.2026 №2470"
+        },
+        {
+          "fio": "Пахомов Семён Дмитриевич",
+          "birth": "2008-05-28",
+          "passport": "1122 424821",
+          "isStudent": "Да",
+          "order": "07.08.2026 №2470"
+        }
+      ]
     }
   ]
 }
