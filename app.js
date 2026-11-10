@@ -2690,17 +2690,18 @@ function importTeamsFromExcelPick() {
 function importTeamsFromPDFPick() {
   pickFile(".pdf,application/pdf", async (file) => {
     try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
       let fullText = "";
-      
+
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        const pageText = textContent.items.map(item => item.str).join(" ");
+        const pageText = textContent.items.map((item) => item.str).join(" ");
         fullText += pageText + "\n";
       }
-      
+
       parsePDFOrganizationApplication(fullText);
     } catch (err) {
       showToast("Ошибка чтения PDF: " + err.message, "error");
@@ -2712,18 +2713,18 @@ function importTeamsFromPDFPick() {
 function parsePDFOrganizationApplication(text) {
   // Очистка текста от лишних пробелов и переносов
   text = text.replace(/\s+/g, " ").trim();
-  
+
   // Извлечение направления (БЭК, ТНПА, АНПА, АННА)
   const directionMatch = text.match(/по\s+направлению\s+[_]*(БЭК|ТНПА|АНПА|АННА|BEK|TNPA|ANPA|ANNA)[_]*/i);
   const direction = directionMatch ? directionMatch[1].toUpperCase() : "";
-  
+
   // Извлечение полей по номерам
   const getField = (num) => {
     const regex = new RegExp(`\\|\\s*${num}\\s*\\|[^|]+\\|([^|]+)\\|`, "i");
     const match = text.match(regex);
     return match ? match[1].trim() : "";
   };
-  
+
   const city = getField(2);
   const organization = getField(3);
   const orgLeader = getField(4);
@@ -2733,12 +2734,12 @@ function parsePDFOrganizationApplication(text) {
   const teamLeader = getField(8);
   const teamLeaderPhone = getField(9);
   const apparatus = getField(10);
-  
+
   // Разбор адреса и индекса
   const postalCodeMatch = addressBlock.match(/^(\d{6})/);
   const postalCode = postalCodeMatch ? postalCodeMatch[1] : "";
   const address = addressBlock.replace(/^\d{6}\s*,?\s*/, "").trim();
-  
+
   // Разбор региона и города
   let region = "";
   let cityName = city;
@@ -2749,22 +2750,22 @@ function parsePDFOrganizationApplication(text) {
       cityName = cityParts[0].trim();
     }
   }
-  
+
   // Извлечение списка участников
   const participantsSection = text.match(/Список\s+участников[\s\S]+?Всего\s+к\s+соревнованиям\s+допущено/i);
   const participantsText = participantsSection ? participantsSection[0] : "";
-  
+
   const participants = [];
   const participantRows = participantsText.match(/\|\s*\d+\s*\|([^|]+)\|([^|]+)\|([^|]+)\|([^|]*)\|/g) || [];
-  
+
   participantRows.forEach((row) => {
-    const cols = row.split("|").filter(c => c.trim());
+    const cols = row.split("|").filter((c) => c.trim());
     if (cols.length >= 4) {
       const fio = cols[1]?.trim() || "";
       const birthDate = cols[2]?.trim() || "";
       const passport = cols[3]?.trim() || "";
       const order = cols[4]?.trim() || "";
-      
+
       if (fio) {
         participants.push({
           fio,
@@ -2776,7 +2777,7 @@ function parsePDFOrganizationApplication(text) {
       }
     }
   });
-  
+
   // Подготовка данных для предпросмотра
   pendingTextImport = {
     id: "", // Номер заявки будет сгенерирован при сохранении
@@ -2799,7 +2800,7 @@ function parsePDFOrganizationApplication(text) {
     teamLeaderPhone,
     members: participants,
   };
-  
+
   renderTextImportPreview();
   document.getElementById("textImportFooter").style.display = "flex";
   showToast(`PDF разобран: ${participants.length} участников`, "success");
