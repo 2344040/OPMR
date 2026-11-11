@@ -3316,6 +3316,44 @@ function saveTeamName() {
   }
 }
 
+// ===== ПРОТОКОЛ: фамилия руководителя второй строкой + подпись колонки жребия =====
+function teamLeaderSurname(team) {
+  const parts = String(team.teamLeader || "").trim().split(/\s+/);
+  return parts[0] || "";
+}
+
+function enhanceCompetitionTables() {
+  const page = document.getElementById("competitionPage");
+  if (!page) return;
+  const byName = {};
+  teamsData.forEach((t) => { byName[getTeamDisplayName(t)] = t; });
+  page.querySelectorAll("table").forEach((table) => {
+    const firstTh = table.querySelector("thead tr th");
+    if (firstTh && firstTh.textContent.trim() === "№") {
+      firstTh.innerHTML = '№<span class="th-sub">жребий</span>';
+    }
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      const nameCell = row.cells[1];
+      if (!nameCell || nameCell.querySelector(".team-leader-line")) return;
+      const team = byName[nameCell.textContent.trim()];
+      const surname = team ? teamLeaderSurname(team) : "";
+      if (surname) {
+        const div = document.createElement("div");
+        div.className = "team-leader-line";
+        div.textContent = surname;
+        nameCell.appendChild(div);
+      }
+    });
+  });
+}
+
+const _origRenderCompetition = renderCompetition;
+renderCompetition = function (...args) {
+  const result = _origRenderCompetition.apply(this, args);
+  enhanceCompetitionTables();
+  return result;
+};
+
 renderFooterVersion();
 renderHeaderButtons();
 loadDefaultData();
