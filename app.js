@@ -635,6 +635,7 @@ function getTeamDupIndex(team) {
 }
 
 function getTeamDisplayName(team) {
+  if (team.teamName && team.teamName.trim()) return team.teamName.trim();
   const org = organizations.find((o) => o.id === team.orgId);
   const base = org ? (org.shortName || org.fullName) : (team.shortName || team.organization || "Без названия");
   const n = getTeamDupIndex(team);
@@ -995,7 +996,7 @@ function showTeamDetails(teamId) {
   document.getElementById("detailContent").innerHTML =
     `<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2 print-header"><div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a;font-size:1.75rem">${displayName}</h3>${getCategoryBadge(team.apparatusClass, "category-badge-card")}<span class="badge bg-secondary ms-2">${team.year}</span></div><div class="d-flex gap-2">${editButtonDesktop}<button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()"><i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span></button></div></div><div class="d-flex gap-1 mb-2 print-header-mobile">${editButtonMobile}<button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display:none"><i class="fas fa-print"></i></button></div><div class="detail-section print-section-info"><div class="row g-4">
     
-    <div class="col-md-6"><div class="detail-label">ID команды</div><div class="detail-value">${team.id}</div></div><div class="col-md-6"><div class="detail-label">Номер заявки</div><div class="detail-value">${team.applicationNumber || "—"}</div></div>
+    <div class="col-md-6"><div class="detail-label">ID команды</div><div class="detail-value">${team.id}</div></div><div class="col-md-6"><div class="detail-label">Номер заявки</div><div class="detail-value">${team.applicationNumber || "—"}</div></div><div class="col-md-6"><div class="detail-label">Название команды</div><div class="detail-value d-flex align-items-center gap-2"><span>${getTeamDisplayName(team)}</span><button class="btn btn-sm btn-outline-secondary" onclick="openTeamNameModal()" title="Задать своё название"><i class="fas fa-pen"></i></button></div></div>
     <div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div><div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${getTeamCity(team) || "—"}</div></div><div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || "—"}</div></div><div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || "—"}</div></div><div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || "—"}</div></div><div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div><div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div><div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || "—"}</div></div></div></div><div class="detail-section print-section-apparatus"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, "category-badge-xl")}</div><div class="row g-4"><div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div><div class="col-12"><div class="detail-label">Название аппарата</div><div class="detail-value">${team.apparatusName || "—"}</div></div><div class="col-12 print-hide-desc"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div><div class="col-12 print-hide-photos"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div></div></div><div class="detail-section print-section-team"><h5 class="detail-section-title">Команда</h5><div class="row g-4"><div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${(team.teamLeaderPhone || "").replace(/\s/g, "")}">${team.teamLeaderPhone || "—"}</a></div></div></div></div><div class="detail-section print-section-members"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>`;
   showDetailPage();
 }
@@ -3289,6 +3290,30 @@ function getAppVersionString() {
 function renderFooterVersion() {
   const el = document.getElementById("appVersion");
   if (el) el.textContent = getAppVersionString();
+}
+
+// ===== СВОЁ НАЗВАНИЕ КОМАНДЫ (teamName) =====
+function openTeamNameModal() {
+  const team = teamsData.find((t) => t.id === currentTeamId);
+  if (!team) return;
+  document.getElementById("teamNameInput").value = team.teamName || "";
+  new bootstrap.Modal(document.getElementById("teamNameModal")).show();
+}
+
+function saveTeamName() {
+  const team = teamsData.find((t) => t.id === currentTeamId);
+  if (!team) return;
+  const v = document.getElementById("teamNameInput").value.trim();
+  team.teamName = v;
+  saveData();
+  const inst = bootstrap.Modal.getInstance(document.getElementById("teamNameModal"));
+  if (inst) inst.hide();
+  showTeamDetails(team.id);
+  showToast(v ? `Название команды: «${v}»` : "Возвращено авто-имя организации", "success");
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token) {
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  }
 }
 
 renderFooterVersion();

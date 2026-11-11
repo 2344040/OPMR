@@ -277,6 +277,26 @@
       </div>
     </div>
 
+        <div class="modal fade" id="teamNameModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Название команды</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+          </div>
+          <div class="modal-body">
+            <label class="form-label">Своё название (необязательно)</label>
+            <input type="text" class="form-control" id="teamNameInput" placeholder="Например: ФМЛ №239 · Юниоры" />
+            <div class="form-text">Если оставить пустым, команда называется по организации, а при нескольких командах в одной номинации добавляется индекс: «ФМЛ №239 (2)».</div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button class="btn btn-primary" onclick="saveTeamName()">Сохранить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <footer class="app-footer">
       <div class="container app-footer-row">
         <div class="app-footer-brand">
