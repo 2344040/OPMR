@@ -65,6 +65,12 @@
       "fullName": "ГБОУ СОШ №368",
       "shortName": "ГБОУ СОШ №368",
       "city": ""
+    },
+    {
+      "id": "016",
+      "fullName": "ГБОУ СОШ №375",
+      "shortName": "ГБОУ СОШ №375",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -96,7 +102,7 @@
   "competitionSettings": {
     "2024": {
       "anna": {
-        "date": "01.11.2024",
+        "date": "26.04.2024",
         "color": "badge-anna",
         "criteria": [
           {
@@ -203,6 +209,14 @@
           }
         ],
         "name": "АННА"
+      },
+      "anpa": {
+        "date": "26.04.2024",
+        "criteria": []
+      },
+      "tnpa": {
+        "date": "26.04.2024",
+        "criteria": []
       }
     },
     "2025": {
@@ -1118,6 +1132,27 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Дрягин Г.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "016-2024-anna",
+      "created": "11.11.2026",
+      "orgId": "016",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АННА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Замолоцкий В.Л.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
