@@ -471,7 +471,7 @@ function renderHeaderButtons() {
          <button class="btn btn-outline-primary btn-upload dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-folder-open"></i><span class="btn-text ms-2">Проект</span></button>
          <ul class="dropdown-menu dropdown-menu-end">
            <li><label for="fileInput" class="dropdown-item" style="cursor:pointer"><i class="fas fa-file-upload me-2 text-primary"></i>Загрузить JSON</label></li>
-           <li><a class="dropdown-item" href="#" onclick="downloadJSON(); return false;"><i class="fas fa-download me-2 text-success"></i>Скачать JSON</a></li>
+           <li><a class="dropdown-item" href="#" onclick="downloadJSON(); return false;"><i class="fas fa-download me-2 text-success"></i>Скачать JSON (бэкап БД)</a></li>
            <li><a class="dropdown-item" href="#" onclick="backupProject(); return false;"><i class="fas fa-file-zipper me-2 text-warning"></i>Бэкап проекта (ZIP)</a></li>
            <li><hr class="dropdown-divider"></li>
            <li><a class="dropdown-item" href="#" onclick="commitToGitHubManual(); return false;"><i class="fab fa-github me-2"></i>Отправить данные на GitHub</a></li>
