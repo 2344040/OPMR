@@ -978,11 +978,14 @@ body {
 }
 
 .group-header-title {
+  flex: 1;
+  min-width: 0;
   font-size: 24px;
   font-weight: 700;
   font-family: "Manrope", sans-serif;
   color: #0f172a;
-  white-space: nowrap;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .group-date-badge {

@@ -88,6 +88,18 @@ function getDefaultCompetitionSettings() {
 // ===== СПРАВОЧНИК КЛАССОВ: СПРАВОЧНЫЕ ДАННЫЕ =====
 const DEFAULT_CLASS_NAMES = {bek: "БЭК", tnpa: "ТНПА", anpa: "АНПА", anna: "АННА"};
 const DEFAULT_CLASS_COLORS = {bek: "badge-bek", tnpa: "badge-tnpa", anpa: "badge-anpa", anna: "badge-anna"};
+const DEFAULT_CLASS_FULLNAMES = {
+  bek: "Безэкипажный катер",
+  tnpa: "Телеуправляемый необитаемый подводный аппарат",
+  anpa: "Автономный необитаемый подводный аппарат",
+  anna: "Автономный необитаемый надводный аппарат",
+};
+
+function getClassFullName(classId) {
+  const info = apparatusClasses.find((c) => c.id === classId);
+  if (info && info.fullName && info.fullName.trim()) return info.fullName.trim();
+  return DEFAULT_CLASS_FULLNAMES[classId] || (info ? info.name : String(classId).toUpperCase());
+}
 
 // Собирает справочник классов из сохранённых данных или из настроек по умолчанию
 function ensureApparatusClasses() {
@@ -95,12 +107,13 @@ function ensureApparatusClasses() {
     apparatusClasses.forEach((c) => {
       if (!c.name) c.name = DEFAULT_CLASS_NAMES[c.id] || c.id.toUpperCase();
       if (!c.color) c.color = "badge-gray";
+      if (!c.fullName) c.fullName = DEFAULT_CLASS_FULLNAMES[c.id] || "";
     });
     return;
   }
   const map = {};
   Object.entries(DEFAULT_CLASS_NAMES).forEach(([id, name]) => {
-    map[id] = {id, name, color: DEFAULT_CLASS_COLORS[id] || "badge-gray"};
+    map[id] = {id, name, fullName: DEFAULT_CLASS_FULLNAMES[id] || "", color: DEFAULT_CLASS_COLORS[id] || "badge-gray"};
   });
   for (const year in competitionSettings) {
     for (const key in competitionSettings[year]) {
@@ -109,6 +122,7 @@ function ensureApparatusClasses() {
         map[key] = {
           id: key,
           name: cfg.name || DEFAULT_CLASS_NAMES[key] || key.toUpperCase(),
+          fullName: cfg.fullName || DEFAULT_CLASS_FULLNAMES[key] || "",
           color: cfg.color || "badge-gray",
         };
       }
@@ -657,8 +671,11 @@ function renderTeamCard(team) {
 // ===== ТАБЛИЧНЫЙ ВИД КОМАНД =====
 function escHtml(s) {
   return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 function buildClassGroups(sortedTeams) {
@@ -666,15 +683,31 @@ function buildClassGroups(sortedTeams) {
   const groups = {};
   for (const key in yearSettings) {
     const info = getClassInfo(key);
-    groups[key] = {...yearSettings[key], id: key, name: info.name, color: info.color, teams: []};
+    groups[key] = {
+      ...yearSettings[key],
+      id: key,
+      name: info.name,
+      fullName: getClassFullName(key),
+      color: info.color,
+      teams: [],
+    };
   }
-  groups["other"] = {name: "Н/Д", color: "bg-secondary text-white", date: "", teams: []};
+  groups["other"] = {
+    name: "Н/Д",
+    fullName: "Класс не определён",
+    color: "bg-secondary text-white",
+    date: "",
+    teams: [],
+  };
   sortedTeams.forEach((team) => {
     const val = String(team.apparatusClass || "").toLowerCase();
     let foundKey = null;
     for (const key in yearSettings) {
       const info = getClassInfo(key);
-      if (val.includes(key.toLowerCase()) || val.includes(info.name.toLowerCase())) { foundKey = key; break; }
+      if (val.includes(key.toLowerCase()) || val.includes(info.name.toLowerCase())) {
+        foundKey = key;
+        break;
+      }
     }
     groups[foundKey || "other"].teams.push(team);
   });
@@ -712,7 +745,7 @@ function renderTeamsList(sortedTeams) {
   for (const key in groups) {
     const g = groups[key];
     if (g.teams.length === 0) continue;
-    html += `<div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.name}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div>`;
+    html += `<div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.fullName || g.name}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div>`;
     html += renderTeamsTable(g.teams);
   }
   return html;
@@ -755,7 +788,7 @@ function renderTeams(teams) {
     for (const key in groups) {
       if (groups[key].teams.length > 0) {
         const g = groups[key];
-        html += `<div class="mt-4 group-header-wrap"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.name}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
+        html += `<div class="mt-4 group-header-wrap"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.fullName || g.name}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
       }
     }
   }
@@ -1702,6 +1735,7 @@ function renderApparatusManager() {
             <tr>
               <th style="width:80px">ID</th>
               <th>Название класса</th>
+               <th>Полное название</th>
               <th style="width:200px">Цвет бейджа</th>
               <th style="width:110px">Команд</th>
               <th style="width:60px"></th>
@@ -1713,7 +1747,8 @@ function renderApparatusManager() {
     html += `
             <tr>
               <td><code>${info.id}</code></td>
-              <td><input type="text" class="form-control form-control-sm" value="${info.name}" onchange="updateApparatusClass(${idx}, 'name', this.value)"></td>
+                            <td><input type="text" class="form-control form-control-sm" value="${info.name}" onchange="updateApparatusClass(${idx}, 'name', this.value)"></td>
+              <td><input type="text" class="form-control form-control-sm" value="${info.fullName || ""}" placeholder="Полное название класса" onchange="updateApparatusClass(${idx}, 'fullName', this.value)"></td>
               <td><select class="form-select form-select-sm" onchange="updateApparatusClass(${idx}, 'color', this.value)">${classColorOptions(info.color)}</select></td>
               <td class="text-muted">${totalTeams}</td>
               <td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="deleteApparatusClass(${idx})" title="Удалить класс"><i class="fas fa-trash"></i></button></td>
@@ -1819,6 +1854,8 @@ function updateApparatusClass(idx, field, value) {
       return;
     }
     info.name = v.toUpperCase();
+  } else if (field === "fullName") {
+    info.fullName = value.trim();
   } else {
     info[field] = value;
   }
@@ -1841,7 +1878,7 @@ function addApparatusClass() {
     alert("Класс с таким ID уже существует");
     return;
   }
-  apparatusClasses.push({id, name: id.toUpperCase(), color: "badge-gray"});
+    apparatusClasses.push({id, name: id.toUpperCase(), fullName: "", color: "badge-gray"});
   saveData();
   renderApparatusManager();
   showToast(`Класс "${id.toUpperCase()}" добавлен — укажите название и цвет в таблице`, "success");
@@ -3051,30 +3088,54 @@ async function backupProject() {
   const skipped = [];
 
   // 1. Живые данные из браузера — главная ценность бэкапа
-  zip.file("data/teams.json", JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}, null, 2));
+  zip.file(
+    "data/teams.json",
+    JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}, null, 2),
+  );
   included.push("data/teams.json (актуальные данные на момент бэкапа)");
 
   // 2. Файлы сайта; отсутствующие пропускаются без падения
   const assets = [
-    "index.html", "app.js", "styles.css", "favicon.svg",
-    "lib/bootstrap.min.css", "lib/all.min.css", "lib/bootstrap.bundle.min.js",
-    "lib/xlsx.full.min.js", "lib/pdf.min.js", "lib/pdf.worker.min.js", "lib/jszip.min.js",
-    "webfonts/fa-solid-900.woff2", "webfonts/fa-brands-400.woff2", "webfonts/fa-regular-400.woff2",
-    "webfonts/fa-solid-900.ttf", "webfonts/fa-brands-400.ttf", "webfonts/fa-regular-400.ttf",
-    "lib/webfonts/fa-solid-900.woff2", "lib/webfonts/fa-brands-400.woff2", "lib/webfonts/fa-regular-400.woff2",
+    "index.html",
+    "app.js",
+    "styles.css",
+    "favicon.svg",
+    "lib/bootstrap.min.css",
+    "lib/all.min.css",
+    "lib/bootstrap.bundle.min.js",
+    "lib/xlsx.full.min.js",
+    "lib/pdf.min.js",
+    "lib/pdf.worker.min.js",
+    "lib/jszip.min.js",
+    "webfonts/fa-solid-900.woff2",
+    "webfonts/fa-brands-400.woff2",
+    "webfonts/fa-regular-400.woff2",
+    "webfonts/fa-solid-900.ttf",
+    "webfonts/fa-brands-400.ttf",
+    "webfonts/fa-regular-400.ttf",
+    "lib/webfonts/fa-solid-900.woff2",
+    "lib/webfonts/fa-brands-400.woff2",
+    "lib/webfonts/fa-regular-400.woff2",
   ];
   for (const path of assets) {
     try {
       const res = await fetch(path + "?backup=" + Date.now());
-      if (!res.ok) { skipped.push(path); continue; }
+      if (!res.ok) {
+        skipped.push(path);
+        continue;
+      }
       zip.file(path, await res.arrayBuffer());
       included.push(path);
-    } catch (e) { skipped.push(path); }
+    } catch (e) {
+      skipped.push(path);
+    }
   }
 
   // 3. Манифест
-  zip.file("BACKUP_INFO.txt",
-    `Полный бэкап проекта ОПМР\nСоздан: ${new Date().toLocaleString("ru-RU")}\nКоманд: ${teamsData.length}\nОрганизаций: ${organizations.length}\n\nВключено:\n${included.join("\n")}\n\nПропущено (не найдено на сервере):\n${skipped.join("\n") || "—"}\n\nВосстановление: распакуйте архив в папку сайта и опубликуйте (GitHub Pages или локальный сервер). Токен GitHub в бэкап не входит.`);
+  zip.file(
+    "BACKUP_INFO.txt",
+    `Полный бэкап проекта ОПМР\nСоздан: ${new Date().toLocaleString("ru-RU")}\nКоманд: ${teamsData.length}\nОрганизаций: ${organizations.length}\n\nВключено:\n${included.join("\n")}\n\nПропущено (не найдено на сервере):\n${skipped.join("\n") || "—"}\n\nВосстановление: распакуйте архив в папку сайта и опубликуйте (GitHub Pages или локальный сервер). Токен GitHub в бэкап не входит.`,
+  );
 
   try {
     const blob = await zip.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 6}});
@@ -3148,8 +3209,11 @@ function wrapReplace(key) {
   const orig = _navOrig[key];
   return async function (...args) {
     navMode = "replace";
-    try { return await orig.apply(this, args); }
-    finally { navMode = "push"; }
+    try {
+      return await orig.apply(this, args);
+    } finally {
+      navMode = "push";
+    }
   };
 }
 saveEdit = wrapReplace("saveEdit");
@@ -3166,19 +3230,26 @@ window.addEventListener("popstate", (e) => {
   // Сначала «Назад» закрывает оверлеи, а не уходит с экрана
   const lb = document.getElementById("lightbox");
   if (lb && lb.classList.contains("active")) {
-    closeLightbox(); history.pushState(navCurrent, ""); navDepth++; return;
+    closeLightbox();
+    history.pushState(navCurrent, "");
+    navDepth++;
+    return;
   }
   const modalEl = document.querySelector(".modal.show");
   if (modalEl) {
     const inst = bootstrap.Modal.getInstance(modalEl);
     if (inst) inst.hide();
-    history.pushState(navCurrent, ""); navDepth++; return;
+    history.pushState(navCurrent, "");
+    navDepth++;
+    return;
   }
   const ocEl = document.querySelector(".offcanvas.show");
   if (ocEl) {
     const inst = bootstrap.Offcanvas.getInstance(ocEl);
     if (inst) inst.hide();
-    history.pushState(navCurrent, ""); navDepth++; return;
+    history.pushState(navCurrent, "");
+    navDepth++;
+    return;
   }
   navDepth = Math.max(0, navDepth - 1);
   const s = e.state && e.state.view ? e.state : {view: "teams", teamId: null};
