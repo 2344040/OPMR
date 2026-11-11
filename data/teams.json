@@ -71,6 +71,12 @@
       "fullName": "ГБОУ СОШ №375",
       "shortName": "ГБОУ СОШ №375",
       "city": ""
+    },
+    {
+      "id": "017",
+      "fullName": "Президентский ФМЛ №239",
+      "shortName": "ФМЛ №239",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -1153,6 +1159,27 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Замолоцкий В.Л.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "017-2024-anna",
+      "created": "11.11.2026",
+      "orgId": "017",
+      "year": 2024,
+      "shortName": "ФМЛ №239",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АННА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Жуков А.И.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
