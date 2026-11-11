@@ -1751,3 +1751,20 @@ html {
 @media print {
   .app-footer { display: none; }
 }
+
+/* ===== ТЁМНЫЙ ФУТЕР НА ВСЮ ШИРИНУ ===== */
+.app-footer {
+  margin-top: 40px;
+  background: #0f172a;
+  border-top: none;
+  padding: 20px 0;
+}
+.app-footer::before { height: 3px; opacity: 0.8; }
+.app-footer-inner {
+  width: 100%;
+  max-width: none;
+  padding: 0 24px;
+}
+.app-footer-name { color: #f1f5f9; }
+.app-footer-version { color: #cbd5e1; background: #1e293b; border-color: #334155; }
+.app-footer-copy { margin-left: auto; text-align: right; color: #94a3b8; }
