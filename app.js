@@ -1885,7 +1885,7 @@ function addApparatusClass() {
     alert("Класс с таким ID уже существует");
     return;
   }
-    apparatusClasses.push({id, name: id.toUpperCase(), fullName: "", color: "badge-gray"});
+  apparatusClasses.push({id, name: id.toUpperCase(), fullName: "", color: "badge-gray"});
   saveData();
   renderApparatusManager();
   showToast(`Класс "${id.toUpperCase()}" добавлен — укажите название и цвет в таблице`, "success");
@@ -3274,5 +3274,19 @@ window.addEventListener("popstate", (e) => {
 
 history.replaceState({view: "teams", teamId: null}, "");
 
+// ===== ВЕРСИЯ ПРИЛОЖЕНИЯ: major.build(=версия app.js) =====
+const APP_MAJOR_VERSION = 1; // меняется вручную при смене поколения
+function getAppVersionString() {
+  const script = document.querySelector('script[src*="app.js"]');
+  const m = script && script.src.match(/[?&]v=(\d+)/);
+  const build = m ? parseInt(m[1], 10) : 0;
+  return `${APP_MAJOR_VERSION}.${build}`;
+}
+function renderFooterVersion() {
+  const el = document.getElementById("appVersion");
+  if (el) el.textContent = getAppVersionString();
+}
+
+renderFooterVersion();
 renderHeaderButtons();
 loadDefaultData();
