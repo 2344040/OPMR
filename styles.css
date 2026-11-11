@@ -1695,3 +1695,59 @@ html {
   margin-left: -0.5rem;
   margin-right: -0.5rem;
 }
+
+/* ===== ЛОГОТИП-ССЫЛКА ===== */
+.header-logo-link {
+  display: inline-flex;
+  cursor: pointer;
+  border-radius: 12px;
+}
+.header-logo-link .header-logo { transition: transform 0.2s ease; }
+.header-logo-link:hover .header-logo { transform: scale(1.05); }
+.header-logo-link:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+
+/* ===== ФУТЕР ===== */
+.app-footer {
+  position: relative;
+  margin-top: 32px;
+  border-top: 1px solid #e2e8f0;
+  background: #f4f6f8;
+  padding: 18px 0 26px;
+}
+.app-footer::before {
+  content: "";
+  position: absolute;
+  top: -1px; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #2563eb, #0ea5e9, #14b8a6);
+  opacity: 0.45;
+}
+.app-footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.app-footer-brand { display: flex; align-items: center; gap: 10px; }
+.app-footer-logo { width: 28px; height: 28px; }
+.app-footer-name {
+  font-family: "Manrope", sans-serif;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+.app-footer-version {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.app-footer-copy { color: #64748b; font-size: 0.85rem; font-weight: 500; }
+
+@media print {
+  .app-footer { display: none; }
+}

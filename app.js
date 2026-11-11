@@ -911,6 +911,12 @@ function goBack() {
   else showTeamsView();
 }
 
+// ===== ПЕРЕХОД НА ГЛАВНУЮ ПО ЛОГОТИПУ =====
+function goHome() {
+  // isListView и isGrouped уже хранят последнее сохранённое представление (localStorage)
+  showTeamsView();
+}
+
 // ===== ДЕТАЛИ КОМАНДЫ =====
 function showTeamDetails(teamId) {
   returnToView = currentView;
