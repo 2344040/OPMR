@@ -3028,5 +3028,108 @@ async function backupProject() {
   }
 }
 
+// ===== ИСТОРИЯ НАВИГАЦИИ: аппаратная "Назад" ходит по экранам сайта =====
+let navMode = "push";
+let navDepth = 0;
+let navCurrent = {view: "teams", teamId: null};
+
+const _navOrig = {
+  teams: showTeamsView,
+  competition: showCompetitionView,
+  master: showMasterTable,
+  org: showOrgManager,
+  apparatus: showApparatusManager,
+  detail: showTeamDetails,
+  edit: editTeam,
+  create: createNewTeam,
+  protocol: showProtocolPage,
+  saveEdit: saveEdit,
+  saveProtocol: saveProtocol,
+  deleteTeam: deleteTeam,
+  finalize: finalizeImportedTeam,
+};
+
+function navRecord(state) {
+  const same = navCurrent.view === state.view && (navCurrent.teamId || null) === (state.teamId || null);
+  if (navMode === "replace" || same) {
+    history.replaceState(state, "");
+  } else {
+    history.pushState(state, "");
+    navDepth++;
+  }
+  navCurrent = state;
+  navMode = "push";
+}
+
+function wrapNav(key, getState) {
+  const orig = _navOrig[key];
+  return function (...args) {
+    navRecord(getState(...args));
+    return orig.apply(this, args);
+  };
+}
+
+showTeamsView = wrapNav("teams", () => ({view: "teams", teamId: null}));
+showCompetitionView = wrapNav("competition", () => ({view: "competition", teamId: null}));
+showMasterTable = wrapNav("master", () => ({view: "master", teamId: null}));
+showOrgManager = wrapNav("org", () => ({view: "org", teamId: null}));
+showApparatusManager = wrapNav("apparatus", () => ({view: "apparatus", teamId: null}));
+showTeamDetails = wrapNav("detail", (id) => ({view: "detail", teamId: id}));
+editTeam = wrapNav("edit", (id) => ({view: "edit", teamId: id}));
+createNewTeam = wrapNav("create", () => ({view: "edit", teamId: null}));
+showProtocolPage = wrapNav("protocol", (id) => ({view: "protocol", teamId: id}));
+
+function wrapReplace(key) {
+  const orig = _navOrig[key];
+  return async function (...args) {
+    navMode = "replace";
+    try { return await orig.apply(this, args); }
+    finally { navMode = "push"; }
+  };
+}
+saveEdit = wrapReplace("saveEdit");
+saveProtocol = wrapReplace("saveProtocol");
+deleteTeam = wrapReplace("deleteTeam");
+finalizeImportedTeam = wrapReplace("finalize");
+
+goBack = function () {
+  if (navDepth > 0) history.back();
+  else _navOrig.teams();
+};
+
+window.addEventListener("popstate", (e) => {
+  // Сначала «Назад» закрывает оверлеи, а не уходит с экрана
+  const lb = document.getElementById("lightbox");
+  if (lb && lb.classList.contains("active")) {
+    closeLightbox(); history.pushState(navCurrent, ""); navDepth++; return;
+  }
+  const modalEl = document.querySelector(".modal.show");
+  if (modalEl) {
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+    history.pushState(navCurrent, ""); navDepth++; return;
+  }
+  const ocEl = document.querySelector(".offcanvas.show");
+  if (ocEl) {
+    const inst = bootstrap.Offcanvas.getInstance(ocEl);
+    if (inst) inst.hide();
+    history.pushState(navCurrent, ""); navDepth++; return;
+  }
+  navDepth = Math.max(0, navDepth - 1);
+  const s = e.state && e.state.view ? e.state : {view: "teams", teamId: null};
+  navCurrent = s;
+  if (s.view === "competition") _navOrig.competition();
+  else if (s.view === "master") _navOrig.master();
+  else if (s.view === "org") _navOrig.org();
+  else if (s.view === "apparatus") _navOrig.apparatus();
+  else if (s.view === "detail" && teamsData.some((t) => t.id === s.teamId)) _navOrig.detail(s.teamId);
+  else if (s.view === "edit" && s.teamId && teamsData.some((t) => t.id === s.teamId)) _navOrig.edit(s.teamId);
+  else if (s.view === "edit" && !s.teamId) _navOrig.create();
+  else if (s.view === "protocol" && teamsData.some((t) => t.id === s.teamId)) _navOrig.protocol(s.teamId);
+  else _navOrig.teams();
+});
+
+history.replaceState({view: "teams", teamId: null}, "");
+
 renderHeaderButtons();
 loadDefaultData();
