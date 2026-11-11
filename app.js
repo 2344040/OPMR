@@ -629,12 +629,16 @@ function sortTeamsByName(teams) {
     getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru"),
   );
 }
+function getTeamDupIndex(team) {
+  const m = String(team.id || "").match(/-(\d+)$/);
+  return m ? parseInt(m[1], 10) : 1;
+}
+
 function getTeamDisplayName(team) {
   const org = organizations.find((o) => o.id === team.orgId);
-  if (org?.shortName) return org.shortName;
-  if (team.shortName) return team.shortName;
-  if (org) return org.fullName;
-  return team.organization || "Без названия";
+  const base = org ? (org.shortName || org.fullName) : (team.shortName || team.organization || "Без названия");
+  const n = getTeamDupIndex(team);
+  return n > 1 ? `${base} (${n})` : base;
 }
 function getTeamFullName(team) {
   const org = organizations.find((o) => o.id === team.orgId);
