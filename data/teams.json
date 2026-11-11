@@ -583,8 +583,9 @@
         "place": 0,
         "totalScore": 0
       },
-      "year": 2026,
-      "orgId": "005"
+      "year": 2024,
+      "orgId": "005",
+      "apparatusName": ""
     }
   ]
 }
