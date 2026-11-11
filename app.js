@@ -1218,94 +1218,73 @@ function addMemberField(member = null) {
 // ===== СОРЕВНОВАНИЯ =====
 // ===== КРИТЕРИИ: единый источник колонок для страницы «Соревнования» =====
 const COMP_DEFAULT_GROUPS = [
-  {
-    key: "pres",
-    title: "Презентация",
-    cols: [
-      {key: "pres_struct", title: "Структ."},
-      {key: "pres_sa", title: "СА"},
-      {key: "pres_new", title: "Нов."},
-      {key: "pres_qual", title: "Кач."},
-    ],
-  },
-  {
-    key: "qual",
-    title: "Квалификация",
-    cols: [
-      {key: "qual_place", title: "Разм."},
-      {key: "qual_weight", title: "Вес"},
-      {key: "qual_penalty", title: "Штраф"},
-      {key: "qual_ok", title: "Квал. ✓"},
-    ],
-  },
-  {
-    key: "task",
-    title: "Конкурсное задание",
-    cols: [
-      {key: "task_time", title: "Т сек"},
-      {key: "task_score", title: "Т балл"},
-      {key: "task_gate", title: "Вор."},
-      {key: "task_park", title: "Парк."},
-      {key: "task_gar", title: "Гар."},
-      {key: "task_penalty", title: "Штраф"},
-    ],
-  },
+  { key: "pres", title: "Презентация", cols: [
+    { key: "pres_struct", title: "Структ." }, { key: "pres_sa", title: "СА" },
+    { key: "pres_new", title: "Нов." }, { key: "pres_qual", title: "Кач." } ] },
+  { key: "qual", title: "Квалификация", cols: [
+    { key: "qual_place", title: "Разм." }, { key: "qual_weight", title: "Вес" },
+    { key: "qual_penalty", title: "Штраф" }, { key: "qual_ok", title: "Квал. ✓" } ] },
+  { key: "task", title: "Конкурсное задание", cols: [
+    { key: "task_time", title: "Т сек" }, { key: "task_score", title: "Т балл" },
+    { key: "task_gate", title: "Вор." }, { key: "task_park", title: "Парк." },
+    { key: "task_gar", title: "Гар." }, { key: "task_penalty", title: "Штраф" } ] },
 ];
 
-function compNormalizeCol(c, i) {
-  if (typeof c === "string") return {key: c, title: c};
-  return {key: c.key || c.id || "c" + i, title: c.title || c.label || c.name || String(c.key || c.id || i)};
+function compColKey(c, i) {
+  if (typeof c === "string") return c;
+  if (c && c.key !== undefined && c.key !== null && String(c.key).trim()) return String(c.key);
+  if (c && c.id !== undefined && c.id !== null && String(c.id).trim()) return String(c.id);
+  return "c" + i;
 }
+function compColTitle(c, i) {
+  if (typeof c === "string") return c;
+  if (!c) return String(i + 1);
+  const fields = ["title", "label", "name", "text", "header", "caption", "col", "column", "criteria", "displayName", "short", "abbr"];
+  for (const f of fields) {
+    const v = c[f];
+    if (v !== undefined && v !== null && String(v).trim()) return String(v);
+  }
+  return String(i + 1);
+}
+function compNormalizeCol(c, i) { return { key: compColKey(c, i), title: compColTitle(c, i) }; }
 
 function getClassCriteriaGroups(year, classId) {
   const cfg = (competitionSettings[year] || {})[classId] || {};
-  const raw = cfg.criteria;
+  let raw = cfg.criteria;
+  if (raw && typeof raw === "object" && !Array.isArray(raw) && raw.groups) raw = raw.groups;
   if (!raw) return COMP_DEFAULT_GROUPS;
+  let groups = [];
   if (Array.isArray(raw)) {
-    if (raw.length && !raw[0].cols && !raw[0].columns && !raw[0].items) {
-      return [{key: "custom", title: cfg.name || "Критерии", cols: raw.map(compNormalizeCol)}];
-    }
-    const groups = raw
-      .map((g, gi) => ({
-        key: g.key || g.id || "g" + gi,
-        title: g.title || g.name || "Группа " + (gi + 1),
+    const looksLikeGroups = raw.some((g) => g && (g.cols || g.columns || g.items));
+    if (looksLikeGroups) {
+      groups = raw.map((g, gi) => ({
+        key: (g.key !== undefined && g.key !== null) ? String(g.key) : ((g.id !== undefined && g.id !== null) ? String(g.id) : ("g" + gi)),
+        title: g.title || g.name || g.text || ("Группа " + (gi + 1)),
         cols: (g.cols || g.columns || g.items || []).map(compNormalizeCol),
-      }))
-      .filter((g) => g.cols.length);
-    return groups.length ? groups : COMP_DEFAULT_GROUPS;
+      }));
+    } else {
+      groups = [{ key: "custom", title: cfg.name || "Критерии", cols: raw.map(compNormalizeCol) }];
+    }
+  } else if (typeof raw === "object") {
+    groups = Object.entries(raw).map(([k, g]) => ({
+      key: k,
+      title: (g && (g.title || g.name || g.text)) || k,
+      cols: ((g && (g.cols || g.columns || g.items)) || (Array.isArray(g) ? g : [])).map(compNormalizeCol),
+    }));
   }
-  if (raw && typeof raw === "object") {
-    const groups = Object.entries(raw)
-      .map(([k, g]) => ({
-        key: k,
-        title: (g && (g.title || g.name)) || k,
-        cols: ((g && (g.cols || g.columns || g.items)) || []).map(compNormalizeCol),
-      }))
-      .filter((g) => g.cols.length);
-    return groups.length ? groups : COMP_DEFAULT_GROUPS;
-  }
-  return COMP_DEFAULT_GROUPS;
+  groups = groups.filter((g) => g.cols && g.cols.length);
+  if (!groups.length) return COMP_DEFAULT_GROUPS;
+  console.log("Критерии", year, classId, "->", groups);
+  return groups;
 }
 
 function getScoreValue(team, groupKey, colKey) {
   const s = team.scores || team.results || team.protocol || {};
   if (s && typeof s === "object") {
     if (s[colKey] !== undefined && s[colKey] !== "") return s[colKey];
-    if (
-      s[groupKey] &&
-      typeof s[groupKey] === "object" &&
-      s[groupKey][colKey] !== undefined &&
-      s[groupKey][colKey] !== ""
-    )
-      return s[groupKey][colKey];
+    if (s[groupKey] && typeof s[groupKey] === "object" && s[groupKey][colKey] !== undefined && s[groupKey][colKey] !== "") return s[groupKey][colKey];
   }
-  if (
-    team[groupKey] &&
-    typeof team[groupKey] === "object" &&
-    team[groupKey][colKey] !== undefined &&
-    team[groupKey][colKey] !== ""
-  )
-    return team[groupKey][colKey];
+  if (team[groupKey] && typeof team[groupKey] === "object" && team[groupKey][colKey] !== undefined && team[groupKey][colKey] !== "") return team[groupKey][colKey];
   if (team[colKey] !== undefined && team[colKey] !== "") return team[colKey];
   return "";
 }
@@ -1320,44 +1299,38 @@ function renderCompetition() {
     if (!g.teams.length) continue;
     const critGroups = getClassCriteriaGroups(currentYear, key);
 
-    let head1 = `<tr><th rowspan="2">№</th><th rowspan="2">Команда</th>`;
+    let head1 = `<tr><th rowspan="2" class="cg-fixed">№</th><th rowspan="2" class="cg-fixed">Команда</th>`;
     let head2 = `<tr>`;
-    critGroups.forEach((cg) => {
-      head1 += `<th colspan="${cg.cols.length}">${cg.title}</th>`;
-      cg.cols.forEach((c) => {
-        head2 += `<th>${c.title}</th>`;
-      });
+    critGroups.forEach((cg, gi) => {
+      const tint = "cg-tint-" + (gi % 5);
+      head1 += `<th colspan="${cg.cols.length}" class="${tint}">${cg.title}</th>`;
+      cg.cols.forEach((c) => { head2 += `<th class="${tint}">${c.title}</th>`; });
     });
-    head1 += `<th rowspan="2">Доп.</th><th rowspan="2">Σ</th><th rowspan="2" class="th-cup"><i class="fas fa-trophy"></i></th></tr>`;
+    head1 += `<th rowspan="2" class="cg-fixed">Доп.</th><th rowspan="2" class="cg-fixed">Σ</th><th rowspan="2" class="cg-fixed th-cup"><i class="fas fa-trophy"></i></th></tr>`;
     head2 += `</tr>`;
 
     let rows = "";
     g.teams.forEach((team) => {
-      let cells = "";
-      let total = 0;
-      let hasAny = false;
-      critGroups.forEach((cg) => {
+      let cells = ""; let total = 0; let hasAny = false;
+      critGroups.forEach((cg, gi) => {
+        const tint = "cg-tint-" + (gi % 5);
         cg.cols.forEach((c) => {
           const v = getScoreValue(team, cg.key, c.key);
-          if (v !== "" && v !== undefined) {
-            hasAny = true;
-            const n = parseFloat(String(v).replace(",", "."));
-            if (!isNaN(n)) total += n;
-          }
-          cells += `<td>${v === "" ? "—" : v}</td>`;
+          if (v !== "" && v !== undefined && v !== null) { hasAny = true; const n = parseFloat(String(v).replace(",", ".")); if (!isNaN(n)) total += n; }
+          cells += `<td class="${tint}">${(v === "" || v === undefined || v === null) ? "—" : v}</td>`;
         });
       });
       const draw = team.draw ?? team.drawNumber ?? team.lot ?? "—";
       const extra = team.extra ?? team.additional ?? "—";
       const cup = team.cup ?? team.place ?? "—";
-      rows += `<tr><td>${draw}</td><td class="td-team">${getTeamDisplayName(team)}</td>${cells}<td>${extra}</td><td><strong>${hasAny ? total : "—"}</strong></td><td class="th-cup">${cup}</td></tr>`;
+      rows += `<tr><td class="cg-fixed">${draw}</td><td class="td-team">${getTeamDisplayName(team)}</td>${cells}<td class="cg-fixed">${extra}</td><td class="cg-fixed"><strong>${hasAny ? total : "—"}</strong></td><td class="cg-fixed th-cup">${cup}</td></tr>`;
     });
 
     html += `<div class="competition-class-card">
-      <div class="competition-class-header">
+      <div class="group-header competition-class-header">
         <div class="group-header-left">
           <span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span>
-          <span class="group-header-title">${g.name}</span>
+          <span class="group-header-title">${g.fullName || g.name}</span>
         </div>
         ${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}
         <span class="competition-class-count">${g.teams.length} команд</span>
@@ -3428,14 +3401,8 @@ function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
   const byName = {};
-  teamsData.forEach((t) => {
-    byName[getTeamDisplayName(t)] = t;
-  });
+  teamsData.forEach((t) => { byName[getTeamDisplayName(t)] = t; });
   page.querySelectorAll("table").forEach((table) => {
-    const firstTh = table.querySelector("thead tr th");
-    if (firstTh && firstTh.textContent.trim() === "№") {
-      firstTh.innerHTML = '№<span class="th-sub">жребий</span>';
-    }
     table.querySelectorAll("tbody tr").forEach((row) => {
       const nameCell = row.cells[1];
       if (!nameCell || nameCell.querySelector(".team-leader-line")) return;
