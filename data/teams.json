@@ -52,13 +52,25 @@
       "id": "012",
       "fullName": "ГБУ ДО ДДТ Петродворцового района Санкт-Петербурга",
       "shortName": "ГБУ ДО ДДТ (Петродворец)",
-      "city": "Петергоф"
+      "city": "Петродворец"
     },
     {
       "id": "014",
       "fullName": "СКБ УОиР СПБГМТУ",
       "shortName": "СКБ УОиР СПБГМТУ",
       "city": "Санкт-Петербург"
+    },
+    {
+      "id": "015",
+      "fullName": "ГБОУ СОШ №368",
+      "shortName": "ГБОУ СОШ №368",
+      "city": ""
+    },
+    {
+      "id": "016",
+      "fullName": "ГБОУ СОШ №375",
+      "shortName": "ГБОУ СОШ №375",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -90,7 +102,7 @@
   "competitionSettings": {
     "2024": {
       "anna": {
-        "date": "01.11.2024",
+        "date": "26.04.2024",
         "color": "badge-anna",
         "criteria": [
           {
@@ -197,6 +209,14 @@
           }
         ],
         "name": "АННА"
+      },
+      "anpa": {
+        "date": "26.04.2024",
+        "criteria": []
+      },
+      "tnpa": {
+        "date": "26.04.2024",
+        "criteria": []
       }
     },
     "2025": {
@@ -472,7 +492,7 @@
         "place": 0,
         "totalScore": 31
       },
-      "year": 2024,
+      "year": 2025,
       "orgId": "004",
       "apparatusName": ""
     },
@@ -519,7 +539,7 @@
         "place": 0,
         "totalScore": 0
       },
-      "year": 2024,
+      "year": 2025,
       "orgId": "005",
       "apparatusName": ""
     },
@@ -1073,6 +1093,69 @@
       ],
       "orgId": "007",
       "applicationNumber": "2586051111"
+    },
+    {
+      "id": "012-2024-anna",
+      "created": "11.11.2026",
+      "orgId": "012",
+      "year": 2024,
+      "shortName": "ГБУ ДО ДДТ (Петродворец)",
+      "city": "Петродворец",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АННА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Меленчук Михаил Алексеевич",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "015-2024-anna",
+      "created": "11.11.2026",
+      "orgId": "015",
+      "year": 2024,
+      "shortName": "",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АННА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Дрягин Г.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "016-2024-anna",
+      "created": "11.11.2026",
+      "orgId": "016",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АННА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Замолоцкий В.Л.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
