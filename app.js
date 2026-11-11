@@ -481,6 +481,7 @@ function loadData() {
 // ===== ШАПКА =====
 function renderHeaderButtons() {
   const container = document.getElementById("headerButtons");
+  if (!container) return;
   const adminButtons = isAdmin
     ? `<div class="dropdown">
          <button class="btn btn-outline-primary btn-upload dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-folder-open"></i><span class="btn-text ms-2">Проект</span></button>
