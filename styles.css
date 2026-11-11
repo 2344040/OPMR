@@ -1790,7 +1790,8 @@ html {
 /* ===== ТЁМНЫЙ ФУТЕР НА ВСЮ ШИРИНУ ===== */
 .app-footer {
   margin-top: 40px;
-  background: #0f172a;
+  /* background: #0f172a; */
+  background: linear-gradient(180deg, #3e454d 0%, #363d44 100%);
   border-top: none;
   padding: 20px 0;
 }
@@ -1814,7 +1815,8 @@ html {
 .app-footer-copy {
   margin-left: auto;
   text-align: right;
-  color: #94a3b8;
+  /* color: #94a3b8; */
+  color: #aeb6bf;
 }
 
 /* ===== ФУТЕР: фон на всю ширину, контент в контейнере ===== */
