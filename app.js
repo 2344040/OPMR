@@ -2173,13 +2173,15 @@ function downloadJSON() {
   const dataStr = JSON.stringify(dataToSave, null, 2);
   const blob = new Blob([dataStr], {type: "application/json"});
   const url = URL.createObjectURL(blob);
+  const name = `OPMR_teamsBackup_${backupTimestamp()}.json`;
   const link = document.createElement("a");
   link.href = url;
-  link.download = "teams.json";
+  link.download = name;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+  showToast(`База сохранена: ${name} (команд: ${teamsData.length})`, "success");
 }
 
 // ===== ИМПОРТ JSON =====
