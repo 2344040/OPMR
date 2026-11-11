@@ -59,6 +59,12 @@
       "fullName": "СКБ УОиР СПБГМТУ",
       "shortName": "СКБ УОиР СПБГМТУ",
       "city": "Санкт-Петербург"
+    },
+    {
+      "id": "015",
+      "fullName": "ГБОУ СОШ №368",
+      "shortName": "ГБОУ СОШ №368",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -1091,6 +1097,27 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Меленчук Михаил Алексеевич",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "015-2024-anna",
+      "created": "11.11.2026",
+      "orgId": "015",
+      "year": 2024,
+      "shortName": "",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АННА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Дрягин Г.В.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
