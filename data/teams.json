@@ -65,22 +65,26 @@
     {
       "id": "bek",
       "name": "БЭК",
-      "color": "badge-bek"
+      "color": "badge-bek",
+      "fullName": "Безэкипажный катер"
     },
     {
       "id": "tnpa",
       "name": "ТНПА",
-      "color": "badge-tnpa"
+      "color": "badge-tnpa",
+      "fullName": "Телеуправляемый необитаемый подводный аппарат"
     },
     {
       "id": "anpa",
       "name": "АНПА",
-      "color": "badge-anpa"
+      "color": "badge-anpa",
+      "fullName": "Автономный необитаемый подводный аппарат"
     },
     {
       "id": "anna",
       "name": "АННА",
-      "color": "badge-anna"
+      "color": "badge-anna",
+      "fullName": "Автономный необитаемый надводный аппарат"
     }
   ],
   "competitionSettings": {
@@ -422,7 +426,8 @@
       ],
       "shortName": "Гидронавтика",
       "year": 2026,
-      "orgId": "002"
+      "orgId": "002",
+      "apparatusName": "«Агент000» (ТНПА)"
     },
     {
       "id": "NEW_1793973152695",
