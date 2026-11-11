@@ -1221,13 +1221,16 @@ body {
 }
 
 .btn-grouping-icon.active {
-  background: #2563eb !important;
-  border-color: #2563eb !important;
-  color: white !important;
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  color: #334155 !important;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08) !important;
 }
 
 .btn-grouping-icon.active:hover {
-  background: #1d4ed8 !important;
+  background: #cbd5e1 !important;
+  border-color: #64748b !important;
+  color: #0f172a !important;
 }
 
 .year-switcher .btn {
@@ -1665,4 +1668,27 @@ body {
   .team-list-table thead th {
     padding: 10px 10px;
   }
+}
+
+/* ===== СТАБИЛЬНАЯ ШИРИНА КОНТЕНТА ===== */
+html {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f4f6f8;
+}
+@supports not (scrollbar-gutter: stable) {
+  html { overflow-y: scroll; }
+}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: #f4f6f8; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; border: 2px solid #f4f6f8; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Все полноширинные элементы сетки — на одних и тех же краях */
+#teamsContainer > .row,
+#teamsContainer > .team-list-wrap,
+#teamsContainer > .group-header,
+.group-header-wrap {
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
 }

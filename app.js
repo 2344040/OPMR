@@ -755,7 +755,7 @@ function renderTeams(teams) {
     for (const key in groups) {
       if (groups[key].teams.length > 0) {
         const g = groups[key];
-        html += `<div class="col-12 mt-4"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.name}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
+        html += `<div class="mt-4 group-header-wrap"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.name}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div></div><div class="row g-3 mb-4">${g.teams.map((team) => renderTeamCard(team)).join("")}</div>`;
       }
     }
   }
