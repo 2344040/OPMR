@@ -77,6 +77,12 @@
       "fullName": "Президентский ФМЛ №239",
       "shortName": "ФМЛ №239",
       "city": ""
+    },
+    {
+      "id": "018",
+      "fullName": "МОУ Сосновский центр образования",
+      "shortName": "МОУ Сосновский центр образования",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -1264,6 +1270,27 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Филиппова Т.С.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "018-2024-anna",
+      "created": "11.11.2026",
+      "orgId": "018",
+      "year": 2024,
+      "shortName": "МОУ Сосновский центр образования",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АННА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Вебер Ю.А.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
