@@ -637,7 +637,7 @@ function getTeamDupIndex(team) {
 function getTeamDisplayName(team) {
   if (team.teamName && team.teamName.trim()) return team.teamName.trim();
   const org = organizations.find((o) => o.id === team.orgId);
-  const base = org ? (org.shortName || org.fullName) : (team.shortName || team.organization || "Без названия");
+  const base = org ? org.shortName || org.fullName : team.shortName || team.organization || "Без названия";
   const n = getTeamDupIndex(team);
   return n > 1 ? `${base} (${n})` : base;
 }
@@ -1216,63 +1216,163 @@ function addMemberField(member = null) {
 }
 
 // ===== СОРЕВНОВАНИЯ =====
-function renderCompetition() {
-  const container = document.getElementById("competitionContent");
-  const yearSettings = competitionSettings[currentYear] || {};
-  let html = "";
-  for (const classId in yearSettings) {
-    const g = yearSettings[classId];
-    const info = getClassInfo(classId);
-    const teams = teamsData.filter(
-      (t) =>
-        (t.year === currentYear &&
-          String(t.apparatusClass || "")
-            .toLowerCase()
-            .includes(classId.toLowerCase())) ||
-        (t.year === currentYear &&
-          String(t.apparatusClass || "")
-            .toLowerCase()
-            .includes(info.name.toLowerCase())),
-    );
-    if (teams.length === 0) continue;
-    const parseTime = (t) => {
-      if (!t) return 999999;
-      const parts = String(t).split(":");
-      if (parts.length === 2) return parseFloat(parts[0]) * 60 + parseFloat(parts[1]);
-      return parseFloat(t) || 999999;
-    };
-    const teamsWithTime = teams.filter((t) => t.protocol?.competition?.time);
-    const sortedByTime = [...teamsWithTime].sort(
-      (a, b) => parseTime(a.protocol.competition.time) - parseTime(b.protocol.competition.time),
-    );
-    sortedByTime.forEach((team, idx) => {
-      if (!team.protocol) team.protocol = {};
-      if (!team.protocol.competition) team.protocol.competition = {};
-      if (!team.protocol.competition.timeScore || team.protocol.competition.timeScore === 0) {
-        team.protocol.competition.timeScore = Math.max(1, 10 - idx);
-      }
-    });
-    const title = info.name;
-    html += `<div class="detail-section mb-4"><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><h4 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a">${title} <span class="badge bg-secondary ms-2" style="font-size:0.8rem">${g.date}</span></h4><span class="text-muted small">${teams.length} команд</span></div><div class="table-responsive"><table class="table table-hover align-middle competition-table" style="font-size:0.8rem"><thead class="table-light"><tr><th rowspan="2" style="width:35px;vertical-align:middle;text-align:center">№</th><th rowspan="2" style="vertical-align:middle;min-width:180px">Команда</th><th colspan="4" class="text-center bg-pres">Презентация</th><th colspan="4" class="text-center bg-qual">Квалификация</th><th colspan="6" class="text-center bg-comp">Конкурсное задание</th><th rowspan="2" style="vertical-align:middle;text-align:center">Доп.</th><th rowspan="2" style="vertical-align:middle;text-align:center">Σ</th><th rowspan="2" style="vertical-align:middle;text-align:center">🏆</th></tr><tr><th class="bg-pres" title="Структура">Структ.</th><th class="bg-pres" title="Сравнительный анализ">СА</th><th class="bg-pres" title="Новизна">Нов.</th><th class="bg-pres" title="Качество">Кач.</th><th class="bg-qual" title="Сумма размерений">Разм.</th><th class="bg-qual" title="Вес (кг)">Вес</th><th class="bg-qual" title="Штрафные баллы">Штраф</th><th class="bg-qual" title="Квалификационное задание выполнено">Квал. ✓</th><th class="bg-comp" title="Время (сек)">Т сек</th><th class="bg-comp" title="Балл за время">Т балл</th><th class="bg-comp" title="Прохождение ворот">Вор.</th><th class="bg-comp" title="Парковка">Парк.</th><th class="bg-comp" title="Нужный гараж">Гар.</th><th class="bg-comp" title="Штрафные баллы">Штраф</th></tr></thead><tbody>${teams
-      .map((team) => {
-        const p = team.protocol || {};
-        const pres = p.presentation || {};
-        const qual = p.qualification || {};
-        const comp = p.competition || {};
-        const presTotal = (pres.structure || 0) + (pres.analysis || 0) + (pres.novelty || 0) + (pres.quality || 0);
-        const compTotal = (comp.timeScore || 0) + (comp.gates || 0) + (comp.parking || 0) + (comp.garage || 0);
-        const total = Math.round(
-          presTotal + compTotal + (p.extraBonus || 0) - (qual.penalty || 0) - (comp.penalty || 0),
-        );
-        const displayName = getTeamDisplayName(team);
-        const fullName = getTeamFullName(team);
-        const city = getTeamCity(team);
-        return `<tr style="cursor:pointer" onclick="showProtocolPage('${team.id}')"><td style="text-align:center">${p.drawNumber || "—"}</td><td title="${fullName}${city ? ", " + city : ""}"><div class="fw-bold">${displayName}</div></td><td class="bg-pres-light">${pres.structure ?? "—"}</td><td class="bg-pres-light">${pres.analysis ?? "—"}</td><td class="bg-pres-light">${pres.novelty ?? "—"}</td><td class="bg-pres-light">${pres.quality ?? "—"}</td><td class="bg-qual-light">${p.dimensions ?? "—"}</td><td class="bg-qual-light">${p.weight ?? "—"}</td><td class="bg-qual-light">${qual.penalty ? "-" + qual.penalty : "—"}</td><td class="bg-qual-light" style="text-align:center">${qual.completed ? '<i class="fas fa-check text-success"></i>' : "—"}</td><td class="bg-comp-light">${comp.time ?? "—"}</td><td class="bg-comp-light">${comp.timeScore ?? "—"}</td><td class="bg-comp-light">${comp.gates ?? "—"}</td><td class="bg-comp-light">${comp.parking ?? "—"}</td><td class="bg-comp-light">${comp.garage ?? "—"}</td><td class="bg-comp-light">${comp.penalty ? "-" + comp.penalty : "—"}</td><td style="text-align:center">${p.extraBonus ?? "—"}</td><td class="fw-bold" style="text-align:center">${total > 0 ? total : "—"}</td><td style="text-align:center">${p.place ? `<span class="badge bg-primary">${p.place}</span>` : "—"}</td></tr>`;
-      })
-      .join("")}</tbody></table></div></div>`;
+// ===== КРИТЕРИИ: единый источник колонок для страницы «Соревнования» =====
+const COMP_DEFAULT_GROUPS = [
+  {
+    key: "pres",
+    title: "Презентация",
+    cols: [
+      {key: "pres_struct", title: "Структ."},
+      {key: "pres_sa", title: "СА"},
+      {key: "pres_new", title: "Нов."},
+      {key: "pres_qual", title: "Кач."},
+    ],
+  },
+  {
+    key: "qual",
+    title: "Квалификация",
+    cols: [
+      {key: "qual_place", title: "Разм."},
+      {key: "qual_weight", title: "Вес"},
+      {key: "qual_penalty", title: "Штраф"},
+      {key: "qual_ok", title: "Квал. ✓"},
+    ],
+  },
+  {
+    key: "task",
+    title: "Конкурсное задание",
+    cols: [
+      {key: "task_time", title: "Т сек"},
+      {key: "task_score", title: "Т балл"},
+      {key: "task_gate", title: "Вор."},
+      {key: "task_park", title: "Парк."},
+      {key: "task_gar", title: "Гар."},
+      {key: "task_penalty", title: "Штраф"},
+    ],
+  },
+];
+
+function compNormalizeCol(c, i) {
+  if (typeof c === "string") return {key: c, title: c};
+  return {key: c.key || c.id || "c" + i, title: c.title || c.label || c.name || String(c.key || c.id || i)};
+}
+
+function getClassCriteriaGroups(year, classId) {
+  const cfg = (competitionSettings[year] || {})[classId] || {};
+  const raw = cfg.criteria;
+  if (!raw) return COMP_DEFAULT_GROUPS;
+  if (Array.isArray(raw)) {
+    if (raw.length && !raw[0].cols && !raw[0].columns && !raw[0].items) {
+      return [{key: "custom", title: cfg.name || "Критерии", cols: raw.map(compNormalizeCol)}];
+    }
+    const groups = raw
+      .map((g, gi) => ({
+        key: g.key || g.id || "g" + gi,
+        title: g.title || g.name || "Группа " + (gi + 1),
+        cols: (g.cols || g.columns || g.items || []).map(compNormalizeCol),
+      }))
+      .filter((g) => g.cols.length);
+    return groups.length ? groups : COMP_DEFAULT_GROUPS;
   }
-  if (html === "") html = `<div class="col-12 text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
-  container.innerHTML = html;
+  if (raw && typeof raw === "object") {
+    const groups = Object.entries(raw)
+      .map(([k, g]) => ({
+        key: k,
+        title: (g && (g.title || g.name)) || k,
+        cols: ((g && (g.cols || g.columns || g.items)) || []).map(compNormalizeCol),
+      }))
+      .filter((g) => g.cols.length);
+    return groups.length ? groups : COMP_DEFAULT_GROUPS;
+  }
+  return COMP_DEFAULT_GROUPS;
+}
+
+function getScoreValue(team, groupKey, colKey) {
+  const s = team.scores || team.results || team.protocol || {};
+  if (s && typeof s === "object") {
+    if (s[colKey] !== undefined && s[colKey] !== "") return s[colKey];
+    if (
+      s[groupKey] &&
+      typeof s[groupKey] === "object" &&
+      s[groupKey][colKey] !== undefined &&
+      s[groupKey][colKey] !== ""
+    )
+      return s[groupKey][colKey];
+  }
+  if (
+    team[groupKey] &&
+    typeof team[groupKey] === "object" &&
+    team[groupKey][colKey] !== undefined &&
+    team[groupKey][colKey] !== ""
+  )
+    return team[groupKey][colKey];
+  if (team[colKey] !== undefined && team[colKey] !== "") return team[colKey];
+  return "";
+}
+
+function renderCompetition() {
+  const yearTeams = sortTeamsByName(teamsData.filter((t) => t.year === currentYear));
+  const groups = buildClassGroups(yearTeams);
+  let html = "";
+
+  for (const key in groups) {
+    const g = groups[key];
+    if (!g.teams.length) continue;
+    const critGroups = getClassCriteriaGroups(currentYear, key);
+
+    let head1 = `<tr><th rowspan="2">№</th><th rowspan="2">Команда</th>`;
+    let head2 = `<tr>`;
+    critGroups.forEach((cg) => {
+      head1 += `<th colspan="${cg.cols.length}">${cg.title}</th>`;
+      cg.cols.forEach((c) => {
+        head2 += `<th>${c.title}</th>`;
+      });
+    });
+    head1 += `<th rowspan="2">Доп.</th><th rowspan="2">Σ</th><th rowspan="2" class="th-cup"><i class="fas fa-trophy"></i></th></tr>`;
+    head2 += `</tr>`;
+
+    let rows = "";
+    g.teams.forEach((team) => {
+      let cells = "";
+      let total = 0;
+      let hasAny = false;
+      critGroups.forEach((cg) => {
+        cg.cols.forEach((c) => {
+          const v = getScoreValue(team, cg.key, c.key);
+          if (v !== "" && v !== undefined) {
+            hasAny = true;
+            const n = parseFloat(String(v).replace(",", "."));
+            if (!isNaN(n)) total += n;
+          }
+          cells += `<td>${v === "" ? "—" : v}</td>`;
+        });
+      });
+      const draw = team.draw ?? team.drawNumber ?? team.lot ?? "—";
+      const extra = team.extra ?? team.additional ?? "—";
+      const cup = team.cup ?? team.place ?? "—";
+      rows += `<tr><td>${draw}</td><td class="td-team">${getTeamDisplayName(team)}</td>${cells}<td>${extra}</td><td><strong>${hasAny ? total : "—"}</strong></td><td class="th-cup">${cup}</td></tr>`;
+    });
+
+    html += `<div class="competition-class-card">
+      <div class="competition-class-header">
+        <div class="group-header-left">
+          <span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span>
+          <span class="group-header-title">${g.name}</span>
+        </div>
+        ${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}
+        <span class="competition-class-count">${g.teams.length} команд</span>
+      </div>
+      <div class="table-responsive"><table class="competition-table">
+        <thead>${head1}${head2}</thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+    </div>`;
+  }
+
+  if (!html) html = `<div class="text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
+  const el = document.getElementById("competitionContent") || document.getElementById("competitionPage");
+  if (el) el.innerHTML = html;
+  return html;
 }
 
 // ===== ПРОТОКОЛ =====
@@ -3318,7 +3418,9 @@ function saveTeamName() {
 
 // ===== ПРОТОКОЛ: фамилия руководителя второй строкой + подпись колонки жребия =====
 function teamLeaderSurname(team) {
-  const parts = String(team.teamLeader || "").trim().split(/\s+/);
+  const parts = String(team.teamLeader || "")
+    .trim()
+    .split(/\s+/);
   return parts[0] || "";
 }
 
@@ -3326,7 +3428,9 @@ function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
   const byName = {};
-  teamsData.forEach((t) => { byName[getTeamDisplayName(t)] = t; });
+  teamsData.forEach((t) => {
+    byName[getTeamDisplayName(t)] = t;
+  });
   page.querySelectorAll("table").forEach((table) => {
     const firstTh = table.querySelector("thead tr th");
     if (firstTh && firstTh.textContent.trim() === "№") {
