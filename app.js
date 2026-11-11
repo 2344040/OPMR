@@ -472,6 +472,7 @@ function renderHeaderButtons() {
          <ul class="dropdown-menu dropdown-menu-end">
            <li><label for="fileInput" class="dropdown-item" style="cursor:pointer"><i class="fas fa-file-upload me-2 text-primary"></i>Загрузить JSON</label></li>
            <li><a class="dropdown-item" href="#" onclick="downloadJSON(); return false;"><i class="fas fa-download me-2 text-success"></i>Скачать JSON</a></li>
+           <li><a class="dropdown-item" href="#" onclick="backupProject(); return false;"><i class="fas fa-file-zipper me-2 text-warning"></i>Бэкап проекта (ZIP)</a></li>
            <li><hr class="dropdown-divider"></li>
            <li><a class="dropdown-item" href="#" onclick="commitToGitHubManual(); return false;"><i class="fab fa-github me-2"></i>Отправить данные на GitHub</a></li>
            <li><a class="dropdown-item" href="#" onclick="openGitHubSettings(); return false;"><i class="fas fa-cog me-2 text-muted"></i>Настройки GitHub…</a></li>
@@ -2963,6 +2964,66 @@ function applyTextImport() {
 
 function applyPDFImport() {
   if (pendingTextImport) finalizeImportedTeam(pendingTextImport, "pdfImportModal");
+}
+
+// ===== ПОЛНЫЙ БЭКАП ПРОЕКТА (ZIP) =====
+function backupTimestamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
+}
+
+async function backupProject() {
+  if (typeof JSZip === "undefined") {
+    showToast("JSZip не подключён: положите jszip.min.js в lib/ и добавьте script в index.html", "error");
+    return;
+  }
+  showToast("Собираю полный бэкап проекта...", "info");
+  const zip = new JSZip();
+  const included = [];
+  const skipped = [];
+
+  // 1. Живые данные из браузера — главная ценность бэкапа
+  zip.file("data/teams.json", JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}, null, 2));
+  included.push("data/teams.json (актуальные данные на момент бэкапа)");
+
+  // 2. Файлы сайта; отсутствующие пропускаются без падения
+  const assets = [
+    "index.html", "app.js", "styles.css", "favicon.svg",
+    "lib/bootstrap.min.css", "lib/all.min.css", "lib/bootstrap.bundle.min.js",
+    "lib/xlsx.full.min.js", "lib/pdf.min.js", "lib/pdf.worker.min.js", "lib/jszip.min.js",
+    "webfonts/fa-solid-900.woff2", "webfonts/fa-brands-400.woff2", "webfonts/fa-regular-400.woff2",
+    "webfonts/fa-solid-900.ttf", "webfonts/fa-brands-400.ttf", "webfonts/fa-regular-400.ttf",
+    "lib/webfonts/fa-solid-900.woff2", "lib/webfonts/fa-brands-400.woff2", "lib/webfonts/fa-regular-400.woff2",
+  ];
+  for (const path of assets) {
+    try {
+      const res = await fetch(path + "?backup=" + Date.now());
+      if (!res.ok) { skipped.push(path); continue; }
+      zip.file(path, await res.arrayBuffer());
+      included.push(path);
+    } catch (e) { skipped.push(path); }
+  }
+
+  // 3. Манифест
+  zip.file("BACKUP_INFO.txt",
+    `Полный бэкап проекта ОПМР\nСоздан: ${new Date().toLocaleString("ru-RU")}\nКоманд: ${teamsData.length}\nОрганизаций: ${organizations.length}\n\nВключено:\n${included.join("\n")}\n\nПропущено (не найдено на сервере):\n${skipped.join("\n") || "—"}\n\nВосстановление: распакуйте архив в папку сайта и опубликуйте (GitHub Pages или локальный сервер). Токен GitHub в бэкап не входит.`);
+
+  try {
+    const blob = await zip.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 6}});
+    const name = `OPMR_siteBackup_${backupTimestamp()}.zip`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast(`Бэкап сохранён: ${name} (${(blob.size / 1024 / 1024).toFixed(1)} МБ)`, "success");
+  } catch (e) {
+    showToast("Ошибка создания ZIP: " + e.message, "error");
+  }
 }
 
 renderHeaderButtons();
