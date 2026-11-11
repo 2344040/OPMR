@@ -1253,40 +1253,48 @@ function getClassCriteriaGroups(year, classId) {
   let raw = cfg.criteria;
   if (raw && typeof raw === "object" && !Array.isArray(raw) && raw.groups) raw = raw.groups;
   if (!raw) return COMP_DEFAULT_GROUPS;
+
+  const mapCol = (c, ci) => ({
+    key: compColKey(c, ci),
+    title: (c && String(c.short || "").trim()) || (c && String(c.title || c.label || "").trim()) || (c && String(c.name || "").trim()) || String(ci + 1),
+    full: (c && String(c.name || "").trim()) || "",
+  });
+  const mapGroup = (g, gi) => ({
+    key: (g && g.key !== undefined && g.key !== null) ? String(g.key) : ((g && g.id !== undefined && g.id !== null) ? String(g.id) : ("g" + gi)),
+    title: (g && String(g.sectionShort || g.title || g.name || g.text || "").trim()) || (g && String(g.section || "").trim()) || ("Группа " + (gi + 1)),
+    fullTitle: (g && String(g.section || "").trim()) || "",
+    cols: ((g && (g.fields || g.cols || g.columns || g.items)) || []).map(mapCol),
+  });
+
   let groups = [];
   if (Array.isArray(raw)) {
-    const looksLikeGroups = raw.some((g) => g && (g.cols || g.columns || g.items));
-    if (looksLikeGroups) {
-      groups = raw.map((g, gi) => ({
-        key: (g.key !== undefined && g.key !== null) ? String(g.key) : ((g.id !== undefined && g.id !== null) ? String(g.id) : ("g" + gi)),
-        title: g.title || g.name || g.text || ("Группа " + (gi + 1)),
-        cols: (g.cols || g.columns || g.items || []).map(compNormalizeCol),
-      }));
-    } else {
-      groups = [{ key: "custom", title: cfg.name || "Критерии", cols: raw.map(compNormalizeCol) }];
-    }
+    const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
+    groups = looksLikeGroups
+      ? raw.map(mapGroup)
+      : [{ key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol) }];
   } else if (typeof raw === "object") {
-    groups = Object.entries(raw).map(([k, g]) => ({
-      key: k,
-      title: (g && (g.title || g.name || g.text)) || k,
-      cols: ((g && (g.cols || g.columns || g.items)) || (Array.isArray(g) ? g : [])).map(compNormalizeCol),
-    }));
+    groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), { key: k }));
   }
   groups = groups.filter((g) => g.cols && g.cols.length);
-  if (!groups.length) return COMP_DEFAULT_GROUPS;
-  console.log("Критерии", year, classId, "->", groups);
-  return groups;
+  return groups.length ? groups : COMP_DEFAULT_GROUPS;
 }
 
-function getScoreValue(team, groupKey, colKey) {
+function getScoreValue(team, group, col, gi, ci) {
   const s = team.scores || team.results || team.protocol || {};
-  if (s && typeof s === "object") {
-    if (s[colKey] !== undefined && s[colKey] !== "") return s[colKey];
-    if (s[groupKey] && typeof s[groupKey] === "object" && s[groupKey][colKey] !== undefined && s[groupKey][colKey] !== "") return s[groupKey][colKey];
-  }
-  if (team[groupKey] && typeof team[groupKey] === "object" && team[groupKey][colKey] !== undefined && team[groupKey][colKey] !== "") return team[groupKey][colKey];
-  if (team[colKey] !== undefined && team[colKey] !== "") return team[colKey];
-  return "";
+  const keys = [col.key, col.full, col.title, `${gi}_${ci}`, `${group.key}_${ci}`, `${group.key}_${col.key}`]
+    .filter((k) => k !== undefined && k !== null && k !== "");
+  const read = (obj) => {
+    if (!obj || typeof obj !== "object") return "";
+    for (const k of keys) {
+      if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k];
+    }
+    return "";
+  };
+  let v = read(s);
+  if (v === "" && s && s[group.key]) v = read(s[group.key]);
+  if (v === "" && team[group.key]) v = read(team[group.key]);
+  if (v === "") v = read(team);
+  return v;
 }
 
 function renderCompetition() {
@@ -1302,22 +1310,30 @@ function renderCompetition() {
     let head1 = `<tr><th rowspan="2" class="cg-fixed">№</th><th rowspan="2" class="cg-fixed">Команда</th>`;
     let head2 = `<tr>`;
     critGroups.forEach((cg, gi) => {
-      const tint = "cg-tint-" + (gi % 5);
-      head1 += `<th colspan="${cg.cols.length}" class="${tint}">${cg.title}</th>`;
-      cg.cols.forEach((c) => { head2 += `<th class="${tint}">${c.title}</th>`; });
+      const tint = `cg-tint-${gi % 5}`;
+      head1 += `<th colspan="${cg.cols.length}" class="${tint}" title="${escHtml(cg.fullTitle || cg.title)}">${escHtml(cg.title)}</th>`;
+      cg.cols.forEach((c) => {
+        head2 += `<th class="${tint}" title="${escHtml(c.full || c.title)}">${escHtml(c.title)}</th>`;
+      });
     });
     head1 += `<th rowspan="2" class="cg-fixed">Доп.</th><th rowspan="2" class="cg-fixed">Σ</th><th rowspan="2" class="cg-fixed th-cup"><i class="fas fa-trophy"></i></th></tr>`;
     head2 += `</tr>`;
 
     let rows = "";
     g.teams.forEach((team) => {
-      let cells = ""; let total = 0; let hasAny = false;
+      let cells = "";
+      let total = 0;
+      let hasAny = false;
       critGroups.forEach((cg, gi) => {
-        const tint = "cg-tint-" + (gi % 5);
-        cg.cols.forEach((c) => {
-          const v = getScoreValue(team, cg.key, c.key);
-          if (v !== "" && v !== undefined && v !== null) { hasAny = true; const n = parseFloat(String(v).replace(",", ".")); if (!isNaN(n)) total += n; }
-          cells += `<td class="${tint}">${(v === "" || v === undefined || v === null) ? "—" : v}</td>`;
+        const tint = `cg-tint-${gi % 5}`;
+        cg.cols.forEach((c, ci) => {
+          const v = getScoreValue(team, cg, c, gi, ci);
+          if (v !== "" && v !== undefined && v !== null) {
+            hasAny = true;
+            const n = parseFloat(String(v).replace(",", "."));
+            if (!isNaN(n)) total += n;
+          }
+          cells += `<td class="${tint}">${(v === "" || v === undefined || v === null) ? "—" : escHtml(v)}</td>`;
         });
       });
       const draw = team.draw ?? team.drawNumber ?? team.lot ?? "—";
