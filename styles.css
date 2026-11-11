@@ -1540,3 +1540,129 @@ body {
     height: 46px;
   }
 }
+
+/* ===== ТАБЛИЧНЫЙ ВИД КОМАНД ===== */
+.team-list-wrap {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  margin-bottom: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+.team-list-wrap::-webkit-scrollbar {
+  height: 8px;
+}
+.team-list-wrap::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+}
+.team-list-wrap::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+.team-list-wrap::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.team-list-table {
+  width: 100%;
+  min-width: 1100px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+/* Фиксированные ширины колонок */
+.team-list-table col.tl-col-name {
+  width: 280px;
+} /* под «Лицей №22 "Надежда Сибири"» */
+.team-list-table col.tl-col-city {
+  width: 160px;
+}
+.team-list-table col.tl-col-leader {
+  width: 220px;
+}
+.team-list-table col.tl-col-count {
+  width: 100px;
+}
+.team-list-table col.tl-col-class {
+  width: 100px;
+}
+.team-list-table col.tl-col-apparatus {
+  width: 240px;
+}
+
+.team-list-table thead th {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: #64748b;
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-bottom: 2px solid #e2e8f0;
+  text-align: left;
+  white-space: nowrap;
+}
+.team-list-table thead th.tl-count,
+.team-list-table thead th.tl-class {
+  text-align: center;
+}
+
+.team-list-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+.team-list-table tbody tr:nth-child(even) {
+  background: #fafcff;
+}
+.team-list-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.team-list-row {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.team-list-row:hover {
+  background: #eef6ff;
+}
+.team-list-row:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
+
+.tl-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+.tl-ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tl-count {
+  text-align: center;
+  font-weight: 600;
+}
+.tl-class {
+  text-align: center;
+}
+.category-badge-list {
+  font-size: 0.72rem;
+  padding: 0.35rem 0.6rem;
+  min-width: 3.6rem;
+}
+
+@media (max-width: 768px) {
+  .team-list-table tbody td,
+  .team-list-table thead th {
+    padding: 10px 10px;
+  }
+}

@@ -10,7 +10,8 @@ const ADMIN_MODE_KEY = "opmr_admin_mode";
 const GH_SETTINGS_KEY = "opmr_gh_settings";
 const ADMIN_PASSWORD = "opmr2026";
 let isAdmin = localStorage.getItem(ADMIN_MODE_KEY) === "true";
-let isGrouped = false;
+let isGrouped = localStorage.getItem("opmr_view_grouped") === "true";
+let isListView = localStorage.getItem("opmr_view_list") === "true";
 let currentView = "teams";
 let currentYear = 2026;
 let returnToView = "list";
@@ -507,7 +508,8 @@ function renderHeaderButtons() {
       <button class="btn ${currentView === "competition" ? "btn-primary" : "btn-outline-primary"}" onclick="showCompetitionView()" style="border-radius:0 8px 8px 0"><i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span></button>
     </div>
         <span id="yearDropdownContainer" class="ms-2"></span>
-    <button class="btn btn-grouping-icon ${isGrouped ? "active" : ""}" onclick="toggleGrouping()" title="${isGrouped ? "Показать списком" : "Группировать по классам"}"><i class="fas fa-layer-group"></i></button>
+        <button class="btn btn-grouping-icon ${isGrouped ? "active" : ""}" onclick="toggleGrouping()" title="${isGrouped ? "Показать без группировки" : "Группировать по классам"}"><i class="fas fa-layer-group"></i></button>
+    <button class="btn btn-grouping-icon ${isListView ? "active" : ""}" onclick="toggleListView()" title="${isListView ? "Показать карточками" : "Показать списком"}"><i class="fas fa-${isListView ? "table-cells-large" : "list-ul"}"></i></button>
     <button class="btn ${isAdmin ? "btn-dark" : "btn-outline-secondary"} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? "Выйти из режима администратора" : "Войти в режим администратора"}"><i class="fas fa-${isAdmin ? "user-shield" : "lock"}"></i><span class="btn-text ms-2">${isAdmin ? "Админ" : "Admin"}</span></button>`;
   renderEditPageAdminButtons();
 }
@@ -630,6 +632,17 @@ function getTeamCity(team) {
 
 function toggleGrouping() {
   isGrouped = !isGrouped;
+  localStorage.setItem("opmr_view_grouped", isGrouped);
+  renderHeaderButtons();
+  renderYearSwitcher();
+  renderTeams(teamsData);
+}
+
+function toggleListView() {
+  isListView = !isListView;
+  localStorage.setItem("opmr_view_list", isListView);
+  renderHeaderButtons();
+  renderYearSwitcher();
   renderTeams(teamsData);
 }
 
@@ -640,6 +653,71 @@ function renderTeamCard(team) {
 }
 
 // ===== СПИСКИ КОМАНД =====
+
+// ===== ТАБЛИЧНЫЙ ВИД КОМАНД =====
+function escHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function buildClassGroups(sortedTeams) {
+  const yearSettings = competitionSettings[currentYear] || {};
+  const groups = {};
+  for (const key in yearSettings) {
+    const info = getClassInfo(key);
+    groups[key] = {...yearSettings[key], id: key, name: info.name, color: info.color, teams: []};
+  }
+  groups["other"] = {name: "Н/Д", color: "bg-secondary text-white", date: "", teams: []};
+  sortedTeams.forEach((team) => {
+    const val = String(team.apparatusClass || "").toLowerCase();
+    let foundKey = null;
+    for (const key in yearSettings) {
+      const info = getClassInfo(key);
+      if (val.includes(key.toLowerCase()) || val.includes(info.name.toLowerCase())) { foundKey = key; break; }
+    }
+    groups[foundKey || "other"].teams.push(team);
+  });
+  return groups;
+}
+
+function renderTeamListRow(team) {
+  const name = escHtml(getTeamDisplayName(team));
+  const city = escHtml(getTeamCity(team) || "—");
+  const leader = escHtml(team.teamLeader || "—");
+  const apparatus = escHtml(team.apparatusName || "—");
+  const count = team.members?.length || 0;
+  return `<tr class="team-list-row" tabindex="0" onclick="showTeamDetails('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showTeamDetails('${team.id}');}">
+    <td class="tl-name"><span class="tl-ellipsis" title="${name}">${name}</span></td>
+    <td><span class="tl-ellipsis" title="${city}">${city}</span></td>
+    <td><span class="tl-ellipsis" title="${leader}">${leader}</span></td>
+    <td class="tl-count">${count}</td>
+    <td class="tl-class">${getCategoryBadge(team.apparatusClass, "category-badge-list", team.year)}</td>
+    <td><span class="tl-ellipsis" title="${apparatus}">${apparatus}</span></td>
+  </tr>`;
+}
+
+function renderTeamsTable(teams) {
+  return `<div class="team-list-wrap"><table class="team-list-table">
+    <colgroup><col class="tl-col-name"><col class="tl-col-city"><col class="tl-col-leader"><col class="tl-col-count"><col class="tl-col-class"><col class="tl-col-apparatus"></colgroup>
+    <thead><tr><th>Название команды</th><th>Город</th><th>Руководитель</th><th class="tl-count">Участников</th><th class="tl-class">Класс</th><th>Название аппарата</th></tr></thead>
+    <tbody>${teams.map((t) => renderTeamListRow(t)).join("")}</tbody>
+  </table></div>`;
+}
+
+function renderTeamsList(sortedTeams) {
+  if (!isGrouped) return renderTeamsTable(sortedTeams);
+  const groups = buildClassGroups(sortedTeams);
+  let html = "";
+  for (const key in groups) {
+    const g = groups[key];
+    if (g.teams.length === 0) continue;
+    html += `<div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${g.name}</span></div>${g.date ? `<span class="group-date-badge">${g.date}</span>` : ""}</div>`;
+    html += renderTeamsTable(g.teams);
+  }
+  return html;
+}
+
 function renderTeams(teams) {
   // Страховка: команда без ID не открывается по клику — восстанавливаем ID на лету
   let repaired = false;
@@ -655,6 +733,7 @@ function renderTeams(teams) {
     }
   });
   if (repaired) saveData();
+
   const container = document.getElementById("teamsContainer");
   const filtered = teams.filter((t) => t.year === currentYear);
   if (filtered.length === 0) {
@@ -662,31 +741,17 @@ function renderTeams(teams) {
     return;
   }
   const sortedTeams = sortTeamsByName(filtered);
+
+  if (isListView) {
+    container.innerHTML = renderTeamsList(sortedTeams);
+    return;
+  }
+
   let html = "";
   if (!isGrouped) {
     html += `<div class="row g-3">${sortedTeams.map((team) => renderTeamCard(team)).join("")}</div>`;
   } else {
-    const yearSettings = competitionSettings[currentYear] || {};
-    const groups = {};
-    for (const key in yearSettings) {
-      const info = getClassInfo(key);
-      groups[key] = {...yearSettings[key], id: key, name: info.name, color: info.color, teams: []};
-    }
-    groups["other"] = {name: "Н/Д", color: "bg-secondary text-white", date: "", teams: []};
-
-    sortedTeams.forEach((team) => {
-      const val = String(team.apparatusClass || "").toLowerCase();
-      let foundKey = null;
-      for (const key in yearSettings) {
-        const info = getClassInfo(key);
-        if (val.includes(key.toLowerCase()) || val.includes(info.name.toLowerCase())) {
-          foundKey = key;
-          break;
-        }
-      }
-      groups[foundKey || "other"].teams.push(team);
-    });
-
+    const groups = buildClassGroups(sortedTeams);
     for (const key in groups) {
       if (groups[key].teams.length > 0) {
         const g = groups[key];
