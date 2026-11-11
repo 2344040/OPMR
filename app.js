@@ -640,6 +640,20 @@ function renderTeamCard(team) {
 
 // ===== СПИСКИ КОМАНД =====
 function renderTeams(teams) {
+  // Страховка: команда без ID не открывается по клику — восстанавливаем ID на лету
+  let repaired = false;
+  teamsData.forEach((t) => {
+    if (!t.id || t.id === "undefined") {
+      const org =
+        organizations.find((o) => o.id === t.orgId) ||
+        findOrCreateOrg(t.organization || t.shortName || "Без названия", t.shortName || "", t.city || "");
+      t.orgId = org.id;
+      t.year = t.year || currentYear;
+      t.id = generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
+      repaired = true;
+    }
+  });
+  if (repaired) saveData();
   const container = document.getElementById("teamsContainer");
   const filtered = teams.filter((t) => t.year === currentYear);
   if (filtered.length === 0) {
@@ -869,7 +883,10 @@ function showTeamDetails(teamId) {
     : "";
 
   document.getElementById("detailContent").innerHTML =
-    `<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2 print-header"><div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a;font-size:1.75rem">${displayName}</h3>${getCategoryBadge(team.apparatusClass, "category-badge-card")}<span class="badge bg-secondary ms-2">${team.year}</span></div><div class="d-flex gap-2">${editButtonDesktop}<button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()"><i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span></button></div></div><div class="d-flex gap-1 mb-2 print-header-mobile">${editButtonMobile}<button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display:none"><i class="fas fa-print"></i></button></div><div class="detail-section print-section-info"><div class="row g-4"><div class="col-md-6"><div class="detail-label">ID заявки</div><div class="detail-value">${team.id}</div></div><div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div><div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${getTeamCity(team) || "—"}</div></div><div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || "—"}</div></div><div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || "—"}</div></div><div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || "—"}</div></div><div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div><div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div><div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || "—"}</div></div></div></div><div class="detail-section print-section-apparatus"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, "category-badge-xl")}</div><div class="row g-4"><div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div><div class="col-12"><div class="detail-label">Название аппарата</div><div class="detail-value">${team.apparatusName || "—"}</div></div><div class="col-12 print-hide-desc"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div><div class="col-12 print-hide-photos"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div></div></div><div class="detail-section print-section-team"><h5 class="detail-section-title">Команда</h5><div class="row g-4"><div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${(team.teamLeaderPhone || "").replace(/\s/g, "")}">${team.teamLeaderPhone || "—"}</a></div></div></div></div><div class="detail-section print-section-members"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>`;
+    `<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2 print-header"><div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a;font-size:1.75rem">${displayName}</h3>${getCategoryBadge(team.apparatusClass, "category-badge-card")}<span class="badge bg-secondary ms-2">${team.year}</span></div><div class="d-flex gap-2">${editButtonDesktop}<button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()"><i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span></button></div></div><div class="d-flex gap-1 mb-2 print-header-mobile">${editButtonMobile}<button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display:none"><i class="fas fa-print"></i></button></div><div class="detail-section print-section-info"><div class="row g-4">
+    
+    <div class="col-md-6"><div class="detail-label">ID команды</div><div class="detail-value">${team.id}</div></div><div class="col-md-6"><div class="detail-label">Номер заявки</div><div class="detail-value">${team.applicationNumber || "—"}</div></div>
+    <div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div><div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${getTeamCity(team) || "—"}</div></div><div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || "—"}</div></div><div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || "—"}</div></div><div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || "—"}</div></div><div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div><div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div><div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || "—"}</div></div></div></div><div class="detail-section print-section-apparatus"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, "category-badge-xl")}</div><div class="row g-4"><div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div><div class="col-12"><div class="detail-label">Название аппарата</div><div class="detail-value">${team.apparatusName || "—"}</div></div><div class="col-12 print-hide-desc"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div><div class="col-12 print-hide-photos"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div></div></div><div class="detail-section print-section-team"><h5 class="detail-section-title">Команда</h5><div class="row g-4"><div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${(team.teamLeaderPhone || "").replace(/\s/g, "")}">${team.teamLeaderPhone || "—"}</a></div></div></div></div><div class="detail-section print-section-members"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>`;
   showDetailPage();
 }
 
@@ -2541,22 +2558,6 @@ function renderTextImportPreview() {
   document.getElementById("textImportPreview").innerHTML = html;
 }
 
-function applyTextImport() {
-  if (!pendingTextImport) return;
-  const t = pendingTextImport;
-  const org = findOrCreateOrg(t.organization, t.shortName, t.city);
-  const finalId = generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
-  const team = {...t, orgId: org.id, id: finalId, applicationNumber: t.id || ""};
-  delete team.id; // удаляем старое поле id, чтобы не конфликтовало с новым ID команды
-  delete team.organization;
-  teamsData.push(team);
-  saveData();
-  bootstrap.Modal.getInstance(document.getElementById("textImportModal")).hide();
-  showTeamsView();
-  showToast(`Команда «${org.shortName || org.fullName}» добавлена в ${t.year} год (ID: ${finalId})`, "success");
-  pendingTextImport = null;
-}
-
 // ===== ИМПОРТ КОМАНД ИЗ ФАЙЛОВ (.txt / JSON / Excel) =====
 function loadTextFileIntoModal(event) {
   const file = event.target.files[0];
@@ -2922,20 +2923,46 @@ function renderPDFImportPreview() {
   document.getElementById("pdfImportPreview").innerHTML = html;
 }
 
-// Сохранение из PDF-модалки
-function applyPDFImport() {
-  if (!pendingTextImport) return;
-  const t = pendingTextImport;
-  const org = findOrCreateOrg(t.organization, t.shortName, t.city);
-  const finalId = generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
-  const team = {...t, orgId: org.id, id: finalId, applicationNumber: t.id || ""};
-  delete team.id;
+// ===== ЕДИНОЕ СОХРАНЕНИЕ ИМПОРТИРОВАННОЙ КОМАНДЫ =====
+function finalizeImportedTeam(t, modalId) {
+  const org = findOrCreateOrg(t.organization || t.shortName || "Без названия", t.shortName || "", t.city || "");
+  const year = t.year || currentYear;
+  const finalId = generateTeamId(org.id, year, getClassIdByValue(t.apparatusClass, year));
+  const team = {
+    ...t,
+    orgId: org.id,
+    year,
+    id: finalId,
+    applicationNumber: t.applicationNumber || t.id || "",
+    members: Array.isArray(t.members) ? t.members : [],
+    photos: Array.isArray(t.photos) ? t.photos : [],
+  };
+  delete team.organization;
   teamsData.push(team);
   saveData();
-  bootstrap.Modal.getInstance(document.getElementById("pdfImportModal")).hide();
+  const inst = bootstrap.Modal.getInstance(document.getElementById(modalId));
+  if (inst) inst.hide();
   showTeamsView();
-  showToast(`Команда «${org.shortName || org.fullName}» добавлена в ${t.year} год (ID: ${finalId})`, "success");
+  showToast(
+    `Команда «${org.shortName || org.fullName}» добавлена в ${year} год (ID: ${finalId}, участников: ${team.members.length})`,
+    "success",
+  );
   pendingTextImport = null;
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token) {
+    showToast("Отправка в GitHub...", "info");
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  } else {
+    showToast("⚠ GitHub не настроен — данные только в браузере. Сделайте бэкап: Проект → Скачать JSON.", "info");
+  }
+}
+
+function applyTextImport() {
+  if (pendingTextImport) finalizeImportedTeam(pendingTextImport, "textImportModal");
+}
+
+function applyPDFImport() {
+  if (pendingTextImport) finalizeImportedTeam(pendingTextImport, "pdfImportModal");
 }
 
 renderHeaderButtons();
