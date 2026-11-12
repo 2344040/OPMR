@@ -1218,16 +1218,38 @@ function addMemberField(member = null) {
 // ===== СОРЕВНОВАНИЯ =====
 // ===== КРИТЕРИИ: единый источник колонок для страницы «Соревнования» =====
 const COMP_DEFAULT_GROUPS = [
-  { key: "pres", title: "Презентация", cols: [
-    { key: "pres_struct", title: "Структ." }, { key: "pres_sa", title: "СА" },
-    { key: "pres_new", title: "Нов." }, { key: "pres_qual", title: "Кач." } ] },
-  { key: "qual", title: "Квалификация", cols: [
-    { key: "qual_place", title: "Разм." }, { key: "qual_weight", title: "Вес" },
-    { key: "qual_penalty", title: "Штраф" }, { key: "qual_ok", title: "Квал. ✓" } ] },
-  { key: "task", title: "Конкурсное задание", cols: [
-    { key: "task_time", title: "Т сек" }, { key: "task_score", title: "Т балл" },
-    { key: "task_gate", title: "Вор." }, { key: "task_park", title: "Парк." },
-    { key: "task_gar", title: "Гар." }, { key: "task_penalty", title: "Штраф" } ] },
+  {
+    key: "pres",
+    title: "Презентация",
+    cols: [
+      {key: "pres_struct", title: "Структ."},
+      {key: "pres_sa", title: "СА"},
+      {key: "pres_new", title: "Нов."},
+      {key: "pres_qual", title: "Кач."},
+    ],
+  },
+  {
+    key: "qual",
+    title: "Квалификация",
+    cols: [
+      {key: "qual_place", title: "Разм."},
+      {key: "qual_weight", title: "Вес"},
+      {key: "qual_penalty", title: "Штраф"},
+      {key: "qual_ok", title: "Квал. ✓"},
+    ],
+  },
+  {
+    key: "task",
+    title: "Конкурсное задание",
+    cols: [
+      {key: "task_time", title: "Т сек"},
+      {key: "task_score", title: "Т балл"},
+      {key: "task_gate", title: "Вор."},
+      {key: "task_park", title: "Парк."},
+      {key: "task_gar", title: "Гар."},
+      {key: "task_penalty", title: "Штраф"},
+    ],
+  },
 ];
 
 function compColKey(c, i) {
@@ -1239,14 +1261,29 @@ function compColKey(c, i) {
 function compColTitle(c, i) {
   if (typeof c === "string") return c;
   if (!c) return String(i + 1);
-  const fields = ["title", "label", "name", "text", "header", "caption", "col", "column", "criteria", "displayName", "short", "abbr"];
+  const fields = [
+    "title",
+    "label",
+    "name",
+    "text",
+    "header",
+    "caption",
+    "col",
+    "column",
+    "criteria",
+    "displayName",
+    "short",
+    "abbr",
+  ];
   for (const f of fields) {
     const v = c[f];
     if (v !== undefined && v !== null && String(v).trim()) return String(v);
   }
   return String(i + 1);
 }
-function compNormalizeCol(c, i) { return { key: compColKey(c, i), title: compColTitle(c, i) }; }
+function compNormalizeCol(c, i) {
+  return {key: compColKey(c, i), title: compColTitle(c, i)};
+}
 
 function getClassCriteriaGroups(year, classId) {
   const cfg = (competitionSettings[year] || {})[classId] || {};
@@ -1256,12 +1293,24 @@ function getClassCriteriaGroups(year, classId) {
 
   const mapCol = (c, ci) => ({
     key: compColKey(c, ci),
-    title: (c && String(c.short || "").trim()) || (c && String(c.title || c.label || "").trim()) || (c && String(c.name || "").trim()) || String(ci + 1),
+    title:
+      (c && String(c.short || "").trim()) ||
+      (c && String(c.title || c.label || "").trim()) ||
+      (c && String(c.name || "").trim()) ||
+      String(ci + 1),
     full: (c && String(c.name || "").trim()) || "",
   });
   const mapGroup = (g, gi) => ({
-    key: (g && g.key !== undefined && g.key !== null) ? String(g.key) : ((g && g.id !== undefined && g.id !== null) ? String(g.id) : ("g" + gi)),
-    title: (g && String(g.sectionShort || g.title || g.name || g.text || "").trim()) || (g && String(g.section || "").trim()) || ("Группа " + (gi + 1)),
+    key:
+      g && g.key !== undefined && g.key !== null
+        ? String(g.key)
+        : g && g.id !== undefined && g.id !== null
+          ? String(g.id)
+          : "g" + gi,
+    title:
+      (g && String(g.sectionShort || g.title || g.name || g.text || "").trim()) ||
+      (g && String(g.section || "").trim()) ||
+      "Группа " + (gi + 1),
     fullTitle: (g && String(g.section || "").trim()) || "",
     cols: ((g && (g.fields || g.cols || g.columns || g.items)) || []).map(mapCol),
   });
@@ -1271,9 +1320,9 @@ function getClassCriteriaGroups(year, classId) {
     const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
     groups = looksLikeGroups
       ? raw.map(mapGroup)
-      : [{ key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol) }];
+      : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol)}];
   } else if (typeof raw === "object") {
-    groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), { key: k }));
+    groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
   }
   groups = groups.filter((g) => g.cols && g.cols.length);
   return groups.length ? groups : COMP_DEFAULT_GROUPS;
@@ -1281,8 +1330,9 @@ function getClassCriteriaGroups(year, classId) {
 
 function getScoreValue(team, group, col, gi, ci) {
   const s = team.scores || team.results || team.protocol || {};
-  const keys = [col.key, col.full, col.title, `${gi}_${ci}`, `${group.key}_${ci}`, `${group.key}_${col.key}`]
-    .filter((k) => k !== undefined && k !== null && k !== "");
+  const keys = [col.key, col.full, col.title, `${gi}_${ci}`, `${group.key}_${ci}`, `${group.key}_${col.key}`].filter(
+    (k) => k !== undefined && k !== null && k !== "",
+  );
   const read = (obj) => {
     if (!obj || typeof obj !== "object") return "";
     for (const k of keys) {
@@ -1351,13 +1401,13 @@ function renderCompetition() {
             const n = parseFloat(String(v).replace(",", "."));
             if (!isNaN(n)) total += n;
           }
-          cells += `<td class="${tint}">${(v === "" || v === undefined || v === null) ? "—" : escHtml(v)}</td>`;
+          cells += `<td class="${tint}">${v === "" || v === undefined || v === null ? "—" : escHtml(v)}</td>`;
         });
       });
       const draw = team.draw ?? team.drawNumber ?? team.lot ?? "—";
       const extra = team.extra ?? team.additional ?? "—";
       const cup = team.cup ?? team.place ?? "—";
-      rows += `<tr><td class="cg-fixed">${draw}</td><td class="td-team">${getTeamDisplayName(team)}</td>${cells}<td class="cg-fixed">${extra}</td><td class="cg-fixed"><strong>${hasAny ? total : "—"}</strong></td><td class="cg-fixed th-cup">${cup}</td></tr>`;
+      rows += `<tr class="competition-row" tabindex="0" title="Открыть протокол команды" onclick="showProtocolPage('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProtocolPage('${team.id}');}"><td class="cg-fixed">${draw}</td><td class="td-team">${getTeamDisplayName(team)}</td>${cells}<td class="cg-fixed">${extra}</td><td class="cg-fixed"><strong>${hasAny ? total : "—"}</strong></td><td class="cg-fixed th-cup">${cup}</td></tr>`;
     });
 
     html += `<div class="competition-class-card">
@@ -3435,7 +3485,9 @@ function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
   const byName = {};
-  teamsData.forEach((t) => { byName[getTeamDisplayName(t)] = t; });
+  teamsData.forEach((t) => {
+    byName[getTeamDisplayName(t)] = t;
+  });
   page.querySelectorAll("table").forEach((table) => {
     table.querySelectorAll("tbody tr").forEach((row) => {
       const nameCell = row.cells[1];

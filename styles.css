@@ -1962,3 +1962,15 @@ body > .container {
   letter-spacing: 0.02em;
   opacity: 0.75;
 }
+
+/* ===== Соревнования: кликабельные строки протокола ===== */
+.competition-table tbody tr.competition-row {
+  cursor: pointer;
+}
+.competition-table tbody tr.competition-row:hover td {
+  box-shadow: inset 0 0 0 999px rgba(37, 99, 235, 0.07);
+}
+.competition-table tbody tr.competition-row:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: -2px;
+}
