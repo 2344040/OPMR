@@ -1923,3 +1923,14 @@ body > .container {
 .competition-table td.cg-tint-4 {
   background: #fdecec;
 }
+
+/* ===== Соревнования: читаемые подзаголовки колонок ===== */
+.competition-table thead tr:nth-child(2) th {
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  white-space: normal;
+  line-height: 1.15;
+  padding: 6px 4px;
+}
