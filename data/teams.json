@@ -2288,6 +2288,27 @@
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
+    },
+    {
+      "id": "022-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "022",
+      "year": 2024,
+      "shortName": "Северный кванториум",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Платоненков С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
