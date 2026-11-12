@@ -83,6 +83,42 @@
       "fullName": "МОУ Сосновский центр образования",
       "shortName": "МОУ Сосновский центр образования",
       "city": ""
+    },
+    {
+      "id": "019",
+      "fullName": "ГБОУ СОШ №777",
+      "shortName": "ГБОУ СОШ №777",
+      "city": ""
+    },
+    {
+      "id": "020",
+      "fullName": "ГБОУ СОШ №385",
+      "shortName": "ГБОУ СОШ №385",
+      "city": ""
+    },
+    {
+      "id": "021",
+      "fullName": "ФГБОУ ВО \"Дальневосточный федеральный университет\"",
+      "shortName": "ДВФУ",
+      "city": ""
+    },
+    {
+      "id": "022",
+      "fullName": "МАОУ ДО \"Северный кванториум\"",
+      "shortName": "Северный кванториум",
+      "city": ""
+    },
+    {
+      "id": "023",
+      "fullName": "Клуб робототехники г.Ломоносов",
+      "shortName": "Клуб робототехники (Ломоносов)",
+      "city": ""
+    },
+    {
+      "id": "024",
+      "fullName": "АНО \"Центр подводных исследований Русского географического общества\"",
+      "shortName": "Центр подводных исследований РГО",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -123,7 +159,7 @@
             "fields": [
               {
                 "name": "Сумма размерений",
-                "short": " Σ размер."
+                "short": " Σ размер"
               },
               {
                 "name": "Штрафные баллы",
@@ -185,11 +221,11 @@
               },
               {
                 "name": "Эффективность",
-                "short": "Эффект."
+                "short": "Эфф."
               },
               {
                 "name": "Новизна",
-                "short": ""
+                "short": "Нов."
               },
               {
                 "name": "Перспектива",
@@ -202,7 +238,7 @@
             ]
           },
           {
-            "section": "Задание 4 (количество подводных объектов)",
+            "section": "Задание 4 (кол-во подводных объектов)",
             "sectionShort": "",
             "fields": [
               {
@@ -224,13 +260,276 @@
       },
       "anpa": {
         "date": "26.04.2024",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "name": "Структура",
+                "short": "Структ."
+              },
+              {
+                "name": "Эффективность",
+                "short": "Эффект."
+              },
+              {
+                "name": "Новизна",
+                "short": "Нов."
+              },
+              {
+                "name": "Перспектива",
+                "short": "Персп."
+              },
+              {
+                "name": "Качество",
+                "short": "Кач.",
+                "sum": true
+              }
+            ]
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "name": "Задание 1 (+/-)",
+                "short": "",
+                "sum": false
+              },
+              {
+                "name": "Сумма размерений (макс 2500 мм)",
+                "short": "Разм.",
+                "sum": false
+              },
+              {
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "penalty": true,
+                "sum": false
+              },
+              {
+                "name": "Вес (макс 30 кг)",
+                "short": "Вес",
+                "sum": false
+              },
+              {
+                "name": "Бонусные баллы",
+                "short": "Бонус"
+              }
+            ]
+          },
+          {
+            "section": "Задание 2 (движение по траектории)",
+            "sectionShort": "Зад. 2",
+            "fields": [
+              {
+                "name": "Время/место",
+                "short": "",
+                "sum": false
+              },
+              {
+                "name": "Баллы",
+                "short": "Баллы"
+              },
+              {
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "penalty": true,
+                "sum": false
+              }
+            ]
+          },
+          {
+            "section": "Задание 3 (Стыковка с имитатором ЗУ)",
+            "sectionShort": "Зад. 3",
+            "fields": [
+              {
+                "name": "Точность (0-10, 10-30, 30-100)",
+                "short": "Остр. 1",
+                "sum": false
+              },
+              {
+                "name": "Баллы за точность",
+                "short": "Балл точность"
+              },
+              {
+                "name": "Бонусные баллы за направленность",
+                "short": "Бонус направл-ть"
+              }
+            ]
+          },
+          {
+            "section": "Задание 4 (фотомозаика, 30 мин)",
+            "sectionShort": "Зад. 4",
+            "fields": [
+              {
+                "name": "Кол-во объектов",
+                "short": "Кол-во объектов",
+                "sum": false
+              },
+              {
+                "name": "Баллы",
+                "short": "Баллы"
+              },
+              {
+                "name": "Бонус за расстояния",
+                "short": "Бонус расст."
+              }
+            ]
+          }
+        ],
         "name": "АНПА",
         "color": "badge-anpa"
       },
       "tnpa": {
         "date": "26.04.2024",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация (5 баллов/параметр)",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "name": "Структура",
+                "short": "Структ.",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Эффективность",
+                "short": "Эффект.",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Новизна",
+                "short": "Нов.",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Перспектива",
+                "short": "Персп.",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Качество",
+                "short": "Кач.",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "name": "Задание 1 (+/-)",
+                "short": "",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Сумма размерений (макс 2100 мм)",
+                "short": "Разм.",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "name": "Вес (макс 30 кг)",
+                "short": "Вес",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Бонусные баллы",
+                "short": "Бонус",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Задание 2 (прохождение колец)",
+            "sectionShort": "Зад. 2",
+            "fields": [
+              {
+                "name": "Время/место",
+                "short": "",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Баллы за время",
+                "short": "Баллы",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          },
+          {
+            "section": "Задание 3 (Прочесть надпись)",
+            "sectionShort": "Зад. 3",
+            "fields": [
+              {
+                "name": "+/-",
+                "short": "",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Баллы",
+                "short": "Баллы",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Ошибки (кол-во)",
+                "short": "Ошибки",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "penalty": true,
+                "sum": false
+              }
+            ]
+          },
+          {
+            "section": "Задание 4 (принести груз",
+            "sectionShort": "Зад. 4",
+            "fields": [
+              {
+                "name": "Время/место",
+                "short": "",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Баллы",
+                "short": "Баллы",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          }
+        ],
         "name": "ТНПА",
         "color": "badge-tnpa"
       }
@@ -282,6 +581,404 @@
       }
     }
   },
+  "criteriaTemplates": [
+    {
+      "id": "t1794491617661",
+      "name": "АНПА 2024",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "name": "Структура",
+              "short": "Структ."
+            },
+            {
+              "name": "Эффективность",
+              "short": "Эффект."
+            },
+            {
+              "name": "Новизна",
+              "short": "Нов."
+            },
+            {
+              "name": "Перспектива",
+              "short": "Персп."
+            },
+            {
+              "name": "Качество",
+              "short": "Кач.",
+              "sum": true
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "name": "Задание 1 (+/-)",
+              "short": "",
+              "sum": false
+            },
+            {
+              "name": "Сумма размерений (макс 2500 мм)",
+              "short": "Разм.",
+              "sum": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "penalty": true,
+              "sum": false
+            },
+            {
+              "name": "Вес (макс 30 кг)",
+              "short": "Вес",
+              "sum": false
+            },
+            {
+              "name": "Бонусные баллы",
+              "short": "Бонус"
+            }
+          ]
+        },
+        {
+          "section": "Задание 2 (движение по траектории)",
+          "sectionShort": "Зад. 2",
+          "fields": [
+            {
+              "name": "Время/место",
+              "short": "",
+              "sum": false
+            },
+            {
+              "name": "Баллы",
+              "short": "Баллы"
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "penalty": true,
+              "sum": false
+            }
+          ]
+        },
+        {
+          "section": "Задание 3 (Стыковка с имитатором ЗУ)",
+          "sectionShort": "Зад. 3",
+          "fields": [
+            {
+              "name": "Точность (0-10, 10-30, 30-100)",
+              "short": "Остр. 1",
+              "sum": false
+            },
+            {
+              "name": "Баллы за точность",
+              "short": "Балл точность"
+            },
+            {
+              "name": "Бонусные баллы за направленность",
+              "short": "Бонус направл-ть"
+            }
+          ]
+        },
+        {
+          "section": "Задание 4 (фотомозаика, 30 мин)",
+          "sectionShort": "Зад. 4",
+          "fields": [
+            {
+              "name": "Кол-во объектов",
+              "short": "Кол-во объектов",
+              "sum": false
+            },
+            {
+              "name": "Баллы",
+              "short": "Баллы"
+            },
+            {
+              "name": "Бонус за расстояния",
+              "short": "Бонус расст."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "t1794491626660",
+      "name": "АНПА 2024",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "name": "Структура",
+              "short": "Структ."
+            },
+            {
+              "name": "Эффективность",
+              "short": "Эффект."
+            },
+            {
+              "name": "Новизна",
+              "short": "Нов."
+            },
+            {
+              "name": "Перспектива",
+              "short": "Персп."
+            },
+            {
+              "name": "Качество",
+              "short": "Кач.",
+              "sum": true
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "name": "Задание 1 (+/-)",
+              "short": "",
+              "sum": false
+            },
+            {
+              "name": "Сумма размерений (макс 2500 мм)",
+              "short": "Разм.",
+              "sum": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "penalty": true,
+              "sum": false
+            },
+            {
+              "name": "Вес (макс 30 кг)",
+              "short": "Вес",
+              "sum": false
+            },
+            {
+              "name": "Бонусные баллы",
+              "short": "Бонус"
+            }
+          ]
+        },
+        {
+          "section": "Задание 2 (движение по траектории)",
+          "sectionShort": "Зад. 2",
+          "fields": [
+            {
+              "name": "Время/место",
+              "short": "",
+              "sum": false
+            },
+            {
+              "name": "Баллы",
+              "short": "Баллы"
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "penalty": true,
+              "sum": false
+            }
+          ]
+        },
+        {
+          "section": "Задание 3 (Стыковка с имитатором ЗУ)",
+          "sectionShort": "Зад. 3",
+          "fields": [
+            {
+              "name": "Точность (0-10, 10-30, 30-100)",
+              "short": "Остр. 1",
+              "sum": false
+            },
+            {
+              "name": "Баллы за точность",
+              "short": "Балл точность"
+            },
+            {
+              "name": "Бонусные баллы за направленность",
+              "short": "Бонус направл-ть"
+            }
+          ]
+        },
+        {
+          "section": "Задание 4 (фотомозаика, 30 мин)",
+          "sectionShort": "Зад. 4",
+          "fields": [
+            {
+              "name": "Кол-во объектов",
+              "short": "Кол-во объектов",
+              "sum": false
+            },
+            {
+              "name": "Баллы",
+              "short": "Баллы"
+            },
+            {
+              "name": "Бонус за расстояния",
+              "short": "Бонус расст."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "t1794492299179",
+      "name": "ТНПА 2024",
+      "criteria": [
+        {
+          "section": "Презентация (5 баллов/параметр)",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "name": "Структура",
+              "short": "Структ.",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Эффективность",
+              "short": "Эффект.",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Новизна",
+              "short": "Нов.",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Перспектива",
+              "short": "Персп.",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Качество",
+              "short": "Кач.",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "name": "Задание 1 (+/-)",
+              "short": "",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Сумма размерений (макс 2100 мм)",
+              "short": "Разм.",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "name": "Вес (макс 30 кг)",
+              "short": "Вес",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Бонусные баллы",
+              "short": "Бонус",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Задание 2 (прохождение колец)",
+          "sectionShort": "Зад. 2",
+          "fields": [
+            {
+              "name": "Время/место",
+              "short": "",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Баллы за время",
+              "short": "Баллы",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Задание 3 (Прочесть надпись)",
+          "sectionShort": "Зад. 3",
+          "fields": [
+            {
+              "name": "+/-",
+              "short": "",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Баллы",
+              "short": "Баллы",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Ошибки (кол-во)",
+              "short": "Ошибки",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "penalty": true,
+              "sum": false
+            }
+          ]
+        },
+        {
+          "section": "Задание 4 (принести груз",
+          "sectionShort": "Зад. 4",
+          "fields": [
+            {
+              "name": "Время/место",
+              "short": "",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Баллы",
+              "short": "Баллы",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
   "teams": [
     {
       "id": "2538225085",
@@ -1321,6 +2018,363 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Вебер Ю.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "016-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "016",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Речкалов С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "019-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "019",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №777",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Молотков М.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "020-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "020",
+      "year": 2024,
+      "shortName": "",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Дзюина М.С.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "021-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "021",
+      "year": 2024,
+      "shortName": "ДВФУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Шилин К.Д.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "001-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "001",
+      "year": 2024,
+      "shortName": "СПбГМТУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Синишин А.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "022-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "022",
+      "year": 2024,
+      "shortName": "Северный кванториум",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Платоненков С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "011-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "011",
+      "year": 2024,
+      "shortName": "САФУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "ТНПА \"Лемминг\"",
+      "description": "",
+      "teamLeader": "Ивлев Марк Леонидович",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "011-2024-tnpa-2",
+      "created": "12.11.2026",
+      "orgId": "011",
+      "year": 2024,
+      "shortName": "САФУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "ТНПА \"Полярник\"",
+      "description": "",
+      "teamLeader": "Ивлев Марк Леонидович",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "016-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "016",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Речкалов С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "020-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "020",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №385",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Верховцева М.О.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "001-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "001",
+      "year": 2024,
+      "shortName": "СПбГМТУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Кузнецов Р.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "001-2024-tnpa-2",
+      "created": "12.11.2026",
+      "orgId": "001",
+      "year": 2024,
+      "shortName": "СПбГМТУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Синишин А.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "023-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "023",
+      "year": 2024,
+      "shortName": "Клуб робототехники (Ломоносов)",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Евстигнеев Д.Н.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "022-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "022",
+      "year": 2024,
+      "shortName": "Северный кванториум",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Платоненков С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "018-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "018",
+      "year": 2024,
+      "shortName": "МОУ Сосновский центр образования",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Вебер Ю.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "019-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "019",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №777",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Малиновский О.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "024-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "024",
+      "year": 2024,
+      "shortName": "Центр подводных исследований РГО",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Егорчев Е.А.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
