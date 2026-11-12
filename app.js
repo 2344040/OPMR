@@ -2,6 +2,7 @@ let teamsData = [];
 let organizations = [];
 let competitionSettings = {};
 let apparatusClasses = [];
+let criteriaTemplates = [];
 let currentTeamId = null;
 let isNewTeam = false;
 const STORAGE_KEY = "opmr_teams_data_v2";
@@ -227,7 +228,7 @@ async function commitToGitHub() {
   const filePath = "data/teams.json";
   const apiUrl = `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${filePath}`;
   const headers = {Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json"};
-  const dataToSave = {organizations, apparatusClasses, competitionSettings, teams: teamsData};
+  const dataToSave = {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData};
   const jsonStr = JSON.stringify(dataToSave, null, 2);
   const content = btoa(unescape(encodeURIComponent(jsonStr)));
   for (let attempt = 1; attempt <= 3; attempt++) {
@@ -453,7 +454,7 @@ function saveData() {
   try {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}),
+            JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}),
     );
   } catch (e) {
     console.warn("Не удалось сохранить:", e);
@@ -469,7 +470,18 @@ function loadData() {
       competitionSettings = normalizeCompetitionSettings(parsed.competitionSettings || getDefaultCompetitionSettings());
       apparatusClasses = parsed.apparatusClasses || [];
       ensureApparatusClasses();
-      teamsData = parsed.teams || [];
+            teamsData = parsed.teams || [];
+      criteriaTemplates = Array.isArray(parsed.criteriaTemplates) ? parsed.criteriaTemplates : [];
+      if (criteriaTemplates.length === 0) {
+        try {
+          const legacy = JSON.parse(localStorage.getItem(CRITERIA_TEMPLATES_KEY));
+          if (Array.isArray(legacy) && legacy.length) {
+            criteriaTemplates = legacy;
+            localStorage.removeItem(CRITERIA_TEMPLATES_KEY);
+            saveData();
+          }
+        } catch {}
+      }
       return true;
     }
   } catch (e) {
@@ -2369,14 +2381,19 @@ function moveField(gIdx, fIdx, direction) {
 }
 // ===== БИБЛИОТЕКА ШАБЛОНОВ НАБОРОВ =====
 const CRITERIA_TEMPLATES_KEY = "opmr_criteria_templates";
+
 function loadCriteriaTemplates() {
-  try {
-    const v = JSON.parse(localStorage.getItem(CRITERIA_TEMPLATES_KEY));
-    return Array.isArray(v) ? v : [];
-  } catch {
-    return [];
+  return Array.isArray(criteriaTemplates) ? criteriaTemplates : [];
+}
+function saveCriteriaTemplates(list) {
+  criteriaTemplates = Array.isArray(list) ? list : [];
+  saveData();
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token) {
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
   }
 }
+
 function saveCriteriaTemplates(list) {
   localStorage.setItem(CRITERIA_TEMPLATES_KEY, JSON.stringify(list));
 }
@@ -2530,7 +2547,7 @@ function downloadJSON() {
     showToast("Нет данных", "error");
     return;
   }
-  const dataToSave = {organizations, apparatusClasses, competitionSettings, teams: teamsData};
+  const dataToSave = {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData};
   const dataStr = JSON.stringify(dataToSave, null, 2);
   const blob = new Blob([dataStr], {type: "application/json"});
   const url = URL.createObjectURL(blob);
@@ -2575,7 +2592,8 @@ function importRawData(rawData) {
     competitionSettings = normalizeCompetitionSettings(rawData.competitionSettings || getDefaultCompetitionSettings());
     apparatusClasses = rawData.apparatusClasses || [];
     ensureApparatusClasses();
-    teamsData = normalizeImportedTeams(rawData.teams || [], currentYear, []);
+        teamsData = normalizeImportedTeams(rawData.teams || [], currentYear, []);
+    criteriaTemplates = Array.isArray(rawData.criteriaTemplates) ? rawData.criteriaTemplates : [];
     saveData();
     showTeamsView();
     showToast(`Данные загружены: ${teamsData.length} команд (полное замещение)`, "success");
@@ -2688,7 +2706,8 @@ async function loadDefaultData() {
       );
       apparatusClasses = rawData.apparatusClasses || [];
       ensureApparatusClasses();
-      teamsData = rawData.teams || [];
+            teamsData = rawData.teams || [];
+      criteriaTemplates = Array.isArray(rawData.criteriaTemplates) ? rawData.criteriaTemplates : [];
     } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
       teamsData = transformYandexFormsData(rawData);
     } else if (
@@ -3349,7 +3368,7 @@ async function backupProject() {
   // 1. Живые данные из браузера — главная ценность бэкапа
   zip.file(
     "data/teams.json",
-    JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}, null, 2),
+      JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}, null, 2),
   );
   included.push("data/teams.json (актуальные данные на момент бэкапа)");
 
