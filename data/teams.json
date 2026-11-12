@@ -2198,6 +2198,48 @@
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
+    },
+    {
+      "id": "020-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "020",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №385",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Верховцева М.О.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "001-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "001",
+      "year": 2024,
+      "shortName": "СПбГМТУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Кузнецов Р.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
