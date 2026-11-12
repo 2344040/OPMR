@@ -107,6 +107,12 @@
       "fullName": "МАОУ ДО \"Северный кванториум\"",
       "shortName": "Северный кванториум",
       "city": ""
+    },
+    {
+      "id": "023",
+      "fullName": "Клуб робототехники г.Ломоносов",
+      "shortName": "Клуб робототехники (Ломоносов)",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -2237,6 +2243,48 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Кузнецов Р.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "001-2024-tnpa-2",
+      "created": "12.11.2026",
+      "orgId": "001",
+      "year": 2024,
+      "shortName": "СПбГМТУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Синишин А.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "023-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "023",
+      "year": 2024,
+      "shortName": "Клуб робототехники (Ломоносов)",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Евстигнеев Д.Н.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
