@@ -101,6 +101,12 @@
       "fullName": "ФГБОУ ВО \"Дальневосточный федеральный университет\"",
       "shortName": "ДВФУ",
       "city": ""
+    },
+    {
+      "id": "022",
+      "fullName": "МАОУ ДО \"Северный кванториум\"",
+      "shortName": "Северный кванториум",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -1789,6 +1795,48 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Шилин К.Д.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "001-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "001",
+      "year": 2024,
+      "shortName": "СПбГМТУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Синишин А.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "022-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "022",
+      "year": 2024,
+      "shortName": "Северный кванториум",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Платоненков С.В.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
