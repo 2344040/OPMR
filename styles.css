@@ -1267,11 +1267,6 @@ body {
 
 .competition-table th,
 .competition-table td {
-  font-size: 0.75rem !important;
-  padding: 6px 4px !important;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   text-align: center !important;
   vertical-align: middle !important;
 }
@@ -1313,13 +1308,6 @@ body {
   background-color: #f0f9ff !important;
 }
 
-.competition-table thead tr:last-child th:nth-child(17),
-.competition-table thead tr:last-child th:nth-child(18),
-.competition-table tbody td:nth-child(17),
-.competition-table tbody td:nth-child(18) {
-  background-color: #f1f5f9 !important;
-}
-
 .competition-table thead tr:first-child th {
   font-family: "Fira Sans Condensed", "Inter", sans-serif !important;
   font-weight: 600 !important;
@@ -1327,16 +1315,19 @@ body {
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: #475569 !important;
+}
+/* Сквозные заголовки (№, Команда, Доп., Σ, кубок): толстая линия к телу */
+.competition-table thead tr:first-child th[rowspan] {
   border-bottom: 2px solid #cbd5e1 !important;
 }
-
-.competition-table thead tr:last-child th {
-  font-family: "Fira Sans Condensed", "Inter", sans-serif !important;
-  font-weight: 400 !important;
-  font-size: 0.72rem !important;
-  letter-spacing: 0.02em;
-  color: #475569 !important;
+/* Заголовки групп: тонкая линия к подзаголовкам */
+.competition-table thead tr:first-child th[colspan] {
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+/* Подзаголовки: сверху тонкая, снизу толстая — как у сквозных */
+.competition-table thead tr:nth-child(2) th {
   border-top: 1px solid #e2e8f0 !important;
+  border-bottom: 2px solid #cbd5e1 !important;
 }
 
 @media print {
@@ -1352,13 +1343,6 @@ body {
   .bg-qual,
   .bg-qual-light {
     background-color: white !important;
-  }
-
-  .competition-table thead tr:last-child th:nth-child(17),
-  .competition-table thead tr:last-child th:nth-child(18),
-  .competition-table tbody td:nth-child(17),
-  .competition-table tbody td:nth-child(18) {
-    background-color: #f1f5f9 !important;
   }
 }
 
@@ -1922,17 +1906,6 @@ body > .container {
 .competition-table th.cg-tint-4,
 .competition-table td.cg-tint-4 {
   background: #fdecec;
-}
-
-/* ===== Соревнования: читаемые подзаголовки колонок ===== */
-.competition-table thead tr:nth-child(2) th {
-  font-size: 8px;
-  font-weight: 600;
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
-  white-space: normal;
-  line-height: 1.15;
-  padding: 6px 4px;
 }
 
 /* ===== Соревнования: переносы в шапке, без обрезаний, мелкая скобочная часть ===== */
