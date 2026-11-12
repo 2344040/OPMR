@@ -1947,3 +1947,25 @@ body > .container {
   outline: 2px solid #2563eb;
   outline-offset: -2px;
 }
+
+/* ===== Редактор критериев: флаги Σ/− и штрафы в таблице ===== */
+.crit-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin: 0;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+}
+.crit-flag input {
+  cursor: pointer;
+}
+.crit-flag-penalty {
+  color: #b91c1c;
+}
+.competition-table td.cg-penalty {
+  color: #b91c1c !important;
+  font-weight: 700;
+}
