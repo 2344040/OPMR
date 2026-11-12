@@ -454,7 +454,7 @@ function saveData() {
   try {
     localStorage.setItem(
       STORAGE_KEY,
-            JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}),
+      JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}),
     );
   } catch (e) {
     console.warn("Не удалось сохранить:", e);
@@ -470,7 +470,7 @@ function loadData() {
       competitionSettings = normalizeCompetitionSettings(parsed.competitionSettings || getDefaultCompetitionSettings());
       apparatusClasses = parsed.apparatusClasses || [];
       ensureApparatusClasses();
-            teamsData = parsed.teams || [];
+      teamsData = parsed.teams || [];
       criteriaTemplates = Array.isArray(parsed.criteriaTemplates) ? parsed.criteriaTemplates : [];
       if (criteriaTemplates.length === 0) {
         try {
@@ -1303,17 +1303,18 @@ function getClassCriteriaGroups(year, classId) {
   if (raw && typeof raw === "object" && !Array.isArray(raw) && raw.groups) raw = raw.groups;
   if (!raw) return COMP_DEFAULT_GROUPS;
 
-  const mapCol = (c, ci) => ({
-    key: compColKey(c, ci),
-    title:
-      (c && String(c.short || "").trim()) ||
-      (c && String(c.title || c.label || "").trim()) ||
-      (c && String(c.name || "").trim()) ||
-      String(ci + 1),
-    full: (c && String(c.name || "").trim()) || "",
-    sum: !(c && c.sum === false),
-    penalty: !!(c && c.penalty),
-  });
+  const mapCol = (c, ci) => {
+    const name = (c && String(c.name || "").trim()) || "";
+    return {
+      key: compColKey(c, ci),
+      title:
+        (c && String(c.short || "").trim()) || (c && String(c.title || c.label || "").trim()) || name || String(ci + 1),
+      full: name,
+      sum: !(c && c.sum === false),
+      penalty: c && c.penalty !== undefined ? !!c.penalty : /штраф/i.test(name),
+    };
+  };
+
   const mapGroup = (g, gi) => ({
     key:
       g && g.key !== undefined && g.key !== null
@@ -1344,9 +1345,16 @@ function getClassCriteriaGroups(year, classId) {
 
 function getScoreValue(team, group, col, gi, ci) {
   const s = team.scores || team.results || team.protocol || {};
-  const keys = [col.key, col.full, col.title, `${gi}_${ci}`, `${group.key}_${ci}`, `${group.key}_${col.key}`].filter(
-    (k) => k !== undefined && k !== null && k !== "",
-  );
+  const keys = [
+    col.key,
+    col.full,
+    col.title,
+    `${gi}_${ci}`,
+    `${group.key}_${ci}`,
+    `${group.key}_${col.key}`,
+    `${group.title}::${col.full || col.title}`,
+    `${group.fullTitle || group.title}::${col.full || col.title}`,
+  ].filter((k) => k !== undefined && k !== null && k !== "");
   const read = (obj) => {
     if (!obj || typeof obj !== "object") return "";
     for (const k of keys) {
@@ -1468,84 +1476,92 @@ function renderCompetition() {
 function renderProtocolForm(teamId) {
   const team = teamsData.find((t) => t.id === teamId);
   if (!team) return;
+  const classId = getClassIdByValue(team.apparatusClass, team.year);
+  const critGroups = getClassCriteriaGroups(team.year, classId);
   const p = team.protocol || {};
-  const pres = p.presentation || {};
-  const qual = p.qualification || {};
-  const comp = p.competition || {};
   const container = document.getElementById("protocolContent");
   const fullName = getTeamFullName(team);
-  container.innerHTML = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-12"><div class="detail-label">Команда</div><div class="detail-value">${fullName}</div></div><div class="col-md-6"><div class="detail-label">Руководитель</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber || ""}"></div></div></div><div class="detail-section"><h5 class="detail-section-title">Презентация</h5><div class="row g-3"><div class="col-md-3"><label class="form-label">Структура</label><input type="number" step="1" min="0" class="form-control proto-calc" id="protoPresStructure" value="${pres.structure || ""}" placeholder="0"></div><div class="col-md-3"><label class="form-label">Сравн. анализ</label><input type="number" step="1" min="0" class="form-control proto-calc" id="protoPresAnalysis" value="${pres.analysis || ""}" placeholder="0"></div><div class="col-md-3"><label class="form-label">Новизна</label><input type="number" step="1" min="0" class="form-control proto-calc" id="protoPresNovelty" value="${pres.novelty || ""}" placeholder="0"></div><div class="col-md-3"><label class="form-label">Качество</label><input type="number" step="1" min="0" class="form-control proto-calc" id="protoPresQuality" value="${pres.quality || ""}" placeholder="0"></div><div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма презентации:</strong> <span id="presTotal">${(pres.structure || 0) + (pres.analysis || 0) + (pres.novelty || 0) + (pres.quality || 0)}</span></div></div></div></div><div class="detail-section"><h5 class="detail-section-title">Квалификация</h5><div class="row g-3"><div class="col-md-3"><label class="form-label">Сумма размерений</label><input type="number" step="0.01" min="0" class="form-control proto-calc" id="protoDimensions" value="${p.dimensions || ""}" placeholder="0"></div><div class="col-md-3"><label class="form-label">Вес (кг)</label><input type="number" step="0.01" min="0" class="form-control proto-calc" id="protoWeight" value="${p.weight || ""}" placeholder="0"></div><div class="col-md-3"><label class="form-label">Штраф. баллы</label><input type="number" step="1" min="0" class="form-control proto-calc" id="protoQualPenalty" value="${qual.penalty || ""}" placeholder="0"></div><div class="col-md-3"><label class="form-label">Квал. задание выполнено</label><div class="form-check mt-2"><input class="form-check-input proto-calc" type="checkbox" id="protoQualCompleted" ${qual.completed ? "checked" : ""}><label class="form-check-label" for="protoQualCompleted">Да</label></div></div></div></div><div class="detail-section"><h5 class="detail-section-title">Конкурсное задание</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">Время (сек)</label><input type="text" class="form-control" id="protoCompTime" value="${comp.time || ""}"></div><div class="col-md-4"><label class="form-label">Балл за время</label><input type="number" step="1" class="form-control proto-calc" id="protoCompTimeScore" value="${comp.timeScore || 0}"></div><div class="col-md-4"><label class="form-label">Прохождение ворот</label><input type="number" step="1" class="form-control proto-calc" id="protoCompGates" value="${comp.gates || 0}"></div><div class="col-md-4"><label class="form-label">Парковка</label><input type="number" step="1" class="form-control proto-calc" id="protoCompParking" value="${comp.parking || 0}"></div><div class="col-md-4"><label class="form-label">Нужный гараж</label><input type="number" step="1" class="form-control proto-calc" id="protoCompGarage" value="${comp.garage || 0}"></div><div class="col-md-4"><label class="form-label">Штрафные баллы</label><input type="number" step="1" class="form-control proto-calc" id="protoCompPenalty" value="${comp.penalty || 0}"></div><div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма конкурса:</strong> <span id="compTotal">${(comp.timeScore || 0) + (comp.gates || 0) + (comp.parking || 0) + (comp.garage || 0)}</span></div></div></div></div><div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="1" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus || 0}"></div></div></div><div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place || ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
-  document.querySelectorAll(".proto-calc").forEach((input) => {
-    input.addEventListener("input", updateProtocolTotals);
+  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-12"><div class="detail-label">Команда</div><div class="detail-value">${fullName}</div></div><div class="col-md-6"><div class="detail-label">Руководитель</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
+  critGroups.forEach((cg, gi) => {
+    html += `<div class="detail-section"><h5 class="detail-section-title">${escHtml(cg.fullTitle || cg.title)}</h5><div class="row g-3">`;
+    cg.cols.forEach((c, ci) => {
+      const val = getScoreValue(team, cg, c, gi, ci);
+      const pen = !!c.penalty;
+      html += `<div class="col-md-3"><label class="form-label ${pen ? "proto-penalty-label" : ""}">${escHtml(c.full || c.title)}${pen ? " (штраф)" : ""}</label><input type="number" step="any" class="form-control proto-calc" data-gi="${gi}" data-ci="${ci}" data-sum="${c.sum !== false ? 1 : 0}" data-penalty="${pen ? 1 : 0}" id="proto-${gi}-${ci}" value="${val === "" ? "" : escHtml(val)}" placeholder="0"></div>`;
+    });
+    html += `<div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма группы:</strong> <span id="protoGroupTotal-${gi}">0</span></div></div></div></div>`;
   });
+  html += `<div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="any" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus ?? team.extra ?? 0}"></div></div></div><div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
+  container.innerHTML = html;
+  document.querySelectorAll(".proto-calc").forEach((input) => input.addEventListener("input", updateProtocolTotals));
   updateProtocolTotals();
 }
 
 function updateProtocolTotals() {
-  const getVal = (id) => {
-    const el = document.getElementById(id);
-    if (!el) return 0;
-    const val = parseFloat(el.value);
-    return isNaN(val) ? 0 : val;
-  };
-  const pres =
-    getVal("protoPresStructure") +
-    getVal("protoPresAnalysis") +
-    getVal("protoPresNovelty") +
-    getVal("protoPresQuality");
-  const comp =
-    getVal("protoCompTimeScore") + getVal("protoCompGates") + getVal("protoCompParking") + getVal("protoCompGarage");
-  const extra = getVal("protoExtraBonus");
-  const qualPenalty = getVal("protoQualPenalty");
-  const compPenalty = getVal("protoCompPenalty");
-  const total = Math.round(pres + comp + extra - qualPenalty - compPenalty);
-  document.getElementById("presTotal").textContent = pres;
-  document.getElementById("compTotal").textContent = comp;
-  document.getElementById("protoTotal").textContent = total;
+  let grand = 0;
+  document.querySelectorAll("[id^='protoGroupTotal-']").forEach((span) => {
+    const gi = span.id.replace("protoGroupTotal-", "");
+    let g = 0;
+    document.querySelectorAll(`.proto-calc[data-gi="${gi}"]`).forEach((inp) => {
+      const n = parseFloat(inp.value);
+      if (isNaN(n)) return;
+      if (inp.dataset.penalty === "1") g -= n;
+      else if (inp.dataset.sum === "1") g += n;
+    });
+    span.textContent = Math.round(g * 100) / 100;
+    grand += g;
+  });
+  grand += parseFloat(document.getElementById("protoExtraBonus")?.value) || 0;
+  const totalEl = document.getElementById("protoTotal");
+  if (totalEl) totalEl.textContent = Math.round(grand * 100) / 100;
 }
 
 function saveProtocol() {
   const team = teamsData.find((t) => t.id === currentProtocolTeamId);
   if (!team) return;
-  const getVal = (id) => document.getElementById(id)?.value;
-  const getNum = (id) => parseFloat(getVal(id)) || 0;
-  team.protocol = {
-    drawNumber: getVal("protoDrawNumber"),
-    presentation: {
-      structure: getNum("protoPresStructure"),
-      analysis: getNum("protoPresAnalysis"),
-      novelty: getNum("protoPresNovelty"),
-      quality: getNum("protoPresQuality"),
-    },
-    dimensions: getNum("protoDimensions"),
-    weight: getNum("protoWeight"),
-    qualification: {
-      penalty: getNum("protoQualPenalty"),
-      completed: document.getElementById("protoQualCompleted")?.checked || false,
-    },
-    competition: {
-      time: getVal("protoCompTime"),
-      timeScore: getNum("protoCompTimeScore"),
-      gates: getNum("protoCompGates"),
-      parking: getNum("protoCompParking"),
-      garage: getNum("protoCompGarage"),
-      penalty: getNum("protoCompPenalty"),
-    },
-    extraBonus: getNum("protoExtraBonus"),
-    place: parseInt(getVal("protoPlace")) || 0,
-    totalScore: parseFloat(document.getElementById("protoTotal").textContent) || 0,
-  };
-  saveData();
-  const ghSettings = getGitHubSettings();
-  if (ghSettings?.owner && ghSettings?.repo && ghSettings?.token) {
-    showToast("Сохранение в GitHub...", "info");
-    commitToGitHub().then((result) => {
-      showToast(result.message, result.success ? "success" : "error");
+  const classId = getClassIdByValue(team.apparatusClass, team.year);
+  const critGroups = getClassCriteriaGroups(team.year, classId);
+  const scores = {};
+  critGroups.forEach((cg, gi) => {
+    cg.cols.forEach((c, ci) => {
+      const el = document.getElementById(`proto-${gi}-${ci}`);
+      scores[`${cg.title}::${c.full || c.title}`] = el ? el.value : "";
     });
+  });
+  team.scores = scores;
+  const draw = document.getElementById("protoDrawNumber")?.value || "";
+  const extra = parseFloat(document.getElementById("protoExtraBonus")?.value) || 0;
+  const place = parseInt(document.getElementById("protoPlace")?.value) || 0;
+  const total = parseFloat(document.getElementById("protoTotal")?.textContent) || 0;
+  team.draw = draw;
+  team.extra = extra;
+  team.place = place;
+  team.protocol = {...(team.protocol || {}), drawNumber: draw, extraBonus: extra, place, totalScore: total};
+  saveData();
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token) {
+    showToast("Сохранение в GitHub...", "info");
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
   } else {
     showToast("Протокол сохранён локально", "success");
   }
   showCompetitionView();
+}
+
+function computeTeamTotal(team) {
+  const classId = getClassIdByValue(team.apparatusClass, team.year);
+  const groups = getClassCriteriaGroups(team.year, classId);
+  let total = 0;
+  groups.forEach((cg, gi) =>
+    cg.cols.forEach((c, ci) => {
+      const n = parseFloat(String(getScoreValue(team, cg, c, gi, ci)).replace(",", "."));
+      if (isNaN(n)) return;
+      if (c.penalty) total -= n;
+      else if (c.sum !== false) total += n;
+    }),
+  );
+  total += parseFloat(team.extra ?? team.protocol?.extraBonus ?? 0) || 0;
+  return Math.round(total * 100) / 100;
 }
 
 function calculatePlaces() {
@@ -1573,25 +1589,8 @@ function calculatePlaces() {
       team.protocol.competition.timeScore = Math.max(1, 10 - idx);
     });
     teams.sort((a, b) => {
-      const calc = (t) => {
-        const pres =
-          (t.protocol.presentation?.structure || 0) +
-          (t.protocol.presentation?.analysis || 0) +
-          (t.protocol.presentation?.novelty || 0) +
-          (t.protocol.presentation?.quality || 0);
-        const comp =
-          (t.protocol.competition?.timeScore || 0) +
-          (t.protocol.competition?.gates || 0) +
-          (t.protocol.competition?.parking || 0) +
-          (t.protocol.competition?.garage || 0);
-        return Math.round(
-          pres +
-            comp +
-            (t.protocol.extraBonus || 0) -
-            (t.protocol.qualification?.penalty || 0) -
-            (t.protocol.competition?.penalty || 0),
-        );
-      };
+      const calc = (t) => computeTeamTotal(t);
+
       return calc(b) - calc(a);
     });
     teams.forEach((team, idx) => {
@@ -2201,8 +2200,13 @@ function normalizeCriteria(criteria) {
     const rawFields = isObj ? g.fields || [] : [];
     const fields = rawFields.map((f) =>
       typeof f === "object" && f !== null
-        ? {name: f.name || String(f), short: f.short || "", sum: f.sum !== false, penalty: !!f.penalty}
-        : {name: String(f), short: "", sum: true, penalty: false},
+        ? {
+            name: f.name || String(f),
+            short: f.short || "",
+            ...(f.sum !== undefined ? {sum: f.sum} : {}),
+            ...(f.penalty !== undefined ? {penalty: f.penalty} : {}),
+          }
+        : {name: String(f), short: ""},
     );
     return {section, sectionShort, fields};
   });
@@ -2394,9 +2398,6 @@ function saveCriteriaTemplates(list) {
   }
 }
 
-function saveCriteriaTemplates(list) {
-  localStorage.setItem(CRITERIA_TEMPLATES_KEY, JSON.stringify(list));
-}
 function saveCriteriaAsTemplate() {
   const name = prompt(
     "Название шаблона набора критериев:",
@@ -2592,7 +2593,7 @@ function importRawData(rawData) {
     competitionSettings = normalizeCompetitionSettings(rawData.competitionSettings || getDefaultCompetitionSettings());
     apparatusClasses = rawData.apparatusClasses || [];
     ensureApparatusClasses();
-        teamsData = normalizeImportedTeams(rawData.teams || [], currentYear, []);
+    teamsData = normalizeImportedTeams(rawData.teams || [], currentYear, []);
     criteriaTemplates = Array.isArray(rawData.criteriaTemplates) ? rawData.criteriaTemplates : [];
     saveData();
     showTeamsView();
@@ -2706,7 +2707,7 @@ async function loadDefaultData() {
       );
       apparatusClasses = rawData.apparatusClasses || [];
       ensureApparatusClasses();
-            teamsData = rawData.teams || [];
+      teamsData = rawData.teams || [];
       criteriaTemplates = Array.isArray(rawData.criteriaTemplates) ? rawData.criteriaTemplates : [];
     } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
       teamsData = transformYandexFormsData(rawData);
@@ -3368,7 +3369,11 @@ async function backupProject() {
   // 1. Живые данные из браузера — главная ценность бэкапа
   zip.file(
     "data/teams.json",
-      JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}, null, 2),
+    JSON.stringify(
+      {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData},
+      null,
+      2,
+    ),
   );
   included.push("data/teams.json (актуальные данные на момент бэкапа)");
 

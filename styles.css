@@ -1969,3 +1969,11 @@ body > .container {
   color: #b91c1c !important;
   font-weight: 700;
 }
+
+.competition-table td.cg-penalty {
+  color: #b91c1c !important;
+  font-weight: 700;
+}
+.proto-penalty-label {
+  color: #b91c1c;
+}
