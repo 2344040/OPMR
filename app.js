@@ -1297,6 +1297,10 @@ function getScoreValue(team, group, col, gi, ci) {
   return v;
 }
 
+function lcLetters(s) {
+  return String(s).replace(/[A-ZА-ЯЁ]/g, (ch) => ch.toLowerCase());
+}
+
 function renderCompetition() {
   const yearTeams = sortTeamsByName(teamsData.filter((t) => t.year === currentYear));
   const groups = buildClassGroups(yearTeams);
@@ -1307,13 +1311,27 @@ function renderCompetition() {
     if (!g.teams.length) continue;
     const critGroups = getClassCriteriaGroups(currentYear, key);
 
+    // Стабильные цвета: презентация и квалификация фиксированы, задания — циклом
+    let extraIdx = 0;
+    const extraPool = [2, 3, 4];
+    const tints = critGroups.map((cg) => {
+      const t = String(cg.title || "").toLowerCase();
+      if (t.includes("презентац")) return 0;
+      if (t.includes("квалификац")) return 1;
+      return extraPool[extraIdx++ % extraPool.length];
+    });
+
     let head1 = `<tr><th rowspan="2" class="cg-fixed">№</th><th rowspan="2" class="cg-fixed">Команда</th>`;
     let head2 = `<tr>`;
     critGroups.forEach((cg, gi) => {
-      const tint = `cg-tint-${gi % 5}`;
-      head1 += `<th colspan="${cg.cols.length}" class="${tint}" title="${escHtml(cg.fullTitle || cg.title)}">${escHtml(cg.title)}</th>`;
+      const tint = "cg-tint-" + tints[gi];
+      const full = cg.fullTitle || cg.title;
+      const pi = full.indexOf("(");
+      const main = pi > 0 ? full.slice(0, pi).trim() : full;
+      const paren = pi > 0 ? full.slice(pi).trim() : "";
+      head1 += `<th colspan="${cg.cols.length}" class="${tint}" title="${escHtml(full)}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
       cg.cols.forEach((c) => {
-        head2 += `<th class="${tint}" title="${escHtml(c.full || c.title)}">${escHtml(c.title)}</th>`;
+        head2 += `<th class="${tint}" title="${escHtml(c.full || c.title)}">${escHtml(lcLetters(c.title))}</th>`;
       });
     });
     head1 += `<th rowspan="2" class="cg-fixed">Доп.</th><th rowspan="2" class="cg-fixed">Σ</th><th rowspan="2" class="cg-fixed th-cup"><i class="fas fa-trophy"></i></th></tr>`;
@@ -1325,7 +1343,7 @@ function renderCompetition() {
       let total = 0;
       let hasAny = false;
       critGroups.forEach((cg, gi) => {
-        const tint = `cg-tint-${gi % 5}`;
+        const tint = "cg-tint-" + tints[gi];
         cg.cols.forEach((c, ci) => {
           const v = getScoreValue(team, cg, c, gi, ci);
           if (v !== "" && v !== undefined && v !== null) {

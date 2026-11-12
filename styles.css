@@ -1934,3 +1934,31 @@ body > .container {
   line-height: 1.15;
   padding: 6px 4px;
 }
+
+/* ===== Соревнования: переносы в шапке, без обрезаний, мелкая скобочная часть ===== */
+.competition-table thead tr:first-child th {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.2;
+  padding: 8px 6px;
+}
+.competition-table thead tr:nth-child(2) th {
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: break-word;
+  line-height: 1.15;
+  padding: 6px 4px;
+}
+.cg-group-paren {
+  display: block;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+}
