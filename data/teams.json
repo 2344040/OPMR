@@ -372,7 +372,152 @@
       },
       "tnpa": {
         "date": "26.04.2024",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация (5 баллов/параметр)",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "name": "Структура",
+                "short": "Структ.",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Эффективность",
+                "short": "Эффект.",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Новизна",
+                "short": "Нов.",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Перспектива",
+                "short": "Персп.",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Качество",
+                "short": "Кач.",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "name": "Задание 1 (+/-)",
+                "short": "",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Сумма размерений (макс 2100 мм)",
+                "short": "Разм.",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "name": "Вес (макс 30 кг)",
+                "short": "Вес",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Бонусные баллы",
+                "short": "Бонус",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Задание 2 (прохождение колец)",
+            "sectionShort": "Зад. 2",
+            "fields": [
+              {
+                "name": "Время/место",
+                "short": "",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Баллы за время",
+                "short": "Баллы",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          },
+          {
+            "section": "Задание 3 (Прочесть надпись)",
+            "sectionShort": "Зад. 3",
+            "fields": [
+              {
+                "name": "+/-",
+                "short": "",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Баллы",
+                "short": "Баллы",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "name": "Ошибки (кол-во)",
+                "short": "Ошибки",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "penalty": true,
+                "sum": false
+              }
+            ]
+          },
+          {
+            "section": "Задание 4 (принести груз",
+            "sectionShort": "Зад. 4",
+            "fields": [
+              {
+                "name": "Время/место",
+                "short": "",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "name": "Баллы",
+                "short": "Баллы",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          }
+        ],
         "name": "ТНПА",
         "color": "badge-tnpa"
       }
@@ -666,6 +811,156 @@
             {
               "name": "Бонус за расстояния",
               "short": "Бонус расст."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "t1794492299179",
+      "name": "ТНПА 2024",
+      "criteria": [
+        {
+          "section": "Презентация (5 баллов/параметр)",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "name": "Структура",
+              "short": "Структ.",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Эффективность",
+              "short": "Эффект.",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Новизна",
+              "short": "Нов.",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Перспектива",
+              "short": "Персп.",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Качество",
+              "short": "Кач.",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "name": "Задание 1 (+/-)",
+              "short": "",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Сумма размерений (макс 2100 мм)",
+              "short": "Разм.",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "name": "Вес (макс 30 кг)",
+              "short": "Вес",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Бонусные баллы",
+              "short": "Бонус",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Задание 2 (прохождение колец)",
+          "sectionShort": "Зад. 2",
+          "fields": [
+            {
+              "name": "Время/место",
+              "short": "",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Баллы за время",
+              "short": "Баллы",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Задание 3 (Прочесть надпись)",
+          "sectionShort": "Зад. 3",
+          "fields": [
+            {
+              "name": "+/-",
+              "short": "",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Баллы",
+              "short": "Баллы",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "name": "Ошибки (кол-во)",
+              "short": "Ошибки",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "penalty": true,
+              "sum": false
+            }
+          ]
+        },
+        {
+          "section": "Задание 4 (принести груз",
+          "sectionShort": "Зад. 4",
+          "fields": [
+            {
+              "name": "Время/место",
+              "short": "",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Баллы",
+              "short": "Баллы",
+              "sum": true,
+              "penalty": false
             }
           ]
         }
@@ -1837,6 +2132,27 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Платоненков С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "011-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "011",
+      "year": 2024,
+      "shortName": "САФУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "ТНПА \"Лемминг\"",
+      "description": "",
+      "teamLeader": "Ивлев Марк Леонидович",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
