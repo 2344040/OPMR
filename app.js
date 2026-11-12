@@ -1364,26 +1364,33 @@ function renderCompetition() {
     // Стабильные цвета: презентация и квалификация фиксированы, задания — циклом
     let extraIdx = 0;
     const extraPool = [2, 3, 4];
-    const tints = critGroups.map((cg) => {
+
+    critGroups.forEach((cg) => {
       const t = String(cg.title || "").toLowerCase();
-      if (t.includes("презентац")) return 0;
-      if (t.includes("квалификац")) return 1;
-      return extraPool[extraIdx++ % extraPool.length];
+      let tint;
+      if (t.includes("презентац")) tint = 0;
+      else if (t.includes("квалификац")) tint = 1;
+      else tint = extraPool[extraIdx++ % extraPool.length];
+      cg.tint = tint;
+      cg.cols.forEach((c) => {
+        c.tint = tint;
+      });
     });
 
     let head1 = `<tr><th rowspan="2" class="cg-fixed">№</th><th rowspan="2" class="cg-fixed">Команда</th>`;
     let head2 = `<tr>`;
-    critGroups.forEach((cg, gi) => {
-      const tint = "cg-tint-" + tints[gi];
+
+    critGroups.forEach((cg) => {
       const full = cg.fullTitle || cg.title;
       const pi = full.indexOf("(");
       const main = pi > 0 ? full.slice(0, pi).trim() : full;
       const paren = pi > 0 ? full.slice(pi).trim() : "";
-      head1 += `<th colspan="${cg.cols.length}" class="${tint}" title="${escHtml(full)}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
+      head1 += `<th colspan="${cg.cols.length}" class="cg-tint-${cg.tint}" title="${escHtml(full)}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
       cg.cols.forEach((c) => {
-        head2 += `<th class="${tint}" title="${escHtml(c.full || c.title)}">${escHtml(lcLetters(c.title))}</th>`;
+        head2 += `<th class="cg-tint-${c.tint}" title="${escHtml(c.full || c.title)}">${escHtml(lcLetters(c.title))}</th>`;
       });
     });
+
     head1 += `<th rowspan="2" class="cg-fixed">Доп.</th><th rowspan="2" class="cg-fixed">Σ</th><th rowspan="2" class="cg-fixed th-cup"><i class="fas fa-trophy"></i></th></tr>`;
     head2 += `</tr>`;
 
@@ -1392,8 +1399,8 @@ function renderCompetition() {
       let cells = "";
       let total = 0;
       let hasAny = false;
-      critGroups.forEach((cg, gi) => {
-        const tint = "cg-tint-" + tints[gi];
+
+        critGroups.forEach((cg, gi) => {
         cg.cols.forEach((c, ci) => {
           const v = getScoreValue(team, cg, c, gi, ci);
           if (v !== "" && v !== undefined && v !== null) {
@@ -1401,9 +1408,10 @@ function renderCompetition() {
             const n = parseFloat(String(v).replace(",", "."));
             if (!isNaN(n)) total += n;
           }
-          cells += `<td class="${tint}">${v === "" || v === undefined || v === null ? "—" : escHtml(v)}</td>`;
+          cells += `<td class="cg-tint-${c.tint}">${(v === "" || v === undefined || v === null) ? "—" : escHtml(v)}</td>`;
         });
       });
+
       const draw = team.draw ?? team.drawNumber ?? team.lot ?? "—";
       const extra = team.extra ?? team.additional ?? "—";
       const cup = team.cup ?? team.place ?? "—";
