@@ -95,6 +95,12 @@
       "fullName": "ГБОУ СОШ №385",
       "shortName": "ГБОУ СОШ №385",
       "city": ""
+    },
+    {
+      "id": "021",
+      "fullName": "ФГБОУ ВО \"Дальневосточный федеральный университет\"",
+      "shortName": "ДВФУ",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -1762,6 +1768,27 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Дзюина М.С.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "021-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "021",
+      "year": 2024,
+      "shortName": "ДВФУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Шилин К.Д.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
