@@ -83,6 +83,18 @@
       "fullName": "МОУ Сосновский центр образования",
       "shortName": "МОУ Сосновский центр образования",
       "city": ""
+    },
+    {
+      "id": "019",
+      "fullName": "ГБОУ СОШ №777",
+      "shortName": "ГБОУ СОШ №777",
+      "city": ""
+    },
+    {
+      "id": "020",
+      "fullName": "ГБОУ СОШ №385",
+      "shortName": "ГБОУ СОШ №385",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -1708,6 +1720,48 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Речкалов С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "019-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "019",
+      "year": 2024,
+      "shortName": "ГБОУ СОШ №777",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Молотков М.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "020-2024-anpa",
+      "created": "12.11.2026",
+      "orgId": "020",
+      "year": 2024,
+      "shortName": "",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Дзюина М.С.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
