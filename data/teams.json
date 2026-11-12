@@ -113,6 +113,12 @@
       "fullName": "Клуб робототехники г.Ломоносов",
       "shortName": "Клуб робототехники (Ломоносов)",
       "city": ""
+    },
+    {
+      "id": "024",
+      "fullName": "АНО \"Центр подводных исследований Русского географического общества\"",
+      "shortName": "Центр подводных исследований РГО",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -2348,6 +2354,27 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Малиновский О.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
+    },
+    {
+      "id": "024-2024-tnpa",
+      "created": "12.11.2026",
+      "orgId": "024",
+      "year": 2024,
+      "shortName": "Центр подводных исследований РГО",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Егорчев Е.А.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": []
