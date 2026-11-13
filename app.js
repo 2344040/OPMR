@@ -6244,4 +6244,74 @@ function enhanceCompetitionTables() {
   if (dirty) saveData();
 }
 
+// ===== НАДЁЖНЫЙ КОММИТ: свежий sha + очередь параллельных сохранений =====
+let _commitInFlight = null;
+
+async function commitToGitHubCore() {
+  const settings = getGitHubSettings();
+  if (!settings || !settings.owner || !settings.repo || !settings.token)
+    return {success: false, message: "Настройки GitHub не заданы"};
+  const filePath = "data/teams.json";
+  const apiUrl = `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${filePath}`;
+  const headers = {Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json"};
+  const dataToSave = {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData};
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave, null, 2))));
+
+  const readSha = async () => {
+    const res = await fetch(`${apiUrl}?ref=${encodeURIComponent(settings.branch)}&_=${Date.now()}`, {
+      headers,
+      cache: "no-store",
+    });
+    if (res.ok) return (await res.json()).sha;
+    if (res.status === 404) return null;
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.message || ("HTTP " + res.status));
+  };
+
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    let sha;
+    try {
+      sha = await readSha();
+    } catch (e) {
+      return {success: false, message: `Ошибка чтения файла: ${e.message}`};
+    }
+    const body = {
+      message: `Обновление базы участников (${new Date().toLocaleString("ru-RU")})`,
+      content,
+      branch: settings.branch,
+    };
+    if (sha) body.sha = sha;
+    try {
+      const putRes = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {...headers, "Content-Type": "application/json"},
+        body: JSON.stringify(body),
+      });
+      if (putRes.ok) return {success: true, message: "Данные сохранены в GitHub"};
+      const err = await putRes.json().catch(() => ({}));
+      const msg = err.message || `HTTP ${putRes.status}`;
+      if (/does not match|conflict/i.test(msg) && attempt < 5) {
+        await new Promise((r) => setTimeout(r, 300 * attempt));
+        continue;
+      }
+      return {success: false, message: `Ошибка коммита: ${msg}`};
+    } catch (e) {
+      if (attempt < 5) {
+        await new Promise((r) => setTimeout(r, 300 * attempt));
+        continue;
+      }
+      return {success: false, message: `Ошибка сети: ${e.message}`};
+    }
+  }
+  return {success: false, message: "Не удалось сохранить после 5 попыток: файл на сервере меняется параллельно"};
+}
+
+function commitToGitHub() {
+  if (_commitInFlight) return _commitInFlight;
+  _commitInFlight = commitToGitHubCore().finally(() => {
+    _commitInFlight = null;
+  });
+  return _commitInFlight;
+}
+
 opmrInit();
