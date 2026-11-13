@@ -1977,3 +1977,18 @@ body > .container {
 .proto-penalty-label {
   color: #b91c1c;
 }
+
+/* ===== Форматы полей критериев ===== */
+.crit-flag-disabled {
+  opacity: 0.4;
+}
+.competition-table td.cg-text {
+  text-align: left;
+}
+.cg-bool-yes {
+  color: #15803d;
+  font-weight: 700;
+}
+.cg-bool-no {
+  color: #94a3b8;
+}

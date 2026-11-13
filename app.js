@@ -1310,6 +1310,7 @@ function getClassCriteriaGroups(year, classId) {
       title:
         (c && String(c.short || "").trim()) || (c && String(c.title || c.label || "").trim()) || name || String(ci + 1),
       full: name,
+      type: (c && c.type) || "int",
       sum: !(c && c.sum === false),
       penalty: c && c.penalty !== undefined ? !!c.penalty : /штраф/i.test(name),
     };
@@ -1367,6 +1368,25 @@ function getScoreValue(team, group, col, gi, ci) {
   if (v === "" && team[group.key]) v = read(team[group.key]);
   if (v === "") v = read(team);
   return v;
+}
+
+// ===== ФОРМАТЫ ПОЛЕЙ КРИТЕРИЕВ =====
+function parseScoreNumber(v) {
+  const n = parseFloat(String(v).replace(",", "."));
+  return isNaN(n) ? null : n;
+}
+function isBoolTrue(v) {
+  return v === true || ["да", "true", "1", "yes", "on", "✓"].includes(String(v).trim().toLowerCase());
+}
+function scoreContribution(col, v) {
+  if (v === "" || v === undefined || v === null) return null;
+  const type = col.type || "int";
+  if (type === "text") return null;
+  if (type === "bool") return col.sum !== false && isBoolTrue(v) ? 1 : 0;
+  const n = parseScoreNumber(v);
+  if (n === null) return null;
+  if (col.penalty) return -n;
+  return col.sum !== false ? n : 0;
 }
 
 function lcLetters(s) {
@@ -1427,20 +1447,30 @@ function renderCompetition() {
         cg.cols.forEach((c, ci) => {
           const v = getScoreValue(team, cg, c, gi, ci);
           const present = v !== "" && v !== undefined && v !== null;
-          let display = present ? escHtml(v) : "—";
+          let display = "—";
+          let cellClass = `cg-tint-${c.tint}`;
           if (present) {
             hasAny = true;
-            const n = parseFloat(String(v).replace(",", "."));
-            if (!isNaN(n)) {
+            const type = c.type || "int";
+            if (type === "bool") {
+              display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
+              const contrib = scoreContribution(c, v);
+              if (contrib !== null) total += contrib;
+            } else if (type === "text") {
+              display = escHtml(v);
+              cellClass += " cg-text";
+            } else {
+              const n = parseScoreNumber(v);
+              const contrib = scoreContribution(c, v);
+              if (contrib !== null) total += contrib;
+              display = type === "decimal" ? escHtml(String(v).replace(".", ",")) : escHtml(v);
               if (c.penalty) {
-                total -= n;
-                if (n > 0) display = "−" + escHtml(v);
-              } else if (c.sum !== false) {
-                total += n;
+                cellClass += " cg-penalty";
+                if (n !== null && n > 0) display = "−" + display;
               }
             }
           }
-          cells += `<td class="cg-tint-${c.tint}${c.penalty ? " cg-penalty" : ""}">${display}</td>`;
+          cells += `<td class="${cellClass}">${display}</td>`;
         });
       });
 
@@ -1481,19 +1511,37 @@ function renderProtocolForm(teamId) {
   const p = team.protocol || {};
   const container = document.getElementById("protocolContent");
   const fullName = getTeamFullName(team);
-  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-12"><div class="detail-label">Команда</div><div class="detail-value">${fullName}</div></div><div class="col-md-6"><div class="detail-label">Руководитель</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
+
+  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-12"><div class="detail-label">Команда</div><div class="detail-value">${escHtml(fullName)}</div></div><div class="col-md-6"><div class="detail-label">Руководитель</div><div class="detail-value">${escHtml(team.teamLeader || "—")}</div></div><div class="col-md-6"><div class="detail-label">Класс аппарата</div><div class="detail-value">${escHtml(team.apparatusClass || "—")}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
+
   critGroups.forEach((cg, gi) => {
     html += `<div class="detail-section"><h5 class="detail-section-title">${escHtml(cg.fullTitle || cg.title)}</h5><div class="row g-3">`;
     cg.cols.forEach((c, ci) => {
       const val = getScoreValue(team, cg, c, gi, ci);
       const pen = !!c.penalty;
-      html += `<div class="col-md-3"><label class="form-label ${pen ? "proto-penalty-label" : ""}">${escHtml(c.full || c.title)}${pen ? " (штраф)" : ""}</label><input type="number" step="any" class="form-control proto-calc" data-gi="${gi}" data-ci="${ci}" data-sum="${c.sum !== false ? 1 : 0}" data-penalty="${pen ? 1 : 0}" id="proto-${gi}-${ci}" value="${val === "" ? "" : escHtml(val)}" placeholder="0"></div>`;
+      const type = c.type || "int";
+      const id = `proto-${gi}-${ci}`;
+      let fieldHtml;
+      if (type === "bool") {
+        fieldHtml = `<div class="form-check mt-2"><input class="form-check-input proto-calc" type="checkbox" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="bool" data-sum="${c.sum !== false ? 1 : 0}" ${isBoolTrue(val) ? "checked" : ""}><label class="form-check-label" for="${id}">Да</label></div>`;
+      } else if (type === "text") {
+        fieldHtml = `<input type="text" class="form-control proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="text" value="${escHtml(val)}" placeholder="Текст">`;
+      } else {
+        const numVal = val === "" || val === undefined || val === null ? "" : escHtml(String(val).replace(",", "."));
+        fieldHtml = `<input type="number" step="${type === "decimal" ? "0.01" : "1"}" class="form-control proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="${type}" data-sum="${c.sum !== false ? 1 : 0}" data-penalty="${pen ? 1 : 0}" value="${numVal}" placeholder="${type === "decimal" ? "0.00" : "0"}">`;
+      }
+      html += `<div class="col-md-3"><label class="form-label ${pen ? "proto-penalty-label" : ""}">${escHtml(c.full || c.title)}${pen ? " (штраф)" : ""}</label>${fieldHtml}</div>`;
     });
     html += `<div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма группы:</strong> <span id="protoGroupTotal-${gi}">0</span></div></div></div></div>`;
   });
-  html += `<div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="any" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus ?? team.extra ?? 0}"></div></div></div><div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
+
+  html += `<div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="any" class="form-control proto-calc" id="protoExtraBonus" data-type="decimal" value="${p.extraBonus ?? team.extra ?? 0}"></div></div></div><div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
+
   container.innerHTML = html;
-  document.querySelectorAll(".proto-calc").forEach((input) => input.addEventListener("input", updateProtocolTotals));
+  document.querySelectorAll(".proto-calc").forEach((input) => {
+    input.addEventListener("input", updateProtocolTotals);
+    input.addEventListener("change", updateProtocolTotals);
+  });
   updateProtocolTotals();
 }
 
@@ -1503,8 +1551,14 @@ function updateProtocolTotals() {
     const gi = span.id.replace("protoGroupTotal-", "");
     let g = 0;
     document.querySelectorAll(`.proto-calc[data-gi="${gi}"]`).forEach((inp) => {
-      const n = parseFloat(inp.value);
-      if (isNaN(n)) return;
+      const type = inp.dataset.type || "int";
+      if (type === "text") return;
+      if (type === "bool") {
+        if (inp.dataset.sum === "1" && inp.checked) g += 1;
+        return;
+      }
+      const n = parseScoreNumber(inp.value);
+      if (n === null) return;
       if (inp.dataset.penalty === "1") g -= n;
       else if (inp.dataset.sum === "1") g += n;
     });
@@ -1525,7 +1579,10 @@ function saveProtocol() {
   critGroups.forEach((cg, gi) => {
     cg.cols.forEach((c, ci) => {
       const el = document.getElementById(`proto-${gi}-${ci}`);
-      scores[`${cg.title}::${c.full || c.title}`] = el ? el.value : "";
+      const type = c.type || "int";
+      let value = "";
+      if (el) value = type === "bool" ? (el.checked ? "Да" : "Нет") : el.value;
+      scores[`${cg.title}::${c.full || c.title}`] = value;
     });
   });
   team.scores = scores;
@@ -1554,10 +1611,8 @@ function computeTeamTotal(team) {
   let total = 0;
   groups.forEach((cg, gi) =>
     cg.cols.forEach((c, ci) => {
-      const n = parseFloat(String(getScoreValue(team, cg, c, gi, ci)).replace(",", "."));
-      if (isNaN(n)) return;
-      if (c.penalty) total -= n;
-      else if (c.sum !== false) total += n;
+      const contrib = scoreContribution(c, getScoreValue(team, cg, c, gi, ci));
+      if (contrib !== null) total += contrib;
     }),
   );
   total += parseFloat(team.extra ?? team.protocol?.extraBonus ?? 0) || 0;
@@ -2203,10 +2258,11 @@ function normalizeCriteria(criteria) {
         ? {
             name: f.name || String(f),
             short: f.short || "",
+            type: f.type || "int",
             ...(f.sum !== undefined ? {sum: f.sum} : {}),
             ...(f.penalty !== undefined ? {penalty: f.penalty} : {}),
           }
-        : {name: String(f), short: ""},
+        : {name: String(f), short: "", type: "int"},
     );
     return {section, sectionShort, fields};
   });
@@ -2259,27 +2315,86 @@ function renderCriteriaOffcanvas() {
       const isObj = typeof field === "object" && field !== null;
       const fName = isObj ? field.name || "" : String(field);
       const fShort = isObj ? field.short || "" : "";
+      const fType = isObj ? field.type || "int" : "int";
       const fSum = isObj ? field.sum !== false : true;
       const fPen = isObj ? !!field.penalty : false;
-      html += `
-<div class="list-group-item d-flex align-items-center gap-2 py-2 px-3">
-<span class="badge bg-light text-dark rounded-circle flex-shrink-0" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem">${fIdx + 1}</span>
-<div class="flex-grow-1 row g-1 align-items-center">
-<div class="col-5">
-<input type="text" class="form-control form-control-sm" value="${escHtml(fName)}" oninput="updateFieldName(${gIdx}, ${fIdx}, this.value)" placeholder="Полное название поля">
-</div>
-<div class="col-3">
-<input type="text" class="form-control form-control-sm" value="${escHtml(fShort)}" oninput="updateFieldShort(${gIdx}, ${fIdx}, this.value)" placeholder="Сокр.">
-</div>
-<div class="col-4 d-flex align-items-center justify-content-end gap-2">
-<label class="crit-flag" title="Включать в общую сумму баллов"><input type="checkbox" class="form-check-input mt-0" ${fSum ? "checked" : ""} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'sum', this.checked)"><span>Σ</span></label>
-<label class="crit-flag crit-flag-penalty" title="Штраф: вычитать из суммы и показывать красным"><input type="checkbox" class="form-check-input mt-0" ${fPen ? "checked" : ""} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'penalty', this.checked)"><span>−</span></label>
-<button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, -1)" ${fIdx === 0 ? "disabled" : ""} title="Выше"><i class="fas fa-chevron-up"></i></button>
-<button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, 1)" ${fIdx === group.fields.length - 1 ? "disabled" : ""} title="Ниже"><i class="fas fa-chevron-down"></i></button>
-<button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeField(${gIdx}, ${fIdx})" title="Удалить"><i class="fas fa-times"></i></button>
-</div>
-</div>
-</div>`;
+      const numeric = fType === "int" || fType === "decimal";
+      html += html` <div class="list-group-item py-2 px-3">
+        <div class="d-flex align-items-center gap-2">
+          <span
+            class="badge bg-light text-dark rounded-circle flex-shrink-0"
+            style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem"
+            >${fIdx + 1}</span
+          >
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            value="${escHtml(fName)}"
+            oninput="updateFieldName(${gIdx}, ${fIdx}, this.value)"
+            placeholder="Полное название поля" />
+          <input
+            type="text"
+            class="form-control form-control-sm"
+            style="max-width:110px"
+            value="${escHtml(fShort)}"
+            oninput="updateFieldShort(${gIdx}, ${fIdx}, this.value)"
+            placeholder="Сокр." />
+          <button
+            class="btn btn-sm btn-outline-danger py-0 px-1"
+            onclick="removeField(${gIdx}, ${fIdx})"
+            title="Удалить">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+          <select
+            class="form-select form-select-sm"
+            style="max-width:160px"
+            onchange="setFieldType(${gIdx}, ${fIdx}, this.value)"
+            title="Формат поля">
+            <option value="int" ${fType === "int" ? "selected" : ""}>Целые баллы</option>
+            <option value="decimal" ${fType === "decimal" ? "selected" : ""}>Дробное число</option>
+            <option value="text" ${fType === "text" ? "selected" : ""}>Текст</option>
+            <option value="bool" ${fType === "bool" ? "selected" : ""}>Да / Нет</option>
+          </select>
+          <label
+            class="crit-flag ${numeric || fType === "bool" ? "" : "crit-flag-disabled"}"
+            title="Включать в общую сумму (для «Да/Нет» = 1 балл)"
+            ><input
+              type="checkbox"
+              class="form-check-input mt-0"
+              ${fSum ? "checked" : ""}
+              ${numeric || fType === "bool" ? "" : "disabled"}
+              onchange="setFieldFlag(${gIdx}, ${fIdx}, 'sum', this.checked)" /><span>Σ</span></label
+          >
+          <label
+            class="crit-flag crit-flag-penalty ${numeric ? "" : "crit-flag-disabled"}"
+            title="Штраф: вычитать и показывать красным"
+            ><input
+              type="checkbox"
+              class="form-check-input mt-0"
+              ${fPen ? "checked" : ""}
+              ${numeric ? "" : "disabled"}
+              onchange="setFieldFlag(${gIdx}, ${fIdx}, 'penalty', this.checked)" /><span>−</span></label
+          >
+          <span class="ms-auto d-flex gap-1">
+            <button
+              class="btn btn-sm btn-outline-secondary py-0 px-1"
+              onclick="moveField(${gIdx}, ${fIdx}, -1)"
+              ${fIdx === 0 ? "disabled" : ""}
+              title="Выше">
+              <i class="fas fa-chevron-up"></i>
+            </button>
+            <button
+              class="btn btn-sm btn-outline-secondary py-0 px-1"
+              onclick="moveField(${gIdx}, ${fIdx}, 1)"
+              ${fIdx === group.fields.length - 1 ? "disabled" : ""}
+              title="Ниже">
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </span>
+        </div>
+      </div>`;
     });
     html += `</div><div class="p-2 bg-light border-top"><button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})"><i class="fas fa-plus me-1"></i>Добавить поле</button></div></div></div>`;
   });
@@ -2332,7 +2447,13 @@ function addGroupFromLibrary(libGroupId) {
   tempCriteria.push({
     section: libGroup.name,
     sectionShort: libGroup.short || "",
-    fields: libGroup.fields.map((f) => ({name: f.name, short: f.short})),
+    fields: libGroup.fields.map((f) => ({
+      name: f.name,
+      short: f.short,
+      type: f.type || (/вес|отклон|время/i.test(f.name) ? "decimal" : "int"),
+      sum: true,
+      penalty: /штраф/i.test(f.name),
+    })),
   });
   renderCriteriaOffcanvas();
 }
@@ -2358,12 +2479,28 @@ function moveGroup(gIdx, direction) {
 }
 
 function addFieldToGroup(gIdx) {
-  tempCriteria[gIdx].fields.push({name: "Новое поле", short: ""});
+  tempCriteria[gIdx].fields.push({name: "Новое поле", short: "", type: "int", sum: true, penalty: false});
   renderCriteriaOffcanvas();
 }
 
 function removeField(gIdx, fIdx) {
   tempCriteria[gIdx].fields.splice(fIdx, 1);
+  renderCriteriaOffcanvas();
+}
+
+function setFieldType(gIdx, fIdx, type) {
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string")
+    tempCriteria[gIdx].fields[fIdx] = {name: f, short: "", type: "int", sum: true, penalty: false};
+  const field = tempCriteria[gIdx].fields[fIdx];
+  field.type = type;
+  if (type === "text" || type === "bool") {
+    field.sum = false;
+    field.penalty = false;
+  } else {
+    field.sum = true;
+    field.penalty = /штраф/i.test(field.name || "");
+  }
   renderCriteriaOffcanvas();
 }
 
