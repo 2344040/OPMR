@@ -4538,4 +4538,488 @@ async function opmrInit() {
   updateSyncIndicator();
   if (pendingSync) showToast("Есть изменения, не сохранённые на сервере — нажмите «Сохранить сейчас»", "info");
 }
+
+// ============================================================
+// OPMR NAVIGATOR — компактный статус, места по классам, сортировка
+// ============================================================
+
+// ---------- Компактный чип синхронизации ----------
+function ensureFooterSyncSlot() {
+  let slot = document.getElementById("footerSyncSlot");
+  if (slot) return slot;
+  slot = document.createElement("div");
+  slot.id = "footerSyncSlot";
+  slot.className = "footer-sync-slot";
+  const row =
+    document.querySelector(".app-footer-row") ||
+    document.querySelector(".app-footer-inner") ||
+    document.querySelector(".app-footer");
+  (row || document.body).appendChild(slot);
+  return slot;
+}
+
+function ensureSyncPill() {
+  let el = document.getElementById("syncPill");
+  if (el) return el;
+  el = document.createElement("div");
+  el.id = "syncPill";
+  el.className = "sync-chip";
+  el.innerHTML = `<i class="sync-chip-icon fas fa-circle-check"></i><span class="sync-chip-text" id="syncPillText">Проверка…</span><button type="button" class="sync-chip-btn" id="syncPillAction" title="Сохранить на сервер"><i class="fas fa-cloud-arrow-up"></i><span class="sync-chip-btn-label">Сохранить</span></button><button type="button" class="sync-chip-mini" id="syncPillPull" title="Загрузить свежую версию с сервера"><i class="fas fa-rotate"></i></button>`;
+  ensureFooterSyncSlot().appendChild(el);
+  el.querySelector("#syncPillAction").addEventListener("click", async () => {
+    const gh = getGitHubSettings();
+    if (!gh?.owner || !gh?.repo || !gh?.token) {
+      openGitHubSettings();
+      return;
+    }
+    if (protocolFormDirty && document.getElementById("protocolForm")) {
+      saveProtocol();
+      return;
+    }
+    await syncNow();
+  });
+  el.querySelector("#syncPillPull").addEventListener("click", async () => {
+    if (pendingSync && !confirm("Есть изменения, не сохранённые на сервере. Загрузка перезапишет их. Продолжить?")) return;
+    if (await pullFromGitHub(false)) refreshCurrentView();
+  });
+  return el;
+}
+
+function updateSyncIndicator() {
+  const el = ensureSyncPill();
+  const gh = getGitHubSettings();
+  const configured = !!(gh && gh.owner && gh.repo && gh.token);
+  const text = el.querySelector("#syncPillText");
+  const btn = el.querySelector("#syncPillAction");
+  const label = el.querySelector(".sync-chip-btn-label");
+  const pull = el.querySelector("#syncPillPull");
+  const icon = el.querySelector(".sync-chip-icon");
+  el.classList.remove("is-local", "is-dirty", "is-saving", "is-synced");
+  pull.style.display = configured ? "" : "none";
+  btn.disabled = false;
+
+  let state, iconClass, message, action;
+  if (syncInFlight) {
+    state = "is-saving";
+    iconClass = "fas fa-spinner fa-spin";
+    message = "Сохранение…";
+    action = "…";
+    btn.disabled = true;
+  } else if (!configured) {
+    state = "is-local";
+    iconClass = "fas fa-hard-drive";
+    message = protocolFormDirty ? "Протокол не сохранён" : "Только локально";
+    action = "Настроить";
+  } else if (protocolFormDirty) {
+    state = "is-dirty";
+    iconClass = "fas fa-pen-to-square";
+    message = "Протокол не сохранён";
+    action = "Сохранить";
+  } else if (pendingSync) {
+    state = "is-dirty";
+    iconClass = "fas fa-cloud-arrow-up";
+    message = "Не сохранено на сервере";
+    action = "Сохранить";
+  } else {
+    state = "is-synced";
+    iconClass = "fas fa-circle-check";
+    const t = lastSyncAt ? new Date(lastSyncAt).toLocaleTimeString("ru-RU", {hour: "2-digit", minute: "2-digit"}) : "";
+    message = t ? `Сохранено · ${t}` : "Сохранено на сервере";
+    action = "Сохранить";
+  }
+
+  el.classList.add(state);
+  icon.className = "sync-chip-icon " + iconClass;
+  text.textContent = message;
+  label.textContent = action;
+  btn.title = action;
+
+  const needsAttention = state !== "is-synced";
+  if (needsAttention) {
+    if (el.parentElement !== document.body) document.body.appendChild(el);
+    el.classList.add("is-floating");
+    document.body.classList.add("sync-floating");
+  } else {
+    const slot = ensureFooterSyncSlot();
+    if (el.parentElement !== slot) slot.appendChild(el);
+    el.classList.remove("is-floating");
+    document.body.classList.remove("sync-floating");
+  }
+}
+
+// ---------- Форматы и вклад полей ----------
+function parseScoreNumber(v) {
+  const n = parseFloat(String(v).replace(",", "."));
+  return isNaN(n) ? null : n;
+}
+function isBoolTrue(v) {
+  return v === true || ["да", "true", "1", "yes", "on", "✓"].includes(String(v).trim().toLowerCase());
+}
+function scoreContribution(col, v) {
+  if (v === "" || v === undefined || v === null) return null;
+  const type = col.type || "int";
+  if (type === "text") return null;
+  if (type === "bool") return col.sum !== false && isBoolTrue(v) ? 1 : 0;
+  const n = parseScoreNumber(v);
+  if (n === null) return null;
+  if (col.penalty) return -Math.abs(n);
+  return col.sum !== false ? n : 0;
+}
+
+const COMP_DEFAULT_SPEC = [
+  ["pres", "Презентация", [
+    ["pres_struct", "Структура", "Структ.", "int", 1],
+    ["pres_sa", "Сравнительный анализ", "СА", "int", 1],
+    ["pres_new", "Новизна", "Нов.", "int", 1],
+    ["pres_qual", "Качество", "Кач.", "int", 1],
+  ]],
+  ["qual", "Квалификация", [
+    ["qual_place", "Сумма размерений", "Разм.", "decimal", 0],
+    ["qual_weight", "Вес (кг)", "Вес", "decimal", 0],
+    ["qual_penalty", "Штрафные баллы", "Штраф", "int", -1],
+    ["qual_ok", "Квал. задание выполнено", "Квал.", "bool", 0],
+  ]],
+  ["task", "Конкурсное задание", [
+    ["task_time", "Время (сек)", "Т сек", "decimal", 0],
+    ["task_score", "Балл за время", "Т балл", "int", 1],
+    ["task_gate", "Прохождение ворот", "Вор.", "int", 1],
+    ["task_park", "Парковка", "Парк.", "int", 1],
+    ["task_gar", "Нужный гараж", "Гар.", "int", 1],
+    ["task_penalty", "Штрафные баллы", "Штраф", "int", -1],
+  ]],
+];
+
+function compDefaultGroups() {
+  return COMP_DEFAULT_SPEC.map(([key, title, cols]) => ({
+    key,
+    title,
+    fullTitle: title,
+    cols: cols.map(([k, full, short, type, mode]) => ({
+      key: k, title: short, short, full, type, sum: mode === 1, penalty: mode === -1,
+    })),
+  }));
+}
+
+function getClassCriteriaGroups(year, classId) {
+  const cfg = (competitionSettings[year] || {})[classId] || {};
+  let raw = cfg.criteria;
+  if (raw && typeof raw === "object" && !Array.isArray(raw) && raw.groups) raw = raw.groups;
+  if (!raw || (Array.isArray(raw) && !raw.length)) return compDefaultGroups();
+
+  const mapCol = (c, ci) => {
+    const name = (c && String(c.name || "").trim()) || "";
+    const short = (c && String(c.short || "").trim()) || "";
+    return {
+      key: compColKey(c, ci),
+      title: short || (c && String(c.title || c.label || "").trim()) || name || String(ci + 1),
+      short,
+      full: name,
+      type: (c && c.type) || "int",
+      sum: !(c && c.sum === false),
+      penalty: c && c.penalty !== undefined ? !!c.penalty : /штраф/i.test(name),
+    };
+  };
+  const mapGroup = (g, gi) => ({
+    key: g && g.key != null ? String(g.key) : g && g.id != null ? String(g.id) : "g" + gi,
+    title:
+      (g && String(g.sectionShort || g.title || g.name || g.text || "").trim()) ||
+      (g && String(g.section || "").trim()) ||
+      "Группа " + (gi + 1),
+    fullTitle: (g && String(g.section || "").trim()) || "",
+    cols: ((g && (g.fields || g.cols || g.columns || g.items)) || []).map(mapCol),
+  });
+
+  let groups = [];
+  if (Array.isArray(raw)) {
+    const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
+    groups = looksLikeGroups
+      ? raw.map(mapGroup)
+      : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol)}];
+  } else if (typeof raw === "object") {
+    groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
+  }
+  groups = groups.filter((g) => g.cols && g.cols.length);
+  return groups.length ? groups : compDefaultGroups();
+}
+
+function computeTeamTotal(team) {
+  const classId = getClassIdByValue(team.apparatusClass, team.year);
+  const groups = getClassCriteriaGroups(team.year, classId);
+  let total = 0;
+  groups.forEach((cg, gi) =>
+    cg.cols.forEach((c, ci) => {
+      const contrib = scoreContribution(c, getScoreValue(team, cg, c, gi, ci));
+      if (contrib !== null) total += contrib;
+    }),
+  );
+  total += parseScoreNumber(team.extra ?? team.protocol?.extraBonus ?? 0) || 0;
+  return Math.round(total * 100) / 100;
+}
+
+// ---------- Сортировка таблиц ----------
+const COMP_SORT_KEY = "opmr_comp_sort";
+const COMP_SORT_LABELS = {draw: "по № жребия", name: "по названию", total: "по сумме баллов"};
+
+function readCompSortMap() {
+  try {
+    return JSON.parse(localStorage.getItem(COMP_SORT_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+function getCompSort(classId) {
+  return readCompSortMap()[`${currentYear}:${classId}`] || "name";
+}
+function setCompSort(classId, mode) {
+  const map = readCompSortMap();
+  map[`${currentYear}:${classId}`] = mode;
+  try {
+    localStorage.setItem(COMP_SORT_KEY, JSON.stringify(map));
+  } catch {}
+  renderCompetition();
+}
+function sortClassTeams(teams, mode) {
+  const arr = [...teams];
+  const byName = (a, b) =>
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru");
+  const drawOf = (t) => parseScoreNumber(t.draw ?? t.drawNumber ?? t.lot ?? "");
+  if (mode === "draw") {
+    arr.sort((a, b) => {
+      const da = drawOf(a), db = drawOf(b);
+      if (da === null && db === null) return byName(a, b);
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db || byName(a, b);
+    });
+  } else if (mode === "total") {
+    arr.sort((a, b) => computeTeamTotal(b) - computeTeamTotal(a) || byName(a, b));
+  } else {
+    arr.sort(byName);
+  }
+  return arr;
+}
+
+// ---------- Места ----------
+function renderPlaceBadge(place) {
+  const p = parseInt(place, 10);
+  if (!p || p < 1) return '<span class="cg-place-empty">—</span>';
+  if (p <= 3) return `<span class="place-badge place-${p}" title="${p} место">${p}</span>`;
+  return `<span class="place-plain">${p}</span>`;
+}
+
+function classTeamsOf(classId) {
+  return teamsData.filter((t) => t.year === currentYear && getClassIdByValue(t.apparatusClass, t.year) === classId);
+}
+
+function assignPlaces(teams) {
+  const scored = teams.map((t) => ({t, total: computeTeamTotal(t)}));
+  scored.sort((a, b) => b.total - a.total);
+  let place = 0;
+  let prev = null;
+  scored.forEach((x, i) => {
+    if (prev === null || x.total !== prev) {
+      place = i + 1;
+      prev = x.total;
+    }
+    x.t.place = place;
+    x.t.protocol = {...(x.t.protocol || {}), place, totalScore: x.total};
+  });
+  return scored.length;
+}
+
+function hasFilledScores(teams) {
+  return teams.some(
+    (t) =>
+      (t.scores && Object.values(t.scores).some((v) => v !== "" && v !== null && v !== undefined)) ||
+      (parseScoreNumber(t.extra ?? t.protocol?.extraBonus ?? "") || 0) !== 0,
+  );
+}
+
+function afterPlacesUpdate(message) {
+  saveData();
+  renderCompetition();
+  showToast(message, "success");
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+
+function calculatePlacesForClass(classId) {
+  const teams = classTeamsOf(classId);
+  const className = getClassInfo(classId).name;
+  if (!teams.length) {
+    showToast(`В классе «${className}» за ${currentYear} год нет команд`, "error");
+    return;
+  }
+  if (!hasFilledScores(teams)) {
+    showToast("Сначала заполните хотя бы один протокол в этом классе", "error");
+    return;
+  }
+  if (!confirm(`Рассчитать места в классе «${className}» за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`)) return;
+  const count = assignPlaces(teams);
+  const map = readCompSortMap();
+  map[`${currentYear}:${classId}`] = "total";
+  try {
+    localStorage.setItem(COMP_SORT_KEY, JSON.stringify(map));
+  } catch {}
+  afterPlacesUpdate(`Места рассчитаны: ${className} · ${currentYear} (${count} команд)`);
+}
+
+function calculatePlaces() {
+  const yearSettings = competitionSettings[currentYear] || {};
+  const classes = Object.keys(yearSettings).filter((id) => classTeamsOf(id).length);
+  if (!classes.length) {
+    showToast(`За ${currentYear} год нет команд ни в одном классе`, "error");
+    return;
+  }
+  if (!confirm(`Рассчитать места во всех классах за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`)) return;
+  let total = 0;
+  const map = readCompSortMap();
+  classes.forEach((id) => {
+    const teams = classTeamsOf(id);
+    if (!hasFilledScores(teams)) return;
+    total += assignPlaces(teams);
+    map[`${currentYear}:${id}`] = "total";
+  });
+  try {
+    localStorage.setItem(COMP_SORT_KEY, JSON.stringify(map));
+  } catch {}
+  if (!total) {
+    showToast("Нет заполненных протоколов — места не рассчитаны", "error");
+    return;
+  }
+  afterPlacesUpdate(`Места рассчитаны: ${total} команд за ${currentYear} год`);
+}
+
+// ---------- Таблица соревнований ----------
+function renderCompetition() {
+  const yearTeams = sortTeamsByName(teamsData.filter((t) => t.year === currentYear));
+  const groups = buildClassGroups(yearTeams);
+  let html = "";
+
+  for (const key in groups) {
+    const g = groups[key];
+    if (!g.teams.length) continue;
+    const critGroups = getClassCriteriaGroups(currentYear, key);
+
+    let extraIdx = 0;
+    const extraPool = [2, 3, 4];
+    critGroups.forEach((cg) => {
+      const t = String(cg.title || "").toLowerCase();
+      const tint = t.includes("презентац") ? 0 : t.includes("квалификац") ? 1 : extraPool[extraIdx++ % extraPool.length];
+      cg.tint = tint;
+      cg.cols.forEach((c) => {
+        c.tint = tint;
+      });
+    });
+    const bg = (i) => `background:${CG_TINTS[i]} !important`;
+    const fixedHead = `background:${CG_FIXED_HEAD} !important`;
+    const fixedBody = `background:${CG_FIXED_BODY} !important`;
+
+    let head1 = `<tr><th rowspan="2" class="cg-fixed" style="${fixedHead}">№</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Команда</th>`;
+    let head2 = `<tr>`;
+    critGroups.forEach((cg) => {
+      const full = cg.fullTitle || cg.title;
+      const pi = full.indexOf("(");
+      const main = pi > 0 ? full.slice(0, pi).trim() : full;
+      const paren = pi > 0 ? full.slice(pi).trim() : "";
+      head1 += `<th colspan="${cg.cols.length}" class="cg-tint-${cg.tint}" style="${bg(cg.tint)}" title="${escHtml(full)}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
+      cg.cols.forEach((c) => {
+        const lbl = String(c.title || "");
+        const short = String(c.short || "").trim();
+        const hay = ((c.full || "") + " " + lbl).toLowerCase();
+        const isPen = !!c.penalty || hay.includes("штраф");
+        const isPts = !isPen && c.sum !== false && (hay.includes("балл") || hay.includes("бонус"));
+        let inner;
+        if (isPen || isPts) {
+          const ico = isPen
+            ? '<i class="fas fa-circle-minus cg-ico cg-ico-pen" aria-hidden="true"></i>'
+            : '<i class="fas fa-circle-plus cg-ico cg-ico-sum" aria-hidden="true"></i>';
+          inner = short
+            ? `<span class="cg-th-stack">${ico}<span class="cg-th-short">${escHtml(lcLetters(short))}</span></span>`
+            : ico;
+        } else {
+          inner = escHtml(lcLetters(lbl));
+        }
+        head2 += `<th class="cg-tint-${c.tint}" style="${bg(c.tint)}" title="${escHtml(c.full || lbl)}">${inner}</th>`;
+      });
+    });
+    head1 += `<th rowspan="2" class="cg-fixed" style="${fixedHead}">Доп.</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Σ</th><th rowspan="2" class="cg-fixed cg-place-col" style="${fixedHead}">Место</th></tr>`;
+    head2 += `</tr>`;
+
+    const mode = getCompSort(key);
+    const sorted = sortClassTeams(g.teams, mode);
+    let rows = "";
+    sorted.forEach((team) => {
+      let cells = "";
+      let total = 0;
+      let hasAny = false;
+      critGroups.forEach((cg, gi) => {
+        cg.cols.forEach((c, ci) => {
+          const v = getScoreValue(team, cg, c, gi, ci);
+          const present = v !== "" && v !== undefined && v !== null;
+          let display = "—";
+          let cls = `cg-tint-${c.tint}`;
+          if (present) {
+            hasAny = true;
+            const type = c.type || "int";
+            if (type === "bool") {
+              display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
+            } else if (type === "text") {
+              display = escHtml(v);
+              cls += " cg-text";
+            } else {
+              const n = parseScoreNumber(v);
+              display = type === "decimal" && n !== null ? escHtml(String(v).replace(".", ",")) : escHtml(v);
+              if (c.penalty) {
+                cls += " cg-penalty";
+                if (n !== null && n > 0) display = "−" + display;
+              }
+            }
+            const contrib = scoreContribution(c, v);
+            if (contrib !== null) total += contrib;
+          }
+          cells += `<td class="${cls}" style="${bg(c.tint)}">${display}</td>`;
+        });
+      });
+      const drawRaw = team.draw ?? team.drawNumber ?? team.lot ?? "";
+      const draw = drawRaw === "" ? "—" : escHtml(drawRaw);
+      const extraRaw = team.extra ?? team.protocol?.extraBonus ?? "";
+      const extra = extraRaw === "" ? "—" : escHtml(extraRaw);
+      const totalShown = hasAny ? Math.round(total * 100) / 100 : "—";
+      const place = renderPlaceBadge(team.place ?? team.protocol?.place);
+      rows += `<tr class="competition-row" tabindex="0" title="Открыть протокол команды" onclick="showProtocolPage('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProtocolPage('${team.id}');}"><td class="cg-fixed" style="${fixedBody}">${draw}</td><td class="td-team" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}</td>${cells}<td class="cg-fixed" style="${fixedBody}">${extra}</td><td class="cg-fixed cg-total" style="${fixedBody}"><strong>${totalShown}</strong></td><td class="cg-fixed cg-place-col" style="${fixedBody}">${place}</td></tr>`;
+    });
+
+    const toolbar = `<div class="competition-toolbar">
+<button type="button" class="btn btn-sm btn-outline-primary comp-tool-btn" onclick="calculatePlacesForClass('${key}')"><i class="fas fa-ranking-star me-1"></i>Рассчитать места</button>
+<div class="dropdown">
+<button class="btn btn-sm btn-outline-secondary comp-tool-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-arrow-down-wide-short me-1"></i>Сортировка: ${COMP_SORT_LABELS[mode]}</button>
+<ul class="dropdown-menu">${["draw", "name", "total"].map((m) => `<li><a class="dropdown-item d-flex align-items-center justify-content-between ${m === mode ? "active" : ""}" href="#" onclick="setCompSort('${key}','${m}'); return false;"><span>${COMP_SORT_LABELS[m]}</span>${m === mode ? '<i class="fas fa-check ms-3"></i>' : ""}</a></li>`).join("")}</ul>
+</div>
+<span class="competition-toolbar-hint"><i class="fas fa-hand-pointer me-1"></i>Клик по строке — протокол команды</span>
+</div>`;
+
+    html += `<div class="competition-class-card">
+<div class="group-header competition-class-header">
+<div class="group-header-left">
+<span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span>
+<span class="group-header-title">${escHtml(g.fullName || g.name)}</span>
+</div>
+${g.date ? `<span class="group-date-badge">${escHtml(g.date)}</span>` : ""}
+<span class="competition-class-count">${g.teams.length} команд</span>
+</div>
+${toolbar}
+<div class="table-responsive"><table class="competition-table">
+<thead>${head1}${head2}</thead>
+<tbody>${rows}</tbody>
+</table></div>
+</div>`;
+  }
+
+  if (!html) html = `<div class="text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
+  const el = document.getElementById("competitionContent") || document.getElementById("competitionPage");
+  if (el) el.innerHTML = html;
+  return html;
+}
+
 opmrInit();

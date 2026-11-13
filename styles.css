@@ -2069,3 +2069,83 @@ body > .container {
 @media print {
   .sync-pill, .criteria-offcanvas-footer { display: none !important; }
 }
+
+/* * ===== Компактный статус синхронизации ===== */
+.sync-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 4px 5px 4px 10px; border-radius: 999px;
+  border: 1px solid transparent; font-size: 0.76rem; font-weight: 600; line-height: 1.25; max-width: 100%;
+}
+.sync-chip-icon { font-size: 0.85rem; }
+.sync-chip-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sync-chip-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  border: none; border-radius: 999px; padding: 4px 9px;
+  font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: filter 0.15s;
+}
+.sync-chip-btn:hover:not(:disabled) { filter: brightness(1.14); }
+.sync-chip-btn:disabled { opacity: 0.55; cursor: default; }
+.sync-chip-btn-label { display: none; }
+.sync-chip-mini {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 1px solid currentColor; background: transparent; color: inherit; opacity: 0.55; cursor: pointer;
+}
+.sync-chip-mini:hover { opacity: 1; }
+.footer-sync-slot { display: flex; align-items: center; }
+
+.app-footer .sync-chip { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.16); color: #dfe6ec; }
+.app-footer .sync-chip-btn { background: rgba(255, 255, 255, 0.16); color: #fff; }
+.app-footer .sync-chip.is-synced .sync-chip-icon { color: #7ee2a8; }
+.app-footer .sync-chip.is-dirty .sync-chip-icon { color: #ffcf6b; }
+.app-footer .sync-chip.is-saving .sync-chip-icon { color: #93c5fd; }
+.app-footer .sync-chip.is-local .sync-chip-icon { color: #b9c3cc; }
+
+.sync-chip.is-floating {
+  position: fixed; right: 16px; bottom: 16px; z-index: 1035;
+  padding: 5px 6px 5px 12px; background: #fff; border-color: #e2e8f0; color: #334155;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.16);
+}
+.sync-chip.is-floating .sync-chip-btn-label { display: inline; }
+.sync-chip.is-floating.is-dirty { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
+.sync-chip.is-floating.is-dirty .sync-chip-btn { background: #d97706; color: #fff; }
+.sync-chip.is-floating.is-saving { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.sync-chip.is-floating.is-saving .sync-chip-btn { background: #2563eb; color: #fff; }
+.sync-chip.is-floating.is-local { background: #f8fafc; border-color: #cbd5e1; color: #475569; }
+.sync-chip.is-floating.is-local .sync-chip-btn { background: #475569; color: #fff; }
+body.sync-floating { padding-bottom: 52px; }
+
+/* ===== Панель инструментов таблицы класса ===== */
+.competition-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.comp-tool-btn { border-radius: 8px; font-weight: 600; font-size: 0.82rem; }
+.competition-toolbar-hint { margin-left: auto; color: #94a3b8; font-size: 0.75rem; white-space: nowrap; }
+.competition-toolbar .dropdown-menu { border-radius: 10px; border-color: #e2e8f0; box-shadow: 0 10px 26px rgba(15, 23, 42, 0.12); font-size: 0.85rem; }
+
+/* ===== Медали за призовые места ===== */
+.competition-table th.cg-place-col, .competition-table td.cg-place-col { min-width: 62px; }
+.place-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  font-family: "Manrope", sans-serif; font-weight: 800; font-size: 0.8rem;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.65), inset 0 -2px 3px rgba(0, 0, 0, 0.18), 0 1px 2px rgba(15, 23, 42, 0.14);
+}
+.place-badge.place-1 { background: linear-gradient(160deg, #ffeeb0 0%, #f3c53f 48%, #cf9412 100%); color: #4a3405; }
+.place-badge.place-2 { background: linear-gradient(160deg, #fbfcfd 0%, #d3dae1 48%, #a5afb9 100%); color: #333c46; }
+.place-badge.place-3 { background: linear-gradient(160deg, #f5d0ab 0%, #cd8b52 48%, #a2612c 100%); color: #3d2410; }
+.place-plain { font-weight: 700; color: #475569; }
+.cg-place-empty { color: #94a3b8; }
+.competition-table td.cg-total strong { color: #0f172a; }
+
+@media (max-width: 768px) {
+  .competition-toolbar-hint { display: none; }
+  .competition-toolbar .comp-tool-btn { flex: 1 1 auto; }
+  .competition-toolbar .dropdown { flex: 1 1 auto; }
+  .competition-toolbar .dropdown > .btn { width: 100%; }
+  .sync-chip.is-floating { right: 10px; bottom: 10px; font-size: 0.72rem; }
+}
+@media print {
+  .competition-toolbar, .sync-chip, .footer-sync-slot { display: none !important; }
+  body.sync-floating { padding-bottom: 0 !important; }
+  .place-badge { box-shadow: none; }
+}
