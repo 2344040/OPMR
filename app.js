@@ -5028,4 +5028,547 @@ ${toolbar}
   return html;
 }
 
+// ============================================================
+// ЦЕЛОСТНОСТЬ: год → класс → набор критериев → команда → оценки
+// ============================================================
+
+function newFieldId() {
+  return "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function normalizeCriteria(criteria) {
+  if (!Array.isArray(criteria)) return [];
+  return criteria.map((g) => {
+    const isObj = typeof g === "object" && g !== null;
+    const section = isObj ? g.section || g.name || "Группа" : String(g);
+    const sectionShort = isObj ? g.sectionShort || g.short || "" : "";
+    const rawFields = isObj ? g.fields || [] : [];
+    const fields = rawFields.map((f) =>
+      typeof f === "object" && f !== null
+        ? {
+            id: f.id || newFieldId(),
+            name: f.name || String(f),
+            short: f.short || "",
+            type: f.type || "int",
+            ...(f.sum !== undefined ? {sum: f.sum} : {}),
+            ...(f.penalty !== undefined ? {penalty: f.penalty} : {}),
+          }
+        : {id: newFieldId(), name: String(f), short: "", type: "int"},
+    );
+    return {section, sectionShort, fields};
+  });
+}
+
+function addFieldToGroup(gIdx) {
+  tempCriteria[gIdx].fields.push({id: newFieldId(), name: "Новое поле", short: "", type: "int", sum: true, penalty: false});
+  renderCriteriaOffcanvas();
+}
+
+function addGroupFromLibrary(libGroupId) {
+  const libGroup = CRITERIA_LIBRARY.groups.find((g) => g.id === libGroupId);
+  if (!libGroup) return;
+  tempCriteria.push({
+    section: libGroup.name,
+    sectionShort: libGroup.short || "",
+    fields: libGroup.fields.map((f) => ({
+      id: newFieldId(),
+      name: f.name,
+      short: f.short,
+      type: f.type || (/вес|отклон|время/i.test(f.name) ? "decimal" : "int"),
+      sum: !/штраф|вес|размер|отклон|время|кол-во|остров/i.test(f.name),
+      penalty: /штраф/i.test(f.name),
+    })),
+  });
+  renderCriteriaOffcanvas();
+}
+
+function getClassIdByValue(apparatusClass, year = currentYear) {
+  const value = String(apparatusClass || "").trim().toLowerCase();
+  if (!value) return "na";
+  const yearSettings = competitionSettings[year] || {};
+  for (const key in yearSettings) {
+    const info = getClassInfo(key);
+    if (value.includes(key.toLowerCase()) || value.includes(String(info.name).toLowerCase())) return key;
+  }
+  for (const c of apparatusClasses) {
+    if (value.includes(String(c.id).toLowerCase()) || value.includes(String(c.name || "").toLowerCase())) return c.id;
+  }
+  return "na";
+}
+
+function getTeamClassId(team) {
+  if (team.classId && apparatusClasses.some((c) => c.id === team.classId)) return team.classId;
+  return getClassIdByValue(team.apparatusClass, team.year);
+}
+
+function getTeamPlace(team) {
+  const p = parseInt(team.place ?? team.protocol?.place, 10);
+  return p > 0 ? p : null;
+}
+
+function teamHasScores(team) {
+  return !!(team.scores && Object.values(team.scores).some((v) => v !== "" && v !== null && v !== undefined));
+}
+
+function buildClassGroups(sortedTeams) {
+  const yearSettings = competitionSettings[currentYear] || {};
+  const groups = {};
+  for (const key in yearSettings) {
+    const info = getClassInfo(key);
+    groups[key] = {...yearSettings[key], id: key, name: info.name, fullName: getClassFullName(key), color: info.color, teams: []};
+  }
+  groups.other = {name: "Н/Д", fullName: "Класс не определён", color: "bg-secondary text-white", date: "", teams: []};
+  sortedTeams.forEach((t) => {
+    const cid = getTeamClassId(t);
+    (groups[cid] || groups.other).teams.push(t);
+  });
+  return groups;
+}
+
+function getClassCriteriaGroups(year, classId) {
+  const cfg = (competitionSettings[year] || {})[classId] || {};
+  let raw = cfg.criteria;
+  if (raw && typeof raw === "object" && !Array.isArray(raw) && raw.groups) raw = raw.groups;
+  if (!raw || (Array.isArray(raw) && !raw.length)) return compDefaultGroups();
+  const mapCol = (c, ci) => {
+    const name = (c && String(c.name || "").trim()) || "";
+    const short = (c && String(c.short || "").trim()) || "";
+    return {
+      id: (c && c.id) || "",
+      key: compColKey(c, ci),
+      title: short || (c && String(c.title || c.label || "").trim()) || name || String(ci + 1),
+      short,
+      full: name,
+      type: (c && c.type) || "int",
+      sum: !(c && c.sum === false),
+      penalty: c && c.penalty !== undefined ? !!c.penalty : /штраф/i.test(name),
+    };
+  };
+  const mapGroup = (g, gi) => ({
+    key: g && g.key != null ? String(g.key) : g && g.id != null ? String(g.id) : "g" + gi,
+    title:
+      (g && String(g.sectionShort || g.title || g.name || g.text || "").trim()) ||
+      (g && String(g.section || "").trim()) ||
+      "Группа " + (gi + 1),
+    fullTitle: (g && String(g.section || "").trim()) || "",
+    cols: ((g && (g.fields || g.cols || g.columns || g.items)) || []).map(mapCol),
+  });
+  let groups = [];
+  if (Array.isArray(raw)) {
+    const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
+    groups = looksLikeGroups ? raw.map(mapGroup) : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol)}];
+  } else if (typeof raw === "object") {
+    groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
+  }
+  groups = groups.filter((g) => g.cols && g.cols.length);
+  return groups.length ? groups : compDefaultGroups();
+}
+
+function getScoreValue(team, group, col, gi, ci) {
+  const s = team.scores || team.results || team.protocol || {};
+  const keys = [];
+  if (col.id) keys.push("f:" + col.id);
+  keys.push(
+    col.key, col.full, col.title,
+    `${gi}_${ci}`, `${group.key}_${ci}`, `${group.key}_${col.key}`,
+    `${group.title}::${col.full || col.title}`,
+    `${group.fullTitle || group.title}::${col.full || col.title}`,
+  );
+  const list = keys.filter((k) => k !== undefined && k !== null && k !== "");
+  const read = (obj) => {
+    if (!obj || typeof obj !== "object") return "";
+    for (const k of list) if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k];
+    return "";
+  };
+  let v = read(s);
+  if (v === "" && s && s[group.key]) v = read(s[group.key]);
+  if (v === "" && team[group.key]) v = read(team[group.key]);
+  if (v === "") v = read(team);
+  return v;
+}
+
+function computeTeamTotal(team) {
+  const groups = getClassCriteriaGroups(team.year, getTeamClassId(team));
+  let total = 0;
+  groups.forEach((cg, gi) =>
+    cg.cols.forEach((c, ci) => {
+      const contrib = scoreContribution(c, getScoreValue(team, cg, c, gi, ci));
+      if (contrib !== null) total += contrib;
+    }),
+  );
+  total += parseScoreNumber(team.extra ?? team.protocol?.extraBonus ?? 0) || 0;
+  return Math.round(total * 100) / 100;
+}
+
+function saveProtocol() {
+  const team = teamsData.find((t) => t.id === currentProtocolTeamId);
+  if (!team) return;
+  const classId = getTeamClassId(team);
+  const critGroups = getClassCriteriaGroups(team.year, classId);
+  const scores = {...(team.scores || {})};
+  critGroups.forEach((cg, gi) => {
+    cg.cols.forEach((c, ci) => {
+      const el = document.getElementById(`proto-${gi}-${ci}`);
+      if (!el) return;
+      const type = c.type || "int";
+      const value = type === "bool" ? (el.checked ? "Да" : "Нет") : el.value;
+      if (c.id) scores["f:" + c.id] = value;
+      scores[`${cg.title}::${c.full || c.title}`] = value;
+    });
+  });
+  team.scores = scores;
+  team.classId = classId;
+  const draw = document.getElementById("protoDrawNumber")?.value || "";
+  const extra = parseFloat(document.getElementById("protoExtraBonus")?.value) || 0;
+  const place = parseInt(document.getElementById("protoPlace")?.value) || 0;
+  team.draw = draw;
+  team.extra = extra;
+  team.place = place;
+  team.protocol = {...(team.protocol || {}), drawNumber: draw, extraBonus: extra, place, totalScore: computeTeamTotal(team)};
+  saveData();
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token) {
+    showToast("Сохранение в GitHub...", "info");
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  } else {
+    showToast("Протокол сохранён локально", "success");
+  }
+  showCompetitionView();
+}
+
+function legacyProtocolToScores(team) {
+  const p = team.protocol;
+  if (!p) return null;
+  const pres = p.presentation || {}, qual = p.qualification || {}, comp = p.competition || {};
+  const map = {
+    pres_struct: pres.structure, pres_sa: pres.analysis, pres_new: pres.novelty, pres_qual: pres.quality,
+    qual_place: p.dimensions, qual_weight: p.weight, qual_penalty: qual.penalty,
+    qual_ok: qual.completed ? "Да" : "",
+    task_time: comp.time, task_score: comp.timeScore, task_gate: comp.gates,
+    task_park: comp.parking, task_gar: comp.garage, task_penalty: comp.penalty,
+  };
+  const out = {};
+  let any = false;
+  for (const k in map) {
+    const v = map[k];
+    if (v !== undefined && v !== null && v !== "" && v !== 0) {
+      out[k] = String(v);
+      any = true;
+    }
+  }
+  return any ? out : null;
+}
+
+function runIntegrityMigration() {
+  let changed = false;
+  for (const y in competitionSettings) {
+    for (const cid in competitionSettings[y]) {
+      const cfg = competitionSettings[y][cid];
+      if (!Array.isArray(cfg.criteria)) continue;
+      cfg.criteria.forEach((g) => {
+        if (!Array.isArray(g.fields)) return;
+        g.fields.forEach((f) => {
+          if (f && typeof f === "object" && !f.id) {
+            f.id = newFieldId();
+            changed = true;
+          }
+        });
+      });
+    }
+  }
+  const seen = new Set();
+  teamsData.forEach((t) => {
+    if (!t.id || seen.has(t.id)) {
+      t.id = generateTeamId(t.orgId, t.year, getTeamClassId(t), seen);
+      changed = true;
+    }
+    seen.add(t.id);
+    const cid = getTeamClassId(t);
+    if (t.classId !== cid) {
+      t.classId = cid;
+      changed = true;
+    }
+    if (!teamHasScores(t)) {
+      const legacy = legacyProtocolToScores(t);
+      if (legacy) {
+        t.scores = legacy;
+        changed = true;
+      }
+    }
+    if (!t.scores) return;
+    const groups = getClassCriteriaGroups(t.year, cid);
+    groups.forEach((cg, gi) =>
+      cg.cols.forEach((c, ci) => {
+        if (!c.id) return;
+        const idKey = "f:" + c.id;
+        if (t.scores[idKey] !== undefined && t.scores[idKey] !== "") return;
+        const legacyKeys = [
+          `${cg.title}::${c.full || c.title}`,
+          `${cg.fullTitle || cg.title}::${c.full || c.title}`,
+          c.full, c.title, c.key, `${gi}_${ci}`,
+        ];
+        for (const k of legacyKeys) {
+          if (k && t.scores[k] !== undefined && t.scores[k] !== "") {
+            t.scores[idKey] = t.scores[k];
+            changed = true;
+            break;
+          }
+        }
+      }),
+    );
+  });
+  teamsData.forEach((t) => {
+    if (!t.protocol || !teamHasScores(t)) return;
+    const live = computeTeamTotal(t);
+    if (Number(t.protocol.totalScore) !== live) {
+      t.protocol.totalScore = live;
+      changed = true;
+    }
+    const p = getTeamPlace(t);
+    if (p && t.protocol.place !== p) {
+      t.protocol.place = p;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+function auditDatabase() {
+  const issues = [];
+  const add = (level, text) => issues.push({level, text});
+  const ids = new Set();
+  let dup = 0, noClass = 0, idMismatch = 0, orphanScores = 0, staleTotal = 0, noFieldId = 0, legacy = 0;
+
+  for (const y in competitionSettings) {
+    for (const cid in competitionSettings[y]) {
+      const cfg = competitionSettings[y][cid];
+      (cfg.criteria || []).forEach((g) =>
+        (g.fields || []).forEach((f) => {
+          if (f && typeof f === "object" && !f.id) noFieldId++;
+        }),
+      );
+      if (!Array.isArray(cfg.criteria) || !cfg.criteria.length) {
+        const cnt = teamsData.filter((t) => String(t.year) === String(y) && getTeamClassId(t) === cid).length;
+        if (cnt) add("info", `${y} · ${getClassInfo(cid).name}: набор критериев не задан, используется стандартный (${cnt} команд).`);
+      }
+    }
+  }
+
+  teamsData.forEach((t) => {
+    if (ids.has(t.id)) dup++;
+    ids.add(t.id);
+    const cid = getTeamClassId(t);
+    const enabled = !!(competitionSettings[t.year] || {})[cid];
+    if (!enabled) {
+      noClass++;
+      add("error", `«${getTeamDisplayName(t)}» (${t.year}): класс «${getClassInfo(cid).name}» не включён в этом году — команда попадает в «Н/Д».`);
+    }
+    const idParts = String(t.id || "").split("-");
+    if (idParts.length >= 3 && (idParts[1] !== String(t.year) || idParts[2] !== cid)) idMismatch++;
+    if (!teamHasScores(t) && legacyProtocolToScores(t)) legacy++;
+    if (teamHasScores(t)) {
+      const groups = getClassCriteriaGroups(t.year, cid);
+      const known = new Set();
+      groups.forEach((cg) => cg.cols.forEach((c) => { if (c.id) known.add("f:" + c.id); known.add(`${cg.title}::${c.full || c.title}`); }));
+      const orphans = Object.keys(t.scores).filter((k) => !k.startsWith("f:") && !known.has(k) && t.scores[k] !== "");
+      if (orphans.length) orphanScores++;
+      const live = computeTeamTotal(t);
+      if (t.protocol && Number(t.protocol.totalScore) !== live) staleTotal++;
+    }
+  });
+
+  if (dup) add("error", `Дублирующихся ID команд: ${dup}.`);
+  if (noFieldId) add("warn", `Полей критериев без постоянного ID: ${noFieldId} (переименование может оборвать связь с оценками).`);
+  if (idMismatch) add("warn", `Команд, у которых ID не совпадает с фактическим годом/классом: ${idMismatch}.`);
+  if (orphanScores) add("warn", `Команд с оценками-сиротами (поля переименованы или удалены): ${orphanScores}.`);
+  if (staleTotal) add("warn", `Команд с устаревшей сохранённой суммой баллов: ${staleTotal}.`);
+  if (legacy) add("warn", `Протоколов старого формата, которые будут переведены в новый: ${legacy}.`);
+  const emptyOrgs = organizations.filter((o) => !teamsData.some((t) => t.orgId === o.id)).length;
+  if (emptyOrgs) add("info", `Организаций без команд: ${emptyOrgs}.`);
+  if (!issues.length) add("ok", "Нарушений связей не найдено. База целостна.");
+  return issues;
+}
+
+function repairDatabase() {
+  const changed = runIntegrityMigration();
+  saveData();
+  refreshCurrentView();
+  showToast(changed ? "Целостность восстановлена" : "Исправлять нечего — всё в порядке", changed ? "success" : "info");
+  const gh = getGitHubSettings();
+  if (changed && gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  openIntegrityReport();
+}
+
+function openIntegrityReport() {
+  let el = document.getElementById("integrityModal");
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "modal fade";
+    el.id = "integrityModal";
+    el.tabIndex = -1;
+    el.innerHTML = `<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-stethoscope me-2 text-primary"></i>Целостность базы</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="integrityReportBody"></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Закрыть</button><button type="button" class="btn btn-primary" onclick="repairDatabase()"><i class="fas fa-wand-magic-sparkles me-2"></i>Исправить автоматически</button></div></div></div>`;
+    document.body.appendChild(el);
+  }
+  const icons = {error: "fa-circle-exclamation text-danger", warn: "fa-triangle-exclamation text-warning", info: "fa-circle-info text-primary", ok: "fa-circle-check text-success"};
+  document.getElementById("integrityReportBody").innerHTML =
+    `<p class="text-muted small">Проверяются связи: год → класс → набор критериев → команда → оценки. Автопочинка проставляет постоянные ID полей, привязку команд к классу, переносит старые ключи оценок и пересчитывает суммы.</p><ul class="integrity-list">` +
+    auditDatabase().map((i) => `<li class="integrity-item"><i class="fas ${icons[i.level]}"></i><span>${escHtml(i.text)}</span></li>`).join("") +
+    `</ul>`;
+  bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function archiveClassCriteria(year, classId) {
+  const cfg = (competitionSettings[year] || {})[classId];
+  if (!cfg || (!(cfg.criteria || []).length && !cfg.date)) return;
+  const list = loadCriteriaTemplates().filter((t) => !(t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId));
+  list.push({
+    id: "arch_" + year + "_" + classId,
+    name: `Архив: ${getClassInfo(classId).name} ${year}`,
+    date: cfg.date || "",
+    criteria: JSON.parse(JSON.stringify(cfg.criteria || [])),
+    archive: {year: String(year), classId},
+  });
+  saveCriteriaTemplates(list);
+}
+
+function toggleYearClass(year, classId, checked) {
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  const info = getClassInfo(classId);
+  if (checked) {
+    if (!competitionSettings[year][classId]) {
+      const arch = loadCriteriaTemplates().find((t) => t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId);
+      competitionSettings[year][classId] = {date: arch?.date || "", criteria: arch ? normalizeCriteria(arch.criteria) : []};
+      if (arch) showToast(`Набор критериев восстановлен из архива`, "success");
+    }
+  } else {
+    const teamCount = teamsData.filter((t) => String(t.year) === String(year) && getTeamClassId(t) === classId).length;
+    let msg = `Отключить класс ${info.name} за ${year} год?`;
+    if (teamCount) msg += `\n\nКоманд в базе: ${teamCount}. Они сохранятся, но попадут в группу «Н/Д», пока класс не включён.`;
+    msg += `\n\nНабор критериев и дата уйдут в архив и вернутся при повторном включении.`;
+    if (!confirm(msg)) {
+      renderApparatusManager();
+      return;
+    }
+    archiveClassCriteria(year, classId);
+    delete competitionSettings[year][classId];
+  }
+  saveData();
+  renderApparatusManager();
+}
+
+function deleteApparatusClass(idx) {
+  const info = apparatusClasses[idx];
+  if (!info) return;
+  const usedYears = Object.keys(competitionSettings).filter((y) => competitionSettings[y][info.id]);
+  const teamCount = teamsData.filter((t) => getTeamClassId(t) === info.id).length;
+  if (usedYears.length || teamCount) {
+    if (!confirm(`Класс «${info.name}» используется:\n· годы: ${usedYears.join(", ") || "—"}\n· команд: ${teamCount}\n\nНаборы критериев будут заархивированы. Удалить класс?`)) return;
+    usedYears.forEach((y) => {
+      archiveClassCriteria(y, info.id);
+      delete competitionSettings[y][info.id];
+    });
+  }
+  apparatusClasses.splice(idx, 1);
+  saveData();
+  renderApparatusManager();
+  showToast("Класс удалён, критерии заархивированы", "success");
+}
+
+function renderMasterTable() {
+  const container = document.getElementById("masterContent");
+  const years = [2026, 2025, 2024];
+  const stats = {};
+  teamsData.forEach((team) => {
+    if (!team.orgId || !organizations.some((o) => o.id === team.orgId)) return;
+    const place = getTeamPlace(team);
+    const score = teamHasScores(team) ? computeTeamTotal(team) : (team.protocol?.totalScore ?? null);
+    if (!stats[team.orgId]) stats[team.orgId] = {org: organizations.find((o) => o.id === team.orgId), years: {}};
+    const cur = stats[team.orgId].years[team.year];
+    if (!cur || (place !== null && (cur.place === null || place < cur.place))) {
+      stats[team.orgId].years[team.year] = {place, score};
+    }
+  });
+  const rows = Object.values(stats).sort((a, b) => a.org.fullName.localeCompare(b.org.fullName, "ru"));
+  if (!rows.length) {
+    container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет данных для сводной таблицы</div>';
+    return;
+  }
+  let html = '<div class="detail-section"><h4 class="detail-section-title">Сводная таблица результатов</h4><div class="table-responsive"><table class="table table-hover master-table"><thead><tr><th style="min-width:250px">Организация</th>';
+  years.forEach((y) => (html += `<th>${y}</th>`));
+  html += "<th>Лучшее место</th></tr></thead><tbody>";
+  rows.forEach(({org, years: yd}) => {
+    html += `<tr><td><div class="fw-bold">${escHtml(org.shortName || org.fullName)}</div><div class="text-muted small">${escHtml(org.city || "")}</div></td>`;
+    let best = null;
+    years.forEach((y) => {
+      const d = yd[y];
+      if (d && d.place !== null) {
+        if (best === null || d.place < best) best = d.place;
+        html += `<td><strong>${d.place}</strong> / ${d.score ?? "—"}</td>`;
+      } else html += "<td>—</td>";
+    });
+    html += `<td class="${best === 1 ? "best-place" : ""}">${best ?? "—"}</td></tr>`;
+  });
+  container.innerHTML = html + "</tbody></table></div></div>";
+}
+
+const _integrityOrigSaveEdit = saveEdit;
+saveEdit = async function (...args) {
+  const before = teamsData.find((t) => t.id === currentTeamId);
+  if (before && !isNewTeam) {
+    const newYear = parseInt(document.getElementById("editYear")?.value, 10) || before.year;
+    const newClass = getClassIdByValue(document.getElementById("editApparatusClass")?.value, newYear);
+    const oldClass = getTeamClassId(before);
+    if (teamHasScores(before) && (newYear !== before.year || newClass !== oldClass)) {
+      if (!confirm(`У команды заполнен протокол: ${before.year} год, класс «${getClassInfo(oldClass).name}».\n\nВы переносите её в ${newYear} год, класс «${getClassInfo(newClass).name}». Оценки уйдут в архив команды, протокол начнётся заново.\n\nПродолжить?`)) return;
+      before.scoresArchive = {...(before.scoresArchive || {}), [`${before.year}:${oldClass}`]: before.scores};
+      before.scores = {};
+      before.place = 0;
+      before.protocol = {...(before.protocol || {}), place: 0, totalScore: 0};
+    }
+  }
+  const r = await _integrityOrigSaveEdit.apply(this, args);
+  const after = teamsData.find((t) => t.id === currentTeamId);
+  if (after) {
+    const cid = getTeamClassId(after);
+    if (after.classId !== cid) {
+      after.classId = cid;
+      saveData();
+    }
+  }
+  return r;
+};
+
+const _integrityOrigHeader = renderHeaderButtons;
+renderHeaderButtons = function (...a) {
+  const r = _integrityOrigHeader.apply(this, a);
+  const menu = document.querySelector("#headerButtons .dropdown-menu");
+  if (isAdmin && menu && !menu.querySelector("[data-opmr-integrity]")) {
+    const li = document.createElement("li");
+    li.innerHTML = `<a class="dropdown-item" href="#" data-opmr-integrity><i class="fas fa-stethoscope me-2 text-primary"></i>Целостность базы…</a>`;
+    li.querySelector("a").addEventListener("click", (ev) => {
+      ev.preventDefault();
+      openIntegrityReport();
+    });
+    menu.appendChild(li);
+  }
+  return r;
+};
+
+const _integrityOrigInit = opmrInit;
+opmrInit = async function (...a) {
+  const r = await _integrityOrigInit.apply(this, a);
+  const prev = suppressDirty;
+  suppressDirty = true;
+  const changed = runIntegrityMigration();
+  if (changed) saveData();
+  suppressDirty = prev;
+  if (changed) {
+    pendingSync = true;
+    persistSyncState();
+    refreshCurrentView();
+  }
+  updateSyncIndicator();
+  return r;
+};
+
 opmrInit();
