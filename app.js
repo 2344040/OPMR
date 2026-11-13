@@ -4585,7 +4585,8 @@ function ensureSyncPill() {
     await syncNow();
   });
   el.querySelector("#syncPillPull").addEventListener("click", async () => {
-    if (pendingSync && !confirm("Есть изменения, не сохранённые на сервере. Загрузка перезапишет их. Продолжить?")) return;
+    if (pendingSync && !confirm("Есть изменения, не сохранённые на сервере. Загрузка перезапишет их. Продолжить?"))
+      return;
     if (await pullFromGitHub(false)) refreshCurrentView();
   });
   return el;
@@ -4673,26 +4674,38 @@ function scoreContribution(col, v) {
 }
 
 const COMP_DEFAULT_SPEC = [
-  ["pres", "Презентация", [
-    ["pres_struct", "Структура", "Структ.", "int", 1],
-    ["pres_sa", "Сравнительный анализ", "СА", "int", 1],
-    ["pres_new", "Новизна", "Нов.", "int", 1],
-    ["pres_qual", "Качество", "Кач.", "int", 1],
-  ]],
-  ["qual", "Квалификация", [
-    ["qual_place", "Сумма размерений", "Разм.", "decimal", 0],
-    ["qual_weight", "Вес (кг)", "Вес", "decimal", 0],
-    ["qual_penalty", "Штрафные баллы", "Штраф", "int", -1],
-    ["qual_ok", "Квал. задание выполнено", "Квал.", "bool", 0],
-  ]],
-  ["task", "Конкурсное задание", [
-    ["task_time", "Время (сек)", "Т сек", "decimal", 0],
-    ["task_score", "Балл за время", "Т балл", "int", 1],
-    ["task_gate", "Прохождение ворот", "Вор.", "int", 1],
-    ["task_park", "Парковка", "Парк.", "int", 1],
-    ["task_gar", "Нужный гараж", "Гар.", "int", 1],
-    ["task_penalty", "Штрафные баллы", "Штраф", "int", -1],
-  ]],
+  [
+    "pres",
+    "Презентация",
+    [
+      ["pres_struct", "Структура", "Структ.", "int", 1],
+      ["pres_sa", "Сравнительный анализ", "СА", "int", 1],
+      ["pres_new", "Новизна", "Нов.", "int", 1],
+      ["pres_qual", "Качество", "Кач.", "int", 1],
+    ],
+  ],
+  [
+    "qual",
+    "Квалификация",
+    [
+      ["qual_place", "Сумма размерений", "Разм.", "decimal", 0],
+      ["qual_weight", "Вес (кг)", "Вес", "decimal", 0],
+      ["qual_penalty", "Штрафные баллы", "Штраф", "int", -1],
+      ["qual_ok", "Квал. задание выполнено", "Квал.", "bool", 0],
+    ],
+  ],
+  [
+    "task",
+    "Конкурсное задание",
+    [
+      ["task_time", "Время (сек)", "Т сек", "decimal", 0],
+      ["task_score", "Балл за время", "Т балл", "int", 1],
+      ["task_gate", "Прохождение ворот", "Вор.", "int", 1],
+      ["task_park", "Парковка", "Парк.", "int", 1],
+      ["task_gar", "Нужный гараж", "Гар.", "int", 1],
+      ["task_penalty", "Штрафные баллы", "Штраф", "int", -1],
+    ],
+  ],
 ];
 
 function compDefaultGroups() {
@@ -4701,7 +4714,13 @@ function compDefaultGroups() {
     title,
     fullTitle: title,
     cols: cols.map(([k, full, short, type, mode]) => ({
-      key: k, title: short, short, full, type, sum: mode === 1, penalty: mode === -1,
+      key: k,
+      title: short,
+      short,
+      full,
+      type,
+      sum: mode === 1,
+      penalty: mode === -1,
     })),
   }));
 }
@@ -4791,14 +4810,20 @@ function sortClassTeams(teams, mode) {
   const drawOf = (t) => parseScoreNumber(t.draw ?? t.drawNumber ?? t.lot ?? "");
   if (mode === "draw") {
     arr.sort((a, b) => {
-      const da = drawOf(a), db = drawOf(b);
+      const da = drawOf(a),
+        db = drawOf(b);
       if (da === null && db === null) return byName(a, b);
       if (da === null) return 1;
       if (db === null) return -1;
       return da - db || byName(a, b);
     });
   } else if (mode === "total") {
-    arr.sort((a, b) => computeTeamTotal(b) - computeTeamTotal(a) || byName(a, b));
+    arr.sort((a, b) => {
+      const ta = computeTeamTotal(a);
+      const tb = computeTeamTotal(b);
+      if ((ta === 0) !== (tb === 0)) return ta === 0 ? 1 : -1;
+      return tb - ta || byName(a, b);
+    });
   } else {
     arr.sort(byName);
   }
@@ -4818,19 +4843,34 @@ function classTeamsOf(classId) {
 }
 
 function assignPlaces(teams) {
+  const byName = (a, b) =>
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru");
   const scored = teams.map((t) => ({t, total: computeTeamTotal(t)}));
-  scored.sort((a, b) => b.total - a.total);
-  let place = 0;
-  let prev = null;
-  scored.forEach((x, i) => {
-    if (prev === null || x.total !== prev) {
-      place = i + 1;
-      prev = x.total;
+  scored.forEach((x) => {
+    x.ranked = x.total !== 0;
+  });
+  scored.sort((a, b) => {
+    if (a.ranked !== b.ranked) return a.ranked ? -1 : 1;
+    if (a.ranked) return b.total - a.total || byName(a.t, b.t);
+    return byName(a.t, b.t);
+  });
+  let rankedCount = 0;
+  let prevTotal = null;
+  let prevPlace = 0;
+  scored.forEach((x) => {
+    if (!x.ranked) {
+      x.t.place = 0;
+      x.t.protocol = {...(x.t.protocol || {}), place: 0, totalScore: x.total};
+      return;
     }
+    rankedCount++;
+    const place = prevTotal !== null && x.total === prevTotal ? prevPlace : rankedCount;
+    prevTotal = x.total;
+    prevPlace = place;
     x.t.place = place;
     x.t.protocol = {...(x.t.protocol || {}), place, totalScore: x.total};
   });
-  return scored.length;
+  return rankedCount;
 }
 
 function hasFilledScores(teams) {
@@ -4846,7 +4886,8 @@ function afterPlacesUpdate(message) {
   renderCompetition();
   showToast(message, "success");
   const gh = getGitHubSettings();
-  if (gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  if (gh?.owner && gh?.repo && gh?.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
 }
 
 function calculatePlacesForClass(classId) {
@@ -4860,7 +4901,12 @@ function calculatePlacesForClass(classId) {
     showToast("Сначала заполните хотя бы один протокол в этом классе", "error");
     return;
   }
-  if (!confirm(`Рассчитать места в классе «${className}» за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`)) return;
+  if (
+    !confirm(
+      `Рассчитать места в классе «${className}» за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`,
+    )
+  )
+    return;
   const count = assignPlaces(teams);
   const map = readCompSortMap();
   map[`${currentYear}:${classId}`] = "total";
@@ -4877,7 +4923,12 @@ function calculatePlaces() {
     showToast(`За ${currentYear} год нет команд ни в одном классе`, "error");
     return;
   }
-  if (!confirm(`Рассчитать места во всех классах за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`)) return;
+  if (
+    !confirm(
+      `Рассчитать места во всех классах за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`,
+    )
+  )
+    return;
   let total = 0;
   const map = readCompSortMap();
   classes.forEach((id) => {
@@ -4911,7 +4962,11 @@ function renderCompetition() {
     const extraPool = [2, 3, 4];
     critGroups.forEach((cg) => {
       const t = String(cg.title || "").toLowerCase();
-      const tint = t.includes("презентац") ? 0 : t.includes("квалификац") ? 1 : extraPool[extraIdx++ % extraPool.length];
+      const tint = t.includes("презентац")
+        ? 0
+        : t.includes("квалификац")
+          ? 1
+          : extraPool[extraIdx++ % extraPool.length];
       cg.tint = tint;
       cg.cols.forEach((c) => {
         c.tint = tint;
@@ -5060,7 +5115,14 @@ function normalizeCriteria(criteria) {
 }
 
 function addFieldToGroup(gIdx) {
-  tempCriteria[gIdx].fields.push({id: newFieldId(), name: "Новое поле", short: "", type: "int", sum: true, penalty: false});
+  tempCriteria[gIdx].fields.push({
+    id: newFieldId(),
+    name: "Новое поле",
+    short: "",
+    type: "int",
+    sum: true,
+    penalty: false,
+  });
   renderCriteriaOffcanvas();
 }
 
@@ -5083,7 +5145,9 @@ function addGroupFromLibrary(libGroupId) {
 }
 
 function getClassIdByValue(apparatusClass, year = currentYear) {
-  const value = String(apparatusClass || "").trim().toLowerCase();
+  const value = String(apparatusClass || "")
+    .trim()
+    .toLowerCase();
   if (!value) return "na";
   const yearSettings = competitionSettings[year] || {};
   for (const key in yearSettings) {
@@ -5115,7 +5179,14 @@ function buildClassGroups(sortedTeams) {
   const groups = {};
   for (const key in yearSettings) {
     const info = getClassInfo(key);
-    groups[key] = {...yearSettings[key], id: key, name: info.name, fullName: getClassFullName(key), color: info.color, teams: []};
+    groups[key] = {
+      ...yearSettings[key],
+      id: key,
+      name: info.name,
+      fullName: getClassFullName(key),
+      color: info.color,
+      teams: [],
+    };
   }
   groups.other = {name: "Н/Д", fullName: "Класс не определён", color: "bg-secondary text-white", date: "", teams: []};
   sortedTeams.forEach((t) => {
@@ -5156,7 +5227,9 @@ function getClassCriteriaGroups(year, classId) {
   let groups = [];
   if (Array.isArray(raw)) {
     const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
-    groups = looksLikeGroups ? raw.map(mapGroup) : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol)}];
+    groups = looksLikeGroups
+      ? raw.map(mapGroup)
+      : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol)}];
   } else if (typeof raw === "object") {
     groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
   }
@@ -5169,8 +5242,12 @@ function getScoreValue(team, group, col, gi, ci) {
   const keys = [];
   if (col.id) keys.push("f:" + col.id);
   keys.push(
-    col.key, col.full, col.title,
-    `${gi}_${ci}`, `${group.key}_${ci}`, `${group.key}_${col.key}`,
+    col.key,
+    col.full,
+    col.title,
+    `${gi}_${ci}`,
+    `${group.key}_${ci}`,
+    `${group.key}_${col.key}`,
     `${group.title}::${col.full || col.title}`,
     `${group.fullTitle || group.title}::${col.full || col.title}`,
   );
@@ -5224,7 +5301,13 @@ function saveProtocol() {
   team.draw = draw;
   team.extra = extra;
   team.place = place;
-  team.protocol = {...(team.protocol || {}), drawNumber: draw, extraBonus: extra, place, totalScore: computeTeamTotal(team)};
+  team.protocol = {
+    ...(team.protocol || {}),
+    drawNumber: draw,
+    extraBonus: extra,
+    place,
+    totalScore: computeTeamTotal(team),
+  };
   saveData();
   const gh = getGitHubSettings();
   if (gh?.owner && gh?.repo && gh?.token) {
@@ -5239,13 +5322,24 @@ function saveProtocol() {
 function legacyProtocolToScores(team) {
   const p = team.protocol;
   if (!p) return null;
-  const pres = p.presentation || {}, qual = p.qualification || {}, comp = p.competition || {};
+  const pres = p.presentation || {},
+    qual = p.qualification || {},
+    comp = p.competition || {};
   const map = {
-    pres_struct: pres.structure, pres_sa: pres.analysis, pres_new: pres.novelty, pres_qual: pres.quality,
-    qual_place: p.dimensions, qual_weight: p.weight, qual_penalty: qual.penalty,
+    pres_struct: pres.structure,
+    pres_sa: pres.analysis,
+    pres_new: pres.novelty,
+    pres_qual: pres.quality,
+    qual_place: p.dimensions,
+    qual_weight: p.weight,
+    qual_penalty: qual.penalty,
     qual_ok: qual.completed ? "Да" : "",
-    task_time: comp.time, task_score: comp.timeScore, task_gate: comp.gates,
-    task_park: comp.parking, task_gar: comp.garage, task_penalty: comp.penalty,
+    task_time: comp.time,
+    task_score: comp.timeScore,
+    task_gate: comp.gates,
+    task_park: comp.parking,
+    task_gar: comp.garage,
+    task_penalty: comp.penalty,
   };
   const out = {};
   let any = false;
@@ -5305,7 +5399,10 @@ function runIntegrityMigration() {
         const legacyKeys = [
           `${cg.title}::${c.full || c.title}`,
           `${cg.fullTitle || cg.title}::${c.full || c.title}`,
-          c.full, c.title, c.key, `${gi}_${ci}`,
+          c.full,
+          c.title,
+          c.key,
+          `${gi}_${ci}`,
         ];
         for (const k of legacyKeys) {
           if (k && t.scores[k] !== undefined && t.scores[k] !== "") {
@@ -5337,7 +5434,13 @@ function auditDatabase() {
   const issues = [];
   const add = (level, text) => issues.push({level, text});
   const ids = new Set();
-  let dup = 0, noClass = 0, idMismatch = 0, orphanScores = 0, staleTotal = 0, noFieldId = 0, legacy = 0;
+  let dup = 0,
+    noClass = 0,
+    idMismatch = 0,
+    orphanScores = 0,
+    staleTotal = 0,
+    noFieldId = 0,
+    legacy = 0;
 
   for (const y in competitionSettings) {
     for (const cid in competitionSettings[y]) {
@@ -5349,7 +5452,11 @@ function auditDatabase() {
       );
       if (!Array.isArray(cfg.criteria) || !cfg.criteria.length) {
         const cnt = teamsData.filter((t) => String(t.year) === String(y) && getTeamClassId(t) === cid).length;
-        if (cnt) add("info", `${y} · ${getClassInfo(cid).name}: набор критериев не задан, используется стандартный (${cnt} команд).`);
+        if (cnt)
+          add(
+            "info",
+            `${y} · ${getClassInfo(cid).name}: набор критериев не задан, используется стандартный (${cnt} команд).`,
+          );
       }
     }
   }
@@ -5361,7 +5468,10 @@ function auditDatabase() {
     const enabled = !!(competitionSettings[t.year] || {})[cid];
     if (!enabled) {
       noClass++;
-      add("error", `«${getTeamDisplayName(t)}» (${t.year}): класс «${getClassInfo(cid).name}» не включён в этом году — команда попадает в «Н/Д».`);
+      add(
+        "error",
+        `«${getTeamDisplayName(t)}» (${t.year}): класс «${getClassInfo(cid).name}» не включён в этом году — команда попадает в «Н/Д».`,
+      );
     }
     const idParts = String(t.id || "").split("-");
     if (idParts.length >= 3 && (idParts[1] !== String(t.year) || idParts[2] !== cid)) idMismatch++;
@@ -5369,7 +5479,12 @@ function auditDatabase() {
     if (teamHasScores(t)) {
       const groups = getClassCriteriaGroups(t.year, cid);
       const known = new Set();
-      groups.forEach((cg) => cg.cols.forEach((c) => { if (c.id) known.add("f:" + c.id); known.add(`${cg.title}::${c.full || c.title}`); }));
+      groups.forEach((cg) =>
+        cg.cols.forEach((c) => {
+          if (c.id) known.add("f:" + c.id);
+          known.add(`${cg.title}::${c.full || c.title}`);
+        }),
+      );
       const orphans = Object.keys(t.scores).filter((k) => !k.startsWith("f:") && !known.has(k) && t.scores[k] !== "");
       if (orphans.length) orphanScores++;
       const live = computeTeamTotal(t);
@@ -5378,7 +5493,8 @@ function auditDatabase() {
   });
 
   if (dup) add("error", `Дублирующихся ID команд: ${dup}.`);
-  if (noFieldId) add("warn", `Полей критериев без постоянного ID: ${noFieldId} (переименование может оборвать связь с оценками).`);
+  if (noFieldId)
+    add("warn", `Полей критериев без постоянного ID: ${noFieldId} (переименование может оборвать связь с оценками).`);
   if (idMismatch) add("warn", `Команд, у которых ID не совпадает с фактическим годом/классом: ${idMismatch}.`);
   if (orphanScores) add("warn", `Команд с оценками-сиротами (поля переименованы или удалены): ${orphanScores}.`);
   if (staleTotal) add("warn", `Команд с устаревшей сохранённой суммой баллов: ${staleTotal}.`);
@@ -5395,7 +5511,8 @@ function repairDatabase() {
   refreshCurrentView();
   showToast(changed ? "Целостность восстановлена" : "Исправлять нечего — всё в порядке", changed ? "success" : "info");
   const gh = getGitHubSettings();
-  if (changed && gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  if (changed && gh?.owner && gh?.repo && gh?.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
   openIntegrityReport();
 }
 
@@ -5409,10 +5526,19 @@ function openIntegrityReport() {
     el.innerHTML = `<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-stethoscope me-2 text-primary"></i>Целостность базы</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="integrityReportBody"></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Закрыть</button><button type="button" class="btn btn-primary" onclick="repairDatabase()"><i class="fas fa-wand-magic-sparkles me-2"></i>Исправить автоматически</button></div></div></div>`;
     document.body.appendChild(el);
   }
-  const icons = {error: "fa-circle-exclamation text-danger", warn: "fa-triangle-exclamation text-warning", info: "fa-circle-info text-primary", ok: "fa-circle-check text-success"};
+  const icons = {
+    error: "fa-circle-exclamation text-danger",
+    warn: "fa-triangle-exclamation text-warning",
+    info: "fa-circle-info text-primary",
+    ok: "fa-circle-check text-success",
+  };
   document.getElementById("integrityReportBody").innerHTML =
     `<p class="text-muted small">Проверяются связи: год → класс → набор критериев → команда → оценки. Автопочинка проставляет постоянные ID полей, привязку команд к классу, переносит старые ключи оценок и пересчитывает суммы.</p><ul class="integrity-list">` +
-    auditDatabase().map((i) => `<li class="integrity-item"><i class="fas ${icons[i.level]}"></i><span>${escHtml(i.text)}</span></li>`).join("") +
+    auditDatabase()
+      .map(
+        (i) => `<li class="integrity-item"><i class="fas ${icons[i.level]}"></i><span>${escHtml(i.text)}</span></li>`,
+      )
+      .join("") +
     `</ul>`;
   bootstrap.Modal.getOrCreateInstance(el).show();
 }
@@ -5420,7 +5546,9 @@ function openIntegrityReport() {
 function archiveClassCriteria(year, classId) {
   const cfg = (competitionSettings[year] || {})[classId];
   if (!cfg || (!(cfg.criteria || []).length && !cfg.date)) return;
-  const list = loadCriteriaTemplates().filter((t) => !(t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId));
+  const list = loadCriteriaTemplates().filter(
+    (t) => !(t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId),
+  );
   list.push({
     id: "arch_" + year + "_" + classId,
     name: `Архив: ${getClassInfo(classId).name} ${year}`,
@@ -5436,14 +5564,20 @@ function toggleYearClass(year, classId, checked) {
   const info = getClassInfo(classId);
   if (checked) {
     if (!competitionSettings[year][classId]) {
-      const arch = loadCriteriaTemplates().find((t) => t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId);
-      competitionSettings[year][classId] = {date: arch?.date || "", criteria: arch ? normalizeCriteria(arch.criteria) : []};
+      const arch = loadCriteriaTemplates().find(
+        (t) => t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId,
+      );
+      competitionSettings[year][classId] = {
+        date: arch?.date || "",
+        criteria: arch ? normalizeCriteria(arch.criteria) : [],
+      };
       if (arch) showToast(`Набор критериев восстановлен из архива`, "success");
     }
   } else {
     const teamCount = teamsData.filter((t) => String(t.year) === String(year) && getTeamClassId(t) === classId).length;
     let msg = `Отключить класс ${info.name} за ${year} год?`;
-    if (teamCount) msg += `\n\nКоманд в базе: ${teamCount}. Они сохранятся, но попадут в группу «Н/Д», пока класс не включён.`;
+    if (teamCount)
+      msg += `\n\nКоманд в базе: ${teamCount}. Они сохранятся, но попадут в группу «Н/Д», пока класс не включён.`;
     msg += `\n\nНабор критериев и дата уйдут в архив и вернутся при повторном включении.`;
     if (!confirm(msg)) {
       renderApparatusManager();
@@ -5462,7 +5596,12 @@ function deleteApparatusClass(idx) {
   const usedYears = Object.keys(competitionSettings).filter((y) => competitionSettings[y][info.id]);
   const teamCount = teamsData.filter((t) => getTeamClassId(t) === info.id).length;
   if (usedYears.length || teamCount) {
-    if (!confirm(`Класс «${info.name}» используется:\n· годы: ${usedYears.join(", ") || "—"}\n· команд: ${teamCount}\n\nНаборы критериев будут заархивированы. Удалить класс?`)) return;
+    if (
+      !confirm(
+        `Класс «${info.name}» используется:\n· годы: ${usedYears.join(", ") || "—"}\n· команд: ${teamCount}\n\nНаборы критериев будут заархивированы. Удалить класс?`,
+      )
+    )
+      return;
     usedYears.forEach((y) => {
       archiveClassCriteria(y, info.id);
       delete competitionSettings[y][info.id];
@@ -5493,7 +5632,8 @@ function renderMasterTable() {
     container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет данных для сводной таблицы</div>';
     return;
   }
-  let html = '<div class="detail-section"><h4 class="detail-section-title">Сводная таблица результатов</h4><div class="table-responsive"><table class="table table-hover master-table"><thead><tr><th style="min-width:250px">Организация</th>';
+  let html =
+    '<div class="detail-section"><h4 class="detail-section-title">Сводная таблица результатов</h4><div class="table-responsive"><table class="table table-hover master-table"><thead><tr><th style="min-width:250px">Организация</th>';
   years.forEach((y) => (html += `<th>${y}</th>`));
   html += "<th>Лучшее место</th></tr></thead><tbody>";
   rows.forEach(({org, years: yd}) => {
@@ -5519,7 +5659,12 @@ saveEdit = async function (...args) {
     const newClass = getClassIdByValue(document.getElementById("editApparatusClass")?.value, newYear);
     const oldClass = getTeamClassId(before);
     if (teamHasScores(before) && (newYear !== before.year || newClass !== oldClass)) {
-      if (!confirm(`У команды заполнен протокол: ${before.year} год, класс «${getClassInfo(oldClass).name}».\n\nВы переносите её в ${newYear} год, класс «${getClassInfo(newClass).name}». Оценки уйдут в архив команды, протокол начнётся заново.\n\nПродолжить?`)) return;
+      if (
+        !confirm(
+          `У команды заполнен протокол: ${before.year} год, класс «${getClassInfo(oldClass).name}».\n\nВы переносите её в ${newYear} год, класс «${getClassInfo(newClass).name}». Оценки уйдут в архив команды, протокол начнётся заново.\n\nПродолжить?`,
+        )
+      )
+        return;
       before.scoresArchive = {...(before.scoresArchive || {}), [`${before.year}:${oldClass}`]: before.scores};
       before.scores = {};
       before.place = 0;
@@ -5722,12 +5867,21 @@ function renderCriteriaOffcanvas() {
 
 function updateFieldName(gIdx, fIdx, value) {
   const f = tempCriteria[gIdx].fields[fIdx];
-  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: value, short: "", type: "int", sum: true, penalty: false};
+  if (typeof f === "string")
+    tempCriteria[gIdx].fields[fIdx] = {
+      id: newFieldId(),
+      name: value,
+      short: "",
+      type: "int",
+      sum: true,
+      penalty: false,
+    };
   else f.name = value;
 }
 function updateFieldShort(gIdx, fIdx, value) {
   const f = tempCriteria[gIdx].fields[fIdx];
-  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: value, type: "int", sum: true, penalty: false};
+  if (typeof f === "string")
+    tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: value, type: "int", sum: true, penalty: false};
   else f.short = value;
   const row = document.querySelector(`[data-crit-field][data-g="${gIdx}"][data-f="${fIdx}"] .crit-short-clear`);
   if (row) row.disabled = !String(value).trim();
@@ -5742,18 +5896,52 @@ function clearFieldShort(gIdx, fIdx) {
 }
 
 const _shortOrig = {
-  setFieldFlag, setFieldType, moveField, moveGroup, removeField, removeGroup,
-  addFieldToGroup, addCustomGroup, addGroupFromLibrary,
+  setFieldFlag,
+  setFieldType,
+  moveField,
+  moveGroup,
+  removeField,
+  removeGroup,
+  addFieldToGroup,
+  addCustomGroup,
+  addGroupFromLibrary,
 };
-setFieldFlag = function (...a) { syncCriteriaFromDom(); return _shortOrig.setFieldFlag.apply(this, a); };
-setFieldType = function (...a) { syncCriteriaFromDom(); return _shortOrig.setFieldType.apply(this, a); };
-moveField = function (...a) { syncCriteriaFromDom(); return _shortOrig.moveField.apply(this, a); };
-moveGroup = function (...a) { syncCriteriaFromDom(); return _shortOrig.moveGroup.apply(this, a); };
-removeField = function (...a) { syncCriteriaFromDom(); return _shortOrig.removeField.apply(this, a); };
-removeGroup = function (...a) { syncCriteriaFromDom(); return _shortOrig.removeGroup.apply(this, a); };
-addFieldToGroup = function (...a) { syncCriteriaFromDom(); return _shortOrig.addFieldToGroup.apply(this, a); };
-addCustomGroup = function (...a) { syncCriteriaFromDom(); return _shortOrig.addCustomGroup.apply(this, a); };
-addGroupFromLibrary = function (...a) { syncCriteriaFromDom(); return _shortOrig.addGroupFromLibrary.apply(this, a); };
+setFieldFlag = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.setFieldFlag.apply(this, a);
+};
+setFieldType = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.setFieldType.apply(this, a);
+};
+moveField = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.moveField.apply(this, a);
+};
+moveGroup = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.moveGroup.apply(this, a);
+};
+removeField = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.removeField.apply(this, a);
+};
+removeGroup = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.removeGroup.apply(this, a);
+};
+addFieldToGroup = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.addFieldToGroup.apply(this, a);
+};
+addCustomGroup = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.addCustomGroup.apply(this, a);
+};
+addGroupFromLibrary = function (...a) {
+  syncCriteriaFromDom();
+  return _shortOrig.addGroupFromLibrary.apply(this, a);
+};
 
 function saveCriteriaFromOffcanvas() {
   syncCriteriaFromDom();
@@ -5769,7 +5957,8 @@ function saveCriteriaFromOffcanvas() {
   renderApparatusManager();
   showToast("Набор критериев сохранён", "success");
   const gh = getGitHubSettings();
-  if (gh && gh.owner && gh.repo && gh.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  if (gh && gh.owner && gh.repo && gh.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
 }
 
 function getClassCriteriaGroups(year, classId) {
@@ -5803,7 +5992,9 @@ function getClassCriteriaGroups(year, classId) {
   let groups = [];
   if (Array.isArray(raw)) {
     const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
-    groups = looksLikeGroups ? raw.map(mapGroup) : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol)}];
+    groups = looksLikeGroups
+      ? raw.map(mapGroup)
+      : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol)}];
   } else if (typeof raw === "object") {
     groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
   }
@@ -5821,7 +6012,9 @@ function renderCriteriaSubhead(c) {
     const ico = isPen
       ? '<i class="fas fa-circle-minus cg-ico cg-ico-pen" aria-hidden="true"></i>'
       : '<i class="fas fa-circle-plus cg-ico cg-ico-sum" aria-hidden="true"></i>';
-    return short ? `<span class="cg-th-stack">${ico}<span class="cg-th-short">${escHtml(lcLetters(short))}</span></span>` : ico;
+    return short
+      ? `<span class="cg-th-stack">${ico}<span class="cg-th-short">${escHtml(lcLetters(short))}</span></span>`
+      : ico;
   }
   return escHtml(lcLetters(short || lbl));
 }
@@ -5830,7 +6023,9 @@ function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
   const byId = {};
-  teamsData.forEach((t) => { byId[String(t.id)] = t; });
+  teamsData.forEach((t) => {
+    byId[String(t.id)] = t;
+  });
   const rowTeam = (row) => {
     const direct = row.dataset.teamId;
     if (direct && byId[direct]) return byId[direct];
@@ -5846,7 +6041,9 @@ function enhanceCompetitionTables() {
     const badge = card.querySelector(".category-badge");
     if (badge) {
       const txt = badge.textContent.trim().toLowerCase();
-      const found = apparatusClasses.find((c) => String(c.name).toLowerCase() === txt || String(c.id).toLowerCase() === txt);
+      const found = apparatusClasses.find(
+        (c) => String(c.name).toLowerCase() === txt || String(c.id).toLowerCase() === txt,
+      );
       if (found) return found.id;
     }
     return null;
@@ -5891,7 +6088,9 @@ const _shortOrigCommit = commitToGitHub;
 commitToGitHub = async function (...a) {
   const r = await _shortOrigCommit.apply(this, a);
   if (r && r.success) {
-    try { localStorage.setItem("opmr_last_push_at", String(Date.now())); } catch {}
+    try {
+      localStorage.setItem("opmr_last_push_at", String(Date.now()));
+    } catch {}
   }
   return r;
 };
@@ -5899,7 +6098,9 @@ const _shortOrigPull = pullFromGitHub;
 pullFromGitHub = async function (silent = false) {
   if (silent) {
     let t = 0;
-    try { t = parseInt(localStorage.getItem("opmr_last_push_at") || "0", 10) || 0; } catch {}
+    try {
+      t = parseInt(localStorage.getItem("opmr_last_push_at") || "0", 10) || 0;
+    } catch {}
     if (Date.now() - t < 5 * 60 * 1000) return false;
   }
   return _shortOrigPull.call(this, silent);

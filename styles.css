@@ -2158,3 +2158,14 @@ body.sync-floating { padding-bottom: 52px; }
   background: #f8fafc; margin-bottom: 8px; font-size: 0.88rem; color: #334155;
 }
 .integrity-item i { margin-top: 2px; flex-shrink: 0; }
+
+/* ===== Руководитель второй строкой: курсив, приглушённый тон ===== */
+.competition-table td.td-team .team-leader-line {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: #64748b;
+  margin-top: 2px;
+}
