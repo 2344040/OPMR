@@ -1431,7 +1431,17 @@ function renderCompetition() {
       const paren = pi > 0 ? full.slice(pi).trim() : "";
       head1 += `<th colspan="${cg.cols.length}" class="cg-tint-${cg.tint}" style="${bg(cg.tint)}" title="${escHtml(full)}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
       cg.cols.forEach((c) => {
-        head2 += `<th class="cg-tint-${c.tint}" style="${bg(c.tint)}" title="${escHtml(c.full || c.title)}">${escHtml(lcLetters(c.title))}</th>`;
+                const lbl = String(c.title || "");
+        const fullN = String(c.full || c.title || "");
+        const hay = (fullN + " " + lbl).toLowerCase();
+        const isPen = !!c.penalty || hay.includes("штраф");
+        const isPts = !isPen && (hay.includes("балл") || hay.includes("бонус"));
+        const inner = isPen
+          ? '<i class="fas fa-circle-minus cg-ico cg-ico-pen" aria-hidden="true"></i>'
+          : isPts
+            ? '<i class="fas fa-circle-plus cg-ico cg-ico-sum" aria-hidden="true"></i>'
+            : escHtml(lcLetters(lbl));
+        head2 += `<th class="cg-tint-${c.tint}" style="${bg(c.tint)}" title="${escHtml(fullN)}">${inner}</th>`;
       });
     });
     head1 += `<th rowspan="2" class="cg-fixed" style="background:${CG_FIXED_HEAD} !important">Доп.</th><th rowspan="2" class="cg-fixed" style="background:${CG_FIXED_HEAD} !important">Σ</th><th rowspan="2" class="cg-fixed th-cup" style="background:${CG_FIXED_HEAD} !important"><i class="fas fa-trophy"></i></th></tr>`;

@@ -1992,3 +1992,8 @@ body > .container {
 .cg-bool-no {
   color: #94a3b8;
 }
+
+/* ===== Иконки расчётных колонок вместо слов «Баллы»/«Штраф» ===== */
+.competition-table .cg-ico { font-size: 0.85rem; line-height: 1; }
+.competition-table .cg-ico-sum { color: #15803d; }
+.competition-table .cg-ico-pen { color: #b91c1c; }
