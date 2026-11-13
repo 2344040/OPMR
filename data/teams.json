@@ -1043,6 +1043,147 @@
           ]
         }
       ]
+    },
+    {
+      "id": "t1794565028720",
+      "name": "АННА 2024 фин",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "",
+          "fields": [
+            {
+              "name": "Структура",
+              "short": "Стр-ра",
+              "type": "int"
+            },
+            {
+              "name": "Эффективность",
+              "short": "Эфф",
+              "type": "int"
+            },
+            {
+              "name": "Новизна",
+              "short": "Нов",
+              "type": "int"
+            },
+            {
+              "name": "Перспектива",
+              "short": "Персп",
+              "type": "int"
+            },
+            {
+              "name": "Качество",
+              "short": "Кач",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "",
+          "fields": [
+            {
+              "name": "Сумма размерений",
+              "short": " Σ размер",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "name": "Вес (кг)",
+              "short": "",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Бонусные баллы",
+              "short": "Бонус",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "section": "Задание 2 (движение по траектории)",
+          "sectionShort": "",
+          "fields": [
+            {
+              "name": "Среднее отклонение от траектории (м.)",
+              "short": "Ср. откл. (м)",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Баллы",
+              "short": "",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "section": "Задание 3 (кол-во правильно определенных типов растений на островах)",
+          "sectionShort": "",
+          "fields": [
+            {
+              "name": "Остров 1",
+              "short": "",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Остров 2",
+              "short": "",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Остров 3",
+              "short": "",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "name": "Баллы",
+              "short": "",
+              "type": "int"
+            }
+          ]
+        },
+        {
+          "section": "Задание 4 (кол-во подводных объектов)",
+          "sectionShort": "",
+          "fields": [
+            {
+              "name": "Кол-во объектов",
+              "short": "Кол-во",
+              "type": "int",
+              "sum": false
+            },
+            {
+              "name": "Баллы",
+              "short": "",
+              "type": "int"
+            },
+            {
+              "name": "Бонус за непрерывность",
+              "short": "Бонус (непрер)",
+              "type": "int"
+            }
+          ]
+        }
+      ]
     }
   ],
   "teams": [
@@ -1916,7 +2057,7 @@
           "penalty": 0
         },
         "extraBonus": 0,
-        "place": 2,
+        "place": 5,
         "totalScore": 62
       },
       "scores": {
@@ -1941,7 +2082,7 @@
       },
       "draw": "4",
       "extra": 0,
-      "place": 0
+      "place": 5
     },
     {
       "id": "015-2024-anna",
@@ -1962,7 +2103,12 @@
       "teamLeader": "Дрягин Г.В.",
       "teamLeaderPhone": "",
       "photos": [],
-      "members": []
+      "members": [],
+      "place": 6,
+      "protocol": {
+        "place": 6,
+        "totalScore": 0
+      }
     },
     {
       "id": "016-2024-anna",
@@ -2006,11 +2152,11 @@
       },
       "draw": "6",
       "extra": 0,
-      "place": 0,
+      "place": 2,
       "protocol": {
         "drawNumber": "6",
         "extraBonus": 0,
-        "place": 1,
+        "place": 2,
         "totalScore": 66
       }
     },
@@ -2056,11 +2202,11 @@
       },
       "draw": "3",
       "extra": 0,
-      "place": 0,
+      "place": 4,
       "protocol": {
         "drawNumber": "3",
         "extraBonus": 0,
-        "place": 0,
+        "place": 4,
         "totalScore": 63
       }
     },
@@ -2106,11 +2252,11 @@
       },
       "draw": "5",
       "extra": 0,
-      "place": 0,
+      "place": 6,
       "protocol": {
         "drawNumber": "5",
         "extraBonus": 0,
-        "place": 0,
+        "place": 6,
         "totalScore": 0
       }
     },
@@ -2133,7 +2279,12 @@
       "teamLeader": "Хартанен А.В.",
       "teamLeaderPhone": "",
       "photos": [],
-      "members": []
+      "members": [],
+      "place": 6,
+      "protocol": {
+        "place": 6,
+        "totalScore": 0
+      }
     },
     {
       "id": "017-2024-anna-4",
@@ -2177,11 +2328,11 @@
       },
       "draw": "",
       "extra": 0,
-      "place": 0,
+      "place": 6,
       "protocol": {
         "drawNumber": "",
         "extraBonus": 0,
-        "place": 0,
+        "place": 6,
         "totalScore": 0
       }
     },
@@ -2227,11 +2378,11 @@
       },
       "draw": "1",
       "extra": 0,
-      "place": 0,
+      "place": 1,
       "protocol": {
         "drawNumber": "1",
         "extraBonus": 0,
-        "place": 0,
+        "place": 1,
         "totalScore": 88
       }
     },
@@ -2277,11 +2428,11 @@
       },
       "draw": "2",
       "extra": 0,
-      "place": 0,
+      "place": 3,
       "protocol": {
         "drawNumber": "2",
         "extraBonus": 0,
-        "place": 0,
+        "place": 3,
         "totalScore": 65
       }
     },
