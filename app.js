@@ -4020,6 +4020,522 @@ function saveCriteriaFromOffcanvas() {
   if (confirm("Сохранить этот набор как шаблон для других классов и годов?")) saveCriteriaAsTemplate();
 }
 
-renderFooterVersion();
-renderHeaderButtons();
-loadDefaultData();
+// ============================================================
+// OPMR NAVIGATOR — надёжное хранение, восстановление позиции,
+// раздельное сохранение критериев и шаблонов
+// ============================================================
+
+// ---------- 1. Состояние синхронизации с сервером ----------
+const SYNC_STATE_KEY = "opmr_sync_state";
+let pendingSync = false;
+let lastSyncAt = null;
+let syncInFlight = false;
+let suppressDirty = true;
+let protocolFormDirty = false;
+
+try {
+  const _s = JSON.parse(localStorage.getItem(SYNC_STATE_KEY));
+  if (_s) {
+    pendingSync = !!_s.pending;
+    lastSyncAt = _s.at || null;
+  }
+} catch {}
+
+function persistSyncState() {
+  try {
+    localStorage.setItem(SYNC_STATE_KEY, JSON.stringify({pending: pendingSync, at: lastSyncAt}));
+  } catch {}
+}
+
+function saveData() {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}),
+    );
+    if (!suppressDirty) {
+      pendingSync = true;
+      persistSyncState();
+    }
+  } catch (e) {
+    console.warn("Не удалось сохранить:", e);
+  }
+  updateSyncIndicator();
+}
+
+const _opmrOrigCommit = commitToGitHub;
+commitToGitHub = async function (...args) {
+  syncInFlight = true;
+  updateSyncIndicator();
+  let res;
+  try {
+    res = await _opmrOrigCommit.apply(this, args);
+  } catch (e) {
+    res = {success: false, message: "Ошибка сети: " + e.message};
+  }
+  syncInFlight = false;
+  if (res && res.success) {
+    pendingSync = false;
+    lastSyncAt = Date.now();
+    persistSyncState();
+  }
+  updateSyncIndicator();
+  return res;
+};
+
+async function syncNow() {
+  const gh = getGitHubSettings();
+  if (!gh?.owner || !gh?.repo || !gh?.token) {
+    showToast("Сначала настройте подключение к GitHub", "error");
+    openGitHubSettings();
+    return;
+  }
+  const r = await commitToGitHub();
+  showToast(r.message, r.success ? "success" : "error");
+}
+
+async function pullFromGitHub(silent = false) {
+  const gh = getGitHubSettings();
+  if (!gh?.owner || !gh?.repo) {
+    if (!silent) showToast("GitHub не настроен", "error");
+    return false;
+  }
+  const url = `https://raw.githubusercontent.com/${gh.owner}/${gh.repo}/${gh.branch || "main"}/data/teams.json?ts=${Date.now()}`;
+  try {
+    const res = await fetch(url, {cache: "no-store"});
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const raw = await res.json();
+    if (!raw || !Array.isArray(raw.teams)) throw new Error("неверный формат файла");
+    const prev = suppressDirty;
+    suppressDirty = true;
+    organizations = raw.organizations || [];
+    competitionSettings = normalizeCompetitionSettings(raw.competitionSettings || getDefaultCompetitionSettings());
+    apparatusClasses = raw.apparatusClasses || [];
+    ensureApparatusClasses();
+    teamsData = raw.teams || [];
+    criteriaTemplates = Array.isArray(raw.criteriaTemplates) ? raw.criteriaTemplates : [];
+    saveData();
+    suppressDirty = prev;
+    pendingSync = false;
+    lastSyncAt = Date.now();
+    persistSyncState();
+    updateSyncIndicator();
+    if (!silent) showToast(`Загружено с сервера: ${teamsData.length} команд`, "success");
+    return true;
+  } catch (e) {
+    if (!silent) showToast("Не удалось загрузить с сервера: " + e.message, "error");
+    return false;
+  }
+}
+
+function refreshCurrentView() {
+  const v = navCurrent?.view || currentView;
+  navMode = "replace";
+  if (v === "competition") _navOrig.competition();
+  else if (v === "master") _navOrig.master();
+  else if (v === "org" && isAdmin) _navOrig.org();
+  else if (v === "apparatus" && isAdmin) _navOrig.apparatus();
+  else if (v === "detail" && currentTeamId) _navOrig.detail(currentTeamId);
+  else if (v === "protocol" && currentProtocolTeamId) _navOrig.protocol(currentProtocolTeamId);
+  else _navOrig.teams();
+  navMode = "push";
+  renderYearSwitcher();
+}
+
+function ensureSyncPill() {
+  let el = document.getElementById("syncPill");
+  if (el) return el;
+  el = document.createElement("div");
+  el.id = "syncPill";
+  el.className = "sync-pill";
+  el.innerHTML = `<span class="sync-pill-icon"><i class="fas fa-cloud"></i></span>
+<span class="sync-pill-text" id="syncPillText">Проверка…</span>
+<button type="button" class="sync-pill-btn" id="syncPillAction">Сохранить</button>
+<button type="button" class="sync-pill-mini" id="syncPillPull" title="Загрузить свежую версию с сервера"><i class="fas fa-rotate"></i></button>`;
+  document.body.appendChild(el);
+  el.querySelector("#syncPillAction").addEventListener("click", async () => {
+    const gh = getGitHubSettings();
+    if (!gh?.owner || !gh?.repo || !gh?.token) {
+      openGitHubSettings();
+      return;
+    }
+    if (protocolFormDirty && document.getElementById("protocolForm")) {
+      saveProtocol();
+      return;
+    }
+    await syncNow();
+  });
+  el.querySelector("#syncPillPull").addEventListener("click", async () => {
+    if (pendingSync && !confirm("Есть изменения, не сохранённые на сервере. Загрузка перезапишет их. Продолжить?"))
+      return;
+    if (await pullFromGitHub(false)) refreshCurrentView();
+  });
+  return el;
+}
+
+function updateSyncIndicator() {
+  const el = ensureSyncPill();
+  const gh = getGitHubSettings();
+  const configured = !!(gh && gh.owner && gh.repo && gh.token);
+  const text = el.querySelector("#syncPillText");
+  const btn = el.querySelector("#syncPillAction");
+  const pull = el.querySelector("#syncPillPull");
+  const icon = el.querySelector(".sync-pill-icon i");
+  el.classList.remove("is-local", "is-dirty", "is-saving", "is-synced");
+  pull.style.display = configured ? "" : "none";
+  btn.disabled = false;
+
+  if (syncInFlight) {
+    el.classList.add("is-saving");
+    icon.className = "fas fa-spinner fa-spin";
+    text.textContent = "Сохранение на сервер…";
+    btn.disabled = true;
+    btn.textContent = "…";
+    return;
+  }
+  if (!configured) {
+    el.classList.add("is-local");
+    icon.className = "fas fa-hard-drive";
+    text.textContent = protocolFormDirty ? "Протокол не сохранён" : "Данные только в этом браузере";
+    btn.textContent = "Настроить сервер";
+    return;
+  }
+  if (protocolFormDirty) {
+    el.classList.add("is-dirty");
+    icon.className = "fas fa-pen-to-square";
+    text.textContent = "Протокол не сохранён";
+    btn.textContent = "Сохранить протокол";
+    return;
+  }
+  if (pendingSync) {
+    el.classList.add("is-dirty");
+    icon.className = "fas fa-cloud-arrow-up";
+    text.textContent = "Не сохранено на сервере";
+    btn.textContent = "Сохранить сейчас";
+    return;
+  }
+  el.classList.add("is-synced");
+  icon.className = "fas fa-circle-check";
+  const t = lastSyncAt ? new Date(lastSyncAt).toLocaleTimeString("ru-RU", {hour: "2-digit", minute: "2-digit"}) : "";
+  text.textContent = t ? `Сохранено на сервере · ${t}` : "Сохранено на сервере";
+  btn.textContent = "Сохранить";
+}
+
+// ---------- 2. Защита от потери несохранённого протокола ----------
+function ensureUnsavedModal() {
+  let el = document.getElementById("unsavedChangesModal");
+  if (el) return el;
+  el = document.createElement("div");
+  el.className = "modal fade";
+  el.id = "unsavedChangesModal";
+  el.tabIndex = -1;
+  el.innerHTML = `<div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title"><i class="fas fa-triangle-exclamation text-warning me-2"></i>Несохранённые изменения</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>
+<div class="modal-body"><p class="mb-0">В протоколе есть изменения, которые ещё не сохранены. Сохранить их перед переходом?</p></div>
+<div class="modal-footer flex-wrap gap-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Остаться</button><button type="button" class="btn btn-outline-danger" id="unsavedDiscard">Уйти без сохранения</button><button type="button" class="btn btn-primary" id="unsavedSave"><i class="fas fa-floppy-disk me-2"></i>Сохранить и продолжить</button></div>
+</div></div>`;
+  document.body.appendChild(el);
+  return el;
+}
+
+let pendingNavTarget = null;
+function askUnsavedThen(target) {
+  pendingNavTarget = target;
+  const el = ensureUnsavedModal();
+  const modal = bootstrap.Modal.getOrCreateInstance(el);
+  const saveBtn = el.querySelector("#unsavedSave");
+  const discardBtn = el.querySelector("#unsavedDiscard");
+  const go = () => {
+    const t = pendingNavTarget;
+    pendingNavTarget = null;
+    if (t) setTimeout(() => t.click(), 80);
+  };
+  const cleanup = () => {
+    saveBtn.removeEventListener("click", onSave);
+    discardBtn.removeEventListener("click", onDiscard);
+  };
+  const onSave = () => {
+    cleanup();
+    protocolFormDirty = false;
+    modal.hide();
+    saveProtocol();
+    go();
+  };
+  const onDiscard = () => {
+    cleanup();
+    protocolFormDirty = false;
+    updateSyncIndicator();
+    modal.hide();
+    go();
+  };
+  saveBtn.addEventListener("click", onSave);
+  discardBtn.addEventListener("click", onDiscard);
+  el.addEventListener("hidden.bs.modal", cleanup, {once: true});
+  modal.show();
+}
+
+const OPMR_NAV_CALL_RE =
+  /(showTeamsView|showCompetitionView|showMasterTable|showOrgManager|showApparatusManager|showTeamDetails|showProtocolPage|editTeam|createNewTeam|goHome|goBack|switchYear)\s*\(/;
+
+document.addEventListener(
+  "click",
+  (e) => {
+    if (!protocolFormDirty) return;
+    const el = e.target.closest("[onclick]");
+    if (!el || el.closest("#unsavedChangesModal")) return;
+    const code = el.getAttribute("onclick") || "";
+    if (!OPMR_NAV_CALL_RE.test(code)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    askUnsavedThen(el);
+  },
+  true,
+);
+
+window.addEventListener("beforeunload", (e) => {
+  if (protocolFormDirty || pendingSync) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+window.addEventListener("online", () => {
+  if (pendingSync && !syncInFlight) syncNow();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && pendingSync && !syncInFlight) commitToGitHub();
+});
+
+const _opmrOrigRenderProtocol = renderProtocolForm;
+renderProtocolForm = function (...a) {
+  const r = _opmrOrigRenderProtocol.apply(this, a);
+  protocolFormDirty = false;
+  const form = document.getElementById("protocolForm");
+  if (form && !form.dataset.dirtyBound) {
+    form.dataset.dirtyBound = "1";
+    const mark = () => {
+      protocolFormDirty = true;
+      updateSyncIndicator();
+    };
+    form.addEventListener("input", mark);
+    form.addEventListener("change", mark);
+  }
+  updateSyncIndicator();
+  return r;
+};
+
+const _opmrOrigSaveProtocol = saveProtocol;
+saveProtocol = async function (...a) {
+  const r = await _opmrOrigSaveProtocol.apply(this, a);
+  protocolFormDirty = false;
+  updateSyncIndicator();
+  return r;
+};
+
+// ---------- 3. Восстановление экрана и позиции после перезагрузки ----------
+const NAV_STATE_KEY = "opmr_nav_state";
+let restoringNav = false;
+
+function readNavState() {
+  try {
+    return JSON.parse(localStorage.getItem(NAV_STATE_KEY)) || null;
+  } catch {
+    return null;
+  }
+}
+function persistNavState(patch) {
+  try {
+    localStorage.setItem(NAV_STATE_KEY, JSON.stringify({...(readNavState() || {}), ...patch}));
+  } catch {}
+}
+
+function navRecord(state) {
+  const same = navCurrent.view === state.view && (navCurrent.teamId || null) === (state.teamId || null);
+  if (navMode === "replace" || same) history.replaceState(state, "");
+  else {
+    history.pushState(state, "");
+    navDepth++;
+  }
+  navCurrent = state;
+  navMode = "push";
+  if (!restoringNav) persistNavState({view: state.view, teamId: state.teamId || null, year: currentYear, scrollY: 0});
+}
+
+function switchYear(y) {
+  currentYear = y;
+  persistNavState({year: y, scrollY: 0});
+  renderYearSwitcher();
+  if (currentView === "teams") renderTeams(teamsData);
+  else if (currentView === "competition") renderCompetition();
+  else if (currentView === "master") showTeamsView();
+}
+
+let opmrScrollTimer = null;
+window.addEventListener(
+  "scroll",
+  () => {
+    if (restoringNav) return;
+    clearTimeout(opmrScrollTimer);
+    opmrScrollTimer = setTimeout(() => persistNavState({scrollY: window.scrollY}), 250);
+  },
+  {passive: true},
+);
+
+window.addEventListener("popstate", () => {
+  setTimeout(() => persistNavState({view: navCurrent.view, teamId: navCurrent.teamId || null, year: currentYear}), 0);
+});
+
+function restoreNavState() {
+  const s = readNavState();
+  if (!s) return;
+  restoringNav = true;
+  if (s.year && [2024, 2025, 2026].includes(Number(s.year))) currentYear = Number(s.year);
+  navMode = "replace";
+  const id = s.teamId;
+  const has = (x) => teamsData.some((t) => t.id === x);
+  try {
+    if (s.view === "competition") _navOrig.competition();
+    else if (s.view === "master") _navOrig.master();
+    else if (s.view === "org" && isAdmin) _navOrig.org();
+    else if (s.view === "apparatus" && isAdmin) _navOrig.apparatus();
+    else if (s.view === "detail" && has(id)) _navOrig.detail(id);
+    else if (s.view === "protocol" && has(id)) _navOrig.protocol(id);
+    else if (s.view === "edit" && id && has(id)) _navOrig.edit(id);
+    else _navOrig.teams();
+  } catch {
+    _navOrig.teams();
+  }
+  navMode = "push";
+  restoringNav = false;
+  history.replaceState(navCurrent, "");
+  const y = Number(s.scrollY) || 0;
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({top: y, behavior: "auto"})));
+}
+
+// ---------- 4. Критерии: две раздельные кнопки ----------
+function saveCriteriaTemplates(list) {
+  criteriaTemplates = Array.isArray(list) ? list : [];
+  saveData();
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+
+function saveCriteriaFromOffcanvas() {
+  if (!competitionSettings[currentCriteriaYear]) competitionSettings[currentCriteriaYear] = {};
+  if (!competitionSettings[currentCriteriaYear][currentCriteriaClass]) {
+    competitionSettings[currentCriteriaYear][currentCriteriaClass] = {date: "", criteria: []};
+  }
+  competitionSettings[currentCriteriaYear][currentCriteriaClass].criteria = JSON.parse(JSON.stringify(tempCriteria));
+  saveData();
+  const oc = bootstrap.Offcanvas.getInstance(document.getElementById("criteriaOffcanvas"));
+  if (oc) oc.hide();
+  renderApparatusManager();
+  showToast("Набор критериев сохранён", "success");
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+
+function ensureCriteriaOffcanvasShell() {
+  let el = document.getElementById("criteriaOffcanvas");
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "offcanvas offcanvas-end";
+    el.tabIndex = -1;
+    el.id = "criteriaOffcanvas";
+    el.style.width = "min(620px, 100%)";
+    el.innerHTML = `<div class="offcanvas-header border-bottom"><h5 class="offcanvas-title"><i class="fas fa-list-check me-2 text-primary"></i>Критерии оценки</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button></div><div class="offcanvas-body" id="criteriaOffcanvasBody"></div>`;
+    document.body.appendChild(el);
+  }
+  if (!document.getElementById("criteriaOffcanvasBody")) {
+    const b = document.createElement("div");
+    b.className = "offcanvas-body";
+    b.id = "criteriaOffcanvasBody";
+    el.appendChild(b);
+  }
+  el.querySelectorAll(".offcanvas-body").forEach((b) => {
+    if (b.id !== "criteriaOffcanvasBody") b.remove();
+  });
+  Array.from(el.children).forEach((ch) => {
+    if (ch.id === "criteriaOffcanvasFooter") return;
+    if (ch.querySelector && ch.querySelector('[onclick*="saveCriteriaFromOffcanvas"]')) ch.remove();
+  });
+  let footer = document.getElementById("criteriaOffcanvasFooter");
+  if (!footer) {
+    footer = document.createElement("div");
+    footer.id = "criteriaOffcanvasFooter";
+    el.appendChild(footer);
+  }
+  footer.className = "criteria-offcanvas-footer";
+  footer.innerHTML = `<button type="button" class="btn btn-primary" onclick="saveCriteriaFromOffcanvas()"><i class="fas fa-floppy-disk me-2"></i>Сохранить набор критериев</button>
+<button type="button" class="btn btn-outline-success" onclick="saveCriteriaAsTemplate()"><i class="fas fa-layer-group me-2"></i>Сохранить как шаблон</button>
+<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Отмена</button>`;
+  return el;
+}
+
+function openCriteriaEditor(year, classId) {
+  currentCriteriaYear = year;
+  currentCriteriaClass = classId;
+  const config = competitionSettings[year]?.[classId];
+  tempCriteria = normalizeCriteria(config?.criteria || []);
+  const el = ensureCriteriaOffcanvasShell();
+  renderCriteriaOffcanvas();
+  bootstrap.Offcanvas.getOrCreateInstance(el).show();
+}
+
+const _opmrOrigRenderCriteria = renderCriteriaOffcanvas;
+renderCriteriaOffcanvas = function (...a) {
+  const r = _opmrOrigRenderCriteria.apply(this, a);
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (body) {
+    body.querySelectorAll('button[onclick="saveCriteriaAsTemplate()"]').forEach((btn) => {
+      const col = btn.closest('[class*="col-"]');
+      if (col)
+        col.innerHTML =
+          '<div class="small text-muted text-start pt-2">Шаблон сохраняется отдельной кнопкой внизу панели.</div>';
+      else btn.remove();
+    });
+  }
+  return r;
+};
+
+// ---------- 5. Пункт меню «Загрузить с сервера» ----------
+const _opmrOrigRenderHeaderButtons = renderHeaderButtons;
+renderHeaderButtons = function (...a) {
+  const r = _opmrOrigRenderHeaderButtons.apply(this, a);
+  const container = document.getElementById("headerButtons");
+  if (container && isAdmin) {
+    const menu = container.querySelector(".dropdown-menu");
+    if (menu && !menu.querySelector("[data-opmr-pull]")) {
+      const div = document.createElement("li");
+      div.innerHTML = '<hr class="dropdown-divider">';
+      const li = document.createElement("li");
+      li.innerHTML = `<a class="dropdown-item" href="#" data-opmr-pull><i class="fas fa-cloud-arrow-down me-2 text-primary"></i>Загрузить с сервера (GitHub)</a>`;
+      li.querySelector("a").addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        if (pendingSync && !confirm("Локальные изменения не сохранены на сервере и будут перезаписаны. Продолжить?"))
+          return;
+        if (await pullFromGitHub(false)) refreshCurrentView();
+      });
+      menu.appendChild(div);
+      menu.appendChild(li);
+    }
+  }
+  updateSyncIndicator();
+  return r;
+};
+
+// ---------- 6. Запуск ----------
+async function opmrInit() {
+  suppressDirty = true;
+  renderFooterVersion();
+  renderHeaderButtons();
+  await loadDefaultData();
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && !pendingSync) await pullFromGitHub(true);
+  suppressDirty = false;
+  restoreNavState();
+  updateSyncIndicator();
+  if (pendingSync) showToast("Есть изменения, не сохранённые на сервере — нажмите «Сохранить сейчас»", "info");
+}
+opmrInit();
