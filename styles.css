@@ -2486,3 +2486,36 @@ body.sync-floating {
   #protocolForm .col-md-3 { flex: 1 1 45%; min-width: 45%; }
   #protocolForm .col-12:has([id^="protoGroupTotal-"]) { flex: 1 1 100%; min-width: 0; }
 }
+
+/* ===== ФУТЕР: всегда прижат к нижнему краю экрана ===== */
+.app-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1005;
+  margin-top: 0;
+  padding: 10px 0;
+  box-shadow: 0 -8px 22px rgba(15, 23, 42, 0.22);
+}
+.app-footer::before { height: 2px; }
+.app-footer-name { font-size: 1.05rem; }
+.app-footer-copy { font-size: 0.8rem; }
+
+body { padding-bottom: 64px; }
+body.sync-floating { padding-bottom: 64px; }
+.sync-chip.is-floating { bottom: 76px; }
+
+@media (max-width: 768px) {
+  .app-footer { padding: 8px 0; }
+  .app-footer-name { font-size: 0.95rem; }
+  .app-footer-copy { font-size: 0.72rem; }
+  body { padding-bottom: 104px; }
+  body.sync-floating { padding-bottom: 104px; }
+  .sync-chip.is-floating { bottom: 116px; }
+}
+
+@media print {
+  body { padding-bottom: 0 !important; }
+  .app-footer { display: none !important; }
+}
