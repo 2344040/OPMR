@@ -1530,7 +1530,42 @@ function renderProtocolForm(teamId) {
   const container = document.getElementById("protocolContent");
   const fullName = getTeamFullName(team);
 
-  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-12"><div class="detail-label">Команда</div><div class="detail-value">${escHtml(fullName)}</div></div><div class="col-md-6"><div class="detail-label">Руководитель</div><div class="detail-value">${escHtml(team.teamLeader || "—")}</div></div><div class="col-md-6"><div class="detail-label">Класс аппарата</div><div class="detail-value">${escHtml(team.apparatusClass || "—")}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
+  let html = html`<div class="detail-section">
+      <h4 class="detail-section-title">Протокол команды (${team.year})</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-8">
+          <div class="detail-label">Команда</div>
+          <div class="detail-value">${fullName}</div>
+        </div>
+        <div class="col-md-4">
+          <div class="detail-label">Класс аппарата</div>
+          <div class="detail-value">${team.apparatusClass || "—"}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Руководитель</div>
+          <div class="detail-value">${team.teamLeader || "—"}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Название аппарата</div>
+          <div class="detail-value">${team.apparatusName || "—"}</div>
+        </div>
+      </div>
+    </div>
+    <form id="protocolForm" class="edit-form">
+      <div class="detail-section">
+        <h5 class="detail-section-title">Жеребьёвка</h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">№ по жребию</label
+            ><input
+              type="number"
+              class="form-control"
+              id="protoDrawNumber"
+              value="${p.drawNumber ?? team.draw ?? ""}" />
+          </div>
+        </div>
+      </div>
+    </form>`;
 
   critGroups.forEach((cg, gi) => {
     html += `<div class="detail-section"><h5 class="detail-section-title">${escHtml(cg.fullTitle || cg.title)}</h5><div class="row g-3">`;
@@ -6145,7 +6180,8 @@ function sortClassTeams(teams, mode) {
   const drawOf = (t) => parseScoreNumber(t.draw ?? t.drawNumber ?? t.lot ?? "");
   if (mode === "draw") {
     arr.sort((a, b) => {
-      const da = drawOf(a), db = drawOf(b);
+      const da = drawOf(a),
+        db = drawOf(b);
       if (da === null && db === null) return byName(a, b);
       if (da === null) return 1;
       if (db === null) return -1;
@@ -6153,7 +6189,8 @@ function sortClassTeams(teams, mode) {
     });
   } else if (mode === "total") {
     arr.sort((a, b) => {
-      const ta = computeTeamTotal(a), tb = computeTeamTotal(b);
+      const ta = computeTeamTotal(a),
+        tb = computeTeamTotal(b);
       if ((ta === 0) !== (tb === 0)) return ta === 0 ? 1 : -1;
       return tb - ta || byName(a, b);
     });
@@ -6185,7 +6222,9 @@ function enhanceCompetitionTables() {
     const badge = card.querySelector(".category-badge");
     if (badge) {
       const txt = badge.textContent.trim().toLowerCase();
-      const found = apparatusClasses.find((c) => String(c.name).toLowerCase() === txt || String(c.id).toLowerCase() === txt);
+      const found = apparatusClasses.find(
+        (c) => String(c.name).toLowerCase() === txt || String(c.id).toLowerCase() === txt,
+      );
       if (found) return found.id;
     }
     return null;
@@ -6230,7 +6269,8 @@ function enhanceCompetitionTables() {
       if (!team || isLegacyProtocol(team)) return;
       if (computeTeamTotal(team) !== 0) return;
       const placeCell = row.cells[row.cells.length - 1];
-      if (placeCell && placeCell.textContent.trim() !== "—") placeCell.innerHTML = '<span class="cg-place-empty">—</span>';
+      if (placeCell && placeCell.textContent.trim() !== "—")
+        placeCell.innerHTML = '<span class="cg-place-empty">—</span>';
       if (team.place) {
         team.place = 0;
         dirty = true;
@@ -6265,7 +6305,7 @@ async function commitToGitHubCore() {
     if (res.ok) return (await res.json()).sha;
     if (res.status === 404) return null;
     const j = await res.json().catch(() => ({}));
-    throw new Error(j.message || ("HTTP " + res.status));
+    throw new Error(j.message || "HTTP " + res.status);
   };
 
   for (let attempt = 1; attempt <= 5; attempt++) {
