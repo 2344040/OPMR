@@ -387,7 +387,7 @@
                 "id": "fmweuby96jnjnc",
                 "name": "Задание 1 (+/-)",
                 "short": "",
-                "type": "int",
+                "type": "bool",
                 "sum": false,
                 "penalty": false
               },
@@ -440,7 +440,7 @@
               {
                 "id": "fmweuby96lyksl",
                 "name": "Баллы",
-                "short": "",
+                "short": "Баллы",
                 "type": "int",
                 "sum": true,
                 "penalty": false
@@ -462,7 +462,7 @@
               {
                 "id": "fmweuby96gmont",
                 "name": "Точность (0-10, 10-30, 30-100)",
-                "short": "",
+                "short": "Остр. 1",
                 "type": "text",
                 "sum": false,
                 "penalty": false
@@ -500,7 +500,7 @@
               {
                 "id": "fmweuby96yrh6s",
                 "name": "Баллы",
-                "short": "",
+                "short": "Баллы",
                 "type": "int",
                 "sum": true,
                 "penalty": false
@@ -2711,16 +2711,16 @@
         "През.::Перспектива": "4",
         "f:fmweuby96klhwi": "5",
         "През.::Качество": "5",
-        "f:fmweuby96jnjnc": "",
-        "Квал.::Задание 1 (+/-)": "",
-        "f:fmweuby9680eyc": "",
-        "Квал.::Сумма размерений (макс 2500 мм)": "",
+        "f:fmweuby96jnjnc": "Да",
+        "Квал.::Задание 1 (+/-)": "Да",
+        "f:fmweuby9680eyc": "660",
+        "Квал.::Сумма размерений (макс 2500 мм)": "660",
         "f:fmweuby964j0vx": "",
         "Квал.::Штрафные баллы": "",
-        "f:fmweuby96z17ha": "",
-        "Квал.::Вес (макс 30 кг)": "",
-        "f:fmweuby96l7hhn": "",
-        "Квал.::Бонусные баллы": "",
+        "f:fmweuby96z17ha": "1.7",
+        "Квал.::Вес (макс 30 кг)": "1.7",
+        "f:fmweuby96l7hhn": "28",
+        "Квал.::Бонусные баллы": "28",
         "f:fmweuby966m3q4": "",
         "Зад. 2::Время/место": "",
         "f:fmweuby96lyksl": "",
@@ -2747,7 +2747,7 @@
         "drawNumber": "1",
         "extraBonus": 0,
         "place": 0,
-        "totalScore": 22
+        "totalScore": 50
       }
     },
     {
