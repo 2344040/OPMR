@@ -2456,3 +2456,33 @@ body.sync-floating {
 .competition-table .cg-place-empty {
   color: #94a3b8;
 }
+
+/* ===== Протокол: значения шапки крупнее и жирнее ===== */
+#protocolContent > .detail-section:first-child .detail-value {
+  font-weight: 700;
+  font-size: 1.2em;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+/* ===== Протокол: блоки критериев стараемся уместить в одну строку ===== */
+#protocolForm .col-md-3 {
+  flex: 1 1 140px;
+  width: auto;
+  min-width: 130px;
+  max-width: 100%;
+}
+#protocolForm .col-12:has([id^="protoGroupTotal-"]) {
+  flex: 0 1 170px;
+  width: auto;
+  min-width: 150px;
+}
+#protocolForm .col-12:has([id^="protoGroupTotal-"]) .alert {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.6rem;
+  white-space: nowrap;
+}
+@media (max-width: 768px) {
+  #protocolForm .col-md-3 { flex: 1 1 45%; min-width: 45%; }
+  #protocolForm .col-12:has([id^="protoGroupTotal-"]) { flex: 1 1 100%; min-width: 0; }
+}
