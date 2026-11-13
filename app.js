@@ -3762,6 +3762,187 @@ renderCompetition = function (...args) {
   return result;
 };
 
+// ===== РЕДАКТОР КРИТЕРИЕВ: единый самодостаточный блок =====
+function normalizeCriteria(criteria) {
+  if (!Array.isArray(criteria)) return [];
+  return criteria.map((g) => {
+    const isObj = typeof g === "object" && g !== null;
+    const section = isObj ? g.section || g.name || "Группа" : String(g);
+    const sectionShort = isObj ? g.sectionShort || g.short || "" : "";
+    const rawFields = isObj ? g.fields || [] : [];
+    const fields = rawFields.map((f) =>
+      typeof f === "object" && f !== null
+        ? {name: f.name || String(f), short: f.short || "", type: f.type || "int",
+           ...(f.sum !== undefined ? {sum: f.sum} : {}), ...(f.penalty !== undefined ? {penalty: f.penalty} : {})}
+        : {name: String(f), short: "", type: "int"},
+    );
+    return {section, sectionShort, fields};
+  });
+}
+
+function ensureCriteriaOffcanvas() {
+  let el = document.getElementById("criteriaOffcanvas");
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "offcanvas offcanvas-end";
+    el.tabIndex = -1;
+    el.id = "criteriaOffcanvas";
+    el.innerHTML = `<div class="offcanvas-header"><h5 class="offcanvas-title">Критерии оценки</h5><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button></div><div class="offcanvas-body" id="criteriaOffcanvasBody"></div><div class="p-3 border-top d-flex gap-2"><button class="btn btn-primary flex-grow-1" onclick="saveCriteriaFromOffcanvas()"><i class="fas fa-save me-2"></i>Сохранить</button><button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Отмена</button></div>`;
+    document.body.appendChild(el);
+  }
+  if (!document.getElementById("criteriaOffcanvasBody")) {
+    const b = document.createElement("div");
+    b.className = "offcanvas-body";
+    b.id = "criteriaOffcanvasBody";
+    el.appendChild(b);
+  }
+  return el;
+}
+
+function openCriteriaEditor(year, classId) {
+  currentCriteriaYear = year;
+  currentCriteriaClass = classId;
+  const config = competitionSettings[year]?.[classId];
+  tempCriteria = normalizeCriteria(config?.criteria || []);
+  const el = ensureCriteriaOffcanvas();
+  renderCriteriaOffcanvas();
+  bootstrap.Offcanvas.getOrCreateInstance(el).show();
+}
+
+function renderCriteriaOffcanvas() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body) return;
+  const title = `${getClassInfo(currentCriteriaClass).name} — ${currentCriteriaYear} год`;
+  const templates = loadCriteriaTemplates();
+  let html = `<div class="alert alert-info d-flex align-items-start py-2"><i class="fas fa-info-circle me-2 mt-1"></i><div class="small"><strong>Настройка критериев:</strong> ${title}<br><strong>Σ</strong> — входит в сумму; <strong>−</strong> — штраф (вычитается, красный). Стрелки меняют порядок.</div></div>`;
+  if (tempCriteria.length === 0) html += `<div class="alert alert-light text-center py-4"><i class="fas fa-clipboard-list fa-2x text-muted mb-2 d-block"></i><p class="mb-0 small">Критерии не заданы. Добавьте группы ниже.</p></div>`;
+  tempCriteria.forEach((group, gIdx) => {
+    html += `<div class="card mb-3 border shadow-sm"><div class="card-header bg-white d-flex justify-content-between align-items-center py-2"><div class="d-flex align-items-center gap-2 flex-grow-1 me-3"><span class="badge bg-primary rounded-pill">${gIdx + 1}</span><div class="flex-grow-1"><input type="text" class="form-control form-control-sm fw-bold border-0 bg-transparent p-0" value="${escHtml(group.section)}" oninput="tempCriteria[${gIdx}].section = this.value" placeholder="Название группы"><input type="text" class="form-control form-control-sm text-muted border-0 bg-transparent p-0" value="${escHtml(group.sectionShort || "")}" oninput="tempCriteria[${gIdx}].sectionShort = this.value" placeholder="Сокращение группы"></div></div><div class="d-flex gap-1"><button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, -1)" ${gIdx === 0 ? "disabled" : ""}><i class="fas fa-chevron-up"></i></button><button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, 1)" ${gIdx === tempCriteria.length - 1 ? "disabled" : ""}><i class="fas fa-chevron-down"></i></button><button class="btn btn-sm btn-outline-danger" onclick="removeGroup(${gIdx})"><i class="fas fa-trash"></i></button></div></div><div class="card-body p-0"><div class="list-group list-group-flush">`;
+    group.fields.forEach((field, fIdx) => {
+      const isObj = typeof field === "object" && field !== null;
+      const fName = isObj ? field.name || "" : String(field);
+      const fShort = isObj ? field.short || "" : "";
+      const fType = isObj ? field.type || "int" : "int";
+      const fSum = isObj ? field.sum !== false : true;
+      const fPen = isObj ? !!field.penalty : false;
+      const numeric = fType === "int" || fType === "decimal";
+      html += `<div class="list-group-item py-2 px-3"><div class="d-flex align-items-center gap-2"><span class="badge bg-light text-dark rounded-circle flex-shrink-0" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem">${fIdx + 1}</span><input type="text" class="form-control form-control-sm" value="${escHtml(fName)}" oninput="updateFieldName(${gIdx}, ${fIdx}, this.value)" placeholder="Полное название поля"><input type="text" class="form-control form-control-sm" style="max-width:110px" value="${escHtml(fShort)}" oninput="updateFieldShort(${gIdx}, ${fIdx}, this.value)" placeholder="Сокр."><button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeField(${gIdx}, ${fIdx})"><i class="fas fa-times"></i></button></div><div class="d-flex align-items-center gap-2 mt-1 flex-wrap"><select class="form-select form-select-sm" style="max-width:160px" onchange="setFieldType(${gIdx}, ${fIdx}, this.value)"><option value="int" ${fType === "int" ? "selected" : ""}>Целые баллы</option><option value="decimal" ${fType === "decimal" ? "selected" : ""}>Дробное число</option><option value="text" ${fType === "text" ? "selected" : ""}>Текст</option><option value="bool" ${fType === "bool" ? "selected" : ""}>Да / Нет</option></select><label class="crit-flag ${numeric || fType === "bool" ? "" : "crit-flag-disabled"}" title="Включать в сумму"><input type="checkbox" class="form-check-input mt-0" ${fSum ? "checked" : ""} ${numeric || fType === "bool" ? "" : "disabled"} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'sum', this.checked)"><span>Σ</span></label><label class="crit-flag crit-flag-penalty ${numeric ? "" : "crit-flag-disabled"}" title="Штраф"><input type="checkbox" class="form-check-input mt-0" ${fPen ? "checked" : ""} ${numeric ? "" : "disabled"} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'penalty', this.checked)"><span>−</span></label><span class="ms-auto d-flex gap-1"><button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, -1)" ${fIdx === 0 ? "disabled" : ""}><i class="fas fa-chevron-up"></i></button><button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, 1)" ${fIdx === group.fields.length - 1 ? "disabled" : ""}><i class="fas fa-chevron-down"></i></button></span></div></div>`;
+    });
+    html += `</div><div class="p-2 bg-light border-top"><button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})"><i class="fas fa-plus me-1"></i>Добавить поле</button></div></div></div>`;
+  });
+  html += `<div class="card border-dashed border-2 bg-light"><div class="card-body text-center py-3"><div class="row g-2 justify-content-center mb-2"><div class="col-md-8"><div class="dropdown w-100"><button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-book me-2"></i>Добавить из библиотеки</button><ul class="dropdown-menu w-100" style="max-height:250px;overflow-y:auto">`;
+  CRITERIA_LIBRARY.groups.forEach((libGroup) => {
+    html += `<li><a class="dropdown-item" href="#" onclick="addGroupFromLibrary('${libGroup.id}'); return false;"><i class="fas fa-folder me-2 text-primary"></i>${libGroup.name}<span class="badge bg-light text-dark ms-2">${libGroup.fields.length} полей</span></a></li>`;
+  });
+  html += `</ul></div></div><div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="addCustomGroup()"><i class="fas fa-folder-plus me-2"></i>Своя группа</button></div></div><div class="row g-2 justify-content-center"><div class="col-md-8"><div class="dropdown w-100"><button class="btn btn-outline-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-layer-group me-2"></i>Шаблоны наборов (${templates.length})</button><ul class="dropdown-menu w-100" style="max-height:250px;overflow-y:auto">`;
+  if (templates.length === 0) html += `<li><span class="dropdown-item-text text-muted small">Шаблонов пока нет</span></li>`;
+  templates.forEach((t) => {
+    html += `<li class="d-flex align-items-center"><a class="dropdown-item flex-grow-1" href="#" onclick="applyCriteriaTemplate('${t.id}'); return false;"><i class="fas fa-file-import me-2 text-primary"></i>${escHtml(t.name)}</a><button class="btn btn-sm btn-outline-danger me-2 py-0 px-1" onclick="deleteCriteriaTemplate('${t.id}')"><i class="fas fa-times"></i></button></li>`;
+  });
+  html += `</ul></div></div><div class="col-md-4"><button class="btn btn-outline-success w-100" onclick="saveCriteriaAsTemplate()"><i class="fas fa-floppy-disk me-2"></i>Сохранить как шаблон</button></div></div></div></div>`;
+  body.innerHTML = html;
+}
+
+function updateFieldName(gIdx, fIdx, value) {
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {name: value, short: "", type: "int"};
+  else f.name = value;
+}
+function updateFieldShort(gIdx, fIdx, value) {
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {name: f, short: value, type: "int"};
+  else f.short = value;
+}
+function setFieldFlag(gIdx, fIdx, flag, value) {
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {name: f, short: "", type: "int", sum: true, penalty: false};
+  tempCriteria[gIdx].fields[fIdx][flag] = value;
+  renderCriteriaOffcanvas();
+}
+function setFieldType(gIdx, fIdx, type) {
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {name: f, short: "", type: "int", sum: true, penalty: false};
+  const field = tempCriteria[gIdx].fields[fIdx];
+  field.type = type;
+  if (type === "text" || type === "bool") { field.sum = false; field.penalty = false; }
+  else { field.sum = true; field.penalty = /штраф/i.test(field.name || ""); }
+  renderCriteriaOffcanvas();
+}
+function moveField(gIdx, fIdx, direction) {
+  const arr = tempCriteria[gIdx].fields;
+  const n = fIdx + direction;
+  if (n < 0 || n >= arr.length) return;
+  const t = arr[fIdx]; arr[fIdx] = arr[n]; arr[n] = t;
+  renderCriteriaOffcanvas();
+}
+function moveGroup(gIdx, direction) {
+  const n = gIdx + direction;
+  if (n < 0 || n >= tempCriteria.length) return;
+  const t = tempCriteria[gIdx]; tempCriteria[gIdx] = tempCriteria[n]; tempCriteria[n] = t;
+  renderCriteriaOffcanvas();
+}
+function addFieldToGroup(gIdx) {
+  tempCriteria[gIdx].fields.push({name: "Новое поле", short: "", type: "int", sum: true, penalty: false});
+  renderCriteriaOffcanvas();
+}
+function removeField(gIdx, fIdx) { tempCriteria[gIdx].fields.splice(fIdx, 1); renderCriteriaOffcanvas(); }
+function addCustomGroup() { tempCriteria.push({section: "Новая группа", sectionShort: "", fields: []}); renderCriteriaOffcanvas(); }
+function removeGroup(gIdx) {
+  if (!confirm(`Удалить группу "${tempCriteria[gIdx].section}" со всеми полями?`)) return;
+  tempCriteria.splice(gIdx, 1); renderCriteriaOffcanvas();
+}
+function addGroupFromLibrary(libGroupId) {
+  const libGroup = CRITERIA_LIBRARY.groups.find((g) => g.id === libGroupId);
+  if (!libGroup) return;
+  tempCriteria.push({section: libGroup.name, sectionShort: libGroup.short || "",
+    fields: libGroup.fields.map((f) => ({name: f.name, short: f.short, type: f.type || (/вес|отклон|время/i.test(f.name) ? "decimal" : "int"), sum: true, penalty: /штраф/i.test(f.name)}))});
+  renderCriteriaOffcanvas();
+}
+
+function loadCriteriaTemplates() { return Array.isArray(criteriaTemplates) ? criteriaTemplates : []; }
+function saveCriteriaTemplates(list) {
+  criteriaTemplates = Array.isArray(list) ? list : [];
+  saveData();
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+function saveCriteriaAsTemplate() {
+  const name = prompt("Название шаблона набора критериев:", `${getClassInfo(currentCriteriaClass).name} ${currentCriteriaYear}`);
+  if (!name || !name.trim()) return;
+  const list = loadCriteriaTemplates();
+  list.push({id: "t" + Date.now(), name: name.trim(), criteria: JSON.parse(JSON.stringify(tempCriteria))});
+  saveCriteriaTemplates(list);
+  renderCriteriaOffcanvas();
+  showToast(`Шаблон «${name.trim()}» сохранён`, "success");
+}
+function applyCriteriaTemplate(id) {
+  const t = loadCriteriaTemplates().find((x) => x.id === id);
+  if (!t) return;
+  tempCriteria = normalizeCriteria(t.criteria);
+  renderCriteriaOffcanvas();
+  showToast(`Шаблон «${t.name}» загружен — не забудьте сохранить`, "info");
+}
+function deleteCriteriaTemplate(id) {
+  const list = loadCriteriaTemplates();
+  const t = list.find((x) => x.id === id);
+  if (!t) return;
+  if (!confirm(`Удалить шаблон «${t.name}?`)) return;
+  saveCriteriaTemplates(list.filter((x) => x.id !== id));
+  renderCriteriaOffcanvas();
+  showToast("Шаблон удалён", "success");
+}
+function saveCriteriaFromOffcanvas() {
+  if (!competitionSettings[currentCriteriaYear]) competitionSettings[currentCriteriaYear] = {};
+  if (!competitionSettings[currentCriteriaYear][currentCriteriaClass]) competitionSettings[currentCriteriaYear][currentCriteriaClass] = {date: "", criteria: []};
+  competitionSettings[currentCriteriaYear][currentCriteriaClass].criteria = tempCriteria;
+  saveData();
+  const oc = bootstrap.Offcanvas.getInstance(document.getElementById("criteriaOffcanvas"));
+  if (oc) oc.hide();
+  renderApparatusManager();
+  showToast("Критерии сохранены", "success");
+  if (confirm("Сохранить этот набор как шаблон для других классов и годов?")) saveCriteriaAsTemplate();
+}
+
 renderFooterVersion();
 renderHeaderButtons();
 loadDefaultData();
