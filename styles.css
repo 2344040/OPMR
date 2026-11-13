@@ -2000,3 +2000,7 @@ body > .container {
 
 /* ===== Числа в колонках баллов — жирным зелёным ===== */
 .competition-table td.cg-score { color: #15803d !important; font-weight: 700; }
+
+/* ===== Иконка расчётной колонки + сокращение под ней ===== */
+.cg-th-stack { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1.1; }
+.cg-th-short { font-size: 8px; font-weight: 600; letter-spacing: 0.02em; }
