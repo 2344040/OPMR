@@ -15,7 +15,7 @@
     <link href="lib/bootstrap.min.css" rel="stylesheet" />
     <link href="lib/all.min.css" rel="stylesheet" />
     <!-- * версия -->
-    <link rel="stylesheet" href="styles.css?v=29" />
+    <link rel="stylesheet" href="styles.css?v=31" />
   </head>
 
   <body>
@@ -41,6 +41,11 @@
           </div>
         </div>
         <div class="d-flex gap-2 align-items-center" id="headerButtons"></div>
+        <div class="header-mobile-row">
+          <button class="btn btn-dark" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu">
+            <i class="fas fa-bars me-2"></i>Меню
+          </button>
+        </div>
       </div>
       <div id="yearSwitcher" class="mb-3" style="display: none"></div>
       <div id="listPage" class="list-page">
@@ -300,6 +305,19 @@
       </div>
     </div>
 
+    <div
+      class="offcanvas offcanvas-start"
+      tabindex="-1"
+      id="mobileMenu"
+      aria-labelledby="mobileMenuLabel"
+      style="max-width: 300px">
+      <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="mobileMenuLabel"><i class="fas fa-bars me-2"></i>Меню</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Закрыть"></button>
+      </div>
+      <div class="offcanvas-body" id="mobileMenuBody"></div>
+    </div>
+
     <footer class="app-footer">
       <div class="container app-footer-row">
         <div class="app-footer-brand">
@@ -532,6 +550,6 @@
     <script src="lib/pdf.min.js"></script>
     <script src="lib/jszip.min.js"></script>
     <!-- * версия -->
-    <script src="app.js?v=63"></script>
+    <script src="app.js?v=64"></script>
   </body>
 </html>

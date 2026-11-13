@@ -2519,3 +2519,46 @@ body.sync-floating { padding-bottom: 64px; }
   body { padding-bottom: 0 !important; }
   .app-footer { display: none !important; }
 }
+
+/* ===== МОБИЛЬНАЯ ВЕРСИЯ ===== */
+.header-menus { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.header-mobile-row { display: none; }
+
+.mobile-menu { display: flex; flex-direction: column; gap: 2px; }
+.mobile-menu-section { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; font-weight: 700; padding: 12px 12px 4px; }
+.mobile-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; padding: 10px 12px; border-radius: 10px; font-size: 0.95rem; font-weight: 600; color: #334155; cursor: pointer; }
+.mobile-menu-item i { width: 20px; text-align: center; color: #2563eb; }
+.mobile-menu-item:hover { background: #f1f5f9; }
+.mobile-menu-item.active { background: #e8f1fb; color: #1d4ed8; }
+
+@media (max-width: 768px) {
+  /* Шапка: меню в гамбургер, справа только год/раскладка/админ */
+  .header-brand { order: 1; }
+  #headerButtons { order: 2; }
+  .header-mobile-row { display: flex; flex-basis: 100%; order: 3; margin-top: 6px; }
+  .header-menus { display: none !important; }
+
+  /* Футер в одну строку, без копирайта */
+  .app-footer { padding: 6px 0; }
+  .app-footer-row { flex-wrap: nowrap; gap: 8px; padding: 0 10px; }
+  .app-footer-copy { display: none !important; }
+  .app-footer-logo { width: 20px; height: 20px; }
+  .app-footer-name { font-size: 0.78rem; white-space: nowrap; }
+  .footer-sync-slot { margin-left: auto; flex-shrink: 0; }
+
+  /* Бейдж сохранения: только значки */
+  .app-footer .sync-chip { padding: 3px 4px 3px 8px; gap: 6px; }
+  .app-footer .sync-chip-text,
+  .app-footer .sync-chip-mini,
+  .app-footer .sync-chip-btn-label { display: none !important; }
+  .app-footer .sync-chip-btn { padding: 3px 7px; }
+  .sync-chip.is-floating .sync-chip-text,
+  .sync-chip.is-floating .sync-chip-mini,
+  .sync-chip.is-floating .sync-chip-btn-label { display: none !important; }
+
+  /* Таблицы протокола: только команда, Σ и место */
+  .competition-table .m-hide { display: none !important; }
+  .competition-table th, .competition-table td { padding: 6px 6px; }
+  .competition-table td.td-team { font-size: 0.85rem; }
+  .competition-toolbar .comp-tool-btn { font-size: 0.75rem; }
+}

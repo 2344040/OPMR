@@ -6314,4 +6314,114 @@ function commitToGitHub() {
   return _commitInFlight;
 }
 
+// ===== МОБИЛЬНАЯ ВЕРСИЯ: гамбургер, компактный футер, итоги в таблицах =====
+function hideMobileMenu() {
+  const el = document.getElementById("mobileMenu");
+  const inst = el && bootstrap.Offcanvas.getInstance(el);
+  if (inst) inst.hide();
+}
+
+function buildMobileMenu() {
+  const body = document.getElementById("mobileMenuBody");
+  if (!body) return;
+  let html = `<div class="mobile-menu">
+<div class="mobile-menu-section">Раздел</div>
+<button class="mobile-menu-item ${currentView === "teams" ? "active" : ""}" onclick="showTeamsView(); hideMobileMenu();"><i class="fas fa-users"></i>Команды</button>
+<button class="mobile-menu-item ${currentView === "competition" ? "active" : ""}" onclick="showCompetitionView(); hideMobileMenu();"><i class="fas fa-trophy"></i>Соревнования</button>
+<button class="mobile-menu-item ${currentView === "master" ? "active" : ""}" onclick="showMasterTable(); hideMobileMenu();"><i class="fas fa-table"></i>Сводная таблица</button>
+<div class="mobile-menu-section">Год</div>`;
+  [2026, 2025, 2024].forEach((yy) => {
+    html += `<button class="mobile-menu-item ${currentYear === yy ? "active" : ""}" onclick="switchYear(${yy}); hideMobileMenu();"><i class="fas fa-calendar-day"></i>${yy}</button>`;
+  });
+  if (isAdmin) {
+    html += `<div class="mobile-menu-section">Проект</div>
+<label for="fileInput" class="mobile-menu-item" onclick="hideMobileMenu()"><i class="fas fa-file-upload"></i>Загрузить JSON</label>
+<button class="mobile-menu-item" onclick="downloadJSON(); hideMobileMenu();"><i class="fas fa-download"></i>Скачать JSON</button>
+<button class="mobile-menu-item" onclick="backupProject(); hideMobileMenu();"><i class="fas fa-file-zipper"></i>Бэкап ZIP</button>
+<button class="mobile-menu-item" onclick="commitToGitHubManual(); hideMobileMenu();"><i class="fab fa-github"></i>Отправить на GitHub</button>`;
+    if (typeof pullFromGitHub === "function")
+      html += `<button class="mobile-menu-item" onclick="pullFromGitHub(false).then((ok) => { if (ok && typeof refreshCurrentView === 'function') refreshCurrentView(); }); hideMobileMenu();"><i class="fas fa-cloud-arrow-down"></i>Загрузить с сервера</button>`;
+    html += `<button class="mobile-menu-item" onclick="openGitHubSettings(); hideMobileMenu();"><i class="fas fa-cog"></i>Настройки GitHub</button>`;
+    if (typeof openIntegrityReport === "function")
+      html += `<button class="mobile-menu-item" onclick="openIntegrityReport(); hideMobileMenu();"><i class="fas fa-stethoscope"></i>Целостность базы</button>`;
+    html += `<div class="mobile-menu-section">Справочники</div>
+<button class="mobile-menu-item" onclick="showOrgManager(); hideMobileMenu();"><i class="fas fa-building"></i>Организации</button>
+<button class="mobile-menu-item" onclick="showApparatusManager(); hideMobileMenu();"><i class="fas fa-robot"></i>Классы аппаратов</button>
+<div class="mobile-menu-section">Команда</div>
+<button class="mobile-menu-item" onclick="createNewTeam(); hideMobileMenu();"><i class="fas fa-pen-to-square"></i>Создать вручную</button>
+<button class="mobile-menu-item" onclick="openTextImportModal(); hideMobileMenu();"><i class="fas fa-file-lines"></i>Импорт из текста</button>
+<button class="mobile-menu-item" onclick="importTeamsFromJSONPick(); hideMobileMenu();"><i class="fas fa-file-code"></i>Импорт из JSON</button>
+<button class="mobile-menu-item" onclick="importTeamsFromExcelPick(); hideMobileMenu();"><i class="fas fa-file-excel"></i>Импорт из Excel</button>
+<button class="mobile-menu-item" onclick="importTeamsFromPDFPick(); hideMobileMenu();"><i class="fas fa-file-pdf"></i>Импорт из PDF</button>`;
+  }
+  html += `</div>`;
+  body.innerHTML = html;
+}
+
+const _mobOrigHeader = renderHeaderButtons;
+renderHeaderButtons = function (...a) {
+  const r = _mobOrigHeader.apply(this, a);
+  const container = document.getElementById("headerButtons");
+  if (container && !container.querySelector(".header-menus")) {
+    const wrap = document.createElement("div");
+    wrap.className = "header-menus";
+    while (container.firstElementChild && container.firstElementChild.id !== "yearDropdownContainer") {
+      wrap.appendChild(container.firstElementChild);
+    }
+    container.insertBefore(wrap, container.firstElementChild);
+  }
+  buildMobileMenu();
+  return r;
+};
+
+function markCompetitionMobileColumns() {
+  const page = document.getElementById("competitionPage");
+  if (!page) return;
+  page.querySelectorAll("table").forEach((table) => {
+    const head1 = table.querySelector("thead tr:first-child");
+    const subRow = table.querySelector("thead tr:nth-child(2)");
+    if (head1) {
+      const cells = Array.from(head1.cells);
+      cells.forEach((th, i) => {
+        const keep = i === 1 || i === cells.length - 2 || i === cells.length - 1;
+        th.classList.toggle("m-hide", !keep);
+      });
+    }
+    if (subRow) Array.from(subRow.cells).forEach((th) => th.classList.add("m-hide"));
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      const cells = Array.from(row.cells);
+      cells.forEach((td, i) => {
+        const keep = i === 1 || i === cells.length - 2 || i === cells.length - 1;
+        td.classList.toggle("m-hide", !keep);
+      });
+    });
+  });
+}
+
+const _mobOrigComp = renderCompetition;
+renderCompetition = function (...a) {
+  const r = _mobOrigComp.apply(this, a);
+  markCompetitionMobileColumns();
+  return r;
+};
+
+const _mobOrigSync = updateSyncIndicator;
+updateSyncIndicator = function (...a) {
+  const r = _mobOrigSync.apply(this, a);
+  const el = document.getElementById("syncPill");
+  if (!el) return r;
+  if (window.matchMedia("(max-width: 768px)").matches) {
+    const slot = document.getElementById("footerSyncSlot");
+    if (slot && el.parentElement !== slot) slot.appendChild(el);
+    el.classList.remove("is-floating");
+    document.body.classList.remove("sync-floating");
+  }
+  return r;
+};
+let _mobResizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(_mobResizeTimer);
+  _mobResizeTimer = setTimeout(() => updateSyncIndicator(), 200);
+});
+
 opmrInit();
