@@ -2277,9 +2277,9 @@
       "teamLeaderPhone": "",
       "photos": [],
       "members": [],
-      "place": 6,
+      "place": 0,
       "protocol": {
-        "place": 6,
+        "place": 0,
         "totalScore": 0
       },
       "classId": "anna"
@@ -2457,11 +2457,11 @@
       },
       "draw": "5",
       "extra": 0,
-      "place": 6,
+      "place": 0,
       "protocol": {
         "drawNumber": "5",
         "extraBonus": 0,
-        "place": 6,
+        "place": 0,
         "totalScore": 0
       },
       "classId": "anna"
@@ -2486,9 +2486,9 @@
       "teamLeaderPhone": "",
       "photos": [],
       "members": [],
-      "place": 6,
+      "place": 0,
       "protocol": {
-        "place": 6,
+        "place": 0,
         "totalScore": 0
       },
       "classId": "anna"
@@ -2538,11 +2538,11 @@
       },
       "draw": "",
       "extra": 0,
-      "place": 6,
+      "place": 0,
       "protocol": {
         "drawNumber": "",
         "extraBonus": 0,
-        "place": 6,
+        "place": 0,
         "totalScore": 0
       },
       "classId": "anna"
