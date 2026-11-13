@@ -197,7 +197,7 @@
               },
               {
                 "name": "Штрафные баллы",
-                "short": "Штраф",
+                "short": "",
                 "type": "int",
                 "sum": false,
                 "penalty": true
