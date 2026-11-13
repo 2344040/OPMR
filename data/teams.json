@@ -1916,7 +1916,7 @@
           "penalty": 0
         },
         "extraBonus": 0,
-        "place": 2,
+        "place": 5,
         "totalScore": 62
       },
       "scores": {
@@ -1941,7 +1941,7 @@
       },
       "draw": "4",
       "extra": 0,
-      "place": 0
+      "place": 5
     },
     {
       "id": "015-2024-anna",
@@ -1962,7 +1962,12 @@
       "teamLeader": "Дрягин Г.В.",
       "teamLeaderPhone": "",
       "photos": [],
-      "members": []
+      "members": [],
+      "place": 6,
+      "protocol": {
+        "place": 6,
+        "totalScore": 0
+      }
     },
     {
       "id": "016-2024-anna",
@@ -2006,11 +2011,11 @@
       },
       "draw": "6",
       "extra": 0,
-      "place": 0,
+      "place": 2,
       "protocol": {
         "drawNumber": "6",
         "extraBonus": 0,
-        "place": 1,
+        "place": 2,
         "totalScore": 66
       }
     },
@@ -2056,11 +2061,11 @@
       },
       "draw": "3",
       "extra": 0,
-      "place": 0,
+      "place": 4,
       "protocol": {
         "drawNumber": "3",
         "extraBonus": 0,
-        "place": 0,
+        "place": 4,
         "totalScore": 63
       }
     },
@@ -2106,11 +2111,11 @@
       },
       "draw": "5",
       "extra": 0,
-      "place": 0,
+      "place": 6,
       "protocol": {
         "drawNumber": "5",
         "extraBonus": 0,
-        "place": 0,
+        "place": 6,
         "totalScore": 0
       }
     },
@@ -2133,7 +2138,12 @@
       "teamLeader": "Хартанен А.В.",
       "teamLeaderPhone": "",
       "photos": [],
-      "members": []
+      "members": [],
+      "place": 6,
+      "protocol": {
+        "place": 6,
+        "totalScore": 0
+      }
     },
     {
       "id": "017-2024-anna-4",
@@ -2177,11 +2187,11 @@
       },
       "draw": "",
       "extra": 0,
-      "place": 0,
+      "place": 6,
       "protocol": {
         "drawNumber": "",
         "extraBonus": 0,
-        "place": 0,
+        "place": 6,
         "totalScore": 0
       }
     },
@@ -2227,11 +2237,11 @@
       },
       "draw": "1",
       "extra": 0,
-      "place": 0,
+      "place": 1,
       "protocol": {
         "drawNumber": "1",
         "extraBonus": 0,
-        "place": 0,
+        "place": 1,
         "totalScore": 88
       }
     },
@@ -2277,11 +2287,11 @@
       },
       "draw": "2",
       "extra": 0,
-      "place": 0,
+      "place": 3,
       "protocol": {
         "drawNumber": "2",
         "extraBonus": 0,
-        "place": 0,
+        "place": 3,
         "totalScore": 65
       }
     },
