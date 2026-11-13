@@ -1522,51 +1522,18 @@ function renderCompetition() {
 
 // ===== ПРОТОКОЛ =====
 function renderProtocolForm(teamId) {
+  const container = document.getElementById("protocolContent");
+  if (!container) return;
   const team = teamsData.find((t) => t.id === teamId);
-  if (!team) return;
-  const classId = getClassIdByValue(team.apparatusClass, team.year);
+  if (!team) {
+    container.innerHTML = `<div class="detail-section"><div class="alert alert-warning mb-0">Команда не найдена (ID: ${escHtml(teamId)}).</div></div>`;
+    return;
+  }
+  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const p = team.protocol || {};
-  const container = document.getElementById("protocolContent");
   const fullName = getTeamFullName(team);
-
-  let html = html`<div class="detail-section">
-      <h4 class="detail-section-title">Протокол команды (${team.year})</h4>
-      <div class="row g-3 mb-4">
-        <div class="col-md-8">
-          <div class="detail-label">Команда</div>
-          <div class="detail-value">${fullName}</div>
-        </div>
-        <div class="col-md-4">
-          <div class="detail-label">Класс аппарата</div>
-          <div class="detail-value">${team.apparatusClass || "—"}</div>
-        </div>
-        <div class="col-md-6">
-          <div class="detail-label">Руководитель</div>
-          <div class="detail-value">${team.teamLeader || "—"}</div>
-        </div>
-        <div class="col-md-6">
-          <div class="detail-label">Название аппарата</div>
-          <div class="detail-value">${team.apparatusName || "—"}</div>
-        </div>
-      </div>
-    </div>
-    <form id="protocolForm" class="edit-form">
-      <div class="detail-section">
-        <h5 class="detail-section-title">Жеребьёвка</h5>
-        <div class="row g-3">
-          <div class="col-md-4">
-            <label class="form-label">№ по жребию</label
-            ><input
-              type="number"
-              class="form-control"
-              id="protoDrawNumber"
-              value="${p.drawNumber ?? team.draw ?? ""}" />
-          </div>
-        </div>
-      </div>
-    </form>`;
-
+  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-md-8"><div class="detail-label">Команда</div><div class="detail-value">${escHtml(fullName)}</div></div><div class="col-md-4"><div class="detail-label">Класс аппарата</div><div class="detail-value">${escHtml(team.apparatusClass || "—")}</div></div><div class="col-md-6"><div class="detail-label">Руководитель</div><div class="detail-value">${escHtml(team.teamLeader || "—")}</div></div><div class="col-md-6"><div class="detail-label">Название аппарата</div><div class="detail-value">${escHtml(team.apparatusName || "—")}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
   critGroups.forEach((cg, gi) => {
     html += `<div class="detail-section"><h5 class="detail-section-title">${escHtml(cg.fullTitle || cg.title)}</h5><div class="row g-3">`;
     cg.cols.forEach((c, ci) => {
@@ -1576,7 +1543,8 @@ function renderProtocolForm(teamId) {
       const id = `proto-${gi}-${ci}`;
       let fieldHtml;
       if (type === "bool") {
-        fieldHtml = `<div class="form-check mt-2"><input class="form-check-input proto-calc" type="checkbox" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="bool" data-sum="${c.sum !== false ? 1 : 0}" ${isBoolTrue(val) ? "checked" : ""}><label class="form-check-label" for="${id}">Да</label></div>`;
+        const checked = typeof isBoolTrue === "function" ? isBoolTrue(val) : val === "Да";
+        fieldHtml = `<div class="form-check mt-2"><input class="form-check-input proto-calc" type="checkbox" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="bool" data-sum="${c.sum !== false ? 1 : 0}" ${checked ? "checked" : ""}><label class="form-check-label" for="${id}">Да</label></div>`;
       } else if (type === "text") {
         fieldHtml = `<input type="text" class="form-control proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="text" value="${escHtml(val)}" placeholder="Текст">`;
       } else {
@@ -1587,9 +1555,7 @@ function renderProtocolForm(teamId) {
     });
     html += `<div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма группы:</strong> <span id="protoGroupTotal-${gi}">0</span></div></div></div></div>`;
   });
-
-  html += `<div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="any" class="form-control proto-calc" id="protoExtraBonus" data-type="decimal" value="${p.extraBonus ?? team.extra ?? 0}"></div></div></div><div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
-
+  html += `<div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="any" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus ?? team.extra ?? 0}"></div></div></div><div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? team.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
   container.innerHTML = html;
   document.querySelectorAll(".proto-calc").forEach((input) => {
     input.addEventListener("input", updateProtocolTotals);
