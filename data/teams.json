@@ -192,7 +192,7 @@
                 "name": "Сумма размерений",
                 "short": " Σ размер",
                 "type": "decimal",
-                "sum": true,
+                "sum": false,
                 "penalty": false
               },
               {
