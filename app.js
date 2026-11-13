@@ -3753,23 +3753,29 @@ function teamLeaderSurname(team) {
 function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
-  const byName = {};
+  const byId = {};
   teamsData.forEach((t) => {
-    byName[getTeamDisplayName(t)] = t;
+    byId[String(t.id)] = t;
   });
+  const rowTeam = (row) => {
+    const direct = row.dataset.teamId;
+    if (direct && byId[direct]) return byId[direct];
+    const code = row.getAttribute("onclick") || "";
+    const m = code.match(/showProtocolPage\(\s*['"]([^'"]+)['"]\s*\)/);
+    return m && byId[m[1]] ? byId[m[1]] : null;
+  };
   page.querySelectorAll("table").forEach((table) => {
-    // Фамилия руководителя второй строкой
+    // Фамилия руководителя — строго по ID команды из этой строки
     table.querySelectorAll("tbody tr").forEach((row) => {
       const nameCell = row.cells[1];
-      if (nameCell && !nameCell.querySelector(".team-leader-line")) {
-        const team = byName[nameCell.textContent.trim()];
-        const surname = team ? teamLeaderSurname(team) : "";
-        if (surname) {
-          const div = document.createElement("div");
-          div.className = "team-leader-line";
-          div.textContent = surname;
-          nameCell.appendChild(div);
-        }
+      if (!nameCell || nameCell.querySelector(".team-leader-line")) return;
+      const team = rowTeam(row);
+      const surname = team ? teamLeaderSurname(team) : "";
+      if (surname) {
+        const div = document.createElement("div");
+        div.className = "team-leader-line";
+        div.textContent = surname;
+        nameCell.appendChild(div);
       }
     });
     // Числа в колонках «Баллы»/«Бонус» — жирным зелёным
