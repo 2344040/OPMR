@@ -527,39 +527,44 @@
             "sectionShort": "През.",
             "fields": [
               {
+                "id": "fmweuby9648wum",
                 "name": "Структура",
                 "short": "Структ.",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby9648wum"
+                "penalty": false
               },
               {
+                "id": "fmweuby960757c",
                 "name": "Эффективность",
                 "short": "Эффект.",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby960757c"
+                "penalty": false
               },
               {
+                "id": "fmweuby96kr6uu",
                 "name": "Новизна",
                 "short": "Нов.",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby96kr6uu"
+                "penalty": false
               },
               {
+                "id": "fmweuby96i1fqa",
                 "name": "Перспектива",
                 "short": "Персп.",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby96i1fqa"
+                "penalty": false
               },
               {
+                "id": "fmweuby96xgo4p",
                 "name": "Качество",
                 "short": "Кач.",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby96xgo4p"
+                "penalty": false
               }
             ]
           },
@@ -568,39 +573,44 @@
             "sectionShort": "Квал.",
             "fields": [
               {
+                "id": "fmweuby96rwawd",
                 "name": "Задание 1 (+/-)",
                 "short": "",
+                "type": "bool",
                 "sum": false,
-                "penalty": false,
-                "id": "fmweuby96rwawd"
+                "penalty": false
               },
               {
+                "id": "fmweuby96cck7q",
                 "name": "Сумма размерений (макс 2100 мм)",
                 "short": "Разм.",
+                "type": "int",
                 "sum": false,
-                "penalty": false,
-                "id": "fmweuby96cck7q"
+                "penalty": false
               },
               {
+                "id": "fmweuby96ov8by",
                 "name": "Штрафные баллы",
-                "short": "Штраф",
+                "short": "",
+                "type": "int",
                 "sum": false,
-                "penalty": true,
-                "id": "fmweuby96ov8by"
+                "penalty": true
               },
               {
+                "id": "fmweuby96dyuf1",
                 "name": "Вес (макс 30 кг)",
                 "short": "Вес",
+                "type": "decimal",
                 "sum": false,
-                "penalty": false,
-                "id": "fmweuby96dyuf1"
+                "penalty": false
               },
               {
+                "id": "fmweuby96rsaek",
                 "name": "Бонусные баллы",
                 "short": "Бонус",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby96rsaek"
+                "penalty": false
               }
             ]
           },
@@ -609,25 +619,28 @@
             "sectionShort": "Зад. 2",
             "fields": [
               {
+                "id": "fmweuby96kl0fy",
                 "name": "Время/место",
                 "short": "",
+                "type": "text",
                 "sum": false,
-                "penalty": false,
-                "id": "fmweuby96kl0fy"
+                "penalty": false
               },
               {
+                "id": "fmweuby96p35zt",
                 "name": "Баллы за время",
-                "short": "Баллы",
+                "short": "за время",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby96p35zt"
+                "penalty": false
               },
               {
+                "id": "fmweuby960o012",
                 "name": "Штрафные баллы",
-                "short": "Штраф",
+                "short": "",
+                "type": "int",
                 "sum": false,
-                "penalty": true,
-                "id": "fmweuby960o012"
+                "penalty": true
               }
             ]
           },
@@ -636,32 +649,36 @@
             "sectionShort": "Зад. 3",
             "fields": [
               {
+                "id": "fmweuby9647nlq",
                 "name": "+/-",
                 "short": "",
+                "type": "bool",
                 "sum": false,
-                "penalty": false,
-                "id": "fmweuby9647nlq"
+                "penalty": false
               },
               {
+                "id": "fmweuby962ti1d",
                 "name": "Баллы",
-                "short": "Баллы",
+                "short": "",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby962ti1d"
+                "penalty": false
               },
               {
+                "id": "fmweuby96fuq2x",
                 "name": "Ошибки (кол-во)",
-                "short": "Ошибки",
+                "short": "",
+                "type": "int",
                 "sum": false,
-                "penalty": false,
-                "id": "fmweuby96fuq2x"
+                "penalty": false
               },
               {
+                "id": "fmweuby96gqw9t",
                 "name": "Штрафные баллы",
-                "short": "Штраф",
-                "penalty": true,
+                "short": "",
+                "type": "int",
                 "sum": false,
-                "id": "fmweuby96gqw9t"
+                "penalty": true
               }
             ]
           },
@@ -670,18 +687,20 @@
             "sectionShort": "Зад. 4",
             "fields": [
               {
+                "id": "fmweuby96569s9",
                 "name": "Время/место",
                 "short": "",
+                "type": "text",
                 "sum": false,
-                "penalty": false,
-                "id": "fmweuby96569s9"
+                "penalty": false
               },
               {
+                "id": "fmweuby96z83rw",
                 "name": "Баллы",
-                "short": "Баллы",
+                "short": "",
+                "type": "int",
                 "sum": true,
-                "penalty": false,
-                "id": "fmweuby96z83rw"
+                "penalty": false
               }
             ]
           }
