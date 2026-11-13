@@ -159,23 +159,28 @@
             "fields": [
               {
                 "name": "Структура",
-                "short": "Структ."
+                "short": "Структ.",
+                "type": "int"
               },
               {
                 "name": "Эффективность",
-                "short": "Эфф."
+                "short": "Эфф.",
+                "type": "int"
               },
               {
                 "name": "Новизна",
-                "short": "Нов."
+                "short": "Нов.",
+                "type": "int"
               },
               {
                 "name": "Перспектива",
-                "short": "Персп."
+                "short": "Персп.",
+                "type": "int"
               },
               {
                 "name": "Качество",
-                "short": "Кач."
+                "short": "Кач.",
+                "type": "int"
               }
             ]
           },
@@ -186,20 +191,28 @@
               {
                 "name": "Сумма размерений",
                 "short": " Σ размер",
-                "sum": false
+                "type": "decimal",
+                "sum": true,
+                "penalty": false
               },
               {
                 "name": "Штрафные баллы",
-                "short": "Штраф"
+                "short": "Штраф",
+                "type": "int",
+                "sum": false,
+                "penalty": true
               },
               {
                 "name": "Вес (кг)",
                 "short": "",
-                "sum": false
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
               },
               {
                 "name": "Бонусные баллы",
-                "short": "Бонус"
+                "short": "Бонус",
+                "type": "int"
               }
             ]
           },
@@ -210,11 +223,14 @@
               {
                 "name": "Среднее отклонение от траектории",
                 "short": "Ср. откл.",
-                "sum": false
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
               },
               {
                 "name": "Баллы",
-                "short": ""
+                "short": "",
+                "type": "int"
               }
             ]
           },
@@ -225,21 +241,25 @@
               {
                 "name": "Остров 1",
                 "short": "",
+                "type": "int",
                 "sum": false
               },
               {
                 "name": "Остров 2",
                 "short": "",
+                "type": "int",
                 "sum": false
               },
               {
                 "name": "Остров 3",
                 "short": "",
+                "type": "int",
                 "sum": false
               },
               {
                 "name": "Баллы",
-                "short": ""
+                "short": "",
+                "type": "int"
               }
             ]
           },
@@ -250,15 +270,18 @@
               {
                 "name": "Кол-во объектов",
                 "short": "Кол-во",
+                "type": "int",
                 "sum": false
               },
               {
                 "name": "Баллы",
-                "short": ""
+                "short": "",
+                "type": "int"
               },
               {
                 "name": "Бонус за непрерывность",
-                "short": "Бонус (непрер)"
+                "short": "Бонус (непрер)",
+                "type": "int"
               }
             ]
           }
@@ -590,252 +613,6 @@
   },
   "criteriaTemplates": [
     {
-      "id": "t1794491617661",
-      "name": "АНПА 2024",
-      "criteria": [
-        {
-          "section": "Презентация",
-          "sectionShort": "През.",
-          "fields": [
-            {
-              "name": "Структура",
-              "short": "Структ."
-            },
-            {
-              "name": "Эффективность",
-              "short": "Эффект."
-            },
-            {
-              "name": "Новизна",
-              "short": "Нов."
-            },
-            {
-              "name": "Перспектива",
-              "short": "Персп."
-            },
-            {
-              "name": "Качество",
-              "short": "Кач.",
-              "sum": true
-            }
-          ]
-        },
-        {
-          "section": "Квалификация",
-          "sectionShort": "Квал.",
-          "fields": [
-            {
-              "name": "Задание 1 (+/-)",
-              "short": "",
-              "sum": false
-            },
-            {
-              "name": "Сумма размерений (макс 2500 мм)",
-              "short": "Разм.",
-              "sum": false
-            },
-            {
-              "name": "Штрафные баллы",
-              "short": "Штраф",
-              "penalty": true,
-              "sum": false
-            },
-            {
-              "name": "Вес (макс 30 кг)",
-              "short": "Вес",
-              "sum": false
-            },
-            {
-              "name": "Бонусные баллы",
-              "short": "Бонус"
-            }
-          ]
-        },
-        {
-          "section": "Задание 2 (движение по траектории)",
-          "sectionShort": "Зад. 2",
-          "fields": [
-            {
-              "name": "Время/место",
-              "short": "",
-              "sum": false
-            },
-            {
-              "name": "Баллы",
-              "short": "Баллы"
-            },
-            {
-              "name": "Штрафные баллы",
-              "short": "Штраф",
-              "penalty": true,
-              "sum": false
-            }
-          ]
-        },
-        {
-          "section": "Задание 3 (Стыковка с имитатором ЗУ)",
-          "sectionShort": "Зад. 3",
-          "fields": [
-            {
-              "name": "Точность (0-10, 10-30, 30-100)",
-              "short": "Остр. 1",
-              "sum": false
-            },
-            {
-              "name": "Баллы за точность",
-              "short": "Балл точность"
-            },
-            {
-              "name": "Бонусные баллы за направленность",
-              "short": "Бонус направл-ть"
-            }
-          ]
-        },
-        {
-          "section": "Задание 4 (фотомозаика, 30 мин)",
-          "sectionShort": "Зад. 4",
-          "fields": [
-            {
-              "name": "Кол-во объектов",
-              "short": "Кол-во объектов",
-              "sum": false
-            },
-            {
-              "name": "Баллы",
-              "short": "Баллы"
-            },
-            {
-              "name": "Бонус за расстояния",
-              "short": "Бонус расст."
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "t1794491626660",
-      "name": "АНПА 2024",
-      "criteria": [
-        {
-          "section": "Презентация",
-          "sectionShort": "През.",
-          "fields": [
-            {
-              "name": "Структура",
-              "short": "Структ."
-            },
-            {
-              "name": "Эффективность",
-              "short": "Эффект."
-            },
-            {
-              "name": "Новизна",
-              "short": "Нов."
-            },
-            {
-              "name": "Перспектива",
-              "short": "Персп."
-            },
-            {
-              "name": "Качество",
-              "short": "Кач.",
-              "sum": true
-            }
-          ]
-        },
-        {
-          "section": "Квалификация",
-          "sectionShort": "Квал.",
-          "fields": [
-            {
-              "name": "Задание 1 (+/-)",
-              "short": "",
-              "sum": false
-            },
-            {
-              "name": "Сумма размерений (макс 2500 мм)",
-              "short": "Разм.",
-              "sum": false
-            },
-            {
-              "name": "Штрафные баллы",
-              "short": "Штраф",
-              "penalty": true,
-              "sum": false
-            },
-            {
-              "name": "Вес (макс 30 кг)",
-              "short": "Вес",
-              "sum": false
-            },
-            {
-              "name": "Бонусные баллы",
-              "short": "Бонус"
-            }
-          ]
-        },
-        {
-          "section": "Задание 2 (движение по траектории)",
-          "sectionShort": "Зад. 2",
-          "fields": [
-            {
-              "name": "Время/место",
-              "short": "",
-              "sum": false
-            },
-            {
-              "name": "Баллы",
-              "short": "Баллы"
-            },
-            {
-              "name": "Штрафные баллы",
-              "short": "Штраф",
-              "penalty": true,
-              "sum": false
-            }
-          ]
-        },
-        {
-          "section": "Задание 3 (Стыковка с имитатором ЗУ)",
-          "sectionShort": "Зад. 3",
-          "fields": [
-            {
-              "name": "Точность (0-10, 10-30, 30-100)",
-              "short": "Остр. 1",
-              "sum": false
-            },
-            {
-              "name": "Баллы за точность",
-              "short": "Балл точность"
-            },
-            {
-              "name": "Бонусные баллы за направленность",
-              "short": "Бонус направл-ть"
-            }
-          ]
-        },
-        {
-          "section": "Задание 4 (фотомозаика, 30 мин)",
-          "sectionShort": "Зад. 4",
-          "fields": [
-            {
-              "name": "Кол-во объектов",
-              "short": "Кол-во объектов",
-              "sum": false
-            },
-            {
-              "name": "Баллы",
-              "short": "Баллы"
-            },
-            {
-              "name": "Бонус за расстояния",
-              "short": "Бонус расст."
-            }
-          ]
-        }
-      ]
-    },
-    {
       "id": "t1794492299179",
       "name": "ТНПА 2024",
       "criteria": [
@@ -986,8 +763,8 @@
       ]
     },
     {
-      "id": "t1794496010400",
-      "name": "АННА 2024",
+      "id": "t1794557766959",
+      "name": "АННА 2024 261113",
       "criteria": [
         {
           "section": "Презентация",
@@ -995,23 +772,28 @@
           "fields": [
             {
               "name": "Структура",
-              "short": "Структ."
+              "short": "Структ.",
+              "type": "int"
             },
             {
               "name": "Эффективность",
-              "short": "Эфф."
+              "short": "Эфф.",
+              "type": "int"
             },
             {
               "name": "Новизна",
-              "short": "Нов."
+              "short": "Нов.",
+              "type": "int"
             },
             {
               "name": "Перспектива",
-              "short": "Персп."
+              "short": "Персп.",
+              "type": "int"
             },
             {
               "name": "Качество",
-              "short": "Кач."
+              "short": "Кач.",
+              "type": "int"
             }
           ]
         },
@@ -1022,20 +804,28 @@
             {
               "name": "Сумма размерений",
               "short": " Σ размер",
-              "sum": false
+              "type": "decimal",
+              "sum": true,
+              "penalty": false
             },
             {
               "name": "Штрафные баллы",
-              "short": "Штраф"
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
             },
             {
               "name": "Вес (кг)",
               "short": "",
-              "sum": false
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
             },
             {
               "name": "Бонусные баллы",
-              "short": "Бонус"
+              "short": "Бонус",
+              "type": "int"
             }
           ]
         },
@@ -1046,11 +836,14 @@
             {
               "name": "Среднее отклонение от траектории",
               "short": "Ср. откл.",
-              "sum": false
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
             },
             {
               "name": "Баллы",
-              "short": ""
+              "short": "",
+              "type": "int"
             }
           ]
         },
@@ -1061,21 +854,25 @@
             {
               "name": "Остров 1",
               "short": "",
+              "type": "int",
               "sum": false
             },
             {
               "name": "Остров 2",
               "short": "",
+              "type": "int",
               "sum": false
             },
             {
               "name": "Остров 3",
               "short": "",
+              "type": "int",
               "sum": false
             },
             {
               "name": "Баллы",
-              "short": ""
+              "short": "",
+              "type": "int"
             }
           ]
         },
@@ -1086,15 +883,18 @@
             {
               "name": "Кол-во объектов",
               "short": "Кол-во",
+              "type": "int",
               "sum": false
             },
             {
               "name": "Баллы",
-              "short": ""
+              "short": "",
+              "type": "int"
             },
             {
               "name": "Бонус за непрерывность",
-              "short": "Бонус (непрер)"
+              "short": "Бонус (непрер)",
+              "type": "int"
             }
           ]
         }
