@@ -1997,3 +1997,6 @@ body > .container {
 .competition-table .cg-ico { font-size: 0.85rem; line-height: 1; }
 .competition-table .cg-ico-sum { color: #15803d; }
 .competition-table .cg-ico-pen { color: #b91c1c; }
+
+/* ===== Числа в колонках баллов — жирным зелёным ===== */
+.competition-table td.cg-score { color: #15803d !important; font-weight: 700; }

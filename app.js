@@ -3746,21 +3746,37 @@ function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
   const byName = {};
-  teamsData.forEach((t) => {
-    byName[getTeamDisplayName(t)] = t;
-  });
+  teamsData.forEach((t) => { byName[getTeamDisplayName(t)] = t; });
   page.querySelectorAll("table").forEach((table) => {
+    // Фамилия руководителя второй строкой
     table.querySelectorAll("tbody tr").forEach((row) => {
       const nameCell = row.cells[1];
-      if (!nameCell || nameCell.querySelector(".team-leader-line")) return;
-      const team = byName[nameCell.textContent.trim()];
-      const surname = team ? teamLeaderSurname(team) : "";
-      if (surname) {
-        const div = document.createElement("div");
-        div.className = "team-leader-line";
-        div.textContent = surname;
-        nameCell.appendChild(div);
+      if (nameCell && !nameCell.querySelector(".team-leader-line")) {
+        const team = byName[nameCell.textContent.trim()];
+        const surname = team ? teamLeaderSurname(team) : "";
+        if (surname) {
+          const div = document.createElement("div");
+          div.className = "team-leader-line";
+          div.textContent = surname;
+          nameCell.appendChild(div);
+        }
       }
+    });
+    // Числа в колонках «Баллы»/«Бонус» — жирным зелёным
+    const subRow = table.querySelector("thead tr:nth-child(2)");
+    if (!subRow) return;
+    const scoreIdx = [];
+    Array.from(subRow.cells).forEach((th, i) => {
+      if (th.querySelector(".cg-ico-sum") || /балл|бонус/i.test(th.textContent)) scoreIdx.push(i + 2);
+    });
+    if (!scoreIdx.length) return;
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      scoreIdx.forEach((idx) => {
+        const cell = row.cells[idx];
+        if (!cell || cell.classList.contains("cg-penalty")) return;
+        const txt = cell.textContent.trim();
+        if (txt && txt !== "—" && !isNaN(parseFloat(txt.replace(",", ".")))) cell.classList.add("cg-score");
+      });
     });
   });
 }
