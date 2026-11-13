@@ -1529,7 +1529,8 @@ function renderProtocolForm(teamId) {
     container.innerHTML = `<div class="detail-section"><div class="alert alert-warning mb-0">Команда не найдена (ID: ${escHtml(teamId)}).</div></div>`;
     return;
   }
-  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+  const classId =
+    typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const p = team.protocol || {};
   const fullName = getTeamFullName(team);
@@ -6429,5 +6430,20 @@ window.addEventListener("resize", () => {
   clearTimeout(_mobResizeTimer);
   _mobResizeTimer = setTimeout(() => updateSyncIndicator(), 200);
 });
+
+const _protoSafeShow = showProtocolPage;
+showProtocolPage = function (teamId) {
+  try {
+    return _protoSafeShow.call(this, teamId);
+  } catch (e) {
+    console.error("Ошибка открытия протокола:", e);
+    const pg = document.getElementById("protocolPage");
+    if (pg) pg.classList.add("active");
+    const c = document.getElementById("protocolContent");
+    if (c)
+      c.innerHTML = `<div class="detail-section"><div class="alert alert-danger mb-0"><i class="fas fa-bug me-2"></i>Не удалось построить форму протокола: ${escHtml(e.message)}</div></div>`;
+    showToast("Ошибка формы протокола: " + e.message, "error");
+  }
+};
 
 opmrInit();
