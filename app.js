@@ -1534,7 +1534,7 @@ function renderProtocolForm(teamId) {
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const p = team.protocol || {};
   const fullName = getTeamFullName(team);
-  let html = html`<div class="detail-section">
+  let html = `<div class="detail-section">
       <h4 class="detail-section-title">Протокол команды (${team.year})</h4>
       <div class="row g-3 mb-4">
         <div class="col-md-6">
