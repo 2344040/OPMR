@@ -6106,4 +6106,142 @@ pullFromGitHub = async function (silent = false) {
   return _shortOrigPull.call(this, silent);
 };
 
+// ===== МЕСТА: ноль баллов = без места (расчёт + самопочинка отображения) =====
+function assignPlaces(teams) {
+  const byName = (a, b) =>
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru");
+  const scored = teams.map((t) => ({t, total: computeTeamTotal(t)}));
+  scored.forEach((x) => {
+    x.ranked = x.total !== 0;
+  });
+  scored.sort((a, b) => {
+    if (a.ranked !== b.ranked) return a.ranked ? -1 : 1;
+    if (a.ranked) return b.total - a.total || byName(a.t, b.t);
+    return byName(a.t, b.t);
+  });
+  let rankedCount = 0;
+  let prevTotal = null;
+  let prevPlace = 0;
+  scored.forEach((x) => {
+    if (!x.ranked) {
+      x.t.place = 0;
+      x.t.protocol = {...(x.t.protocol || {}), place: 0, totalScore: x.total};
+      return;
+    }
+    rankedCount++;
+    const place = prevTotal !== null && x.total === prevTotal ? prevPlace : rankedCount;
+    prevTotal = x.total;
+    prevPlace = place;
+    x.t.place = place;
+    x.t.protocol = {...(x.t.protocol || {}), place, totalScore: x.total};
+  });
+  return rankedCount;
+}
+
+function sortClassTeams(teams, mode) {
+  const arr = [...teams];
+  const byName = (a, b) =>
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru");
+  const drawOf = (t) => parseScoreNumber(t.draw ?? t.drawNumber ?? t.lot ?? "");
+  if (mode === "draw") {
+    arr.sort((a, b) => {
+      const da = drawOf(a), db = drawOf(b);
+      if (da === null && db === null) return byName(a, b);
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db || byName(a, b);
+    });
+  } else if (mode === "total") {
+    arr.sort((a, b) => {
+      const ta = computeTeamTotal(a), tb = computeTeamTotal(b);
+      if ((ta === 0) !== (tb === 0)) return ta === 0 ? 1 : -1;
+      return tb - ta || byName(a, b);
+    });
+  } else {
+    arr.sort(byName);
+  }
+  return arr;
+}
+
+function enhanceCompetitionTables() {
+  const page = document.getElementById("competitionPage");
+  if (!page) return;
+  const byId = {};
+  teamsData.forEach((t) => {
+    byId[String(t.id)] = t;
+  });
+  const rowTeam = (row) => {
+    const direct = row.dataset.teamId;
+    if (direct && byId[direct]) return byId[direct];
+    const m = (row.getAttribute("onclick") || "").match(/showProtocolPage\(\s*['"]([^'"]+)['"]\s*\)/);
+    return m && byId[m[1]] ? byId[m[1]] : null;
+  };
+  const classOf = (table) => {
+    const card = table.closest(".competition-class-card");
+    if (!card) return null;
+    const btn = card.querySelector('[onclick*="calculatePlacesForClass("]');
+    const m = btn && (btn.getAttribute("onclick") || "").match(/calculatePlacesForClass\(\s*['"]([^'"]+)['"]/);
+    if (m) return m[1];
+    const badge = card.querySelector(".category-badge");
+    if (badge) {
+      const txt = badge.textContent.trim().toLowerCase();
+      const found = apparatusClasses.find((c) => String(c.name).toLowerCase() === txt || String(c.id).toLowerCase() === txt);
+      if (found) return found.id;
+    }
+    return null;
+  };
+  const isLegacyProtocol = (t) =>
+    !!(t.protocol && (t.protocol.presentation || t.protocol.qualification || t.protocol.competition));
+  let dirty = false;
+  page.querySelectorAll("table").forEach((table) => {
+    const classId = classOf(table);
+    const cols = classId ? getClassCriteriaGroups(currentYear, classId).flatMap((g) => g.cols) : [];
+    const subRow = table.querySelector("thead tr:nth-child(2)");
+    if (subRow && cols.length && typeof renderCriteriaSubhead === "function") {
+      Array.from(subRow.cells).forEach((th, i) => {
+        const c = cols[i];
+        if (!c) return;
+        th.innerHTML = renderCriteriaSubhead(c);
+        th.title = c.full || c.title || "";
+      });
+    }
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      const team = rowTeam(row);
+      const nameCell = row.cells[1];
+      if (nameCell && !nameCell.querySelector(".team-leader-line")) {
+        const surname = team ? teamLeaderSurname(team) : "";
+        if (surname) {
+          const div = document.createElement("div");
+          div.className = "team-leader-line";
+          div.textContent = surname;
+          nameCell.appendChild(div);
+        }
+      }
+      if (subRow) {
+        Array.from(subRow.cells).forEach((th, i) => {
+          if (!th.querySelector(".cg-ico-sum")) return;
+          const cell = row.cells[i + 2];
+          if (!cell || cell.classList.contains("cg-penalty")) return;
+          const txt = cell.textContent.trim();
+          if (txt && txt !== "—" && !isNaN(parseFloat(txt.replace(",", ".")))) cell.classList.add("cg-score");
+        });
+      }
+      // Самопочинка: команда без баллов не может иметь место
+      if (!team || isLegacyProtocol(team)) return;
+      if (computeTeamTotal(team) !== 0) return;
+      const placeCell = row.cells[row.cells.length - 1];
+      if (placeCell && placeCell.textContent.trim() !== "—") placeCell.innerHTML = '<span class="cg-place-empty">—</span>';
+      if (team.place) {
+        team.place = 0;
+        dirty = true;
+      }
+      if (team.protocol && team.protocol.place) {
+        team.protocol.place = 0;
+        dirty = true;
+      }
+    });
+  });
+  if (dirty) saveData();
+}
+
 opmrInit();
