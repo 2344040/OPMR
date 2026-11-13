@@ -462,7 +462,7 @@
               {
                 "id": "fmweuby96gmont",
                 "name": "Точность (0-10, 10-30, 30-100)",
-                "short": "Остр. 1",
+                "short": "",
                 "type": "text",
                 "sum": false,
                 "penalty": false
