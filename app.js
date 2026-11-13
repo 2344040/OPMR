@@ -1534,7 +1534,42 @@ function renderProtocolForm(teamId) {
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const p = team.protocol || {};
   const fullName = getTeamFullName(team);
-  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-md-8"><div class="detail-label">Команда</div><div class="detail-value">${escHtml(fullName)}</div></div><div class="col-md-4"><div class="detail-label">Класс аппарата</div><div class="detail-value">${escHtml(team.apparatusClass || "—")}</div></div><div class="col-md-6"><div class="detail-label">Руководитель</div><div class="detail-value">${escHtml(team.teamLeader || "—")}</div></div><div class="col-md-6"><div class="detail-label">Название аппарата</div><div class="detail-value">${escHtml(team.apparatusName || "—")}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
+  let html = html`<div class="detail-section">
+      <h4 class="detail-section-title">Протокол команды (${team.year})</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <div class="detail-label">Команда</div>
+          <div class="detail-value">${escHtml(fullName)}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Класс аппарата</div>
+          <div class="detail-value">${escHtml(team.apparatusClass || "—")}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Руководитель</div>
+          <div class="detail-value">${escHtml(team.teamLeader || "—")}</div>
+        </div>
+        <div class="col-md-6">
+          <div class="detail-label">Название аппарата</div>
+          <div class="detail-value">${escHtml(team.apparatusName || "—")}</div>
+        </div>
+      </div>
+    </div>
+    <form id="protocolForm" class="edit-form">
+      <div class="detail-section">
+        <h5 class="detail-section-title">Жеребьёвка</h5>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">№ по жребию</label
+            ><input
+              type="number"
+              class="form-control"
+              id="protoDrawNumber"
+              value="${p.drawNumber ?? team.draw ?? ""}" />
+          </div>
+        </div>
+      </div>
+    </form>`;
   critGroups.forEach((cg, gi) => {
     html += `<div class="detail-section"><h5 class="detail-section-title">${escHtml(cg.fullTitle || cg.title)}</h5><div class="row g-3">`;
     cg.cols.forEach((c, ci) => {
