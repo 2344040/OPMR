@@ -2742,11 +2742,11 @@
       },
       "draw": "1",
       "extra": 0,
-      "place": 2,
+      "place": 5,
       "protocol": {
         "drawNumber": "1",
         "extraBonus": 0,
-        "place": 2,
+        "place": 5,
         "totalScore": 50
       }
     },
@@ -2813,11 +2813,11 @@
       },
       "draw": "6",
       "extra": 0,
-      "place": 1,
+      "place": 2,
       "protocol": {
         "drawNumber": "6",
         "extraBonus": 0,
-        "place": 1,
+        "place": 2,
         "totalScore": 67
       }
     },
@@ -2842,9 +2842,9 @@
       "photos": [],
       "members": [],
       "classId": "anpa",
-      "place": 3,
+      "place": 4,
       "protocol": {
-        "place": 3,
+        "place": 4,
         "totalScore": 52,
         "drawNumber": "4",
         "extraBonus": 0
@@ -2913,9 +2913,9 @@
       "photos": [],
       "members": [],
       "classId": "anpa",
-      "place": 3,
+      "place": 1,
       "protocol": {
-        "place": 3,
+        "place": 1,
         "totalScore": 99,
         "drawNumber": "3",
         "extraBonus": 0
@@ -3055,11 +3055,55 @@
       "photos": [],
       "members": [],
       "classId": "anpa",
-      "place": 3,
+      "place": 6,
       "protocol": {
-        "place": 3,
-        "totalScore": 0
-      }
+        "place": 6,
+        "totalScore": 46,
+        "drawNumber": "4",
+        "extraBonus": 0
+      },
+      "scores": {
+        "f:fmweuby96c86gb": "4",
+        "През.::Структура": "4",
+        "f:fmweuby964rmey": "3",
+        "През.::Эффективность": "3",
+        "f:fmweuby96pnaq6": "3",
+        "През.::Новизна": "3",
+        "f:fmweuby96j6ksu": "3",
+        "През.::Перспектива": "3",
+        "f:fmweuby96klhwi": "4",
+        "През.::Качество": "4",
+        "f:fmweuby96jnjnc": "Да",
+        "Квал.::Задание 1 (+/-)": "Да",
+        "f:fmweuby9680eyc": "510",
+        "Квал.::Сумма размерений (макс 2500 мм)": "510",
+        "f:fmweuby964j0vx": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmweuby96z17ha": "1",
+        "Квал.::Вес (макс 30 кг)": "1",
+        "f:fmweuby96l7hhn": "29",
+        "Квал.::Бонусные баллы": "29",
+        "f:fmweuby966m3q4": "",
+        "Зад. 2::Время/место": "",
+        "f:fmweuby96lyksl": "",
+        "Зад. 2::Баллы": "",
+        "f:fmweuby96v6chp": "",
+        "Зад. 2::Штрафные баллы": "",
+        "f:fmweuby96gmont": "",
+        "Зад. 3::Точность (0-10, 10-30, 30-100)": "",
+        "f:fmweuby96dwc97": "",
+        "Зад. 3::Баллы за точность": "",
+        "f:fmweuby96jtryd": "",
+        "Зад. 3::Бонусные баллы за направленность": "",
+        "f:fmweuby96u19yo": "",
+        "Зад. 4::Кол-во объектов": "",
+        "f:fmweuby96yrh6s": "",
+        "Зад. 4::Баллы": "",
+        "f:fmweuby96l1ei7": "",
+        "Зад. 4::Бонус за расстояния": ""
+      },
+      "draw": "4",
+      "extra": 0
     },
     {
       "id": "011-2024-tnpa",
