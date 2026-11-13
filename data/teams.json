@@ -440,7 +440,7 @@
               {
                 "id": "fmweuby96lyksl",
                 "name": "Баллы",
-                "short": "Баллы",
+                "short": "",
                 "type": "int",
                 "sum": true,
                 "penalty": false
@@ -500,7 +500,7 @@
               {
                 "id": "fmweuby96yrh6s",
                 "name": "Баллы",
-                "short": "Баллы",
+                "short": "",
                 "type": "int",
                 "sum": true,
                 "penalty": false
