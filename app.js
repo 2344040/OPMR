@@ -5571,4 +5571,338 @@ opmrInit = async function (...a) {
   return r;
 };
 
+// ============================================================
+// СОКРАЩЕНИЯ ПОЛЕЙ: пустое значение сохраняется и снимает подпись
+// ============================================================
+
+function normalizeCriteria(criteria) {
+  if (!Array.isArray(criteria)) return [];
+  return criteria.map((g) => {
+    const isObj = typeof g === "object" && g !== null;
+    const section = isObj ? g.section || g.name || "Группа" : String(g);
+    const sectionShort = isObj ? String(g.sectionShort ?? g.short ?? "").trim() : "";
+    const rawFields = isObj ? g.fields || [] : [];
+    const fields = rawFields.map((f) =>
+      typeof f === "object" && f !== null
+        ? {
+            id: f.id || newFieldId(),
+            name: String(f.name ?? "").trim(),
+            short: String(f.short ?? "").trim(),
+            type: f.type || "int",
+            ...(f.sum !== undefined ? {sum: !!f.sum} : {}),
+            ...(f.penalty !== undefined ? {penalty: !!f.penalty} : {}),
+          }
+        : {id: newFieldId(), name: String(f).trim(), short: "", type: "int"},
+    );
+    return {section, sectionShort, fields};
+  });
+}
+
+function syncCriteriaFromDom() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body || body.dataset.critOwner !== `${currentCriteriaYear}:${currentCriteriaClass}`) return;
+  body.querySelectorAll("[data-crit-group]").forEach((el) => {
+    const g = Number(el.dataset.g);
+    if (!tempCriteria[g]) return;
+    const n = el.querySelector('[data-role="section"]');
+    const s = el.querySelector('[data-role="sectionShort"]');
+    if (n) tempCriteria[g].section = n.value;
+    if (s) tempCriteria[g].sectionShort = s.value;
+  });
+  body.querySelectorAll("[data-crit-field]").forEach((el) => {
+    const g = Number(el.dataset.g);
+    const f = Number(el.dataset.f);
+    const field = tempCriteria[g] && tempCriteria[g].fields[f];
+    if (!field || typeof field !== "object") return;
+    const n = el.querySelector('[data-role="name"]');
+    const s = el.querySelector('[data-role="short"]');
+    const t = el.querySelector('[data-role="type"]');
+    const su = el.querySelector('[data-role="sum"]');
+    const pe = el.querySelector('[data-role="penalty"]');
+    if (n) field.name = n.value;
+    if (s) field.short = s.value;
+    if (t) field.type = t.value;
+    if (su) field.sum = su.checked;
+    if (pe) field.penalty = pe.checked;
+  });
+}
+
+function trimCriteriaInPlace(list) {
+  list.forEach((g) => {
+    g.section = String(g.section || "").trim();
+    g.sectionShort = String(g.sectionShort || "").trim();
+    (g.fields || []).forEach((f) => {
+      if (typeof f !== "object" || f === null) return;
+      f.name = String(f.name || "").trim();
+      f.short = String(f.short || "").trim();
+      f.type = f.type || "int";
+    });
+  });
+  return list;
+}
+
+function renderCriteriaOffcanvas() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body) return;
+  body.dataset.critOwner = `${currentCriteriaYear}:${currentCriteriaClass}`;
+  const title = `${getClassInfo(currentCriteriaClass).name} — ${currentCriteriaYear} год`;
+  const templates = loadCriteriaTemplates();
+  let html = `<div class="alert alert-info d-flex align-items-start py-2"><i class="fas fa-info-circle me-2 mt-1"></i><div class="small"><strong>Настройка критериев:</strong> ${escHtml(title)}<br><strong>Σ</strong> — поле входит в сумму; <strong>−</strong> — штраф. Пустое «Сокр.» у расчётного поля оставляет в таблице только иконку.</div></div>`;
+  if (!tempCriteria.length) {
+    html += `<div class="alert alert-light text-center py-4"><i class="fas fa-clipboard-list fa-2x text-muted mb-2 d-block"></i><p class="mb-0 small">Критерии не заданы. Добавьте группы ниже.</p></div>`;
+  }
+  tempCriteria.forEach((group, gIdx) => {
+    html += `<div class="card mb-3 border shadow-sm" data-crit-group data-g="${gIdx}">
+<div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+<div class="d-flex align-items-center gap-2 flex-grow-1 me-3">
+<span class="badge bg-primary rounded-pill">${gIdx + 1}</span>
+<div class="flex-grow-1">
+<input type="text" data-role="section" class="form-control form-control-sm fw-bold border-0 bg-transparent p-0" value="${escHtml(group.section)}" placeholder="Название группы">
+<input type="text" data-role="sectionShort" class="form-control form-control-sm text-muted border-0 bg-transparent p-0" value="${escHtml(group.sectionShort || "")}" placeholder="Сокращение группы (необязательно)">
+</div>
+</div>
+<div class="d-flex gap-1">
+<button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, -1)" ${gIdx === 0 ? "disabled" : ""} title="Вверх"><i class="fas fa-chevron-up"></i></button>
+<button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, 1)" ${gIdx === tempCriteria.length - 1 ? "disabled" : ""} title="Вниз"><i class="fas fa-chevron-down"></i></button>
+<button class="btn btn-sm btn-outline-danger" onclick="removeGroup(${gIdx})" title="Удалить группу"><i class="fas fa-trash"></i></button>
+</div>
+</div>
+<div class="card-body p-0"><div class="list-group list-group-flush">`;
+    group.fields.forEach((field, fIdx) => {
+      const isObj = typeof field === "object" && field !== null;
+      const fName = isObj ? field.name || "" : String(field);
+      const fShort = isObj ? field.short || "" : "";
+      const fType = isObj ? field.type || "int" : "int";
+      const fSum = isObj ? field.sum !== false : true;
+      const fPen = isObj ? !!field.penalty : false;
+      const numeric = fType === "int" || fType === "decimal";
+      html += `<div class="list-group-item py-2 px-3" data-crit-field data-g="${gIdx}" data-f="${fIdx}">
+<div class="d-flex align-items-center gap-2">
+<span class="badge bg-light text-dark rounded-circle flex-shrink-0" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem">${fIdx + 1}</span>
+<input type="text" data-role="name" class="form-control form-control-sm" value="${escHtml(fName)}" placeholder="Полное название поля">
+<div class="crit-short-wrap">
+<input type="text" data-role="short" class="form-control form-control-sm" value="${escHtml(fShort)}" placeholder="Сокр.">
+<button type="button" class="crit-short-clear" onclick="clearFieldShort(${gIdx}, ${fIdx})" title="Убрать сокращение" ${fShort ? "" : "disabled"}><i class="fas fa-xmark"></i></button>
+</div>
+<button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeField(${gIdx}, ${fIdx})" title="Удалить"><i class="fas fa-times"></i></button>
+</div>
+<div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+<select data-role="type" class="form-select form-select-sm" style="max-width:160px" onchange="setFieldType(${gIdx}, ${fIdx}, this.value)">
+<option value="int" ${fType === "int" ? "selected" : ""}>Целое число</option>
+<option value="decimal" ${fType === "decimal" ? "selected" : ""}>Дробное число</option>
+<option value="text" ${fType === "text" ? "selected" : ""}>Текст</option>
+<option value="bool" ${fType === "bool" ? "selected" : ""}>Да / Нет</option>
+</select>
+<label class="crit-flag ${numeric || fType === "bool" ? "" : "crit-flag-disabled"}" title="Включать в общую сумму"><input type="checkbox" data-role="sum" class="form-check-input mt-0" ${fSum ? "checked" : ""} ${numeric || fType === "bool" ? "" : "disabled"} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'sum', this.checked)"><span>Σ</span></label>
+<label class="crit-flag crit-flag-penalty ${numeric ? "" : "crit-flag-disabled"}" title="Штраф: вычитать и показывать красным"><input type="checkbox" data-role="penalty" class="form-check-input mt-0" ${fPen ? "checked" : ""} ${numeric ? "" : "disabled"} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'penalty', this.checked)"><span>−</span></label>
+<span class="ms-auto d-flex gap-1">
+<button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, -1)" ${fIdx === 0 ? "disabled" : ""} title="Выше"><i class="fas fa-chevron-up"></i></button>
+<button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, 1)" ${fIdx === group.fields.length - 1 ? "disabled" : ""} title="Ниже"><i class="fas fa-chevron-down"></i></button>
+</span>
+</div>
+</div>`;
+    });
+    html += `</div><div class="p-2 bg-light border-top"><button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})"><i class="fas fa-plus me-1"></i>Добавить поле</button></div></div></div>`;
+  });
+  html += `<div class="card border-dashed border-2 bg-light"><div class="card-body text-center py-3">
+<div class="row g-2 justify-content-center mb-2">
+<div class="col-md-8"><div class="dropdown w-100"><button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-book me-2"></i>Добавить из библиотеки</button><ul class="dropdown-menu w-100" style="max-height:250px;overflow-y:auto">`;
+  CRITERIA_LIBRARY.groups.forEach((libGroup) => {
+    html += `<li><a class="dropdown-item" href="#" onclick="addGroupFromLibrary('${libGroup.id}'); return false;"><i class="fas fa-folder me-2 text-primary"></i>${escHtml(libGroup.name)}<span class="badge bg-light text-dark ms-2">${libGroup.fields.length} полей</span></a></li>`;
+  });
+  html += `</ul></div></div><div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="addCustomGroup()"><i class="fas fa-folder-plus me-2"></i>Своя группа</button></div></div>
+<div class="dropdown w-100"><button class="btn btn-outline-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-layer-group me-2"></i>Шаблоны наборов (${templates.length})</button><ul class="dropdown-menu w-100" style="max-height:250px;overflow-y:auto">`;
+  if (!templates.length) html += `<li><span class="dropdown-item-text text-muted small">Шаблонов пока нет</span></li>`;
+  templates.forEach((t) => {
+    html += `<li class="d-flex align-items-center"><a class="dropdown-item flex-grow-1" href="#" onclick="applyCriteriaTemplate('${t.id}'); return false;"><i class="fas fa-file-import me-2 text-primary"></i>${escHtml(t.name)}</a><button class="btn btn-sm btn-outline-danger me-2 py-0 px-1" onclick="deleteCriteriaTemplate('${t.id}')" title="Удалить шаблон"><i class="fas fa-times"></i></button></li>`;
+  });
+  html += `</ul></div><div class="small text-muted mt-2">Сохранение набора и шаблона — раздельные кнопки внизу панели.</div></div></div>`;
+  body.innerHTML = html;
+}
+
+function updateFieldName(gIdx, fIdx, value) {
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: value, short: "", type: "int", sum: true, penalty: false};
+  else f.name = value;
+}
+function updateFieldShort(gIdx, fIdx, value) {
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: value, type: "int", sum: true, penalty: false};
+  else f.short = value;
+  const row = document.querySelector(`[data-crit-field][data-g="${gIdx}"][data-f="${fIdx}"] .crit-short-clear`);
+  if (row) row.disabled = !String(value).trim();
+}
+function clearFieldShort(gIdx, fIdx) {
+  syncCriteriaFromDom();
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "object" && f !== null) f.short = "";
+  renderCriteriaOffcanvas();
+  const input = document.querySelector(`[data-crit-field][data-g="${gIdx}"][data-f="${fIdx}"] [data-role="short"]`);
+  if (input) input.focus();
+}
+
+const _shortOrig = {
+  setFieldFlag, setFieldType, moveField, moveGroup, removeField, removeGroup,
+  addFieldToGroup, addCustomGroup, addGroupFromLibrary,
+};
+setFieldFlag = function (...a) { syncCriteriaFromDom(); return _shortOrig.setFieldFlag.apply(this, a); };
+setFieldType = function (...a) { syncCriteriaFromDom(); return _shortOrig.setFieldType.apply(this, a); };
+moveField = function (...a) { syncCriteriaFromDom(); return _shortOrig.moveField.apply(this, a); };
+moveGroup = function (...a) { syncCriteriaFromDom(); return _shortOrig.moveGroup.apply(this, a); };
+removeField = function (...a) { syncCriteriaFromDom(); return _shortOrig.removeField.apply(this, a); };
+removeGroup = function (...a) { syncCriteriaFromDom(); return _shortOrig.removeGroup.apply(this, a); };
+addFieldToGroup = function (...a) { syncCriteriaFromDom(); return _shortOrig.addFieldToGroup.apply(this, a); };
+addCustomGroup = function (...a) { syncCriteriaFromDom(); return _shortOrig.addCustomGroup.apply(this, a); };
+addGroupFromLibrary = function (...a) { syncCriteriaFromDom(); return _shortOrig.addGroupFromLibrary.apply(this, a); };
+
+function saveCriteriaFromOffcanvas() {
+  syncCriteriaFromDom();
+  trimCriteriaInPlace(tempCriteria);
+  if (!competitionSettings[currentCriteriaYear]) competitionSettings[currentCriteriaYear] = {};
+  if (!competitionSettings[currentCriteriaYear][currentCriteriaClass]) {
+    competitionSettings[currentCriteriaYear][currentCriteriaClass] = {date: "", criteria: []};
+  }
+  competitionSettings[currentCriteriaYear][currentCriteriaClass].criteria = JSON.parse(JSON.stringify(tempCriteria));
+  saveData();
+  const oc = bootstrap.Offcanvas.getInstance(document.getElementById("criteriaOffcanvas"));
+  if (oc) oc.hide();
+  renderApparatusManager();
+  showToast("Набор критериев сохранён", "success");
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+
+function getClassCriteriaGroups(year, classId) {
+  const cfg = (competitionSettings[year] || {})[classId] || {};
+  let raw = cfg.criteria;
+  if (raw && typeof raw === "object" && !Array.isArray(raw) && raw.groups) raw = raw.groups;
+  if (!raw || (Array.isArray(raw) && !raw.length)) return compDefaultGroups();
+  const mapCol = (c, ci) => {
+    const name = (c && String(c.name ?? "").trim()) || "";
+    const short = (c && String(c.short ?? "").trim()) || "";
+    return {
+      id: (c && c.id) || "",
+      key: compColKey(c, ci),
+      short,
+      title: short || name || String(ci + 1),
+      full: name,
+      type: (c && c.type) || "int",
+      sum: !(c && c.sum === false),
+      penalty: c && c.penalty !== undefined ? !!c.penalty : /штраф/i.test(name),
+    };
+  };
+  const mapGroup = (g, gi) => ({
+    key: g && g.key != null ? String(g.key) : g && g.id != null ? String(g.id) : "g" + gi,
+    title:
+      (g && String(g.sectionShort || g.title || g.name || "").trim()) ||
+      (g && String(g.section || "").trim()) ||
+      "Группа " + (gi + 1),
+    fullTitle: (g && String(g.section || "").trim()) || "",
+    cols: ((g && (g.fields || g.cols || g.columns || g.items)) || []).map(mapCol),
+  });
+  let groups = [];
+  if (Array.isArray(raw)) {
+    const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
+    groups = looksLikeGroups ? raw.map(mapGroup) : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", cols: raw.map(mapCol)}];
+  } else if (typeof raw === "object") {
+    groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
+  }
+  groups = groups.filter((g) => g.cols && g.cols.length);
+  return groups.length ? groups : compDefaultGroups();
+}
+
+function renderCriteriaSubhead(c) {
+  const lbl = String(c.title || "");
+  const short = String(c.short || "").trim();
+  const hay = ((c.full || "") + " " + lbl).toLowerCase();
+  const isPen = !!c.penalty || hay.includes("штраф");
+  const isPts = !isPen && c.sum !== false && (hay.includes("балл") || hay.includes("бонус"));
+  if (isPen || isPts) {
+    const ico = isPen
+      ? '<i class="fas fa-circle-minus cg-ico cg-ico-pen" aria-hidden="true"></i>'
+      : '<i class="fas fa-circle-plus cg-ico cg-ico-sum" aria-hidden="true"></i>';
+    return short ? `<span class="cg-th-stack">${ico}<span class="cg-th-short">${escHtml(lcLetters(short))}</span></span>` : ico;
+  }
+  return escHtml(lcLetters(short || lbl));
+}
+
+function enhanceCompetitionTables() {
+  const page = document.getElementById("competitionPage");
+  if (!page) return;
+  const byId = {};
+  teamsData.forEach((t) => { byId[String(t.id)] = t; });
+  const rowTeam = (row) => {
+    const direct = row.dataset.teamId;
+    if (direct && byId[direct]) return byId[direct];
+    const m = (row.getAttribute("onclick") || "").match(/showProtocolPage\(\s*['"]([^'"]+)['"]\s*\)/);
+    return m && byId[m[1]] ? byId[m[1]] : null;
+  };
+  const classOf = (table) => {
+    const card = table.closest(".competition-class-card");
+    if (!card) return null;
+    const btn = card.querySelector('[onclick*="calculatePlacesForClass("]');
+    const m = btn && (btn.getAttribute("onclick") || "").match(/calculatePlacesForClass\(\s*['"]([^'"]+)['"]/);
+    if (m) return m[1];
+    const badge = card.querySelector(".category-badge");
+    if (badge) {
+      const txt = badge.textContent.trim().toLowerCase();
+      const found = apparatusClasses.find((c) => String(c.name).toLowerCase() === txt || String(c.id).toLowerCase() === txt);
+      if (found) return found.id;
+    }
+    return null;
+  };
+  page.querySelectorAll("table").forEach((table) => {
+    const classId = classOf(table);
+    const cols = classId ? getClassCriteriaGroups(currentYear, classId).flatMap((g) => g.cols) : [];
+    const subRow = table.querySelector("thead tr:nth-child(2)");
+    if (subRow && cols.length) {
+      Array.from(subRow.cells).forEach((th, i) => {
+        const c = cols[i];
+        if (!c) return;
+        th.innerHTML = renderCriteriaSubhead(c);
+        th.title = c.full || c.title || "";
+      });
+    }
+    table.querySelectorAll("tbody tr").forEach((row) => {
+      const nameCell = row.cells[1];
+      if (nameCell && !nameCell.querySelector(".team-leader-line")) {
+        const team = rowTeam(row);
+        const surname = team ? teamLeaderSurname(team) : "";
+        if (surname) {
+          const div = document.createElement("div");
+          div.className = "team-leader-line";
+          div.textContent = surname;
+          nameCell.appendChild(div);
+        }
+      }
+      if (!subRow) return;
+      Array.from(subRow.cells).forEach((th, i) => {
+        if (!th.querySelector(".cg-ico-sum")) return;
+        const cell = row.cells[i + 2];
+        if (!cell || cell.classList.contains("cg-penalty")) return;
+        const txt = cell.textContent.trim();
+        if (txt && txt !== "—" && !isNaN(parseFloat(txt.replace(",", ".")))) cell.classList.add("cg-score");
+      });
+    });
+  });
+}
+
+const _shortOrigCommit = commitToGitHub;
+commitToGitHub = async function (...a) {
+  const r = await _shortOrigCommit.apply(this, a);
+  if (r && r.success) {
+    try { localStorage.setItem("opmr_last_push_at", String(Date.now())); } catch {}
+  }
+  return r;
+};
+const _shortOrigPull = pullFromGitHub;
+pullFromGitHub = async function (silent = false) {
+  if (silent) {
+    let t = 0;
+    try { t = parseInt(localStorage.getItem("opmr_last_push_at") || "0", 10) || 0; } catch {}
+    if (Date.now() - t < 5 * 60 * 1000) return false;
+  }
+  return _shortOrigPull.call(this, silent);
+};
+
 opmrInit();
