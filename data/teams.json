@@ -113,6 +113,12 @@
       "fullName": "АНО \"Центр подводных исследований Русского географического общества\"",
       "shortName": "Центр подводных исследований РГО",
       "city": ""
+    },
+    {
+      "id": "025",
+      "fullName": "СПб МТА им. адмирала Сенявина",
+      "shortName": "МТА им. адмирала Сенявина",
+      "city": "Санкт-Петербург"
     }
   ],
   "apparatusClasses": [
@@ -4152,6 +4158,27 @@
       "photos": [],
       "members": [],
       "classId": "bek"
+    },
+    {
+      "id": "025-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "025",
+      "year": 2025,
+      "shortName": "МТА им. адмирала Сенявина",
+      "city": "Санкт-Петербург",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Жуков А.И.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
