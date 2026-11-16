@@ -4128,6 +4128,28 @@
       "teamLeader": "Синишин",
       "teamLeaderPhone": "",
       "photos": [],
+      "members": [],
+      "classId": "bek"
+    },
+    {
+      "id": "016-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "016",
+      "year": 2025,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Речкалов С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
       "members": []
     }
   ]
