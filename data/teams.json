@@ -58,13 +58,23 @@
       "id": "016",
       "fullName": "ГБОУ СОШ №375",
       "shortName": "ГБОУ СОШ №375",
-      "city": ""
+      "city": "Санкт-Петербург",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": ""
     },
     {
       "id": "017",
       "fullName": "Президентский ФМЛ №239",
       "shortName": "ФМЛ №239",
-      "city": "Сант-Петербург"
+      "city": "Санкт-Петербург",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": ""
     },
     {
       "id": "018",
@@ -713,7 +723,138 @@
       "bek": {
         "date": "28.11.2025",
         "color": "badge-bek",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "id": "fmwj4cb873l5d5",
+                "name": "Структура",
+                "short": "Структ.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4cb87ap5u2",
+                "name": "Сравнительный анализ",
+                "short": "Сравн. анализ",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4cb873dwrd",
+                "name": "Новизна",
+                "short": "Нов.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4cb879ijag",
+                "name": "Качество",
+                "short": "Кач.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "id": "fmwj4dht3xho2i",
+                "name": "Сумма размерений",
+                "short": "Разм.",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4dht3gpy5s",
+                "name": "Вес (кг)",
+                "short": "Вес",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4dht3z52uk",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "id": "fmwj4dht3gh26v",
+                "name": "Квалификационное задание (+/-)",
+                "short": "Квал. задание",
+                "type": "bool",
+                "sum": false,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Конкурсное задание",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwj4fk1n2c4hj",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4fk1n31n5d",
+                "name": "Балл за время",
+                "short": "Б. времени",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4fk1nx55z9",
+                "name": "Прохождение ворот",
+                "short": "Ворота",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4fk1n2m60z",
+                "name": "Парковка",
+                "short": "Парковка",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4fk1nneb9x",
+                "name": "Нужный гараж",
+                "short": "Гараж",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwj4fk1n1nk7k",
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          }
+        ],
         "name": "БЭК"
       },
       "tnpa": {
@@ -1712,115 +1853,6 @@
       "orgId": "002",
       "apparatusName": "«Агент000» (ТНПА)",
       "classId": "tnpa"
-    },
-    {
-      "id": "NEW_1793973152695",
-      "created": "06.11.2026",
-      "shortName": "ФМЛ №239 (1)",
-      "city": "Санкт-Петербург",
-      "region": "Санкт-Петербург",
-      "postalCode": "",
-      "address": "",
-      "phone": "",
-      "email": "",
-      "orgLeader": "",
-      "apparatusClass": "БЭК",
-      "description": "",
-      "teamLeader": "",
-      "teamLeaderPhone": "",
-      "photos": [],
-      "members": [],
-      "protocol": {
-        "drawNumber": "1",
-        "presentation": {
-          "structure": 2,
-          "analysis": 1,
-          "novelty": 2,
-          "quality": 2
-        },
-        "dimensions": 1500,
-        "weight": 9.38,
-        "qualification": {
-          "penalty": 0,
-          "completed": true
-        },
-        "competition": {
-          "time": "65",
-          "timeScore": 9,
-          "gates": 5,
-          "parking": 5,
-          "garage": 0,
-          "penalty": 0
-        },
-        "extraBonus": 0,
-        "place": 0,
-        "totalScore": 26
-      },
-      "year": 2025,
-      "orgId": "004",
-      "apparatusName": "",
-      "classId": "bek",
-      "scores": {
-        "pres_struct": "2",
-        "pres_sa": "1",
-        "pres_new": "2",
-        "pres_qual": "2",
-        "qual_place": "1500",
-        "qual_weight": "9.38",
-        "qual_ok": "Да",
-        "task_time": "65",
-        "task_score": "9",
-        "task_gate": "5",
-        "task_park": "5"
-      }
-    },
-    {
-      "id": "NEW_1793973312972",
-      "created": "06.11.2026",
-      "shortName": "ФМЛ №239 (2)",
-      "city": "Санкт-Петербург",
-      "region": "Санкт-Петербург",
-      "postalCode": "",
-      "address": "",
-      "phone": "",
-      "email": "",
-      "orgLeader": "",
-      "apparatusClass": "БЭК",
-      "description": "",
-      "teamLeader": "",
-      "teamLeaderPhone": "",
-      "photos": [],
-      "members": [],
-      "protocol": {
-        "drawNumber": "",
-        "presentation": {
-          "structure": 0,
-          "analysis": 0,
-          "novelty": 0,
-          "quality": 0
-        },
-        "dimensions": 0,
-        "weight": 0,
-        "qualification": {
-          "penalty": 0,
-          "completed": false
-        },
-        "competition": {
-          "time": "",
-          "timeScore": 0,
-          "gates": 0,
-          "parking": 0,
-          "garage": 0,
-          "penalty": 0
-        },
-        "extraBonus": 0,
-        "place": 0,
-        "totalScore": 0
-      },
-      "year": 2025,
-      "orgId": "004",
-      "apparatusName": "",
-      "classId": "bek"
     },
     {
       "created": "10.11.2026",
@@ -4223,7 +4255,31 @@
       "teamLeaderPhone": "",
       "photos": [],
       "members": [],
-      "classId": "bek"
+      "classId": "bek",
+      "teamName": "ФМЛ №239 - 1"
+    },
+    {
+      "id": "017-2025-bek-2",
+      "created": "16.11.2026",
+      "orgId": "017",
+      "year": 2025,
+      "shortName": "ФМЛ №239",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Филиппова Т.С.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": [],
+      "classId": "bek",
+      "teamName": "ФМЛ №239 - 2"
     }
   ]
 }
