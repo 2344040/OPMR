@@ -4108,6 +4108,27 @@
       "photos": [],
       "members": [],
       "classId": "bek"
+    },
+    {
+      "id": "001-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "001",
+      "year": 2025,
+      "shortName": "СПбГМТУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Синишин",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
