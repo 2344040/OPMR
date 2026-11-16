@@ -5444,11 +5444,11 @@
       },
       "draw": "2",
       "extra": 0,
-      "place": 0,
+      "place": 2,
       "protocol": {
         "drawNumber": "2",
         "extraBonus": 0,
-        "place": 0,
+        "place": 2,
         "totalScore": 28
       }
     },
@@ -5514,11 +5514,11 @@
       },
       "draw": "1",
       "extra": 0,
-      "place": 0,
+      "place": 1,
       "protocol": {
         "drawNumber": "1",
         "extraBonus": 0,
-        "place": 0,
+        "place": 1,
         "totalScore": 101
       }
     },
@@ -5543,7 +5543,12 @@
       "photos": [],
       "members": [],
       "classId": "anpa",
-      "teamName": ""
+      "teamName": "",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     }
   ]
 }
