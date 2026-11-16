@@ -1131,9 +1131,11 @@ function updateOrgDatalist() {
   const datalist = document.getElementById("orgDatalist");
   if (!datalist) return;
   datalist.innerHTML = organizations
+    .slice()
+    .sort((a, b) => String(a.fullName || "").localeCompare(String(b.fullName || ""), "ru"))
     .map(
       (o) =>
-        `<option value="${o.fullName}" data-id="${o.id}">${o.shortName ? o.shortName + " - " : ""}${o.fullName}</option>`,
+        `<option value="${escHtml(o.fullName)}" data-id="${o.id}">${escHtml(o.shortName ? o.shortName + " - " + o.fullName : o.fullName)}</option>`,
     )
     .join("");
 }
@@ -1208,7 +1210,9 @@ function updateClassDatalist() {
   const year = parseInt(document.getElementById("editYear").value) || currentYear;
   const yearSettings = competitionSettings[year] || {};
   datalist.innerHTML = Object.keys(yearSettings)
-    .map((key) => `<option value="${getClassInfo(key).name}"></option>`)
+    .map((key) => getClassInfo(key).name)
+    .sort((a, b) => String(a).localeCompare(String(b), "ru"))
+    .map((name) => `<option value="${escHtml(name)}"></option>`)
     .join("");
 }
 
