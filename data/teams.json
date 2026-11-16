@@ -5682,6 +5682,27 @@
       "members": [],
       "classId": "tnpa",
       "teamName": ""
+    },
+    {
+      "id": "016-2025-tnpa",
+      "created": "16.11.2026",
+      "orgId": "016",
+      "year": 2025,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Речкалов С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
