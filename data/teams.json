@@ -806,8 +806,8 @@
             "fields": [
               {
                 "id": "fmwj4fk1n2c4hj",
-                "name": "Время (мин:сек)",
-                "short": "Время",
+                "name": "Время (сек)",
+                "short": "Время (м:с)",
                 "type": "time",
                 "sum": true,
                 "penalty": false
