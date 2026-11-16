@@ -135,6 +135,12 @@
       "fullName": "ГБНОУ \"СПб ГДТЮ\"",
       "shortName": "ГБНОУ \"СПб ГДТЮ\"",
       "city": ""
+    },
+    {
+      "id": "028",
+      "fullName": "ЧОУ \"Газпром школа Санкт-Петербург\"",
+      "shortName": "Газпром школа СПб",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -5572,6 +5578,27 @@
       "members": [],
       "classId": "tnpa",
       "teamName": ""
+    },
+    {
+      "id": "028-2025-tnpa",
+      "created": "16.11.2026",
+      "orgId": "028",
+      "year": 2025,
+      "shortName": "Газпром школа СПб",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Пальчинский П.Э.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
