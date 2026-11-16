@@ -6887,4 +6887,16 @@ function saveCriteriaAsTemplate() {
   showToast(`Шаблон «${fullName}» сохранён`, "success");
 }
 
+// ===== ИТОГОВАЯ СУММА: время (мин:сек) и текст не участвуют в расчёте =====
+function scoreContribution(col, v) {
+  if (v === "" || v === undefined || v === null) return null;
+  const type = col.type || "int";
+  if (type === "text" || type === "time") return null;
+  if (type === "bool") return col.sum !== false && isBoolTrue(v) ? 1 : 0;
+  const n = parseScoreNumber(v);
+  if (n === null) return null;
+  if (col.penalty) return -Math.abs(n);
+  return col.sum !== false ? n : 0;
+}
+
 opmrInit();
