@@ -998,7 +998,7 @@
               {
                 "id": "fmwjclu8lg03s2",
                 "name": "Штрафные баллы",
-                "short": "Штраф",
+                "short": "",
                 "type": "int",
                 "sum": false,
                 "penalty": true
@@ -1020,15 +1020,15 @@
               {
                 "id": "fmwjebuozm16ss",
                 "name": "Балл за время",
-                "short": "Б. времени",
-                "type": "decimal",
-                "sum": false,
+                "short": "время",
+                "type": "int",
+                "sum": true,
                 "penalty": false
               },
               {
                 "id": "fmwjebuozrgbr9",
                 "name": "Штрафные баллы",
-                "short": "Штраф",
+                "short": "",
                 "type": "int",
                 "sum": false,
                 "penalty": true
@@ -1043,15 +1043,15 @@
                 "id": "fmwjecnvrpsfbg",
                 "name": "Время (сек)",
                 "short": "Время",
-                "type": "decimal",
-                "sum": false,
+                "type": "time",
+                "sum": true,
                 "penalty": false
               },
               {
                 "id": "fmwjecnvrp9ecc",
                 "name": "Балл за время",
                 "short": "Б. времени",
-                "type": "time",
+                "type": "int",
                 "sum": true,
                 "penalty": false
               },
