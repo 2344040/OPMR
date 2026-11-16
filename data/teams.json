@@ -1969,6 +1969,156 @@
           ]
         }
       ]
+    },
+    {
+      "id": "t1794826220133",
+      "name": "БЭК 2025 1",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwj4cb873l5d5",
+              "name": "Структура",
+              "short": "Структ.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4cb87ap5u2",
+              "name": "Сравнительный анализ",
+              "short": "Сравн. анализ",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4cb873dwrd",
+              "name": "Новизна",
+              "short": "Нов.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4cb879ijag",
+              "name": "Качество",
+              "short": "Кач.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwj4dht3xho2i",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4dht3gpy5s",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4dht3z52uk",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwj4dht3gh26v",
+              "name": "Квалификационное задание (+/-)",
+              "short": "Квал. задание",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwj4fk1n2c4hj",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1n31n5d",
+              "name": "Балл за время",
+              "short": "время",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1nx55z9",
+              "name": "Прохождение ворот",
+              "short": "Ворота",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1n2m60z",
+              "name": "Парковка",
+              "short": "Парковка",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1nneb9x",
+              "name": "Нужный гараж",
+              "short": "Гараж",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1n1nk7k",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Внеконкурсное задание",
+          "sectionShort": "Внек. зад.",
+          "fields": [
+            {
+              "id": "fmwj51oenliw9i",
+              "name": "Доп баллы",
+              "short": "",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        }
+      ]
     }
   ],
   "teams": [
