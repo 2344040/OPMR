@@ -880,7 +880,176 @@
       "anpa": {
         "date": "29.11.2025",
         "color": "badge-anpa",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "id": "fmwjciwc09ro04",
+                "name": "Структура",
+                "short": "Структ.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjciwc0u7b77",
+                "name": "Сравнительный анализ",
+                "short": "Сравн. анализ",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjciwc0ar5rn",
+                "name": "Новизна",
+                "short": "Нов.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjciwc0e89n2",
+                "name": "Качество",
+                "short": "Кач.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "id": "fmwjckktbczrzk",
+                "name": "Сумма размерений",
+                "short": "Разм.",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwjckktc6pppg",
+                "name": "Вес (кг)",
+                "short": "Вес",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwjckktcqynxw",
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "id": "fmwjckktc744ef",
+                "name": "Квалификационное задание (+/-)",
+                "short": "Квал. задание",
+                "type": "bool",
+                "sum": false,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Конкурсное задание",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwjclu8lrl6it",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "time",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjclu8l0ij6b",
+                "name": "Балл за время",
+                "short": "Время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjclu8lobyp4",
+                "name": "Посадка на маркер",
+                "short": "Ворота",
+                "type": "text",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwjcotsf05rj9",
+                "name": "Посадка на маркер (балл)",
+                "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjclu8lncecu",
+                "name": "Объекты (кол-во)",
+                "short": "Парковка",
+                "type": "text",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwjcprgqugpt1",
+                "name": "Объекты (балл)",
+                "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjclu8ld87q2",
+                "name": "Блоки (кол-во)",
+                "short": "Гараж",
+                "type": "text",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwjcqk16ip15q",
+                "name": "Блоки (балл)",
+                "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjclu8lg03s2",
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          },
+          {
+            "section": "Внек. зад.",
+            "sectionShort": "",
+            "fields": [
+              {
+                "id": "fmwjcrzkzfuaw3",
+                "name": "Доп баллы",
+                "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          }
+        ],
         "name": "АНПА"
       }
     },
@@ -5206,6 +5375,27 @@
         "place": 0,
         "totalScore": 36
       }
+    },
+    {
+      "id": "007-2025-anpa",
+      "created": "16.11.2026",
+      "orgId": "007",
+      "year": 2025,
+      "shortName": "ИТМО",
+      "city": "Санкт-Петербург",
+      "region": "Санкт-Петербург",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Одышев Артемий Сергеевич",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
