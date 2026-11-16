@@ -2885,6 +2885,208 @@
           ]
         }
       ]
+    },
+    {
+      "id": "t1794841925762",
+      "name": "ТНПА 2025 261116-181205",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwjciwc09ro04",
+              "name": "Структура",
+              "short": "Структ.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0u7b77",
+              "name": "Сравнительный анализ",
+              "short": "Сравн. анализ",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0ar5rn",
+              "name": "Новизна",
+              "short": "Нов.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0e89n2",
+              "name": "Качество",
+              "short": "Кач.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwjckktbczrzk",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjckktc6pppg",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjckktcqynxw",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwjckktc744ef",
+              "name": "Квалификационное задание (+/-)",
+              "short": "Квал. задание",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 1",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwjclu8lrl6it",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjclu8l0ij6b",
+              "name": "Балл за время",
+              "short": "Время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjclu8lg03s2",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 2",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjebuozr415c",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjebuozm16ss",
+              "name": "Балл за время",
+              "short": "время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjebuozrgbr9",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 3",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjecnvrpsfbg",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrp9ecc",
+              "name": "Балл за время",
+              "short": "Б. времени",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvr8d0ic",
+              "name": "кольца",
+              "short": "Кольца",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrzd2vi",
+              "name": "баллы за кольца",
+              "short": "",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrz5bxh",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Внек. зад.",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjcrzkzfuaw3",
+              "name": "Доп баллы",
+              "short": "",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        }
+      ]
     }
   ],
   "teams": [
