@@ -13,18 +13,6 @@
       "city": "Москва"
     },
     {
-      "id": "004",
-      "fullName": "Президентский ФМЛ №239 команда 1",
-      "shortName": "ФМЛ №239 (1)",
-      "city": "Санкт-Петербург"
-    },
-    {
-      "id": "005",
-      "fullName": "Президентский ФМЛ №239 команда 2",
-      "shortName": "ФМЛ №239 (2)",
-      "city": "Санкт-Петербург"
-    },
-    {
       "id": "007",
       "fullName": "Университет ИТМО",
       "shortName": "ИТМО",
@@ -76,7 +64,7 @@
       "id": "017",
       "fullName": "Президентский ФМЛ №239",
       "shortName": "ФМЛ №239",
-      "city": ""
+      "city": "Санкт-Петербург"
     },
     {
       "id": "018",
@@ -119,6 +107,12 @@
       "fullName": "АНО \"Центр подводных исследований Русского географического общества\"",
       "shortName": "Центр подводных исследований РГО",
       "city": ""
+    },
+    {
+      "id": "025",
+      "fullName": "СПб МТА им. адмирала Сенявина",
+      "shortName": "МТА им. адмирала Сенявина",
+      "city": "Санкт-Петербург"
     }
   ],
   "apparatusClasses": [
@@ -1818,7 +1812,7 @@
         "totalScore": 0
       },
       "year": 2025,
-      "orgId": "005",
+      "orgId": "004",
       "apparatusName": "",
       "classId": "bek"
     },
@@ -4092,6 +4086,94 @@
         "place": 8,
         "totalScore": 50
       }
+    },
+    {
+      "id": "012-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "012",
+      "year": 2025,
+      "shortName": "ГБУ ДО ДДТ (Петродворец)",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Меленчук Михаил Алексеевич",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": [],
+      "classId": "bek"
+    },
+    {
+      "id": "001-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "001",
+      "year": 2025,
+      "shortName": "СПбГМТУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Синишин",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": [],
+      "classId": "bek"
+    },
+    {
+      "id": "016-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "016",
+      "year": 2025,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Речкалов С.В.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": [],
+      "classId": "bek"
+    },
+    {
+      "id": "025-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "025",
+      "year": 2025,
+      "shortName": "МТА им. адмирала Сенявина",
+      "city": "Санкт-Петербург",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Жуков А.И.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": [],
+      "classId": "bek"
     }
   ]
 }
