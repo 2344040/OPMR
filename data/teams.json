@@ -5630,6 +5630,27 @@
       "members": [],
       "classId": "tnpa",
       "teamName": ""
+    },
+    {
+      "id": "011-2025-tnpa",
+      "created": "16.11.2026",
+      "orgId": "011",
+      "year": 2025,
+      "shortName": "САФУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Шкрябин А.А.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
