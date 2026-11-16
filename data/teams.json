@@ -141,6 +141,12 @@
       "fullName": "ЧОУ \"Газпром школа Санкт-Петербург\"",
       "shortName": "Газпром школа СПб",
       "city": ""
+    },
+    {
+      "id": "029",
+      "fullName": "ГБУ ДО ДДТ \"На 9-й линии\"",
+      "shortName": "ГБУ ДО ДДТ \"На 9-й линии\"",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -5601,6 +5607,27 @@
       "members": [],
       "classId": "tnpa",
       "teamName": ""
+    },
+    {
+      "id": "029-2025-tnpa",
+      "created": "16.11.2026",
+      "orgId": "029",
+      "year": 2025,
+      "shortName": "ГБУ ДО ДДТ \"На 9-й линии\"",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Василевская М.Ю.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
