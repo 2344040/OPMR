@@ -6836,4 +6836,43 @@ function formatTimeValue(v) {
   return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 
+// ===== РЕДАКТОР КРИТЕРИЕВ: живая запись значений в tempCriteria =====
+function attachCriteriaLiveBindings() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body || body.dataset.liveBound) return;
+  body.dataset.liveBound = "1";
+  const write = (target) => {
+    const role = target.dataset ? target.dataset.role : null;
+    if (!role) return;
+    const groupEl = target.closest("[data-crit-group]");
+    if (!groupEl) return;
+    const g = Number(groupEl.dataset.g);
+    const fieldEl = target.closest("[data-crit-field]");
+    if (fieldEl) {
+      const f = Number(fieldEl.dataset.f);
+      const field = tempCriteria[g] && tempCriteria[g].fields ? tempCriteria[g].fields[f] : null;
+      if (!field || typeof field !== "object") return;
+      if (role === "name") field.name = target.value;
+      else if (role === "short") field.short = target.value;
+      else if (role === "type") field.type = target.value;
+      else if (role === "sum") field.sum = target.checked;
+      else if (role === "penalty") field.penalty = target.checked;
+    } else {
+      const grp = tempCriteria[g];
+      if (!grp) return;
+      if (role === "section") grp.section = target.value;
+      else if (role === "sectionShort") grp.sectionShort = target.value;
+    }
+  };
+  body.addEventListener("input", (e) => write(e.target));
+  body.addEventListener("change", (e) => write(e.target));
+}
+
+const _liveOrigOpenCriteria = openCriteriaEditor;
+openCriteriaEditor = function (...a) {
+  const r = _liveOrigOpenCriteria.apply(this, a);
+  attachCriteriaLiveBindings();
+  return r;
+};
+
 opmrInit();
