@@ -1316,7 +1316,7 @@ function getClassCriteriaGroups(year, classId) {
       full: name,
       short: (c && String(c.short || "").trim()) || "",
       type: (c && c.type) || "int",
-      sum: !(c && c.sum === false),
+      sum: c && c.sum !== undefined ? !!c.sum : undefined,
       penalty: c && c.penalty !== undefined ? !!c.penalty : /штраф/i.test(name),
     };
   };
@@ -5095,23 +5095,7 @@ function renderCompetition() {
       const paren = pi > 0 ? full.slice(pi).trim() : "";
       head1 += `<th colspan="${cg.cols.length}" class="cg-tint-${cg.tint}" style="${bg(cg.tint)}" title="${escHtml(full)}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
       cg.cols.forEach((c) => {
-        const lbl = String(c.title || "");
-        const short = String(c.short || "").trim();
-        const hay = ((c.full || "") + " " + lbl).toLowerCase();
-        const isPen = !!c.penalty || hay.includes("штраф");
-        const isPts = !isPen && c.sum !== false && (hay.includes("балл") || hay.includes("бонус"));
-        let inner;
-        if (isPen || isPts) {
-          const ico = isPen
-            ? '<i class="fas fa-circle-minus cg-ico cg-ico-pen" aria-hidden="true"></i>'
-            : '<i class="fas fa-circle-plus cg-ico cg-ico-sum" aria-hidden="true"></i>';
-          inner = short
-            ? `<span class="cg-th-stack">${ico}<span class="cg-th-short">${escHtml(lcLetters(short))}</span></span>`
-            : ico;
-        } else {
-          inner = escHtml(lcLetters(lbl));
-        }
-        head2 += `<th class="cg-tint-${c.tint}" style="${bg(c.tint)}" title="${escHtml(c.full || lbl)}">${inner}</th>`;
+        head2 += `<th class="cg-tint-${c.tint}" style="${bg(c.tint)}" title="${escHtml(c.full || c.title)}">${renderCriteriaSubhead(c)}</th>`;
       });
     });
     head1 += `<th rowspan="2" class="cg-fixed" style="${fixedHead}">Доп.</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Σ</th><th rowspan="2" class="cg-fixed cg-place-col" style="${fixedHead}">Место</th></tr>`;
@@ -6121,8 +6105,12 @@ function renderCriteriaSubhead(c) {
   const lbl = String(c.title || "");
   const short = String(c.short || "").trim();
   const hay = ((c.full || "") + " " + lbl).toLowerCase();
-  const isPen = !!c.penalty || hay.includes("штраф");
-  const isPts = !isPen && c.sum !== false && (hay.includes("балл") || hay.includes("бонус"));
+  const isPen = !!c.penalty;
+  const isPts =
+    !isPen &&
+    c.type !== "text" &&
+    c.type !== "time" &&
+    (c.sum === true || (c.sum === undefined && (hay.includes("балл") || hay.includes("бонус"))));
   if (isPen || isPts) {
     const ico = isPen
       ? '<i class="fas fa-circle-minus cg-ico cg-ico-pen" aria-hidden="true"></i>'
