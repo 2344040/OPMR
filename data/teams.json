@@ -4490,13 +4490,14 @@
         "f:fmwj4fk1n1nk7k": "",
         "Конкурс::Штрафные баллы": "",
         "f:fmwj51oenliw9i": "",
-        "Внек. зад.::Доп баллы": ""
+        "Внек. зад.::Доп баллы": "",
+        "Конкурс::Время (мин:сек)": "0:45"
       },
-      "draw": "2",
+      "draw": "3",
       "extra": 0,
       "place": 0,
       "protocol": {
-        "drawNumber": "2",
+        "drawNumber": "3",
         "extraBonus": 0,
         "place": 0,
         "totalScore": 32
