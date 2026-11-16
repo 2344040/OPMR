@@ -2702,3 +2702,13 @@ body.sync-floating {
   font-weight: 600;
   color: #15803d;
 }
+
+/* ===== Время (мин:сек) ===== */
+.competition-table td.cg-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.cg-time-input {
+  font-variant-numeric: tabular-nums;
+}

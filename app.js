@@ -1387,6 +1387,7 @@ function scoreContribution(col, v) {
   if (v === "" || v === undefined || v === null) return null;
   const type = col.type || "int";
   if (type === "text") return null;
+  if (type === "time") return null;
   if (type === "bool") return col.sum !== false && isBoolTrue(v) ? 1 : 0;
   const n = parseScoreNumber(v);
   if (n === null) return null;
@@ -1587,6 +1588,8 @@ function renderProtocolForm(teamId) {
         fieldHtml = `<div class="form-check mt-2"><input class="form-check-input proto-calc" type="checkbox" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="bool" data-sum="${c.sum !== false ? 1 : 0}" ${checked ? "checked" : ""}><label class="form-check-label" for="${id}">Да</label></div>`;
       } else if (type === "text") {
         fieldHtml = `<input type="text" class="form-control proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="text" value="${escHtml(val)}" placeholder="Текст">`;
+      } else if (type === "time") {
+        fieldHtml = `<input type="text" inputmode="numeric" class="form-control proto-calc cg-time-input" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="time" value="${escHtml(val)}" placeholder="мин:сек, напр. 1:33">`;
       } else {
         const numVal = val === "" || val === undefined || val === null ? "" : escHtml(String(val).replace(",", "."));
         fieldHtml = `<input type="number" step="${type === "decimal" ? "0.01" : "1"}" class="form-control proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-type="${type}" data-sum="${c.sum !== false ? 1 : 0}" data-penalty="${pen ? 1 : 0}" value="${numVal}" placeholder="${type === "decimal" ? "0.00" : "0"}">`;
@@ -1611,7 +1614,7 @@ function updateProtocolTotals() {
     let g = 0;
     document.querySelectorAll(`.proto-calc[data-gi="${gi}"]`).forEach((inp) => {
       const type = inp.dataset.type || "int";
-      if (type === "text") return;
+      if (type === "text" || type === "time") return;
       if (type === "bool") {
         if (inp.dataset.sum === "1" && inp.checked) g += 1;
         return;
@@ -2416,6 +2419,7 @@ function renderCriteriaOffcanvas() {
             <option value="decimal" ${fType === "decimal" ? "selected" : ""}>Дробное число</option>
             <option value="text" ${fType === "text" ? "selected" : ""}>Текст</option>
             <option value="bool" ${fType === "bool" ? "selected" : ""}>Да / Нет</option>
+            <option value="time" ${fType === "time" ? "selected" : ""}>Время (мин:сек)</option>
           </select>
           <label
             class="crit-flag ${numeric || fType === "bool" ? "" : "crit-flag-disabled"}"
@@ -2554,7 +2558,7 @@ function setFieldType(gIdx, fIdx, type) {
     tempCriteria[gIdx].fields[fIdx] = {name: f, short: "", type: "int", sum: true, penalty: false};
   const field = tempCriteria[gIdx].fields[fIdx];
   field.type = type;
-  if (type === "text" || type === "bool") {
+  if (type === "text" || type === "bool" || type === "time") {
     field.sum = false;
     field.penalty = false;
   } else {
@@ -3920,7 +3924,67 @@ function renderCriteriaOffcanvas() {
       const fSum = isObj ? field.sum !== false : true;
       const fPen = isObj ? !!field.penalty : false;
       const numeric = fType === "int" || fType === "decimal";
-      html += `<div class="list-group-item py-2 px-3"><div class="d-flex align-items-center gap-2"><span class="badge bg-light text-dark rounded-circle flex-shrink-0" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem">${fIdx + 1}</span><input type="text" class="form-control form-control-sm" value="${escHtml(fName)}" oninput="updateFieldName(${gIdx}, ${fIdx}, this.value)" placeholder="Полное название поля"><input type="text" class="form-control form-control-sm" style="max-width:110px" value="${escHtml(fShort)}" oninput="updateFieldShort(${gIdx}, ${fIdx}, this.value)" placeholder="Сокр."><button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeField(${gIdx}, ${fIdx})"><i class="fas fa-times"></i></button></div><div class="d-flex align-items-center gap-2 mt-1 flex-wrap"><select class="form-select form-select-sm" style="max-width:160px" onchange="setFieldType(${gIdx}, ${fIdx}, this.value)"><option value="int" ${fType === "int" ? "selected" : ""}>Целое число</option><option value="decimal" ${fType === "decimal" ? "selected" : ""}>Дробное число</option><option value="text" ${fType === "text" ? "selected" : ""}>Текст</option><option value="bool" ${fType === "bool" ? "selected" : ""}>Да / Нет</option></select><label class="crit-flag ${numeric || fType === "bool" ? "" : "crit-flag-disabled"}" title="Включать в сумму"><input type="checkbox" class="form-check-input mt-0" ${fSum ? "checked" : ""} ${numeric || fType === "bool" ? "" : "disabled"} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'sum', this.checked)"><span>Σ</span></label><label class="crit-flag crit-flag-penalty ${numeric ? "" : "crit-flag-disabled"}" title="Штраф"><input type="checkbox" class="form-check-input mt-0" ${fPen ? "checked" : ""} ${numeric ? "" : "disabled"} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'penalty', this.checked)"><span>−</span></label><span class="ms-auto d-flex gap-1"><button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, -1)" ${fIdx === 0 ? "disabled" : ""}><i class="fas fa-chevron-up"></i></button><button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, 1)" ${fIdx === group.fields.length - 1 ? "disabled" : ""}><i class="fas fa-chevron-down"></i></button></span></div></div>`;
+      html += /* html */ `<div class="list-group-item py-2 px-3">
+        <div class="d-flex align-items-center gap-2">
+          <span
+            class="badge bg-light text-dark rounded-circle flex-shrink-0"
+            style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem"
+            >${fIdx + 1}</span
+          ><input
+            type="text"
+            class="form-control form-control-sm"
+            value="${escHtml(fName)}"
+            oninput="updateFieldName(${gIdx}, ${fIdx}, this.value)"
+            placeholder="Полное название поля" /><input
+            type="text"
+            class="form-control form-control-sm"
+            style="max-width:110px"
+            value="${escHtml(fShort)}"
+            oninput="updateFieldShort(${gIdx}, ${fIdx}, this.value)"
+            placeholder="Сокр." /><button
+            class="btn btn-sm btn-outline-danger py-0 px-1"
+            onclick="removeField(${gIdx}, ${fIdx})">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+          <select
+            class="form-select form-select-sm"
+            style="max-width:160px"
+            onchange="setFieldType(${gIdx}, ${fIdx}, this.value)">
+            <option value="int" ${fType === "int" ? "selected" : ""}>Целое число</option>
+            <option value="decimal" ${fType === "decimal" ? "selected" : ""}>Дробное число</option>
+            <option value="text" ${fType === "text" ? "selected" : ""}>Текст</option>
+            <option value="bool" ${fType === "bool" ? "selected" : ""}>Да / Нет</option>
+<option value="time" ${fType === "time" ? "selected" : ""}>Время (мин:сек)</option>
+<label class="crit-flag ${numeric || fType === "bool" ? "" : "crit-flag-disabled"}" title="Включать в сумму"
+            ><input
+              type="checkbox"
+              class="form-check-input mt-0"
+              ${fSum ? "checked" : ""}
+              ${numeric || fType === "bool" ? "" : "disabled"}
+              onchange="setFieldFlag(${gIdx}, ${fIdx}, 'sum', this.checked)" /><span>Σ</span></label
+          ><label class="crit-flag crit-flag-penalty ${numeric ? "" : "crit-flag-disabled"}" title="Штраф"
+            ><input
+              type="checkbox"
+              class="form-check-input mt-0"
+              ${fPen ? "checked" : ""}
+              ${numeric ? "" : "disabled"}
+              onchange="setFieldFlag(${gIdx}, ${fIdx}, 'penalty', this.checked)" /><span>−</span></label
+          ><span class="ms-auto d-flex gap-1"
+            ><button
+              class="btn btn-sm btn-outline-secondary py-0 px-1"
+              onclick="moveField(${gIdx}, ${fIdx}, -1)"
+              ${fIdx === 0 ? "disabled" : ""}>
+              <i class="fas fa-chevron-up"></i></button
+            ><button
+              class="btn btn-sm btn-outline-secondary py-0 px-1"
+              onclick="moveField(${gIdx}, ${fIdx}, 1)"
+              ${fIdx === group.fields.length - 1 ? "disabled" : ""}>
+              <i class="fas fa-chevron-down"></i></button
+          ></span>
+        </div>
+      </div>`;
     });
     html += `</div><div class="p-2 bg-light border-top"><button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})"><i class="fas fa-plus me-1"></i>Добавить поле</button></div></div></div>`;
   });
@@ -5074,6 +5138,9 @@ function renderCompetition() {
             } else if (type === "text") {
               display = escHtml(v);
               cls += " cg-text";
+            } else if (type === "time") {
+              display = escHtml(formatTimeValue(v));
+              cls += " cg-time";
             } else {
               const n = parseScoreNumber(v);
               display = type === "decimal" && n !== null ? escHtml(String(v).replace(".", ",")) : escHtml(v);
@@ -5334,7 +5401,8 @@ function saveProtocol() {
       const el = document.getElementById(`proto-${gi}-${ci}`);
       if (!el) return;
       const type = c.type || "int";
-      const value = type === "bool" ? (el.checked ? "Да" : "Нет") : el.value;
+      const value =
+        type === "bool" ? (el.checked ? "Да" : "Нет") : type === "time" ? formatTimeValue(el.value) : el.value;
       if (c.id) scores["f:" + c.id] = value;
       scores[`${cg.title}::${c.full || c.title}`] = value;
     });
@@ -5883,6 +5951,7 @@ function renderCriteriaOffcanvas() {
 <option value="decimal" ${fType === "decimal" ? "selected" : ""}>Дробное число</option>
 <option value="text" ${fType === "text" ? "selected" : ""}>Текст</option>
 <option value="bool" ${fType === "bool" ? "selected" : ""}>Да / Нет</option>
+<option value="time" ${fType === "time" ? "selected" : ""}>Время (мин:сек)</option>
 </select>
 <label class="crit-flag ${numeric || fType === "bool" ? "" : "crit-flag-disabled"}" title="Включать в общую сумму"><input type="checkbox" data-role="sum" class="form-check-input mt-0" ${fSum ? "checked" : ""} ${numeric || fType === "bool" ? "" : "disabled"} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'sum', this.checked)"><span>Σ</span></label>
 <label class="crit-flag crit-flag-penalty ${numeric ? "" : "crit-flag-disabled"}" title="Штраф: вычитать и показывать красным"><input type="checkbox" data-role="penalty" class="form-check-input mt-0" ${fPen ? "checked" : ""} ${numeric ? "" : "disabled"} onchange="setFieldFlag(${gIdx}, ${fIdx}, 'penalty', this.checked)"><span>−</span></label>
@@ -6741,5 +6810,30 @@ saveEdit = async function (...a) {
   }
   return r;
 };
+
+// ===== ТИП ДАННЫХ «ВРЕМЯ (МИН:СЕК)» =====
+function parseTimeValue(v) {
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return null;
+  const m = s.match(/^(\d+):([0-5]?\d)(?:[.,](\d+))?$/);
+  if (m) {
+    let sec = parseInt(m[2], 10);
+    if (m[3]) sec += parseFloat("0." + m[3]);
+    return parseInt(m[1], 10) * 60 + sec;
+  }
+  if (/^\d+(?:[.,]\d+)?$/.test(s)) return parseFloat(s.replace(",", "."));
+  return null;
+}
+function formatTimeValue(v) {
+  const total = parseTimeValue(v);
+  if (total === null) return String(v == null ? "" : v).trim();
+  let mins = Math.floor(total / 60);
+  let secs = Math.round(total - mins * 60);
+  if (secs === 60) {
+    mins += 1;
+    secs = 0;
+  }
+  return `${mins}:${String(secs).padStart(2, "0")}`;
+}
 
 opmrInit();
