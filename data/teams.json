@@ -4994,11 +4994,11 @@
       },
       "draw": "3",
       "extra": 0,
-      "place": 0,
+      "place": 3,
       "protocol": {
         "drawNumber": "3",
         "extraBonus": 0,
-        "place": 0,
+        "place": 3,
         "totalScore": 32
       }
     },
@@ -5057,11 +5057,11 @@
       },
       "draw": "6",
       "extra": 0,
-      "place": 0,
+      "place": 5,
       "protocol": {
         "drawNumber": "6",
         "extraBonus": 0,
-        "place": 0,
+        "place": 5,
         "totalScore": 26
       }
     },
@@ -5120,11 +5120,11 @@
       },
       "draw": "2",
       "extra": 0,
-      "place": 0,
+      "place": 2,
       "protocol": {
         "drawNumber": "2",
         "extraBonus": 0,
-        "place": 0,
+        "place": 2,
         "totalScore": 35
       }
     },
@@ -5183,11 +5183,11 @@
       },
       "draw": "5",
       "extra": 0,
-      "place": 0,
+      "place": 6,
       "protocol": {
         "drawNumber": "5",
         "extraBonus": 0,
-        "place": 0,
+        "place": 6,
         "totalScore": 1
       }
     },
@@ -5246,11 +5246,11 @@
       },
       "draw": "7",
       "extra": 0,
-      "place": 0,
+      "place": 6,
       "protocol": {
         "drawNumber": "7",
         "extraBonus": 0,
-        "place": 0,
+        "place": 6,
         "totalScore": 1
       }
     },
@@ -5310,11 +5310,11 @@
       },
       "draw": "1",
       "extra": 0,
-      "place": 0,
+      "place": 4,
       "protocol": {
         "drawNumber": "1",
         "extraBonus": 0,
-        "place": 0,
+        "place": 4,
         "totalScore": 31
       }
     },
@@ -5374,11 +5374,11 @@
       },
       "draw": "4",
       "extra": 0,
-      "place": 0,
+      "place": 1,
       "protocol": {
         "drawNumber": "4",
         "extraBonus": 0,
-        "place": 0,
+        "place": 1,
         "totalScore": 36
       }
     },
