@@ -64,7 +64,7 @@
       "id": "017",
       "fullName": "Президентский ФМЛ №239",
       "shortName": "ФМЛ №239",
-      "city": "Санкт-Петербург"
+      "city": "Сант-Петербург"
     },
     {
       "id": "018",
@@ -112,6 +112,12 @@
       "id": "025",
       "fullName": "СПб МТА им. адмирала Сенявина",
       "shortName": "МТА им. адмирала Сенявина",
+      "city": "Санкт-Петербург"
+    },
+    {
+      "id": "026",
+      "fullName": "ГБОУ СОШ №136",
+      "shortName": "ГБОУ СОШ №136",
       "city": "Санкт-Петербург"
     }
   ],
@@ -4170,6 +4176,50 @@
       "apparatusName": "",
       "description": "",
       "teamLeader": "Жуков А.И.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": [],
+      "classId": "bek"
+    },
+    {
+      "id": "026-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "026",
+      "year": 2025,
+      "shortName": "ГБОУ СОШ №136",
+      "city": "Санкт-Петербург",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Филиппов Е.Г.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": [],
+      "classId": "bek"
+    },
+    {
+      "id": "017-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "017",
+      "year": 2025,
+      "shortName": "ФМЛ №239",
+      "city": "Сант-Петербург",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Филиппова Т.С.",
       "teamLeaderPhone": "",
       "photos": [],
       "members": [],
