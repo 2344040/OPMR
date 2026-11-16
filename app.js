@@ -1921,7 +1921,8 @@ function renderOrgManager() {
       const checkbox = mergeMode
         ? `<input class="form-check-input me-2" type="checkbox" style="min-width:20px" ${checked ? "checked" : ""} onchange="toggleMergeSelection('${org.id}')">`
         : "";
-      html += `<div class="org-manager-item" ${checked ? 'style="border-color:#0d6efd;background:#f8f9ff"' : ""}><span class="org-id">${org.id}</span>${checkbox}<div class="org-info"><div class="full-name">${org.fullName}</div><div class="meta">${org.shortName || "—"} | ${org.city || "—"} | Команд: ${teamCount}</div></div><button class="btn btn-outline-danger btn-sm" onclick="deleteOrganization('${org.id}')"><i class="fas fa-trash"></i></button></div>`;
+      const contactBits = [org.shortName, org.city, org.phone, org.email].filter((v) => v && String(v).trim());
+html += `<div class="org-manager-item" ${checked ? 'style="border-color:#0d6efd;background:#f8f9ff"' : ""}><span class="org-id">${org.id}</span>${checkbox}<div class="org-info"><div class="full-name"><a href="#" class="org-edit-link" onclick="openOrgEditor('${org.id}'); return false;">${org.fullName}</a></div><div class="meta">${contactBits.join(" | ") || "—"} | Команд: ${teamCount}</div></div><div class="d-flex gap-1"><button class="btn btn-outline-primary btn-sm" onclick="openOrgEditor('${org.id}')" title="Редактировать организацию"><i class="fas fa-pen"></i></button><button class="btn btn-outline-danger btn-sm" onclick="deleteOrganization('${org.id}')" title="Удалить"><i class="fas fa-trash"></i></button></div></div>`;
     });
   html += "</div>";
   container.innerHTML = html;
@@ -3208,7 +3209,11 @@ function appendTeamsFromData(rawData, label) {
   else if (list.length && typeof list[0] === "object" && ("Организация" in list[0] || "Ф.И.О. [1]" in list[0]))
     list = transformObjectRows(list);
   const incoming = normalizeImportedTeams(list, currentYear);
-  let added = 0;
+incoming.forEach((t) => {
+  const org = organizations.find((o) => o.id === t.orgId);
+  if (org) mergeOrgEmptyFromApplication(org, t);
+});
+let added = 0;
   incoming.forEach((t) => {
     if (!teamsData.some((x) => x.id === t.id)) {
       teamsData.push(t);
@@ -6480,5 +6485,195 @@ showProtocolPage = function (teamId) {
     showToast("Ошибка формы протокола: " + e.message, "error");
   }
 };
+
+// ===== СПРАВОЧНИК ОРГАНИЗАЦИЙ: карточка, контакты, контроль расхождений =====
+const ORG_CONTACT_FIELDS = [
+  {key: "fullName", label: "Название"},
+  {key: "shortName", label: "Краткое название"},
+  {key: "city", label: "Город"},
+  {key: "postalCode", label: "Почтовый индекс"},
+  {key: "address", label: "Адрес"},
+  {key: "phone", label: "Телефон"},
+  {key: "email", label: "Email"},
+  {key: "orgLeader", label: "ФИО руководителя организации"},
+];
+
+function getOrgEffective(org) {
+  const base = {};
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    base[f.key] = String(org[f.key] || "").trim();
+  });
+  const teams = teamsData.filter((t) => t.orgId === org.id);
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    if (base[f.key]) return;
+    for (const t of teams) {
+      const v = String(t[f.key] || "").trim();
+      if (v) {
+        base[f.key] = v;
+        break;
+      }
+    }
+  });
+  return base;
+}
+
+function mergeOrgEmptyFromApplication(org, t) {
+  if (!org || !t) return false;
+  let changed = false;
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    if (f.key === "fullName") return;
+    const v = String(t[f.key] || "").trim();
+    if (v && !String(org[f.key] || "").trim()) {
+      org[f.key] = v;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+function ensureOrgEditModal() {
+  let el = document.getElementById("orgEditModal");
+  if (el) return el;
+  el = document.createElement("div");
+  el.className = "modal fade";
+  el.id = "orgEditModal";
+  el.tabIndex = -1;
+  el.innerHTML = `<div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title"><i class="fas fa-building me-2 text-primary"></i>Организация <code id="orgEditId" class="ms-2"></code></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>
+<div class="modal-body"><div class="row g-3">${ORG_CONTACT_FIELDS.map(
+    (f) =>
+      `<div class="${f.key === "fullName" || f.key === "address" ? "col-12" : "col-md-6"}"><label class="form-label">${f.label}</label><input type="text" class="form-control" id="orgEdit_${f.key}"></div>`,
+  ).join("")}</div>
+<div class="form-text mt-2">При первом открытии пустые поля подставляются из заявок команд этой организации; после сохранения эталоном становится карточка.</div></div>
+<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button><button type="button" class="btn btn-primary" onclick="saveOrgEditor()"><i class="fas fa-save me-2"></i>Сохранить</button></div>
+</div></div>`;
+  document.body.appendChild(el);
+  return el;
+}
+
+function openOrgEditor(orgId) {
+  const org = organizations.find((o) => o.id === orgId);
+  if (!org) return;
+  const el = ensureOrgEditModal();
+  const eff = getOrgEffective(org);
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    const inp = el.querySelector(`#orgEdit_${f.key}`);
+    if (inp) inp.value = eff[f.key] || "";
+  });
+  el.querySelector("#orgEditId").textContent = org.id;
+  el.dataset.orgId = org.id;
+  bootstrap.Modal.getOrCreateInstance(el).show();
+}
+
+function saveOrgEditor() {
+  const el = document.getElementById("orgEditModal");
+  const org = organizations.find((o) => o.id === el.dataset.orgId);
+  if (!org) return;
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    const inp = el.querySelector(`#orgEdit_${f.key}`);
+    if (inp) org[f.key] = inp.value.trim();
+  });
+  saveData();
+  const inst = bootstrap.Modal.getInstance(el);
+  if (inst) inst.hide();
+  renderOrgManager();
+  updateOrgDatalist();
+  showToast("Данные организации сохранены", "success");
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+
+function ensureOrgMismatchModal() {
+  let el = document.getElementById("orgMismatchModal");
+  if (el) return el;
+  el = document.createElement("div");
+  el.className = "modal fade";
+  el.id = "orgMismatchModal";
+  el.tabIndex = -1;
+  el.innerHTML = `<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title"><i class="fas fa-triangle-exclamation text-warning me-2"></i>Данные организации не совпадают с базой</h5></div>
+<div class="modal-body" id="orgMismatchBody"></div>
+<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" id="orgMismatchKeep">Не менять</button><button type="button" class="btn btn-primary" id="orgMismatchReplace">Заменить на новые</button></div>
+</div></div>`;
+  document.body.appendChild(el);
+  return el;
+}
+
+function askOrgMismatch(org, diffs) {
+  return new Promise((resolve) => {
+    const el = ensureOrgMismatchModal();
+    document.getElementById("orgMismatchBody").innerHTML =
+      `<p class="small text-muted mb-2">Новая заявка содержит данные организации «${escHtml(org.fullName)}», отличающиеся от сохранённых в базе. Сравните значения и выберите действие.</p>
+<table class="table table-sm align-middle mb-0"><thead><tr><th style="width:32%">Поле</th><th>В базе</th><th>В заявке</th></tr></thead><tbody>${diffs
+        .map(
+          (d) =>
+            `<tr><td class="fw-semibold">${escHtml(d.label)}</td><td class="org-diff-old">${escHtml(d.old) || "—"}</td><td class="org-diff-new">${escHtml(d.neu)}</td></tr>`,
+        )
+        .join("")}</tbody></table>`;
+    const modal = bootstrap.Modal.getOrCreateInstance(el);
+    const rep = el.querySelector("#orgMismatchReplace");
+    const keep = el.querySelector("#orgMismatchKeep");
+    const onHidden = () => finish(false);
+    function finish(val) {
+      el.removeEventListener("hidden.bs.modal", onHidden);
+      rep.onclick = null;
+      keep.onclick = null;
+      const inst = bootstrap.Modal.getInstance(el);
+      if (inst) inst.hide();
+      resolve(val);
+    }
+    rep.onclick = () => finish(true);
+    keep.onclick = () => finish(false);
+    el.addEventListener("hidden.bs.modal", onHidden, {once: true});
+    modal.show();
+  });
+}
+
+async function reconcileOrgFromApplication(org, t) {
+  if (!org || !t) return;
+  mergeOrgEmptyFromApplication(org, t);
+  const eff = getOrgEffective(org);
+  const diffs = ORG_CONTACT_FIELDS.filter((f) => f.key !== "fullName")
+    .map((f) => ({key: f.key, label: f.label, old: eff[f.key], neu: String(t[f.key] || "").trim()}))
+    .filter((d) => {
+      const a = d.old.toLowerCase();
+      const b = d.neu.toLowerCase();
+      return a && b && a !== b;
+    });
+  if (!diffs.length) return;
+  const replace = await askOrgMismatch(org, diffs);
+  if (replace) diffs.forEach((d) => (org[d.key] = d.neu));
+}
+
+async function finalizeImportedTeam(t, modalId) {
+  const org = findOrCreateOrg(t.organization || t.shortName || "Без названия", t.shortName || "", t.city || "");
+  await reconcileOrgFromApplication(org, t);
+  const year = t.year || currentYear;
+  const finalId = generateTeamId(org.id, year, getClassIdByValue(t.apparatusClass, year));
+  const team = {
+    ...t,
+    orgId: org.id,
+    year,
+    id: finalId,
+    applicationNumber: t.applicationNumber || t.id || "",
+    members: Array.isArray(t.members) ? t.members : [],
+    photos: Array.isArray(t.photos) ? t.photos : [],
+  };
+  delete team.organization;
+  teamsData.push(team);
+  saveData();
+  const inst = bootstrap.Modal.getInstance(document.getElementById(modalId));
+  if (inst) inst.hide();
+  showTeamsView();
+  showToast(`Команда «${org.shortName || org.fullName}» добавлена в ${year} год (ID: ${finalId}, участников: ${team.members.length})`, "success");
+  pendingTextImport = null;
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token) {
+    showToast("Отправка в GitHub...", "info");
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  } else {
+    showToast("⚠ GitHub не настроен — данные только в браузере. Сделайте бэкап: Проект → Скачать JSON.", "info");
+  }
+}
 
 opmrInit();
