@@ -129,6 +129,12 @@
       "fullName": "ГБОУ СОШ №136",
       "shortName": "ГБОУ СОШ №136",
       "city": "Санкт-Петербург"
+    },
+    {
+      "id": "027",
+      "fullName": "ГБНОУ \"СПб ГДТЮ\"",
+      "shortName": "ГБНОУ \"СПб ГДТЮ\"",
+      "city": ""
     }
   ],
   "apparatusClasses": [
@@ -5421,6 +5427,27 @@
       "members": [],
       "classId": "anpa",
       "teamName": ""
+    },
+    {
+      "id": "027-2025-anpa",
+      "created": "16.11.2026",
+      "orgId": "027",
+      "year": 2025,
+      "shortName": "",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "АНПА",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Александрова Т.Е.",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
