@@ -1926,7 +1926,7 @@ function renderOrgManager() {
         ? `<input class="form-check-input me-2" type="checkbox" style="min-width:20px" ${checked ? "checked" : ""} onchange="toggleMergeSelection('${org.id}')">`
         : "";
       const contactBits = [org.shortName, org.city, org.phone, org.email].filter((v) => v && String(v).trim());
-html += `<div class="org-manager-item" ${checked ? 'style="border-color:#0d6efd;background:#f8f9ff"' : ""}><span class="org-id">${org.id}</span>${checkbox}<div class="org-info"><div class="full-name"><a href="#" class="org-edit-link" onclick="openOrgEditor('${org.id}'); return false;">${org.fullName}</a></div><div class="meta">${contactBits.join(" | ") || "—"} | Команд: ${teamCount}</div></div><div class="d-flex gap-1"><button class="btn btn-outline-primary btn-sm" onclick="openOrgEditor('${org.id}')" title="Редактировать организацию"><i class="fas fa-pen"></i></button><button class="btn btn-outline-danger btn-sm" onclick="deleteOrganization('${org.id}')" title="Удалить"><i class="fas fa-trash"></i></button></div></div>`;
+      html += `<div class="org-manager-item" ${checked ? 'style="border-color:#0d6efd;background:#f8f9ff"' : ""}><span class="org-id">${org.id}</span>${checkbox}<div class="org-info"><div class="full-name"><a href="#" class="org-edit-link" onclick="openOrgEditor('${org.id}'); return false;">${org.fullName}</a></div><div class="meta">${contactBits.join(" | ") || "—"} | Команд: ${teamCount}</div></div><div class="d-flex gap-1"><button class="btn btn-outline-primary btn-sm" onclick="openOrgEditor('${org.id}')" title="Редактировать организацию"><i class="fas fa-pen"></i></button><button class="btn btn-outline-danger btn-sm" onclick="deleteOrganization('${org.id}')" title="Удалить"><i class="fas fa-trash"></i></button></div></div>`;
     });
   html += "</div>";
   container.innerHTML = html;
@@ -3213,11 +3213,11 @@ function appendTeamsFromData(rawData, label) {
   else if (list.length && typeof list[0] === "object" && ("Организация" in list[0] || "Ф.И.О. [1]" in list[0]))
     list = transformObjectRows(list);
   const incoming = normalizeImportedTeams(list, currentYear);
-incoming.forEach((t) => {
-  const org = organizations.find((o) => o.id === t.orgId);
-  if (org) mergeOrgEmptyFromApplication(org, t);
-});
-let added = 0;
+  incoming.forEach((t) => {
+    const org = organizations.find((o) => o.id === t.orgId);
+    if (org) mergeOrgEmptyFromApplication(org, t);
+  });
+  let added = 0;
   incoming.forEach((t) => {
     if (!teamsData.some((x) => x.id === t.id)) {
       teamsData.push(t);
@@ -6584,7 +6584,8 @@ function saveOrgEditor() {
   updateOrgDatalist();
   showToast("Данные организации сохранены", "success");
   const gh = getGitHubSettings();
-  if (gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  if (gh?.owner && gh?.repo && gh?.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
 }
 
 function ensureOrgMismatchModal() {
@@ -6669,7 +6670,10 @@ async function finalizeImportedTeam(t, modalId) {
   const inst = bootstrap.Modal.getInstance(document.getElementById(modalId));
   if (inst) inst.hide();
   showTeamsView();
-  showToast(`Команда «${org.shortName || org.fullName}» добавлена в ${year} год (ID: ${finalId}, участников: ${team.members.length})`, "success");
+  showToast(
+    `Команда «${org.shortName || org.fullName}» добавлена в ${year} год (ID: ${finalId}, участников: ${team.members.length})`,
+    "success",
+  );
   pendingTextImport = null;
   const gh = getGitHubSettings();
   if (gh && gh.owner && gh.repo && gh.token) {
@@ -6679,5 +6683,63 @@ async function finalizeImportedTeam(t, modalId) {
     showToast("⚠ GitHub не настроен — данные только в браузере. Сделайте бэкап: Проект → Скачать JSON.", "info");
   }
 }
+
+// ===== СВОЁ НАЗВАНИЕ КОМАНДЫ: поле в форме редактирования =====
+function ensureTeamNameField() {
+  if (document.getElementById("editTeamName")) return true;
+  const anchor = document.getElementById("editOrgSearch") || document.getElementById("editApparatusName");
+  if (!anchor) return false;
+  const col = anchor.closest('[class*="col-"]') || anchor.parentElement;
+  if (!col || !col.parentNode) return false;
+  const wrap = document.createElement("div");
+  wrap.className = col.className || "col-12";
+  wrap.innerHTML = `<label class="form-label">Своё название команды (необязательно)</label><input type="text" class="form-control" id="editTeamName" placeholder="Например: ФМЛ №239 · Юниоры"><div class="form-text">Если оставить пустым, команда называется по организации; при нескольких командах одной организации в одной номинации добавляется индекс (2), (3)…</div>`;
+  col.parentNode.insertBefore(wrap, col.nextSibling);
+  return true;
+}
+
+function readTeamNameField() {
+  const inp = document.getElementById("editTeamName");
+  return inp ? inp.value.trim() : null;
+}
+
+const _tnOrigEditTeam = editTeam;
+editTeam = function (...a) {
+  const r = _tnOrigEditTeam.apply(this, a);
+  if (ensureTeamNameField()) {
+    const team = teamsData.find((t) => t.id === currentTeamId);
+    document.getElementById("editTeamName").value = (team && team.teamName) || "";
+  }
+  return r;
+};
+
+const _tnOrigCreateTeam = createNewTeam;
+createNewTeam = function (...a) {
+  const r = _tnOrigCreateTeam.apply(this, a);
+  if (ensureTeamNameField()) document.getElementById("editTeamName").value = "";
+  return r;
+};
+
+const _tnOrigSaveEdit = saveEdit;
+saveEdit = async function (...a) {
+  const tn = readTeamNameField();
+  const wasNew = isNewTeam;
+  if (tn !== null && !wasNew && currentTeamId) {
+    const team = teamsData.find((t) => t.id === currentTeamId);
+    if (team) team.teamName = tn;
+  }
+  const r = await _tnOrigSaveEdit.apply(this, a);
+  if (tn !== null && wasNew && currentTeamId) {
+    const team = teamsData.find((t) => t.id === currentTeamId);
+    if (team) {
+      team.teamName = tn;
+      saveData();
+      const gh = getGitHubSettings();
+      if (gh?.owner && gh?.repo && gh?.token)
+        commitToGitHub().then((x) => showToast(x.message, x.success ? "success" : "error"));
+    }
+  }
+  return r;
+};
 
 opmrInit();
