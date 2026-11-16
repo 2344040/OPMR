@@ -6875,4 +6875,28 @@ openCriteriaEditor = function (...a) {
   return r;
 };
 
+// ===== ШАБЛОНЫ КРИТЕРИЕВ: имя всегда с меткой времени =====
+function criteriaTemplateStamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getFullYear() % 100)}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+
+function saveCriteriaAsTemplate() {
+  const base = prompt(
+    "Название шаблона набора критериев:",
+    `${getClassInfo(currentCriteriaClass).name} ${currentCriteriaYear}`,
+  );
+  if (base === null) return;
+  let name = String(base).trim();
+  if (!name) name = `${getClassInfo(currentCriteriaClass).name} ${currentCriteriaYear}`;
+  name = name.replace(/\s+\d{6}-\d{6}$/, "");
+  const fullName = `${name} ${criteriaTemplateStamp()}`;
+  const list = loadCriteriaTemplates();
+  list.push({id: "t" + Date.now(), name: fullName, criteria: JSON.parse(JSON.stringify(tempCriteria))});
+  saveCriteriaTemplates(list);
+  renderCriteriaOffcanvas();
+  showToast(`Шаблон «${fullName}» сохранён`, "success");
+}
+
 opmrInit();
