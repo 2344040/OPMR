@@ -808,14 +808,14 @@
                 "id": "fmwj4fk1n2c4hj",
                 "name": "Время (сек)",
                 "short": "Время",
-                "type": "decimal",
-                "sum": false,
+                "type": "time",
+                "sum": true,
                 "penalty": false
               },
               {
                 "id": "fmwj4fk1n31n5d",
                 "name": "Балл за время",
-                "short": "Б. времени",
+                "short": "время",
                 "type": "decimal",
                 "sum": false,
                 "penalty": false
@@ -847,10 +847,24 @@
               {
                 "id": "fmwj4fk1n1nk7k",
                 "name": "Штрафные баллы",
-                "short": "Штраф",
+                "short": "",
                 "type": "int",
                 "sum": false,
                 "penalty": true
+              }
+            ]
+          },
+          {
+            "section": "Внеконкурсное задание",
+            "sectionShort": "Внек. зад.",
+            "fields": [
+              {
+                "id": "fmwj51oenliw9i",
+                "name": "Доп баллы",
+                "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
               }
             ]
           }
