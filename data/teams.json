@@ -4092,6 +4092,27 @@
         "place": 8,
         "totalScore": 50
       }
+    },
+    {
+      "id": "012-2025-bek",
+      "created": "16.11.2026",
+      "orgId": "012",
+      "year": 2025,
+      "shortName": "ГБУ ДО ДДТ (Петродворец)",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "",
+      "description": "",
+      "teamLeader": "Меленчук Михаил Алексеевич",
+      "teamLeaderPhone": "",
+      "photos": [],
+      "members": []
     }
   ]
 }
