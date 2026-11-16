@@ -6899,4 +6899,20 @@ function scoreContribution(col, v) {
   return col.sum !== false ? n : 0;
 }
 
+/* ===== Подзаголовки: выраженный отступ между текстом и иконкой ===== */
+.competition-table thead tr:nth-child(2) th {
+  height: 60px;
+  padding: 6px 4px;
+}
+.competition-table thead tr:nth-child(2) th .cg-th-stack {
+  position: absolute;
+  top: 6px;
+  right: 4px;
+  bottom: 6px;
+  left: 4px;
+  height: auto;
+  min-height: 0;
+  gap: 6px;
+}
+
 opmrInit();
