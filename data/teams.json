@@ -806,7 +806,7 @@
             "fields": [
               {
                 "id": "fmwj4fk1n2c4hj",
-                "name": "Время (сек)",
+                "name": "Время (мин:сек)",
                 "short": "Время",
                 "type": "time",
                 "sum": true,
@@ -1806,6 +1806,156 @@
         },
         {
           "section": "Внеконкурсное задание",
+          "sectionShort": "Внек. зад.",
+          "fields": [
+            {
+              "id": "fmwj51oenliw9i",
+              "name": "Доп баллы",
+              "short": "",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "t1794837540090",
+      "name": "БЭК 2025 261116-165900",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwj4cb873l5d5",
+              "name": "Структура",
+              "short": "Структ.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4cb87ap5u2",
+              "name": "Сравнительный анализ",
+              "short": "Сравн. анализ",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4cb873dwrd",
+              "name": "Новизна",
+              "short": "Нов.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4cb879ijag",
+              "name": "Качество",
+              "short": "Кач.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwj4dht3xho2i",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4dht3gpy5s",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4dht3z52uk",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwj4dht3gh26v",
+              "name": "Квалификационное задание (+/-)",
+              "short": "Квал. задание",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwj4fk1n2c4hj",
+              "name": "Время (мин:сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1n31n5d",
+              "name": "Балл за время",
+              "short": "время",
+              "type": "decimal",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1nx55z9",
+              "name": "Прохождение ворот",
+              "short": "Ворота",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1n2m60z",
+              "name": "Парковка",
+              "short": "Парковка",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1nneb9x",
+              "name": "Нужный гараж",
+              "short": "Гараж",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwj4fk1n1nk7k",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Внек. зад.",
           "sectionShort": "Внек. зад.",
           "fields": [
             {
@@ -4309,7 +4459,48 @@
       "teamLeaderPhone": "",
       "photos": [],
       "members": [],
-      "classId": "bek"
+      "classId": "bek",
+      "scores": {
+        "f:fmwj4cb873l5d5": "1",
+        "През.::Структура": "1",
+        "f:fmwj4cb87ap5u2": "1",
+        "През.::Сравнительный анализ": "1",
+        "f:fmwj4cb873dwrd": "2",
+        "През.::Новизна": "2",
+        "f:fmwj4cb879ijag": "2",
+        "През.::Качество": "2",
+        "f:fmwj4dht3xho2i": "1500",
+        "Квал.::Сумма размерений": "1500",
+        "f:fmwj4dht3gpy5s": "9.2",
+        "Квал.::Вес (кг)": "9.2",
+        "f:fmwj4dht3z52uk": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwj4dht3gh26v": "Да",
+        "Квал.::Квалификационное задание (+/-)": "Да",
+        "f:fmwj4fk1n2c4hj": "0:45",
+        "Конкурс::Время (сек)": "0:45",
+        "f:fmwj4fk1n31n5d": "16",
+        "Конкурс::Балл за время": "16",
+        "f:fmwj4fk1nx55z9": "5",
+        "Конкурс::Прохождение ворот": "5",
+        "f:fmwj4fk1n2m60z": "5",
+        "Конкурс::Парковка": "5",
+        "f:fmwj4fk1nneb9x": "",
+        "Конкурс::Нужный гараж": "",
+        "f:fmwj4fk1n1nk7k": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwj51oenliw9i": "",
+        "Внек. зад.::Доп баллы": ""
+      },
+      "draw": "2",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "2",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 32
+      }
     },
     {
       "id": "001-2025-bek",
@@ -4331,7 +4522,48 @@
       "teamLeaderPhone": "",
       "photos": [],
       "members": [],
-      "classId": "bek"
+      "classId": "bek",
+      "scores": {
+        "f:fmwj4cb873l5d5": "3",
+        "През.::Структура": "3",
+        "f:fmwj4cb87ap5u2": "3",
+        "През.::Сравнительный анализ": "3",
+        "f:fmwj4cb873dwrd": "3",
+        "През.::Новизна": "3",
+        "f:fmwj4cb879ijag": "2",
+        "През.::Качество": "2",
+        "f:fmwj4dht3xho2i": "1500",
+        "Квал.::Сумма размерений": "1500",
+        "f:fmwj4dht3gpy5s": "9.8",
+        "Квал.::Вес (кг)": "9.8",
+        "f:fmwj4dht3z52uk": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwj4dht3gh26v": "Да",
+        "Квал.::Квалификационное задание (+/-)": "Да",
+        "f:fmwj4fk1n2c4hj": "1:30",
+        "Конкурс::Время (сек)": "1:30",
+        "f:fmwj4fk1n31n5d": "10",
+        "Конкурс::Балл за время": "10",
+        "f:fmwj4fk1nx55z9": "5",
+        "Конкурс::Прохождение ворот": "5",
+        "f:fmwj4fk1n2m60z": "",
+        "Конкурс::Парковка": "",
+        "f:fmwj4fk1nneb9x": "",
+        "Конкурс::Нужный гараж": "",
+        "f:fmwj4fk1n1nk7k": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwj51oenliw9i": "",
+        "Внек. зад.::Доп баллы": ""
+      },
+      "draw": "6",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "6",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 27
+      }
     },
     {
       "id": "016-2025-bek",
@@ -4353,7 +4585,48 @@
       "teamLeaderPhone": "",
       "photos": [],
       "members": [],
-      "classId": "bek"
+      "classId": "bek",
+      "scores": {
+        "f:fmwj4cb873l5d5": "1",
+        "През.::Структура": "1",
+        "f:fmwj4cb87ap5u2": "1",
+        "През.::Сравнительный анализ": "1",
+        "f:fmwj4cb873dwrd": "1",
+        "През.::Новизна": "1",
+        "f:fmwj4cb879ijag": "2",
+        "През.::Качество": "2",
+        "f:fmwj4dht3xho2i": "1500",
+        "Квал.::Сумма размерений": "1500",
+        "f:fmwj4dht3gpy5s": "9.0",
+        "Квал.::Вес (кг)": "9.0",
+        "f:fmwj4dht3z52uk": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwj4dht3gh26v": "Да",
+        "Квал.::Квалификационное задание (+/-)": "Да",
+        "f:fmwj4fk1n2c4hj": "0:31",
+        "Конкурс::Время (мин:сек)": "0:31",
+        "f:fmwj4fk1n31n5d": "20",
+        "Конкурс::Балл за время": "20",
+        "f:fmwj4fk1nx55z9": "5",
+        "Конкурс::Прохождение ворот": "5",
+        "f:fmwj4fk1n2m60z": "5",
+        "Конкурс::Парковка": "5",
+        "f:fmwj4fk1nneb9x": "",
+        "Конкурс::Нужный гараж": "",
+        "f:fmwj4fk1n1nk7k": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwj51oenliw9i": "",
+        "Внек. зад.::Доп баллы": ""
+      },
+      "draw": "2",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "2",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 35
+      }
     },
     {
       "id": "025-2025-bek",
