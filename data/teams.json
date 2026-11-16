@@ -13,12 +13,6 @@
       "city": "Москва"
     },
     {
-      "id": "004",
-      "fullName": "Президентский ФМЛ №239 команда 1",
-      "shortName": "ФМЛ №239 (1)",
-      "city": "Санкт-Петербург"
-    },
-    {
       "id": "007",
       "fullName": "Университет ИТМО",
       "shortName": "ИТМО",
@@ -4178,7 +4172,8 @@
       "teamLeader": "Жуков А.И.",
       "teamLeaderPhone": "",
       "photos": [],
-      "members": []
+      "members": [],
+      "classId": "bek"
     }
   ]
 }
