@@ -1451,7 +1451,200 @@
       "anpa": {
         "date": "29.11.2026",
         "color": "badge-anpa",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "id": "fmwkqljf8q3vq9",
+                "name": "Понимание устройства и принципов работы",
+                "short": "Пон. принц.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqljf8ncr23",
+                "name": "Понимание задачи и обоснование инженерного подхода",
+                "short": "Пон. зад.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqljf8a5no6",
+                "name": "Собственный вклад",
+                "short": "Вклад",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqljf8cbmz1",
+                "name": "Инженерная методология",
+                "short": "Метод",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqljf8hldje",
+                "name": "Ответы на вопросы и эрудиция",
+                "short": "Эрудиция",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ],
+            "attempts": 1,
+            "multi": false
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "id": "fmwkqlzxm8brhr",
+                "name": "Размерения (ДхШхВ, мм)",
+                "short": "Разм. ДШВ мм",
+                "type": "text",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqlzxmvc52b",
+                "name": "Вес (кг)",
+                "short": "Вес",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqlzxm1n4qs",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "id": "fmwkqlzxmmr74q",
+                "name": "Квалификационное задание",
+                "short": "Квалиф.",
+                "type": "bool",
+                "sum": false,
+                "penalty": false
+              }
+            ],
+            "attempts": 1,
+            "multi": false
+          },
+          {
+            "section": "Конкурсное задание",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwkqqgsx8661t",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqqgsxo12ep",
+                "name": "Балл за время",
+                "short": "Время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqqgsxdcel8",
+                "name": "Посадка на маркер (10/0 баллов)",
+                "short": "Посадка",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqqgsx6iull",
+                "name": "Точность посадки (расст)",
+                "short": "Точность (расст)",
+                "type": "text",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqqgsx4xzyn",
+                "name": "Точность посадки (балл)",
+                "short": "точность",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqqgsxvzcbd",
+                "name": "Объекты (кол-во)",
+                "short": "Объекты",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqte6orht3u",
+                "name": "Объекты (балл)",
+                "short": "объекты",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqttll020fw",
+                "name": "Блоки (кол-во)",
+                "short": "Блоки (кол-во)",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqu9y6uerr4",
+                "name": "Блоки (балл)",
+                "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkqv1huh9jxg",
+                "name": "Штрафные баллы (наимен/балл)",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ],
+            "attempts": 2,
+            "multi": true
+          },
+          {
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "fields": [
+              {
+                "id": "fmwkqvryrtzz9d",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ],
+            "attempts": 1,
+            "multi": false
+          }
+        ],
         "name": "АНПА"
       },
       "anna": {
