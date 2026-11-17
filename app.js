@@ -6479,6 +6479,13 @@ renderHeaderButtons = function (...a) {
     }
     container.insertBefore(wrap, container.firstElementChild);
   }
+  let mobRow = document.querySelector(".header-mobile-row");
+  if (!mobRow) {
+    mobRow = document.createElement("div");
+    mobRow.className = "header-mobile-row";
+    mobRow.innerHTML = `<button class="btn btn-dark header-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-label="Меню"><i class="fas fa-bars"></i></button>`;
+  }
+  if (container.firstChild !== mobRow) container.insertBefore(mobRow, container.firstChild);
   buildMobileMenu();
   return r;
 };
@@ -6900,6 +6907,173 @@ function scoreContribution(col, v) {
   return col.sum !== false ? n : 0;
 }
 
+// ===== ПЕЧАТЬ: таблицы протоколов, заявки команд, списки =====
+function printViaIframe(title, bodyHtml, landscape) {
+  const old = document.getElementById("opmrPrintFrame");
+  if (old) old.remove();
+  const frame = document.createElement("iframe");
+  frame.id = "opmrPrintFrame";
+  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+  document.body.appendChild(frame);
+  const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+    .map((l) => l.outerHTML)
+    .join("");
+  const styles = Array.from(document.querySelectorAll("head style"))
+    .map((s) => s.outerHTML)
+    .join("");
+  const doc = frame.contentWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>${escHtml(title)}</title>${links}${styles}
+<style>
+@page { size: A4 ${landscape ? "landscape" : "portrait"}; margin: 8mm; }
+html, body { background: #fff !important; }
+body { padding: 10px; color: #0f172a; }
+.print-sheet-title { font-family: "Manrope", sans-serif; font-size: 14pt; font-weight: 800; margin: 0 0 6px; }
+.print-sheet-sub { font-size: 9pt; color: #475569; margin: 0 0 10px; }
+table { width: 100%; border-collapse: collapse; }
+.competition-table th, .competition-table td { border: 1px solid #cbd5e1 !important; }
+.team-list-table { min-width: 0 !important; }
+.team-list-table .tl-print { display: none !important; }
+.group-header { margin-top: 14px; }
+.print-kv-table, .print-members-table { border-collapse: collapse; width: 100%; font-size: 9pt; }
+.print-kv-table th, .print-kv-table td, .print-members-table th, .print-members-table td { border: 1px solid #94a3b8; padding: 3px 6px; text-align: left; vertical-align: top; }
+.print-kv-table th { background: #f1f5f9; width: 16%; font-weight: 700; }
+.print-members-table th { background: #f1f5f9; }
+@media print { body { padding: 0; } }
+</style></head><body>${bodyHtml}</body></html>`);
+  doc.close();
+  const run = () => {
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+    setTimeout(() => frame.remove(), 1500);
+  };
+  if (doc.readyState === "complete") setTimeout(run, 200);
+  else frame.onload = () => setTimeout(run, 200);
+}
 
+function printCompetitionCard(card) {
+  const table = card.querySelector("table");
+  if (!table) return;
+  const header = card.querySelector(".group-header");
+  const tclone = table.cloneNode(true);
+  tclone.querySelectorAll(".m-hide").forEach((n) => n.classList.remove("m-hide"));
+  const title = header ? header.textContent.replace(/\s+/g, " ").trim() : "Таблица протокола";
+  printViaIframe(
+    title,
+    `<div class="print-sheet-title">${escHtml(title)}</div><div class="print-sheet-sub">Протокол соревнований · ${currentYear} год · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>${tclone.outerHTML}`,
+    true,
+  );
+}
+
+function injectCompetitionPrintButtons() {
+  document.querySelectorAll("#competitionPage .competition-class-card").forEach((card) => {
+    const tb = card.querySelector(".competition-toolbar");
+    if (!tb || tb.querySelector(".print-table-btn")) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-sm btn-outline-secondary comp-tool-btn print-table-btn print-btn-desktop";
+    btn.title = "Распечатать таблицу этого класса";
+    btn.innerHTML = '<i class="fas fa-print me-1"></i>Печать таблицы';
+    btn.onclick = () => printCompetitionCard(card);
+    tb.appendChild(btn);
+  });
+}
+
+function buildTeamApplicationPrintHtml(team) {
+  const org = organizations.find((o) => o.id === team.orgId);
+  const displayName = getTeamDisplayName(team);
+  const members = [...(team.members || [])];
+  const leaderFio = (team.teamLeader || "").trim().toLowerCase();
+  const captainIdx = members.findIndex((m) => (m.fio || "").trim().toLowerCase() === leaderFio);
+  if (captainIdx > 0) members.unshift(members.splice(captainIdx, 1)[0]);
+  const rows = members
+    .map((m, i) => {
+      const isCap = leaderFio !== "" && (m.fio || "").trim().toLowerCase() === leaderFio;
+      return `<tr><td>${i + 1}</td><td>${escHtml(m.fio || "")}${isCap ? " <b>(капитан)</b>" : ""}</td><td>${escHtml(formatDate(m.birth))}</td><td>${escHtml(m.passport || "—")}</td><td>${escHtml(m.isStudent || "Нет")}</td><td>${escHtml(m.isStudent === "Да" ? m.order || "—" : "—")}</td></tr>`;
+    })
+    .join("");
+  return `<div class="print-sheet-title">${escHtml(displayName)} — заявка (${team.year})</div>
+<div class="print-sheet-sub">ОПМР Navigator · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>
+<table class="print-kv-table"><tbody>
+<tr><th>Организация</th><td>${escHtml(org?.fullName || team.organization || "—")}</td><th>Краткое название</th><td>${escHtml(org?.shortName || team.shortName || "—")}</td></tr>
+<tr><th>Город</th><td>${escHtml(getTeamCity(team) || "—")}</td><th>Регион</th><td>${escHtml(team.region || "—")}</td></tr>
+<tr><th>Индекс</th><td>${escHtml(team.postalCode || "—")}</td><th>Адрес</th><td>${escHtml(team.address || "—")}</td></tr>
+<tr><th>Телефон</th><td>${escHtml(team.phone || "—")}</td><th>Email</th><td>${escHtml(team.email || "—")}</td></tr>
+<tr><th>Руководитель организации</th><td>${escHtml(team.orgLeader || "—")}</td><th>№ заявки</th><td>${escHtml(team.applicationNumber || team.id || "—")}</td></tr>
+<tr><th>Класс аппарата</th><td>${escHtml(team.apparatusClass || "—")}</td><th>Название аппарата</th><td>${escHtml(team.apparatusName || "—")}</td></tr>
+<tr><th>Руководитель команды</th><td>${escHtml(team.teamLeader || "—")}</td><th>Телефон руководителя</th><td>${escHtml(team.teamLeaderPhone || "—")}</td></tr>
+</tbody></table>
+<div class="print-sheet-title" style="font-size:11pt;margin-top:10px">Участники (${members.length})</div>
+<table class="print-members-table"><thead><tr><th style="width:24px">№</th><th>ФИО</th><th style="width:90px">Дата рожд.</th><th style="width:140px">Паспорт/св-во</th><th style="width:60px">Студент</th><th>Приказ</th></tr></thead><tbody>${rows || '<tr><td colspan="6">Состав команды не указан</td></tr>'}</tbody></table>`;
+}
+
+function printTeamApplication(teamId) {
+  const team = teamsData.find((t) => t.id === teamId);
+  if (!team) return;
+  printViaIframe(`${getTeamDisplayName(team)} — заявка`, buildTeamApplicationPrintHtml(team), false);
+}
+
+function printTeamsList() {
+  const container = document.getElementById("teamsContainer");
+  if (!container) return;
+  const clone = container.cloneNode(true);
+  clone.querySelectorAll(".print-toolbar, button").forEach((n) => n.remove());
+  const title = `Список команд · ${currentYear} год${isGrouped ? " · по классам" : ""}`;
+  printViaIframe(
+    title,
+    `<div class="print-sheet-title">${escHtml(title)}</div><div class="print-sheet-sub">ОПМР Navigator · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>${clone.innerHTML}`,
+    true,
+  );
+}
+
+function renderTeamListRow(team) {
+  const name = escHtml(getTeamDisplayName(team));
+  const city = escHtml(getTeamCity(team) || "—");
+  const leader = escHtml(team.teamLeader || "—");
+  const apparatus = escHtml(team.apparatusName || "—");
+  const count = team.members?.length || 0;
+  return `<tr class="team-list-row" tabindex="0" onclick="showTeamDetails('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showTeamDetails('${team.id}');}">
+<td class="tl-name"><span class="tl-ellipsis" title="${name}">${name}</span></td>
+<td><span class="tl-ellipsis" title="${city}">${city}</span></td>
+<td><span class="tl-ellipsis" title="${leader}">${leader}</span></td>
+<td class="tl-count">${count}</td>
+<td class="tl-class">${getCategoryBadge(team.apparatusClass, "category-badge-list", team.year)}</td>
+<td><span class="tl-ellipsis" title="${apparatus}">${apparatus}</span></td>
+<td class="tl-print"><button type="button" class="btn btn-sm btn-outline-secondary print-btn-desktop" title="Печать заявки" onclick="event.stopPropagation(); printTeamApplication('${team.id}')"><i class="fas fa-print"></i></button></td>
+</tr>`;
+}
+
+function renderTeamsTable(teams) {
+  return `<div class="team-list-wrap"><table class="team-list-table">
+<colgroup><col class="tl-col-name"><col class="tl-col-city"><col class="tl-col-leader"><col class="tl-col-count"><col class="tl-col-class"><col class="tl-col-apparatus"><col class="tl-col-print"></colgroup>
+<thead><tr><th>Название команды</th><th>Город</th><th>Руководитель</th><th class="tl-count">Участников</th><th class="tl-class">Класс</th><th>Название аппарата</th><th class="tl-print">Печать</th></tr></thead>
+<tbody>${teams.map((t) => renderTeamListRow(t)).join("")}</tbody>
+</table></div>`;
+}
+
+const _prOrigCompRender = renderCompetition;
+renderCompetition = function (...a) {
+  const r = _prOrigCompRender.apply(this, a);
+  injectCompetitionPrintButtons();
+  return r;
+};
+
+const _prOrigRenderTeams = renderTeams;
+renderTeams = function (...a) {
+  const r = _prOrigRenderTeams.apply(this, a);
+  const container = document.getElementById("teamsContainer");
+  if (
+    container &&
+    isListView &&
+    container.querySelector(".team-list-wrap") &&
+    !container.querySelector(".print-toolbar")
+  ) {
+    container.insertAdjacentHTML(
+      "afterbegin",
+      `<div class="print-toolbar print-btn-desktop"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="printTeamsList()"><i class="fas fa-print me-1"></i>Печать списка</button><span class="print-toolbar-hint">Печатается текущий список (${isGrouped ? "с группировкой по классам" : "без группировки"}) за ${currentYear} год</span></div>`,
+    );
+  }
+  return r;
+};
 
 opmrInit();
