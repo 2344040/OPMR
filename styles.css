@@ -2952,3 +2952,7 @@ body.sync-floating {
   color: #94a3b8;
   border-left-color: #e2e8f0;
 }
+
+/* ===== Чекбокс «Несколько попыток» ===== */
+.crit-flag-multi { color: #1d4ed8; font-weight: 600; gap: 5px; }
+.crit-flag-multi input { cursor: pointer; }

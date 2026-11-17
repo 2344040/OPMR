@@ -7846,4 +7846,181 @@ updateProtocolTotals = function (...a) {
   return r;
 };
 
+// ===== БИБЛИОТЕКА ГРУПП, НЕСКОЛЬКО ПОПЫТОК ПО ЧЕКБОКСУ, ДУБЛИРОВАНИЕ =====
+function normalizeCriteria(criteria) {
+  if (!Array.isArray(criteria)) return [];
+  return criteria.map((g) => {
+    const isObj = typeof g === "object" && g !== null;
+    const section = isObj ? g.section || g.name || "Группа" : String(g);
+    const sectionShort = isObj ? String(g.sectionShort ?? g.short ?? "").trim() : "";
+    const rawFields = isObj ? g.fields || [] : [];
+    const fields = rawFields.map((f) =>
+      typeof f === "object" && f !== null
+        ? {
+            id: f.id || newFieldId(),
+            name: String(f.name ?? "").trim(),
+            short: String(f.short ?? "").trim(),
+            type: f.type || "int",
+            ...(f.sum !== undefined ? {sum: !!f.sum} : {}),
+            ...(f.penalty !== undefined ? {penalty: !!f.penalty} : {}),
+          }
+        : {id: newFieldId(), name: String(f).trim(), short: "", type: "int"},
+    );
+    let attempts = isObj ? Math.min(2, Math.max(1, parseInt(g.attempts, 10) || 1)) : 1;
+    let multi = isObj && g.multi !== undefined ? !!g.multi : attempts > 1;
+    if (!multi) attempts = 1;
+    return {section, sectionShort, fields, attempts, multi};
+  });
+}
+
+function criteriaLibraryCustom() {
+  return loadCriteriaTemplates().filter((t) => t && t.library);
+}
+function saveGroupToLibrary(gIdx) {
+  if (typeof syncCriteriaFromDom === "function") syncCriteriaFromDom();
+  const g = tempCriteria[gIdx];
+  if (!g) return;
+  const def = `${g.section} (${g.fields.length} крит.)`;
+  const name = prompt("Название группы в библиотеке:", def);
+  if (name === null) return;
+  const finalName = name.trim() || def;
+  const list = loadCriteriaTemplates();
+  list.push({id: "lib" + Date.now(), name: finalName, criteria: [JSON.parse(JSON.stringify(g))], library: true});
+  saveCriteriaTemplates(list);
+  renderCriteriaOffcanvas();
+  showToast(`Группа «${finalName}» сохранена в библиотеку`, "success");
+}
+function deleteLibraryGroup(id) {
+  const list = loadCriteriaTemplates();
+  const t = list.find((x) => x.id === id);
+  if (!t) return;
+  if (!confirm(`Удалить «${t.name}» из библиотеки групп?`)) return;
+  saveCriteriaTemplates(list.filter((x) => x.id !== id));
+  renderCriteriaOffcanvas();
+  showToast("Группа удалена из библиотеки", "success");
+}
+function addGroupFromLibraryCustom(id) {
+  const t = criteriaLibraryCustom().find((x) => x.id === id);
+  if (!t || !t.criteria || !t.criteria[0]) return;
+  if (typeof syncCriteriaFromDom === "function") syncCriteriaFromDom();
+  const src = JSON.parse(JSON.stringify(t.criteria[0]));
+  (src.fields || []).forEach((f) => {
+    f.id = newFieldId();
+  });
+  tempCriteria.push(src);
+  renderCriteriaOffcanvas();
+}
+function duplicateCriteriaGroup(gIdx) {
+  if (typeof syncCriteriaFromDom === "function") syncCriteriaFromDom();
+  const src = JSON.parse(JSON.stringify(tempCriteria[gIdx]));
+  (src.fields || []).forEach((f) => {
+    f.id = newFieldId();
+  });
+  src.section = (src.section || "Группа") + " (копия)";
+  tempCriteria.splice(gIdx + 1, 0, src);
+  renderCriteriaOffcanvas();
+}
+function setGroupMulti(gIdx, checked) {
+  if (typeof syncCriteriaFromDom === "function") syncCriteriaFromDom();
+  const g = tempCriteria[gIdx];
+  g.multi = !!checked;
+  g.attempts = checked ? (parseInt(g.attempts, 10) > 1 ? parseInt(g.attempts, 10) : 2) : 1;
+  renderCriteriaOffcanvas();
+}
+function setGroupAttempts(gIdx, value) {
+  if (typeof syncCriteriaFromDom === "function") syncCriteriaFromDom();
+  const n = Math.min(2, Math.max(1, parseInt(value, 10) || 1));
+  tempCriteria[gIdx].attempts = n;
+  if (n > 1) tempCriteria[gIdx].multi = true;
+  renderCriteriaOffcanvas();
+}
+function copyCriteriaSetTo(year, classId) {
+  if (typeof syncCriteriaFromDom === "function") syncCriteriaFromDom();
+  const target = `${getClassInfo(classId).name} · ${year}`;
+  if (!confirm(`Скопировать текущий набор критериев в «${target}»?\nСуществующий там набор будет заменён.`)) return;
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  competitionSettings[year][classId] = {...(competitionSettings[year][classId] || {date: ""}), criteria: JSON.parse(JSON.stringify(tempCriteria))};
+  saveData();
+  showToast(`Набор скопирован в «${target}»`, "success");
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+
+const _libPrevRenderCriteria = renderCriteriaOffcanvas;
+renderCriteriaOffcanvas = function (...a) {
+  const r = _libPrevRenderCriteria.apply(this, a);
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body) return r;
+  body.querySelectorAll("[data-crit-group]").forEach((el) => {
+    const g = Number(el.dataset.g);
+    const grp = tempCriteria[g];
+    if (!grp) return;
+    const btnRow = el.querySelector(".card-header .d-flex.gap-1");
+    if (!btnRow) return;
+    const sel = btnRow.querySelector("[data-role='attempts']");
+    if (!btnRow.querySelector("[data-role='multi']")) {
+      const lab = document.createElement("label");
+      lab.className = "crit-flag crit-flag-multi me-1";
+      lab.title = "Разрешить несколько попыток в этой группе";
+      lab.innerHTML = `<input type="checkbox" class="form-check-input mt-0" data-role="multi" ${grp.multi ? "checked" : ""} onchange="setGroupMulti(${g}, this.checked)"><span>Несколько попыток</span>`;
+      btnRow.insertBefore(lab, sel || btnRow.firstChild);
+    }
+    if (sel) {
+      sel.style.width = "150px";
+      sel.style.fontWeight = "600";
+      sel.style.borderColor = grp.multi ? "#86b7f8" : "";
+      sel.style.display = grp.multi ? "" : "none";
+      sel.value = String(grp.attempts || 1);
+    }
+    const up = btnRow.querySelector('button[title="Вверх"]');
+    if (up && !btnRow.querySelector("[data-role='dupgroup']")) {
+      const dup = document.createElement("button");
+      dup.type = "button";
+      dup.className = "btn btn-sm btn-outline-secondary";
+      dup.dataset.role = "dupgroup";
+      dup.title = "Дублировать группу";
+      dup.innerHTML = '<i class="fas fa-clone"></i>';
+      dup.onclick = () => duplicateCriteriaGroup(g);
+      const lib = document.createElement("button");
+      lib.type = "button";
+      lib.className = "btn btn-sm btn-outline-success";
+      lib.dataset.role = "libgroup";
+      lib.title = "Сохранить группу в библиотеку";
+      lib.innerHTML = '<i class="fas fa-bookmark"></i>';
+      lib.onclick = () => saveGroupToLibrary(g);
+      btnRow.insertBefore(lib, up);
+      btnRow.insertBefore(dup, up);
+    }
+  });
+  const libBtn = body.querySelector(".btn-success");
+  const libUl = libBtn ? libBtn.closest(".dropdown").querySelector("ul.dropdown-menu") : null;
+  if (libUl && !libUl.querySelector("[data-lib-custom]")) {
+    criteriaLibraryCustom().forEach((t) => {
+      const li = document.createElement("li");
+      li.className = "d-flex align-items-center";
+      li.dataset.libCustom = "1";
+      li.innerHTML = `<a class="dropdown-item flex-grow-1" href="#" onclick="addGroupFromLibraryCustom('${t.id}'); return false;"><i class="fas fa-bookmark me-2 text-success"></i>${escHtml(t.name)}<span class="badge bg-light text-dark ms-2">${((t.criteria && t.criteria[0] && t.criteria[0].fields) || []).length} полей</span></a><button class="btn btn-sm btn-outline-danger me-2 py-0 px-1" onclick="deleteLibraryGroup('${t.id}')" title="Удалить из библиотеки"><i class="fas fa-times"></i></button>`;
+      libUl.appendChild(li);
+    });
+  }
+  const bottom = body.querySelector(".card.border-dashed .card-body");
+  if (bottom && !bottom.querySelector("[data-role='copyset']")) {
+    let items = "";
+    Object.keys(competitionSettings)
+      .sort((x, y) => y - x)
+      .forEach((yy) => {
+        Object.keys(competitionSettings[yy]).forEach((cid) => {
+          if (String(yy) === String(currentCriteriaYear) && cid === currentCriteriaClass) return;
+          items += `<li><a class="dropdown-item" href="#" onclick="copyCriteriaSetTo('${yy}','${cid}'); return false;">${getClassInfo(cid).name} · ${yy}</a></li>`;
+        });
+      });
+    const wrap = document.createElement("div");
+    wrap.className = "dropdown w-100 mt-2";
+    wrap.dataset.role = "copyset";
+    wrap.innerHTML = `<button class="btn btn-outline-secondary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-copy me-2"></i>Дублировать набор в…</button><ul class="dropdown-menu w-100" style="max-height:220px;overflow-y:auto">${items || '<li><span class="dropdown-item-text text-muted small">Нет других классов и годов</span></li>'}</ul>`;
+    bottom.appendChild(wrap);
+  }
+  return r;
+};
+
 opmrInit();
