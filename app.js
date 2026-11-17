@@ -7076,4 +7076,94 @@ renderTeams = function (...a) {
   return r;
 };
 
+// ===== ПЕЧАТЬ v2: ландшафт, все колонки, разбивка по классам, шапка протокола =====
+function printViaIframe(title, bodyHtml, landscape) {
+  const old = document.getElementById("opmrPrintFrame");
+  if (old) old.remove();
+  const frame = document.createElement("iframe");
+  frame.id = "opmrPrintFrame";
+  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+  document.body.appendChild(frame);
+  const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map((l) => l.outerHTML).join("");
+  const styles = Array.from(document.querySelectorAll("head style")).map((s) => s.outerHTML).join("");
+  const doc = frame.contentWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>${escHtml(title)}</title>${links}${styles}
+<style>
+@page { size: A4 ${landscape ? "landscape" : "portrait"}; margin: 8mm; }
+html, body { background: #fff !important; }
+body { padding: 10px; color: #0f172a; }
+* { scrollbar-width: none !important; }
+::-webkit-scrollbar { display: none !important; }
+.print-sheet-title { font-family: "Manrope", sans-serif; font-size: 14pt; font-weight: 800; margin: 0 0 4px; }
+.print-sheet-sub { font-size: 9pt; color: #475569; margin: 0 0 10px; }
+.print-sheet-head { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; }
+.print-sheet-head .print-class-name { font-family: "Manrope", sans-serif; font-weight: 800; font-size: 13pt; }
+.print-sheet-head .print-sheet-date { margin-left: auto; font-weight: 700; font-size: 11pt; }
+table { width: 100%; border-collapse: collapse; }
+.group-header { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; flex-wrap: nowrap !important; margin: 0 0 8px; }
+.group-header-left { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.group-date-badge { margin-left: auto; flex-shrink: 0; }
+.team-list-wrap { overflow: visible !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+.team-list-table { min-width: 0 !important; }
+.team-list-table .tl-print { display: none !important; }
+.competition-table .m-hide { display: table-cell !important; }
+.competition-table { table-layout: auto !important; font-size: 7.5pt !important; }
+.competition-table th, .competition-table td { padding: 2px 3px !important; white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+.competition-table thead tr:nth-child(2) th { height: 40px !important; }
+.competition-table thead tr:nth-child(2) th .cg-th-stack { top: 3px !important; bottom: 3px !important; }
+.print-class-block { page-break-after: always; }
+.print-class-block:last-child { page-break-after: auto; }
+.print-toolbar, .print-btn-desktop { display: none !important; }
+.print-kv-table, .print-members-table { border-collapse: collapse; width: 100%; font-size: 9pt; }
+.print-kv-table th, .print-kv-table td, .print-members-table th, .print-members-table td { border: 1px solid #94a3b8; padding: 3px 6px; text-align: left; vertical-align: top; }
+.print-kv-table th { background: #f1f5f9; width: 16%; font-weight: 700; }
+.print-members-table th { background: #f1f5f9; }
+@media print { body { padding: 0; } }
+</style></head><body>${bodyHtml}</body></html>`);
+  doc.close();
+  const run = () => {
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+    setTimeout(() => frame.remove(), 1500);
+  };
+  if (doc.readyState === "complete") setTimeout(run, 200);
+  else frame.onload = () => setTimeout(run, 200);
+}
+
+function printCompetitionCard(card) {
+  const table = card.querySelector("table");
+  if (!table) return;
+  const badge = card.querySelector(".category-badge");
+  const titleEl = card.querySelector(".group-header-title");
+  const dateEl = card.querySelector(".group-date-badge");
+  const tclone = table.cloneNode(true);
+  tclone.querySelectorAll(".m-hide").forEach((n) => n.classList.remove("m-hide"));
+  const className = titleEl ? titleEl.textContent.trim() : "";
+  const head = `<div class="print-sheet-title">Протокол соревнований</div>
+<div class="print-sheet-head">${badge ? badge.outerHTML : ""}<span class="print-class-name">${escHtml(className)}</span><span class="print-sheet-date">${escHtml(dateEl ? dateEl.textContent.trim() : "")}</span></div>
+<div class="print-sheet-sub">ОПМР Navigator · ${currentYear} год · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>`;
+  printViaIframe(`Протокол соревнований · ${className}`, head + tclone.outerHTML, true);
+}
+
+function printTeamsList() {
+  const sorted = sortTeamsByName(teamsData.filter((t) => t.year === currentYear));
+  if (!sorted.length) {
+    showToast("Нет команд для печати", "error");
+    return;
+  }
+  let body = `<div class="print-sheet-title">Список команд · ${currentYear} год${isGrouped ? " · по классам" : ""}</div><div class="print-sheet-sub">ОПМР Navigator · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>`;
+  if (!isGrouped) {
+    body += `<section class="print-class-block">${renderTeamsTable(sorted)}</section>`;
+  } else {
+    const groups = buildClassGroups(sorted);
+    for (const key in groups) {
+      const g = groups[key];
+      if (!g.teams.length) continue;
+      body += `<section class="print-class-block"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${escHtml(g.name)}</span><span class="group-header-title">${escHtml(g.fullName || g.name)}</span></div>${g.date ? `<span class="group-date-badge">${escHtml(g.date)}</span>` : ""}</div>${renderTeamsTable(g.teams)}</section>`;
+    }
+  }
+  printViaIframe(`Список команд ${currentYear}`, body, true);
+}
+
 opmrInit();

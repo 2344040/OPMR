@@ -2825,3 +2825,7 @@ body.sync-floating {
   #headerButtons > .btn-upload { order: 2; }
   #headerButtons > .btn-grouping-icon:first-of-type { margin-left: auto; }
 }
+
+/* ===== Кнопка печати списка — справа, как служебная ===== */
+.print-toolbar { justify-content: flex-end; }
+.print-toolbar-hint { margin-right: auto; }
