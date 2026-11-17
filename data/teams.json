@@ -1370,61 +1370,6 @@
             "sectionShort": "Конкурс",
             "fields": [
               {
-                "id": "fmwkolnln2gn9c",
-                "name": "Время (сек)",
-                "short": "Время",
-                "type": "decimal",
-                "sum": false,
-                "penalty": false
-              },
-              {
-                "id": "fmwkolnlnxkhst",
-                "name": "Балл за время",
-                "short": "Б. времени",
-                "type": "int",
-                "sum": true,
-                "penalty": false
-              },
-              {
-                "id": "fmwkolnlni2eqs",
-                "name": "Прохождение ворот",
-                "short": "Ворота",
-                "type": "int",
-                "sum": true,
-                "penalty": false
-              },
-              {
-                "id": "fmwkolnln8j7xj",
-                "name": "Парковка",
-                "short": "Парковка",
-                "type": "int",
-                "sum": true,
-                "penalty": false
-              },
-              {
-                "id": "fmwkolnln73ub2",
-                "name": "Нужный гараж",
-                "short": "Гараж",
-                "type": "int",
-                "sum": true,
-                "penalty": false
-              },
-              {
-                "id": "fmwkolnlnpaetm",
-                "name": "Штрафные баллы",
-                "short": "Штраф",
-                "type": "int",
-                "sum": false,
-                "penalty": true
-              }
-            ],
-            "attempts": 1
-          },
-          {
-            "section": "Конкурсное задание",
-            "sectionShort": "Конкурс",
-            "fields": [
-              {
                 "id": "fmwkon1q2alotv",
                 "name": "Время (сек)",
                 "short": "Время",
@@ -3382,7 +3327,7 @@
         },
         "extraBonus": 0,
         "place": 2,
-        "totalScore": 24
+        "totalScore": 0
       },
       "shortName": "СПбГМТУ",
       "year": 2026,
