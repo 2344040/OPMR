@@ -8153,4 +8153,239 @@ renderCriteriaOffcanvas = function (...a) {
   return r;
 };
 
+// ===== ШИРОКАЯ МАТРИЦА: сворачивание групп колонок + закреплённые колонки =====
+const COMP_COLLAPSE_KEY = "opmr_comp_collapsed";
+function readCollapseMap() {
+  try { return JSON.parse(localStorage.getItem(COMP_COLLAPSE_KEY)) || {}; } catch { return {}; }
+}
+function isGroupCollapsed(classId, gkey) {
+  const arr = readCollapseMap()[`${currentYear}:${classId}`];
+  return Array.isArray(arr) ? arr.includes(gkey) : true;
+}
+function toggleCompGroup(classId, gkey) {
+  const k = `${currentYear}:${classId}`;
+  const map = readCollapseMap();
+  const arr = Array.isArray(map[k]) ? map[k].slice() : [];
+  const i = arr.indexOf(gkey);
+  if (i >= 0) arr.splice(i, 1); else arr.push(gkey);
+  map[k] = arr;
+  localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
+  renderCompetition();
+}
+function setCompGroupsExpanded(classId, expand) {
+  const k = `${currentYear}:${classId}`;
+  const map = readCollapseMap();
+  map[k] = expand ? [] : getClassCriteriaGroups(currentYear, classId).map((g) => g.key);
+  localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
+  renderCompetition();
+}
+function groupBestSubtotal(team, cg, gi) {
+  const A = cg.attempts || 1;
+  let has = false, best = null;
+  for (let a = 1; a <= A; a++) {
+    let any = false;
+    cg.cols.forEach((c, ci) => {
+      const v = getScoreValue(team, cg, c, gi, ci, a);
+      if (v !== "" && v !== undefined && v !== null) any = true;
+    });
+    if (any) {
+      has = true;
+      const s = groupAttemptSubtotal(team, cg, gi, a);
+      if (best === null || s > best) best = s;
+    }
+  }
+  return has ? best : null;
+}
+function teamHasAnyValue(team, critGroups) {
+  for (let gi = 0; gi < critGroups.length; gi++) {
+    const cg = critGroups[gi];
+    const A = cg.attempts || 1;
+    for (let a = 1; a <= A; a++)
+      for (let ci = 0; ci < cg.cols.length; ci++) {
+        const v = getScoreValue(team, cg, cg.cols[ci], gi, ci, a);
+        if (v !== "" && v !== undefined && v !== null) return true;
+      }
+  }
+  return false;
+}
+
+function renderCompetition() {
+  const yearTeams = sortTeamsByName(teamsData.filter((t) => t.year === currentYear));
+  const groups = buildClassGroups(yearTeams);
+  let html = "";
+  for (const key in groups) {
+    const g = groups[key];
+    if (!g.teams.length) continue;
+    const critGroups = getClassCriteriaGroups(currentYear, key);
+    let extraIdx = 0;
+    const extraPool = [2, 3, 4];
+    critGroups.forEach((cg) => {
+      const t = String(cg.title || "").toLowerCase();
+      const tint = t.includes("презентац") ? 0 : t.includes("квалификац") ? 1 : extraPool[extraIdx++ % extraPool.length];
+      cg.tint = tint;
+      cg.cols.forEach((c) => { c.tint = tint; });
+      cg.collapsed = isGroupCollapsed(key, cg.key);
+    });
+    const bg = (i) => `background:${CG_TINTS[i]} !important`;
+    const fixedHead = `background:${CG_FIXED_HEAD} !important`;
+    const fixedBody = `background:${CG_FIXED_BODY} !important`;
+    const rowsPerTeam = critGroups.some((cg) => (cg.attempts || 1) > 1 && !cg.collapsed) ? 2 : 1;
+
+    let head1 = `<tr><th rowspan="2" class="cg-fixed cg-sticky-0" style="${fixedHead}">№</th><th rowspan="2" class="cg-fixed cg-sticky-1" style="${fixedHead}">Команда</th>`;
+    let head2 = `<tr>`;
+    critGroups.forEach((cg) => {
+      const A = cg.attempts || 1;
+      const full = cg.fullTitle || cg.title;
+      const pi = full.indexOf("(");
+      const main = pi > 0 ? full.slice(0, pi).trim() : full;
+      const paren = pi > 0 ? full.slice(pi).trim() : "";
+      const span = cg.collapsed ? 1 : cg.cols.length + (A > 1 ? 1 : 0);
+      head1 += `<th colspan="${span}" class="cg-tint-${cg.tint} m-hide cg-group-th${cg.collapsed ? " is-collapsed" : ""}" style="${bg(cg.tint)}" title="${escHtml(full)} — нажмите, чтобы ${cg.collapsed ? "развернуть" : "свернуть"}" onclick="toggleCompGroup('${key}','${cg.key}')">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""} <i class="fas fa-chevron-${cg.collapsed ? "down" : "up"} cg-group-chev"></i></th>`;
+      if (cg.collapsed) {
+        head2 += `<th class="cg-tint-${cg.tint} m-hide cg-group-sum-th" style="${bg(cg.tint)}" title="Сумма группы (для нескольких попыток — лучшая)">Σ</th>`;
+      } else {
+        if (A > 1) head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ попытки</th>`;
+        cg.cols.forEach((c) => {
+          head2 += `<th class="cg-tint-${c.tint} m-hide" style="${bg(c.tint)}" title="${escHtml(c.full || c.title)}">${renderCriteriaSubhead(c)}</th>`;
+        });
+      }
+    });
+    head1 += `<th rowspan="2" class="cg-fixed" style="${fixedHead}">Доп.</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Σ</th><th rowspan="2" class="cg-fixed cg-place-col" style="${fixedHead}">Место</th></tr>`;
+    head2 += `</tr>`;
+
+    const mode = getCompSort(key);
+    const sorted = sortClassTeams(g.teams, mode);
+    let rows = "";
+    sorted.forEach((team) => {
+      const total = computeTeamTotal(team);
+      const hasAny = teamHasAnyValue(team, critGroups);
+      const attemptInfo = critGroups.map((cg, gi) => {
+        const A = cg.attempts || 1;
+        if (A < 2 || cg.collapsed) return null;
+        const subs = [];
+        let has = false;
+        for (let a = 1; a <= A; a++) {
+          subs.push(groupAttemptSubtotal(team, cg, gi, a));
+          cg.cols.forEach((c, ci) => {
+            const v = getScoreValue(team, cg, c, gi, ci, a);
+            if (v !== "" && v !== undefined && v !== null) has = true;
+          });
+        }
+        let best = 1;
+        for (let a = 2; a <= A; a++) if (subs[a - 1] > subs[best - 1]) best = a;
+        return {best, has};
+      });
+      for (let r = 0; r < rowsPerTeam; r++) {
+        let cells = "";
+        if (r === 0) {
+          const drawRaw = team.draw ?? team.drawNumber ?? team.lot ?? "";
+          cells += `<td class="cg-fixed cg-sticky-0 team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${drawRaw === "" ? "—" : escHtml(drawRaw)}</td>`;
+          cells += `<td class="td-team cg-sticky-1 team-block-end" rowspan="${rowsPerTeam}" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}</td>`;
+        }
+        critGroups.forEach((cg, gi) => {
+          const A = cg.attempts || 1;
+          if (cg.collapsed) {
+            if (r === 0) {
+              const sub = groupBestSubtotal(team, cg, gi);
+              cells += `<td class="cg-tint-${cg.tint} m-hide cg-group-sum team-block-end${sub !== null && sub > 0 ? " cg-score" : ""}" rowspan="${rowsPerTeam}" style="${bg(cg.tint)}">${sub === null ? "—" : sub}</td>`;
+            }
+          } else if (A > 1) {
+            const info = attemptInfo[gi];
+            const aBest = !!(info && info.has && r + 1 === info.best);
+            const aMut = !!(info && info.has && r + 1 !== info.best);
+            cells += `<td class="cg-attempt-no cg-tint-${cg.tint} m-hide${aBest ? " cg-attempt-best" : ""}${aMut ? " cg-attempt-muted" : ""}" style="${bg(cg.tint)}">${r + 1}${aBest ? ' <i class="fas fa-check" style="font-size:0.6rem"></i>' : ""}</td>`;
+            cg.cols.forEach((c, ci) => {
+              cells += scoreCell(team, cg, c, gi, ci, r + 1, 1, aMut ? " cg-cell-muted" : aBest ? " cg-cell-best" : "");
+            });
+          } else if (r === 0) {
+            cg.cols.forEach((c, ci) => {
+              cells += scoreCell(team, cg, c, gi, ci, 1, rowsPerTeam, "");
+            });
+          }
+        });
+        if (r === 0) {
+          const extraRaw = team.extra ?? team.protocol?.extraBonus ?? "";
+          cells += `<td class="cg-fixed team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${extraRaw === "" ? "—" : escHtml(extraRaw)}</td>`;
+          cells += `<td class="cg-fixed cg-total team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}"><strong>${hasAny ? Math.round(total * 100) / 100 : "—"}</strong></td>`;
+          cells += `<td class="cg-fixed cg-place-col team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${renderPlaceBadge(team.place ?? team.protocol?.place)}</td>`;
+        }
+        rows += `<tr class="competition-row${r === rowsPerTeam - 1 ? " team-block-end" : ""}" data-team-row="${team.id}" tabindex="0" title="Открыть протокол команды" onclick="showProtocolPage('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProtocolPage('${team.id}');}">${cells}</tr>`;
+      }
+    });
+
+    const anyCollapsed = critGroups.some((cg) => cg.collapsed);
+    const toolbar = `<div class="competition-toolbar">
+<button type="button" class="btn btn-sm btn-outline-primary comp-tool-btn" onclick="calculatePlacesForClass('${key}')"><i class="fas fa-ranking-star me-1"></i>Рассчитать места</button>
+<div class="dropdown">
+<button class="btn btn-sm btn-outline-secondary comp-tool-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-arrow-down-wide-short me-1"></i>Сортировка: ${COMP_SORT_LABELS[mode]}</button>
+<ul class="dropdown-menu">${["draw", "name", "total"].map((m) => `<li><a class="dropdown-item d-flex align-items-center justify-content-between ${m === mode ? "active" : ""}" href="#" onclick="setCompSort('${key}','${m}'); return false;"><span>${COMP_SORT_LABELS[m]}</span>${m === mode ? '<i class="fas fa-check ms-3"></i>' : ""}</a></li>`).join("")}</ul>
+</div>
+<button type="button" class="btn btn-sm btn-outline-secondary comp-tool-btn" onclick="setCompGroupsExpanded('${key}', ${anyCollapsed})"><i class="fas fa-${anyCollapsed ? "expand" : "compress"} me-1"></i>${anyCollapsed ? "Развернуть все группы" : "Свернуть все группы"}</button>
+<span class="competition-toolbar-hint"><i class="fas fa-hand-pointer me-1"></i>Клик по строке — протокол; клик по заголовку группы — развернуть/свернуть поля</span>
+</div>`;
+
+    html += `<div class="competition-class-card">
+<div class="group-header competition-class-header">
+<div class="group-header-left">
+<span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span>
+<span class="group-header-title">${escHtml(g.fullName || g.name)}</span>
+</div>
+${g.date ? `<span class="group-date-badge">${escHtml(g.date)}</span>` : ""}
+<span class="competition-class-count">${g.teams.length} команд</span>
+</div>
+${toolbar}
+<div class="table-responsive"><table class="competition-table">
+<thead>${head1}${head2}</thead>
+<tbody>${rows}</tbody>
+</table></div>
+</div>`;
+  }
+  if (!html) html = `<div class="text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
+  const el = document.getElementById("competitionContent") || document.getElementById("competitionPage");
+  if (el) el.innerHTML = html;
+  return html;
+}
+
+function printCompetitionCard(card) {
+  const btn = card.querySelector('[onclick*="calculatePlacesForClass("]');
+  const m = btn && (btn.getAttribute("onclick") || "").match(/calculatePlacesForClass\(\s*['"]([^'"]+)['"]/);
+  const classId = m ? m[1] : null;
+  const k = classId ? `${currentYear}:${classId}` : null;
+  const map = readCollapseMap();
+  const saved = k ? map[k] : undefined;
+  if (k) {
+    map[k] = [];
+    localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
+    renderCompetition();
+  }
+  let target = card;
+  if (k) {
+    target =
+      Array.from(document.querySelectorAll("#competitionPage .competition-class-card")).find((c) => {
+        const b = c.querySelector('[onclick*="calculatePlacesForClass("]');
+        const mm = b && (b.getAttribute("onclick") || "").match(/calculatePlacesForClass\(\s*['"]([^'"]+)['"]/);
+        return mm && mm[1] === classId;
+      }) || card;
+  }
+  const table = target.querySelector("table");
+  if (!table) return;
+  const badge = target.querySelector(".category-badge");
+  const titleEl = target.querySelector(".group-header-title");
+  const dateEl = target.querySelector(".group-date-badge");
+  const tclone = table.cloneNode(true);
+  tclone.querySelectorAll(".m-hide").forEach((n) => n.classList.remove("m-hide"));
+  tclone.querySelectorAll(".cg-group-chev").forEach((n) => n.remove());
+  const className = titleEl ? titleEl.textContent.trim() : "";
+  const head = `<div class="print-sheet-title">Протокол соревнований</div>
+<div class="print-sheet-head">${badge ? badge.outerHTML : ""}<span class="print-class-name">${escHtml(className)}</span><span class="print-sheet-date">${escHtml(dateEl ? dateEl.textContent.trim() : "")}</span></div>
+<div class="print-sheet-sub">ОПМР Navigator · ${currentYear} год · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>`;
+  printViaIframe(`Протокол соревнований · ${className}`, head + tclone.outerHTML, true);
+  if (k) {
+    if (saved === undefined) delete map[k];
+    else map[k] = saved;
+    localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
+    renderCompetition();
+  }
+}
+
 opmrInit();

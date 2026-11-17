@@ -3026,3 +3026,41 @@ body.sync-floating {
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
+
+/* ===== Сворачиваемые группы колонок + закреплённые № и Команда ===== */
+.competition-table th.cg-group-th {
+  cursor: pointer;
+  user-select: none;
+}
+.competition-table th.cg-group-th:hover {
+  filter: brightness(0.96);
+}
+.cg-group-chev {
+  font-size: 0.6rem;
+  opacity: 0.55;
+  margin-left: 4px;
+}
+.competition-table th.cg-group-sum-th,
+.competition-table td.cg-group-sum {
+  font-weight: 700;
+  text-align: center;
+}
+.competition-table th.cg-sticky-0,
+.competition-table td.cg-sticky-0 {
+  position: sticky;
+  left: 0;
+  z-index: 4;
+  width: 44px;
+  min-width: 44px;
+}
+.competition-table th.cg-sticky-1,
+.competition-table td.cg-sticky-1 {
+  position: sticky;
+  left: 44px;
+  z-index: 4;
+  min-width: 180px;
+}
+.competition-table thead th.cg-sticky-0,
+.competition-table thead th.cg-sticky-1 {
+  z-index: 6;
+}
