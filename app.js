@@ -8388,4 +8388,66 @@ function printCompetitionCard(card) {
   }
 }
 
+// ===== ИСТОРИЯ НАБОРОВ КРИТЕРИЕВ + ЗАЩИТА ОТ ПОТЕРИ ГРУПП =====
+const CRITERIA_HISTORY_KEY = "opmr_criteria_history";
+function criteriaHistory() {
+  try { return JSON.parse(localStorage.getItem(CRITERIA_HISTORY_KEY)) || []; } catch { return []; }
+}
+function pushCriteriaHistory(year, classId, criteria) {
+  const list = criteriaHistory();
+  list.push({id: "h" + Date.now(), year: String(year), classId, ts: Date.now(), criteria: JSON.parse(JSON.stringify(criteria))});
+  localStorage.setItem(CRITERIA_HISTORY_KEY, JSON.stringify(list.slice(-60)));
+}
+function restoreCriteriaSnapshot(id) {
+  const h = criteriaHistory().find((x) => x.id === id);
+  if (!h) return;
+  if (!confirm(`Восстановить набор «${getClassInfo(h.classId).name} · ${h.year}» от ${new Date(h.ts).toLocaleString("ru-RU")} (групп: ${h.criteria.length})?\nТекущий набор перед заменой уйдёт в историю.`)) return;
+  const cur = (competitionSettings[h.year] || {})[h.classId];
+  if (cur && Array.isArray(cur.criteria) && cur.criteria.length) pushCriteriaHistory(h.year, h.classId, cur.criteria);
+  if (!competitionSettings[h.year]) competitionSettings[h.year] = {};
+  if (!competitionSettings[h.year][h.classId]) competitionSettings[h.year][h.classId] = {date: "", criteria: []};
+  competitionSettings[h.year][h.classId].criteria = JSON.parse(JSON.stringify(h.criteria));
+  saveData();
+  renderApparatusManager();
+  showToast("Набор критериев восстановлен из истории", "success");
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh.repo && gh.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+
+const _histPrevSaveCriteria = saveCriteriaFromOffcanvas;
+saveCriteriaFromOffcanvas = function (...a) {
+  const year = currentCriteriaYear;
+  const classId = currentCriteriaClass;
+  const prev = ((competitionSettings[year] || {})[classId] || {}).criteria || [];
+  const before = Array.isArray(prev) ? prev.length : 0;
+  const after = Array.isArray(tempCriteria) ? tempCriteria.length : 0;
+  if (before > 0 && after < before) {
+    if (!confirm(`Внимание: сохраняемый набор содержит групп: ${after}, а в базе сейчас ${before}.\nГруппы будут удалены из набора этого класса.\n\nПродолжить сохранение?`)) return;
+  }
+  if (before > 0) pushCriteriaHistory(year, classId, prev);
+  return _histPrevSaveCriteria.apply(this, a);
+};
+
+const _histPrevRenderCriteria = renderCriteriaOffcanvas;
+renderCriteriaOffcanvas = function (...a) {
+  const r = _histPrevRenderCriteria.apply(this, a);
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body) return r;
+  const bottom = body.querySelector(".card.border-dashed .card-body");
+  if (bottom && !bottom.querySelector("[data-role='history']")) {
+    const items = criteriaHistory()
+      .filter((h) => h.classId === currentCriteriaClass && String(h.year) === String(currentCriteriaYear))
+      .reverse();
+    const wrap = document.createElement("div");
+    wrap.className = "dropdown w-100 mt-2";
+    wrap.dataset.role = "history";
+    wrap.innerHTML = `<button class="btn btn-outline-warning w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-history me-2"></i>История наборов (${items.length})</button><ul class="dropdown-menu w-100" style="max-height:220px;overflow-y:auto">${
+      items.map((h) => `<li><a class="dropdown-item" href="#" onclick="restoreCriteriaSnapshot('${h.id}'); return false;"><i class="fas fa-rotate-left me-2 text-warning"></i>${new Date(h.ts).toLocaleString("ru-RU")} · групп: ${h.criteria.length}</a></li>`).join("") ||
+      '<li><span class="dropdown-item-text text-muted small">Снимков пока нет</span></li>'
+    }</ul>`;
+    bottom.appendChild(wrap);
+  }
+  return r;
+};
+
 opmrInit();
