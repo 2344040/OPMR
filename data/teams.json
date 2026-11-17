@@ -1324,7 +1324,8 @@
                 "penalty": false
               }
             ],
-            "attempts": 1
+            "attempts": 1,
+            "multi": false
           },
           {
             "section": "Квалификация",
@@ -1363,7 +1364,8 @@
                 "penalty": false
               }
             ],
-            "attempts": 1
+            "attempts": 1,
+            "multi": false
           },
           {
             "section": "Конкурсное задание",
@@ -1418,7 +1420,22 @@
                 "penalty": true
               }
             ],
-            "attempts": 2
+            "attempts": 2,
+            "multi": true
+          },
+          {
+            "section": "Дополнительные баллы",
+            "sectionShort": "Доп.",
+            "fields": [
+              {
+                "id": "fmwkpofc38fjyn",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "БЭК"
@@ -3227,6 +3244,501 @@
               "penalty": false
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "lib1794921036442",
+      "name": "Презентация (5 крит.) БЭК 2026",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwkoghud3aszz",
+              "name": "Понимание устройства и принципов работы",
+              "short": "Пон. принц.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghud7t1hp",
+              "name": "Понимание задачи и обоснование инженерного подхода",
+              "short": "Пон. зад.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghud465va",
+              "name": "Собственный вклад",
+              "short": "Вклад",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghudac8hl",
+              "name": "Инженерная методология",
+              "short": "Метод",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghudiqavb",
+              "name": "Ответы на вопросы и эрудиция",
+              "short": "Эрудиция",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        }
+      ],
+      "library": true
+    },
+    {
+      "id": "lib1794921057291",
+      "name": "Квалификация (4 крит.) 2026",
+      "criteria": [
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwkojse4lq214",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkojse48aeid",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkojse4x4q3w",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwkojse46dex9",
+              "name": "Квалификационное задание",
+              "short": "Квалиф.",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        }
+      ],
+      "library": true
+    },
+    {
+      "id": "lib1794921081628",
+      "name": "Конкурсное задание (6 крит.) 2 попытки БЭК 2026",
+      "criteria": [
+        {
+          "section": "Конкурсное задание",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwkon1q2alotv",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2sb1cl",
+              "name": "Балл за время",
+              "short": "Время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q27o5ne",
+              "name": "Прохождение ворот",
+              "short": "Ворота",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2tc2w6",
+              "name": "Парковка",
+              "short": "Парковка",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q27vk5d",
+              "name": "Нужный гараж",
+              "short": "Гараж",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2qrixv",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ],
+          "attempts": 2,
+          "multi": true
+        }
+      ],
+      "library": true
+    },
+    {
+      "id": "t1794921117009",
+      "name": "БЭК 2026 261117-161157",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwkoghud3aszz",
+              "name": "Понимание устройства и принципов работы",
+              "short": "Пон. принц.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghud7t1hp",
+              "name": "Понимание задачи и обоснование инженерного подхода",
+              "short": "Пон. зад.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghud465va",
+              "name": "Собственный вклад",
+              "short": "Вклад",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghudac8hl",
+              "name": "Инженерная методология",
+              "short": "Метод",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghudiqavb",
+              "name": "Ответы на вопросы и эрудиция",
+              "short": "Эрудиция",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwkojse4lq214",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkojse48aeid",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkojse4x4q3w",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwkojse46dex9",
+              "name": "Квалификационное задание",
+              "short": "Квалиф.",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        },
+        {
+          "section": "Конкурсное задание",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwkon1q2alotv",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2sb1cl",
+              "name": "Балл за время",
+              "short": "Время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q27o5ne",
+              "name": "Прохождение ворот",
+              "short": "Ворота",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2tc2w6",
+              "name": "Парковка",
+              "short": "Парковка",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q27vk5d",
+              "name": "Нужный гараж",
+              "short": "Гараж",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2qrixv",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ],
+          "attempts": 2,
+          "multi": true
+        },
+        {
+          "section": "Дополнительные баллы",
+          "sectionShort": "Доп.",
+          "fields": [
+            {
+              "id": "fmwkpofc38fjyn",
+              "name": "За внеконкурсное задание",
+              "short": "Внеконкурс",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "t1794921175098",
+      "name": "БЭК 2026 261117-161255",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwkoghud3aszz",
+              "name": "Понимание устройства и принципов работы",
+              "short": "Пон. принц.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghud7t1hp",
+              "name": "Понимание задачи и обоснование инженерного подхода",
+              "short": "Пон. зад.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghud465va",
+              "name": "Собственный вклад",
+              "short": "Вклад",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghudac8hl",
+              "name": "Инженерная методология",
+              "short": "Метод",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghudiqavb",
+              "name": "Ответы на вопросы и эрудиция",
+              "short": "Эрудиция",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwkojse4lq214",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkojse48aeid",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkojse4x4q3w",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwkojse46dex9",
+              "name": "Квалификационное задание",
+              "short": "Квалиф.",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        },
+        {
+          "section": "Конкурсное задание",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwkon1q2alotv",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2sb1cl",
+              "name": "Балл за время",
+              "short": "Время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q27o5ne",
+              "name": "Прохождение ворот",
+              "short": "Ворота",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2tc2w6",
+              "name": "Парковка",
+              "short": "Парковка",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q27vk5d",
+              "name": "Нужный гараж",
+              "short": "Гараж",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2qrixv",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ],
+          "attempts": 2,
+          "multi": true
+        },
+        {
+          "section": "Доп. баллы",
+          "sectionShort": "Доп.",
+          "fields": [
+            {
+              "id": "fmwkpofc38fjyn",
+              "name": "За внеконкурсное задание",
+              "short": "Внеконкурс",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
         }
       ]
     }
