@@ -1278,7 +1278,201 @@
       "bek": {
         "date": "28.11.2026",
         "color": "badge-red",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "id": "fmwkoghud3aszz",
+                "name": "Понимание устройства и принципов работы",
+                "short": "Пон. принц.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkoghud7t1hp",
+                "name": "Понимание задачи и обоснование инженерного подхода",
+                "short": "Пон. зад.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkoghud465va",
+                "name": "Собственный вклад",
+                "short": "Вклад",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkoghudac8hl",
+                "name": "Инженерная методология",
+                "short": "Метод",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkoghudiqavb",
+                "name": "Ответы на вопросы и эрудиция",
+                "short": "Эрудиция",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "id": "fmwkojse4lq214",
+                "name": "Сумма размерений",
+                "short": "Разм.",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkojse48aeid",
+                "name": "Вес (кг)",
+                "short": "Вес",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkojse4x4q3w",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "id": "fmwkojse46dex9",
+                "name": "Квалификационное задание",
+                "short": "Квалиф.",
+                "type": "bool",
+                "sum": false,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Конкурсное задание",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwkolnln2gn9c",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkolnlnxkhst",
+                "name": "Балл за время",
+                "short": "Б. времени",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkolnlni2eqs",
+                "name": "Прохождение ворот",
+                "short": "Ворота",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkolnln8j7xj",
+                "name": "Парковка",
+                "short": "Парковка",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkolnln73ub2",
+                "name": "Нужный гараж",
+                "short": "Гараж",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkolnlnpaetm",
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          },
+          {
+            "section": "Конкурсное задание",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwkon1q2alotv",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkon1q2sb1cl",
+                "name": "Балл за время",
+                "short": "Время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkon1q27o5ne",
+                "name": "Прохождение ворот",
+                "short": "Ворота",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkon1q2tc2w6",
+                "name": "Парковка",
+                "short": "Парковка",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkon1q27vk5d",
+                "name": "Нужный гараж",
+                "short": "Гараж",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkon1q2qrixv",
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ],
+            "attempts": 2
+          }
+        ],
         "name": "БЭК"
       },
       "tnpa": {
