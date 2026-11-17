@@ -360,6 +360,23 @@
                 "penalty": false
               }
             ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbsvpus2",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "АННА"
@@ -543,6 +560,23 @@
                 "id": "fmweuby96l1ei7",
                 "name": "Бонус за расстояния",
                 "short": "Бонус расст.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbsknoji",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
                 "type": "int",
                 "sum": true,
                 "penalty": false
@@ -737,6 +771,23 @@
                 "penalty": false
               }
             ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbs82xlz",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "ТНПА",
@@ -886,6 +937,23 @@
                 "id": "fmwj51oenliw9i",
                 "name": "Доп баллы",
                 "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbsmtmkl",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
                 "type": "int",
                 "sum": true,
                 "penalty": false
@@ -1094,6 +1162,23 @@
                 "penalty": false
               }
             ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbsr4qq7",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "ТНПА"
@@ -1269,6 +1354,23 @@
                 "penalty": false
               }
             ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbswujwb",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "АНПА"
@@ -1437,7 +1539,8 @@
               }
             ],
             "attempts": 1,
-            "multi": false
+            "multi": false,
+            "extra": true
           }
         ],
         "name": "БЭК"
@@ -1708,7 +1811,8 @@
               }
             ],
             "attempts": 1,
-            "multi": false
+            "multi": false,
+            "extra": true
           }
         ],
         "name": "ТНПА"
@@ -1907,7 +2011,8 @@
               }
             ],
             "attempts": 1,
-            "multi": false
+            "multi": false,
+            "extra": true
           }
         ],
         "name": "АНПА"
