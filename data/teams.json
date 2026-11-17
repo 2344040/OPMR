@@ -6235,11 +6235,11 @@
       },
       "draw": "7",
       "extra": 0,
-      "place": 0,
+      "place": 2,
       "protocol": {
         "drawNumber": "7",
         "extraBonus": 0,
-        "place": 0,
+        "place": 2,
         "totalScore": 75
       }
     },
@@ -6309,11 +6309,11 @@
       },
       "draw": "6",
       "extra": 0,
-      "place": 0,
+      "place": 4,
       "protocol": {
         "drawNumber": "6",
         "extraBonus": 0,
-        "place": 0,
+        "place": 4,
         "totalScore": 64
       }
     },
@@ -6383,11 +6383,11 @@
       },
       "draw": "1",
       "extra": 0,
-      "place": 0,
+      "place": 8,
       "protocol": {
         "drawNumber": "1",
         "extraBonus": 0,
-        "place": 0,
+        "place": 8,
         "totalScore": 7
       }
     },
@@ -6457,11 +6457,11 @@
       },
       "draw": "4",
       "extra": 0,
-      "place": 0,
+      "place": 1,
       "protocol": {
         "drawNumber": "4",
         "extraBonus": 0,
-        "place": 0,
+        "place": 1,
         "totalScore": 81
       }
     },
@@ -6531,11 +6531,11 @@
       },
       "draw": "5",
       "extra": 0,
-      "place": 0,
+      "place": 6,
       "protocol": {
         "drawNumber": "5",
         "extraBonus": 0,
-        "place": 0,
+        "place": 6,
         "totalScore": 35
       }
     },
@@ -6605,11 +6605,11 @@
       },
       "draw": "1",
       "extra": 0,
-      "place": 0,
+      "place": 7,
       "protocol": {
         "drawNumber": "1",
         "extraBonus": 0,
-        "place": 0,
+        "place": 7,
         "totalScore": 10
       }
     },
@@ -6679,11 +6679,11 @@
       },
       "draw": "0",
       "extra": 0,
-      "place": 0,
+      "place": 3,
       "protocol": {
         "drawNumber": "0",
         "extraBonus": 0,
-        "place": 0,
+        "place": 3,
         "totalScore": 65
       }
     },
@@ -6753,11 +6753,11 @@
       },
       "draw": "8",
       "extra": 0,
-      "place": 0,
+      "place": 5,
       "protocol": {
         "drawNumber": "8",
         "extraBonus": 0,
-        "place": 0,
+        "place": 5,
         "totalScore": 57
       }
     }
