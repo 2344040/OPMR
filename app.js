@@ -8492,4 +8492,152 @@ renderCriteriaOffcanvas = function (...a) {
   return r;
 };
 
+// ===== ДОП. БАЛЛЫ: авто-группа внутри набора критериев (редактируемая) =====
+function normalizeCriteria(criteria) {
+  if (!Array.isArray(criteria)) return [];
+  return criteria.map((g) => {
+    const isObj = typeof g === "object" && g !== null;
+    const section = isObj ? g.section || g.name || "Группа" : String(g);
+    const sectionShort = isObj ? String(g.sectionShort ?? g.short ?? "").trim() : "";
+    const rawFields = isObj ? g.fields || [] : [];
+    const fields = rawFields.map((f) =>
+      typeof f === "object" && f !== null
+        ? {
+            id: f.id || newFieldId(),
+            name: String(f.name ?? "").trim(),
+            short: String(f.short ?? "").trim(),
+            type: f.type || "int",
+            ...(f.sum !== undefined ? {sum: !!f.sum} : {}),
+            ...(f.penalty !== undefined ? {penalty: !!f.penalty} : {}),
+          }
+        : {id: newFieldId(), name: String(f).trim(), short: "", type: "int"},
+    );
+    let attempts = isObj ? Math.min(2, Math.max(1, parseInt(g.attempts, 10) || 1)) : 1;
+    let multi = isObj && g.multi !== undefined ? !!g.multi : attempts > 1;
+    if (!multi) attempts = 1;
+    const out = {section, sectionShort, fields, attempts, multi};
+    if (isObj && g.extra) out.extra = true;
+    return out;
+  });
+}
+
+function findExtraGroup(list) {
+  return (
+    (Array.isArray(list) &&
+      list.find((g) => g && g.extra === true)) ||
+    (Array.isArray(list) &&
+      list.find((g) => {
+        const gt = ((g && g.section || "") + " " + (g && g.sectionShort || "")).toLowerCase();
+        if (gt.includes("доп") && gt.includes("балл")) return true;
+        return ((g && g.fields) || []).some((f) => ((f.name || "") + " " + (f.short || "")).toLowerCase().includes("внеконкурс"));
+      })) ||
+    null
+  );
+}
+
+function migrateExtraGroup() {
+  let changed = false;
+  for (const y in competitionSettings) {
+    for (const cid in competitionSettings[y]) {
+      const cfg = competitionSettings[y][cid];
+      if (!cfg || cfg.extraGroupDisabled) continue;
+      if (!Array.isArray(cfg.criteria)) cfg.criteria = [];
+      let grp = findExtraGroup(cfg.criteria);
+      if (grp) {
+        if (!grp.extra) {
+          grp.extra = true;
+          changed = true;
+        }
+      } else if (cfg.criteria.length) {
+        cfg.criteria.push({
+          extra: true,
+          section: "Доп. баллы",
+          sectionShort: "Доп.",
+          attempts: 1,
+          multi: false,
+          fields: [{id: newFieldId(), name: "За внеконкурсное задание", short: "Внеконкурс", type: "int", sum: true, penalty: false}],
+        });
+        changed = true;
+      }
+    }
+  }
+  teamsData.forEach((t) => {
+    const cid = typeof getTeamClassId === "function" ? getTeamClassId(t) : getClassIdByValue(t.apparatusClass, t.year);
+    const cfg = (competitionSettings[t.year] || {})[cid];
+    const grp = cfg && findExtraGroup(cfg.criteria);
+    if (!grp || !grp.fields || !grp.fields[0]) return;
+    const fid = "f:" + grp.fields[0].id;
+    const cur = (t.scores || {})[fid];
+    const legacy = t.extra ?? t.protocol?.extraBonus ?? "";
+    if ((cur === undefined || cur === "" || cur === null) && legacy !== "" && legacy !== null && legacy !== 0) {
+      t.scores = {...(t.scores || {}), [fid]: String(legacy)};
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+const _egPrevMigrate = runIntegrityMigration;
+runIntegrityMigration = function (...a) {
+  const c1 = _egPrevMigrate.apply(this, a);
+  const c2 = migrateExtraGroup();
+  return c1 || c2;
+};
+
+function computeTeamTotal(team) {
+  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+  const groups = getClassCriteriaGroups(team.year, classId);
+  let total = 0;
+  groups.forEach((cg, gi) => {
+    const A = cg.attempts || 1;
+    if (A > 1) {
+      let best = 0;
+      for (let a = 1; a <= A; a++) best = Math.max(best, groupAttemptSubtotal(team, cg, gi, a));
+      total += best;
+    } else {
+      total += groupAttemptSubtotal(team, cg, gi, 1);
+    }
+  });
+  if (!classHasExtraGroup(team.year, classId)) total += parseScoreNumber(team.extra ?? team.protocol?.extraBonus ?? 0) || 0;
+  return Math.round(total * 100) / 100;
+}
+
+const _egPrevSaveCriteria = saveCriteriaFromOffcanvas;
+saveCriteriaFromOffcanvas = function (...a) {
+  const year = currentCriteriaYear;
+  const cid = currentCriteriaClass;
+  const cfgBefore = (competitionSettings[year] || {})[cid];
+  const hadExtra = !!(cfgBefore && findExtraGroup(cfgBefore.criteria));
+  const willExtra = Array.isArray(tempCriteria) && tempCriteria.some((g) => g && g.extra === true);
+  const r = _egPrevSaveCriteria.apply(this, a);
+  const cfg = (competitionSettings[year] || {})[cid];
+  if (cfg) {
+    if (hadExtra && !willExtra) cfg.extraGroupDisabled = true;
+    if (willExtra) delete cfg.extraGroupDisabled;
+  }
+  if (!(cfg && cfg.extraGroupDisabled)) migrateExtraGroup();
+  saveData();
+  return r;
+};
+
+const _egPrevRenderCriteria = renderCriteriaOffcanvas;
+renderCriteriaOffcanvas = function (...a) {
+  const r = _egPrevRenderCriteria.apply(this, a);
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body) return r;
+  body.querySelectorAll("[data-crit-group]").forEach((el) => {
+    const g = Number(el.dataset.g);
+    const grp = tempCriteria[g];
+    if (!grp || !grp.extra) return;
+    const num = el.querySelector(".card-header .badge.bg-primary");
+    if (!num || num.parentNode.querySelector(".crit-extra-badge")) return;
+    const b = document.createElement("span");
+    b.className = "crit-extra-badge";
+    b.textContent = "авто";
+    b.title = "Группа дополнительных баллов: добавляется автоматически, но полностью редактируется";
+    num.after(b);
+  });
+  return r;
+};
+
 opmrInit();

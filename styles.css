@@ -3093,3 +3093,10 @@ body.sync-floating {
   text-align: center;
   margin-bottom: 0;
 }
+
+/* ===== Метка авто-группы доп. баллов ===== */
+.crit-extra-badge {
+  font-size: 0.65rem; font-weight: 700; color: #15803d;
+  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 999px;
+  padding: 1px 7px; margin-left: 6px; vertical-align: middle;
+}
