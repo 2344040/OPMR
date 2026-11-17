@@ -2869,3 +2869,14 @@ body.sync-floating {
   .competition-table th:nth-child(2),
   .competition-table td:nth-child(2) { min-width: 30mm; }
 }
+
+/* ===== Попытки в конкурсных заданиях ===== */
+.competition-table .cg-attempt-no { width: 34px; font-weight: 700; color: #64748b; }
+.proto-attempt-head {
+  font-family: "Manrope", sans-serif; font-weight: 700; font-size: 0.85rem; color: #1d4ed8;
+  margin: 12px 0 6px; padding-left: 8px; border-left: 3px solid #bfdbfe;
+}
+.proto-attempts-badge {
+  font-size: 0.7rem; font-weight: 600; color: #15803d; background: #f0fdf4;
+  border: 1px solid #bbf7d0; border-radius: 999px; padding: 2px 8px; vertical-align: middle; margin-left: 6px;
+}
