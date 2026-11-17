@@ -2975,3 +2975,19 @@ body.sync-floating {
 .competition-table tbody tr.row-hover > td.td-team {
   color: #1d4ed8;
 }
+
+/* ===== Колонка «Время» и номера попыток: стабильная геометрия ===== */
+.competition-table td { text-align: center; vertical-align: middle; }
+.competition-table td.td-team { text-align: left; }
+.competition-table td.cg-time {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  min-width: 46px;
+}
+.competition-table td.cg-attempt-no { min-width: 36px; }
+.cg-time-val {
+  display: inline-block;
+  min-width: 36px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}

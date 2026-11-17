@@ -8057,4 +8057,28 @@ renderCompetition = function (...a) {
   return r;
 };
 
+// ===== КОЛОНКА «ВРЕМЯ»: однородное выравнивание значений =====
+function scoreCell(team, cg, c, gi, ci, a, rowspan, extraCls) {
+  const v = getScoreValue(team, cg, c, gi, ci, a);
+  const present = v !== "" && v !== undefined && v !== null;
+  let display = "—";
+  let cls = `cg-tint-${c.tint} m-hide${extraCls || ""}`;
+  if (present) {
+    const type = c.type || "int";
+    if (type === "bool") display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
+    else if (type === "text") { display = escHtml(v); cls += " cg-text"; }
+    else if (type === "time") { display = `<span class="cg-time-val">${escHtml(formatTimeValue(v))}</span>`; cls += " cg-time"; }
+    else {
+      const n = parseScoreNumber(v);
+      display = type === "decimal" && n !== null ? escHtml(String(v).replace(".", ",")) : escHtml(v);
+      if (c.penalty) { cls += " cg-penalty"; if (n !== null && n > 0) display = "−" + display; }
+      else if (isPtsCol(c) && n !== null) cls += " cg-score";
+    }
+  } else if ((c.type || "int") === "time") {
+    display = '<span class="cg-time-val">—</span>';
+  }
+  const rs = rowspan > 1 ? ` rowspan="${rowspan}"` : "";
+  return `<td class="${cls}"${rs} style="background:${CG_TINTS[c.tint]} !important">${display}</td>`;
+}
+
 opmrInit();
