@@ -4599,6 +4599,27 @@
         }
       ],
       "library": true
+    },
+    {
+      "id": "lib1794924296065",
+      "name": "Доп. баллы (1 крит.)",
+      "criteria": [
+        {
+          "section": "Доп. баллы",
+          "sectionShort": "Доп.",
+          "fields": [
+            {
+              "id": "fmwkrkn7x2d902",
+              "name": "За внеконкурсное задание",
+              "short": "Внеконкурс",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        }
+      ],
+      "library": true
     }
   ],
   "teams": [
