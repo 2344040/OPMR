@@ -4330,6 +4330,53 @@
           "multi": false
         }
       ]
+    },
+    {
+      "id": "lib1794923427040",
+      "name": "Квалификация (4 крит.) ДШВ",
+      "criteria": [
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwkqlzxm8brhr",
+              "name": "Размерения (ДхШхВ, мм)",
+              "short": "Разм. ДШВ мм",
+              "type": "text",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkqlzxmvc52b",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkqlzxm1n4qs",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwkqlzxmmr74q",
+              "name": "Квалификационное задание",
+              "short": "Квалиф.",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        }
+      ],
+      "library": true
     }
   ],
   "teams": [
