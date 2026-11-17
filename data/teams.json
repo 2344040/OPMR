@@ -3331,6 +3331,69 @@
         }
       ],
       "library": true
+    },
+    {
+      "id": "lib1794921081628",
+      "name": "Конкурсное задание (6 крит.) 2 попытки БЭК 2026",
+      "criteria": [
+        {
+          "section": "Конкурсное задание",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwkon1q2alotv",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2sb1cl",
+              "name": "Балл за время",
+              "short": "Время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q27o5ne",
+              "name": "Прохождение ворот",
+              "short": "Ворота",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2tc2w6",
+              "name": "Парковка",
+              "short": "Парковка",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q27vk5d",
+              "name": "Нужный гараж",
+              "short": "Гараж",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkon1q2qrixv",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ],
+          "attempts": 2,
+          "multi": true
+        }
+      ],
+      "library": true
     }
   ],
   "teams": [
