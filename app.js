@@ -8081,12 +8081,76 @@ function scoreCell(team, cg, c, gi, ci, a, rowspan, extraCls) {
         if (n !== null && n > 0) display = "−" + display;
       } else if (isPtsCol(c) && n !== null) cls += " cg-score";
     }
-    } else if ((c.type || "int") === "time") {
+  } else if ((c.type || "int") === "time") {
     display = '<span class="cg-time-val">—</span>';
     cls += " cg-time";
   }
   const rs = rowspan > 1 ? ` rowspan="${rowspan}"` : "";
   return `<td class="${cls}"${rs} style="background:${CG_TINTS[c.tint]} !important">${display}</td>`;
 }
+
+// ===== БИБЛИОТЕКА И ШАБЛОНЫ: сортировка от новых к старым =====
+function entrySortKey(id, name) {
+  let m = String(id || "").match(/^(?:t|lib)(\d{10,})$/);
+  if (m) return Number(m[1]);
+  m = String(name || "").match(/(\d{6})-(\d{6})$/);
+  if (m) {
+    const d = m[1],
+      t = m[2];
+    return new Date(
+      2000 + Number(d.slice(0, 2)),
+      Number(d.slice(2, 4)) - 1,
+      Number(d.slice(4, 6)),
+      Number(t.slice(0, 2)),
+      Number(t.slice(2, 4)),
+      Number(t.slice(4, 6)),
+    ).getTime();
+  }
+  return 0;
+}
+
+function sortCriteriaDropdowns() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body) return;
+  const libBtn = body.querySelector(".btn-success");
+  const libUl = libBtn ? libBtn.closest(".dropdown").querySelector("ul.dropdown-menu") : null;
+  if (libUl) {
+    const keyed = Array.from(libUl.children).map((li, idx) => {
+      const a = li.querySelector("a[onclick]");
+      const code = a ? a.getAttribute("onclick") : "";
+      const custom = /addGroupFromLibraryCustom\('([^']+)'\)/.exec(code);
+      return {
+        li,
+        order: custom ? 0 : 1,
+        key: custom ? entrySortKey(custom[1], li.textContent) : 0,
+        idx,
+      };
+    });
+    keyed.sort((x, y) => x.order - y.order || y.key - x.key || x.idx - y.idx);
+    keyed.forEach((k) => libUl.appendChild(k.li));
+  }
+  const tplBtn = Array.from(body.querySelectorAll("button.dropdown-toggle")).find((b) =>
+    /Шаблоны наборов/.test(b.textContent),
+  );
+  const tplUl = tplBtn ? tplBtn.closest(".dropdown").querySelector("ul.dropdown-menu") : null;
+  if (tplUl) {
+    const keyed = Array.from(tplUl.children)
+      .filter((li) => li.querySelector("a[onclick*='applyCriteriaTemplate']"))
+      .map((li, idx) => {
+        const a = li.querySelector("a");
+        const m = /applyCriteriaTemplate\('([^']+)'\)/.exec(a.getAttribute("onclick") || "");
+        return {li, key: entrySortKey(m ? m[1] : "", a.textContent), idx};
+      });
+    keyed.sort((x, y) => y.key - x.key || x.idx - y.idx);
+    keyed.forEach((k) => tplUl.appendChild(k.li));
+  }
+}
+
+const _sortPrevRenderCriteria = renderCriteriaOffcanvas;
+renderCriteriaOffcanvas = function (...a) {
+  const r = _sortPrevRenderCriteria.apply(this, a);
+  sortCriteriaDropdowns();
+  return r;
+};
 
 opmrInit();
