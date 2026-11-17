@@ -153,6 +153,16 @@
       "fullName": "ГБОУ ИТШ №777",
       "shortName": "ГБОУ СОШ №777",
       "city": ""
+    },
+    {
+      "id": "031",
+      "fullName": "Робототехнический центр ФМЛ №239",
+      "shortName": "Робототехнический центр ФМЛ №239",
+      "city": "Санкт-Петербург",
+      "address": "Санкт-Петербург улю Бакунина 8",
+      "phone": "8 921 9035564",
+      "email": "krekerele@gmail.com",
+      "orgLeader": "Филиппов Сергей Александрович"
     }
   ],
   "apparatusClasses": [
@@ -360,6 +370,23 @@
                 "penalty": false
               }
             ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbsvpus2",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "АННА"
@@ -543,6 +570,23 @@
                 "id": "fmweuby96l1ei7",
                 "name": "Бонус за расстояния",
                 "short": "Бонус расст.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbsknoji",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
                 "type": "int",
                 "sum": true,
                 "penalty": false
@@ -737,6 +781,23 @@
                 "penalty": false
               }
             ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbs82xlz",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "ТНПА",
@@ -886,6 +947,23 @@
                 "id": "fmwj51oenliw9i",
                 "name": "Доп баллы",
                 "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbsmtmkl",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
                 "type": "int",
                 "sum": true,
                 "penalty": false
@@ -1094,6 +1172,23 @@
                 "penalty": false
               }
             ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbsr4qq7",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "ТНПА"
@@ -1269,6 +1364,23 @@
                 "penalty": false
               }
             ]
+          },
+          {
+            "extra": true,
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "attempts": 1,
+            "multi": false,
+            "fields": [
+              {
+                "id": "fmwkuadbswujwb",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
           }
         ],
         "name": "АНПА"
@@ -1437,7 +1549,8 @@
               }
             ],
             "attempts": 1,
-            "multi": false
+            "multi": false,
+            "extra": true
           }
         ],
         "name": "БЭК"
@@ -1708,7 +1821,8 @@
               }
             ],
             "attempts": 1,
-            "multi": false
+            "multi": false,
+            "extra": true
           }
         ],
         "name": "ТНПА"
@@ -1907,16 +2021,11 @@
               }
             ],
             "attempts": 1,
-            "multi": false
+            "multi": false,
+            "extra": true
           }
         ],
         "name": "АНПА"
-      },
-      "anna": {
-        "date": "29.11.2026",
-        "color": "badge-anna",
-        "criteria": [],
-        "name": "АННА"
       }
     }
   },
@@ -5002,6 +5111,16 @@
           ]
         }
       ]
+    },
+    {
+      "id": "arch_2026_anna",
+      "name": "Архив: АННА 2026",
+      "date": "29.11.2026",
+      "criteria": [],
+      "archive": {
+        "year": "2026",
+        "classId": "anna"
+      }
     }
   ],
   "teams": [
@@ -8877,6 +8996,62 @@
         "place": 5,
         "totalScore": 57
       }
+    },
+    {
+      "id": "031-2026-tnpa",
+      "created": "17.11.2026",
+      "year": 2026,
+      "shortName": "Робототехнический центр ФМЛ №239",
+      "city": "Санкт-Петербург",
+      "region": "",
+      "postalCode": "",
+      "address": "Санкт-Петербург улю Бакунина 8",
+      "phone": "8 921 9035564",
+      "email": "krekerele@gmail.com",
+      "orgLeader": "Филиппов Сергей Александрович",
+      "apparatusClass": "Телеуправляемый необитаемый подводный аппарат (ТНПА)",
+      "apparatusName": "ТНПА Океаника \"Батискаф\"",
+      "description": "ТНПА Океаника \"Батискаф\", шестимоторный подводный аппарат с манипулятором хватом и камерой",
+      "photos": [
+        "https://forms.yandex.ru/cloud/files?path=%2F4740727%2F6afc6d25c45c07ff08f062f3_09203d_batiskafnew112902cam001_1.png",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a0%d0%be%d0%b1%d0%be%d1%82%d0%be%d1%82%d0%b5%d1%85%20%d1%86%d0%b5%d0%bd%d1%82%d1%80%20%d0%a4%d0%9c%d0%9b%20239/0920_3D%20%d0%91%d0%b0%d1%82%d0%b8%d1%81%d0%ba%d0%b0%d1%84_new_1129_02_cam001%20(1).png"
+      ],
+      "teamLeader": "Василевская Мария Юрьевна",
+      "teamLeaderPhone": "8 900 6538330",
+      "members": [
+        {
+          "fio": "Василевская Мария Юрьевна",
+          "birth": "1998-10-12",
+          "passport": "4018215101",
+          "isStudent": "Нет",
+          "order": "_______"
+        },
+        {
+          "fio": "Лебедев\tАлексей\tАлексеевич",
+          "birth": "2014-05-17",
+          "passport": "III - AK 7773403",
+          "isStudent": "Нет",
+          "order": "_____-"
+        },
+        {
+          "fio": "Лузин\tДаниил\tИльич",
+          "birth": "2014-08-20",
+          "passport": "III - AK 8014533",
+          "isStudent": "Нет",
+          "order": "________"
+        },
+        {
+          "fio": "Оромян\tФёдор\tАртемович",
+          "birth": "2012-12-14",
+          "passport": "III - AK 628949",
+          "isStudent": "Нет",
+          "order": "________-"
+        }
+      ],
+      "orgId": "031",
+      "applicationNumber": "2598310036",
+      "teamName": "",
+      "classId": "tnpa"
     }
   ]
 }
