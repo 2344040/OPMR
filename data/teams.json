@@ -1323,7 +1323,8 @@
                 "sum": true,
                 "penalty": false
               }
-            ]
+            ],
+            "attempts": 1
           },
           {
             "section": "Квалификация",
@@ -1361,7 +1362,8 @@
                 "sum": false,
                 "penalty": false
               }
-            ]
+            ],
+            "attempts": 1
           },
           {
             "section": "Конкурсное задание",
@@ -1415,7 +1417,8 @@
                 "sum": false,
                 "penalty": true
               }
-            ]
+            ],
+            "attempts": 1
           },
           {
             "section": "Конкурсное задание",
