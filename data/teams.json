@@ -1424,7 +1424,7 @@
             "multi": true
           },
           {
-            "section": "Дополнительные баллы",
+            "section": "Доп. баллы",
             "sectionShort": "Доп.",
             "fields": [
               {
@@ -1435,7 +1435,9 @@
                 "sum": true,
                 "penalty": false
               }
-            ]
+            ],
+            "attempts": 1,
+            "multi": false
           }
         ],
         "name": "БЭК"
@@ -3838,7 +3840,7 @@
           "penalty": 0
         },
         "extraBonus": 0,
-        "place": 2,
+        "place": 0,
         "totalScore": 0
       },
       "shortName": "СПбГМТУ",
@@ -3857,7 +3859,8 @@
         "task_time": "90",
         "task_score": "8",
         "task_gate": "5"
-      }
+      },
+      "place": 0
     },
     {
       "id": "2564426297",
@@ -4157,7 +4160,12 @@
       "orgId": "014",
       "applicationNumber": "2588938595",
       "id": "014-2026-bek",
-      "classId": "bek"
+      "classId": "bek",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "010-2026-bek",
@@ -4456,7 +4464,12 @@
           "order": ""
         }
       ],
-      "classId": "bek"
+      "classId": "bek",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "008-2026-tnpa",
