@@ -3229,6 +3229,61 @@
           ]
         }
       ]
+    },
+    {
+      "id": "lib1794921036442",
+      "name": "Презентация (5 крит.) БЭК 2026",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwkoghud3aszz",
+              "name": "Понимание устройства и принципов работы",
+              "short": "Пон. принц.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghud7t1hp",
+              "name": "Понимание задачи и обоснование инженерного подхода",
+              "short": "Пон. зад.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghud465va",
+              "name": "Собственный вклад",
+              "short": "Вклад",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghudac8hl",
+              "name": "Инженерная методология",
+              "short": "Метод",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkoghudiqavb",
+              "name": "Ответы на вопросы и эрудиция",
+              "short": "Эрудиция",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        }
+      ],
+      "library": true
     }
   ],
   "teams": [
