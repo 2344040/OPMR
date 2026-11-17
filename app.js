@@ -5715,40 +5715,61 @@ function deleteApparatusClass(idx) {
 
 function renderMasterTable() {
   const container = document.getElementById("masterContent");
+  if (!container) return;
   const years = [2026, 2025, 2024];
-  const stats = {};
-  teamsData.forEach((team) => {
-    if (!team.orgId || !organizations.some((o) => o.id === team.orgId)) return;
-    const place = getTeamPlace(team);
-    const score = teamHasScores(team) ? computeTeamTotal(team) : (team.protocol?.totalScore ?? null);
-    if (!stats[team.orgId]) stats[team.orgId] = {org: organizations.find((o) => o.id === team.orgId), years: {}};
-    const cur = stats[team.orgId].years[team.year];
-    if (!cur || (place !== null && (cur.place === null || place < cur.place))) {
-      stats[team.orgId].years[team.year] = {place, score};
-    }
+  const enabledClasses = new Set();
+  years.forEach((y) => {
+    Object.keys(competitionSettings[y] || {}).forEach((cid) => enabledClasses.add(cid));
   });
-  const rows = Object.values(stats).sort((a, b) => a.org.fullName.localeCompare(b.org.fullName, "ru"));
-  if (!rows.length) {
-    container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет данных для сводной таблицы</div>';
+  if (!enabledClasses.size) {
+    container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет включённых классов аппаратов</div>';
     return;
   }
-  let html =
-    '<div class="detail-section"><h4 class="detail-section-title">Сводная таблица результатов</h4><div class="table-responsive"><table class="table table-hover master-table"><thead><tr><th style="min-width:250px">Организация</th>';
-  years.forEach((y) => (html += `<th>${y}</th>`));
-  html += "<th>Лучшее место</th></tr></thead><tbody>";
-  rows.forEach(({org, years: yd}) => {
-    html += `<tr><td><div class="fw-bold">${escHtml(org.shortName || org.fullName)}</div><div class="text-muted small">${escHtml(org.city || "")}</div></td>`;
-    let best = null;
-    years.forEach((y) => {
-      const d = yd[y];
-      if (d && d.place !== null) {
-        if (best === null || d.place < best) best = d.place;
-        html += `<td><strong>${d.place}</strong> / ${d.score ?? "—"}</td>`;
-      } else html += "<td>—</td>";
-    });
-    html += `<td class="${best === 1 ? "best-place" : ""}">${best ?? "—"}</td></tr>`;
+  const byClass = {};
+  teamsData.forEach((team) => {
+    if (!team.orgId) return;
+    const cid = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+    if (!enabledClasses.has(cid)) return;
+    if (!byClass[cid]) byClass[cid] = {};
+    const orgId = team.orgId;
+    if (!byClass[cid][orgId]) byClass[cid][orgId] = {org: organizations.find((o) => o.id === orgId), years: {}};
+    const place = getTeamPlace(team);
+    const score = teamHasScores(team) ? computeTeamTotal(team) : (team.protocol?.totalScore ?? null);
+    const cur = byClass[cid][orgId].years[team.year];
+    if (!cur || (place !== null && (cur.place === null || place < cur.place))) {
+      byClass[cid][orgId].years[team.year] = {place, score};
+    }
   });
-  container.innerHTML = html + "</tbody></table></div></div>";
+  let html = '<div class="detail-section"><h4 class="detail-section-title">Сводная таблица результатов</h4>';
+  const classOrder = Array.from(enabledClasses).sort((a, b) => String(getClassInfo(a).name).localeCompare(String(getClassInfo(b).name), "ru"));
+  classOrder.forEach((cid) => {
+    const rows = Object.values(byClass[cid] || {}).filter((r) => r.org).sort((a, b) => String(a.org.fullName || "").localeCompare(String(b.org.fullName || ""), "ru"));
+    if (!rows.length) return;
+    const info = getClassInfo(cid);
+    html += `<div class="master-class-block"><div class="master-class-head"><span class="badge category-badge ${info.color}">${escHtml(info.name)}</span><span class="master-class-title">${escHtml(info.fullName || info.name)}</span></div>
+<div class="table-responsive"><table class="table table-hover master-table">
+<thead><tr><th rowspan="2" class="master-org-col">Организация</th>`;
+    years.forEach((y) => { html += `<th colspan="2" class="master-year-head">${y}</th>`; });
+    html += `<th rowspan="2">Лучшее место</th></tr><tr>`;
+    years.forEach(() => { html += `<th class="master-place-col">Место</th><th class="master-score-col">Баллы</th>`; });
+    html += `</tr></thead><tbody>`;
+    rows.forEach(({org, years: yd}) => {
+      let best = null;
+      html += `<tr><td><div class="fw-semibold">${escHtml(org.shortName || org.fullName)}</div><div class="text-muted small">${escHtml(org.city || "")}</div></td>`;
+      years.forEach((y) => {
+        const d = yd[y];
+        if (d && d.place !== null) {
+          if (best === null || d.place < best) best = d.place;
+          html += `<td class="master-place-cell"><strong>${d.place}</strong></td><td class="master-score-cell">${d.score ?? "—"}</td>`;
+        } else {
+          html += `<td class="master-place-cell">—</td><td class="master-score-cell">—</td>`;
+        }
+      });
+      html += `<td class="master-best-cell${best === 1 ? " best-place" : ""}">${best ?? "—"}</td></tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+  });
+  container.innerHTML = html + "</div>";
 }
 
 const _integrityOrigSaveEdit = saveEdit;

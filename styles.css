@@ -3095,11 +3095,66 @@ body.sync-floating {
 }
 
 /* ===== Колонка «Доп.» скрывается, когда доп. баллы ведутся своей группой ===== */
-.competition-table.no-extra-col .cg-extra-col { display: none !important; }
+.competition-table.no-extra-col .cg-extra-col {
+  display: none !important;
+}
 
 /* ===== Метка авто-группы доп. баллов ===== */
 .crit-extra-badge {
-  font-size: 0.65rem; font-weight: 700; color: #15803d;
-  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 999px;
-  padding: 1px 7px; margin-left: 6px; vertical-align: middle;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ===== Сводная таблица: блоки по классам, равномерные колонки ===== */
+.master-class-block {
+  margin-bottom: 24px;
+}
+.master-class-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+.master-class-title {
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+.master-table {
+  table-layout: fixed;
+}
+.master-org-col {
+  width: 38%;
+  min-width: 260px;
+}
+.master-year-head {
+  text-align: center;
+}
+.master-place-col,
+.master-place-cell {
+  width: 70px;
+  text-align: center;
+}
+.master-score-col,
+.master-score-cell {
+  width: 70px;
+  text-align: center;
+}
+.master-best-cell {
+  text-align: center;
+  font-weight: 700;
+}
+.master-place-cell strong {
+  color: #0f172a;
+}
+.best-place {
+  color: #b45309;
 }
