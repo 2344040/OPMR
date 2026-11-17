@@ -3203,3 +3203,8 @@ body.sync-floating {
 .master-team-table td {
   vertical-align: middle;
 }
+
+/* ===== Сводная таблица: режим «По командам» ===== */
+.master-team-table .master-team-col { width: 40%; min-width: 260px; }
+.master-team-table td { vertical-align: middle; }
+.master-sub { color: #64748b; font-size: 0.72rem; line-height: 1.25; }
