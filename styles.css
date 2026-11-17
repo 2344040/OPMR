@@ -3064,3 +3064,17 @@ body.sync-floating {
 .competition-table thead th.cg-sticky-1 {
   z-index: 6;
 }
+
+/* ===== Панель инструментов таблицы: кнопки в первой строке, подсказка во второй ===== */
+.competition-toolbar {
+  flex-wrap: wrap;
+  row-gap: 6px;
+  column-gap: 8px;
+}
+.competition-toolbar-hint {
+  flex: 0 0 100%;
+  order: 99;
+  margin-left: 0 !important;
+  white-space: normal;
+  text-align: left;
+}
