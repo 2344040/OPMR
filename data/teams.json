@@ -3284,6 +3284,53 @@
         }
       ],
       "library": true
+    },
+    {
+      "id": "lib1794921057291",
+      "name": "Квалификация (4 крит.) 2026",
+      "criteria": [
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwkojse4lq214",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkojse48aeid",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkojse4x4q3w",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwkojse46dex9",
+              "name": "Квалификационное задание",
+              "short": "Квалиф.",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        }
+      ],
+      "library": true
     }
   ],
   "teams": [
