@@ -2026,12 +2026,6 @@
           }
         ],
         "name": "АНПА"
-      },
-      "anna": {
-        "date": "29.11.2026",
-        "color": "badge-anna",
-        "criteria": [],
-        "name": "АННА"
       }
     }
   },
@@ -9029,28 +9023,28 @@
           "fio": "Василевская Мария Юрьевна",
           "birth": "1998-10-12",
           "passport": "4018215101",
-          "isStudent": "Да",
+          "isStudent": "Нет",
           "order": "_______"
         },
         {
           "fio": "Лебедев\tАлексей\tАлексеевич",
           "birth": "2014-05-17",
           "passport": "III - AK 7773403",
-          "isStudent": "Да",
+          "isStudent": "Нет",
           "order": "_____-"
         },
         {
           "fio": "Лузин\tДаниил\tИльич",
           "birth": "2014-08-20",
           "passport": "III - AK 8014533",
-          "isStudent": "Да",
+          "isStudent": "Нет",
           "order": "________"
         },
         {
           "fio": "Оромян\tФёдор\tАртемович",
           "birth": "2012-12-14",
           "passport": "III - AK 628949",
-          "isStudent": "Да",
+          "isStudent": "Нет",
           "order": "________-"
         }
       ],
