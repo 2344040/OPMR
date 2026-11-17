@@ -8081,8 +8081,9 @@ function scoreCell(team, cg, c, gi, ci, a, rowspan, extraCls) {
         if (n !== null && n > 0) display = "−" + display;
       } else if (isPtsCol(c) && n !== null) cls += " cg-score";
     }
-  } else if ((c.type || "int") === "time") {
+    } else if ((c.type || "int") === "time") {
     display = '<span class="cg-time-val">—</span>';
+    cls += " cg-time";
   }
   const rs = rowspan > 1 ? ` rowspan="${rowspan}"` : "";
   return `<td class="${cls}"${rs} style="background:${CG_TINTS[c.tint]} !important">${display}</td>`;

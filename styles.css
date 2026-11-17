@@ -3006,3 +3006,23 @@ body.sync-floating {
 .competition-table th.team-block-end {
   border-bottom: 2px solid #cbd5e1 !important;
 }
+
+/* ===== Граница между командами сквозь объединённые (rowspan) ячейки ===== */
+.competition-table tbody td[rowspan="2"],
+.competition-table tbody th[rowspan="2"] {
+  border-bottom: 2px solid #cbd5e1 !important;
+}
+
+/* ===== Колонка «время»: одинаковая центровка значения и прочерка ===== */
+.competition-table td.cg-time {
+  text-align: center !important;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.competition-table .cg-time-val {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
