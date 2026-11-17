@@ -2977,17 +2977,32 @@ body.sync-floating {
 }
 
 /* ===== Колонка «Время» и номера попыток: стабильная геометрия ===== */
-.competition-table td { text-align: center; vertical-align: middle; }
-.competition-table td.td-team { text-align: left; }
+.competition-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+.competition-table td.td-team {
+  text-align: left;
+}
 .competition-table td.cg-time {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   min-width: 46px;
 }
-.competition-table td.cg-attempt-no { min-width: 36px; }
+.competition-table td.cg-attempt-no {
+  min-width: 36px;
+}
 .cg-time-val {
   display: inline-block;
   min-width: 36px;
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+/* ===== Граница между командами: вся строка, в формате линии под шапкой ===== */
+.competition-table tbody tr.team-block-end > td,
+.competition-table tbody tr.team-block-end > th,
+.competition-table td.team-block-end,
+.competition-table th.team-block-end {
+  border-bottom: 2px solid #cbd5e1 !important;
 }

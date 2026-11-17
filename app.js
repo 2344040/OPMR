@@ -7765,8 +7765,8 @@ function renderCompetition() {
         let cells = "";
         if (r === 0) {
           const drawRaw = team.draw ?? team.drawNumber ?? team.lot ?? "";
-          cells += `<td class="cg-fixed" rowspan="${rowsPerTeam}" style="${fixedBody}">${drawRaw === "" ? "—" : escHtml(drawRaw)}</td>`;
-          cells += `<td class="td-team" rowspan="${rowsPerTeam}" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}</td>`;
+          cells += `<td class="cg-fixed team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${drawRaw === "" ? "—" : escHtml(drawRaw)}</td>`;
+          cells += `<td class="td-team team-block-end" rowspan="${rowsPerTeam}" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}</td>`;
         }
         critGroups.forEach((cg, gi) => {
           const A = cg.attempts || 1;
@@ -7786,9 +7786,9 @@ function renderCompetition() {
         });
         if (r === 0) {
           const extraRaw = team.extra ?? team.protocol?.extraBonus ?? "";
-          cells += `<td class="cg-fixed" rowspan="${rowsPerTeam}" style="${fixedBody}">${extraRaw === "" ? "—" : escHtml(extraRaw)}</td>`;
-          cells += `<td class="cg-fixed cg-total" rowspan="${rowsPerTeam}" style="${fixedBody}"><strong>${hasAny ? Math.round(total * 100) / 100 : "—"}</strong></td>`;
-          cells += `<td class="cg-fixed cg-place-col" rowspan="${rowsPerTeam}" style="${fixedBody}">${renderPlaceBadge(team.place ?? team.protocol?.place)}</td>`;
+          cells += `<td class="cg-fixed team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${extraRaw === "" ? "—" : escHtml(extraRaw)}</td>`;
+          cells += `<td class="cg-fixed cg-total team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}"><strong>${hasAny ? Math.round(total * 100) / 100 : "—"}</strong></td>`;
+          cells += `<td class="cg-fixed cg-place-col team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${renderPlaceBadge(team.place ?? team.protocol?.place)}</td>`;
         }
         rows += `<tr class="competition-row${r === rowsPerTeam - 1 ? " team-block-end" : ""}" data-team-row="${team.id}" tabindex="0" title="Открыть протокол команды" onclick="showProtocolPage('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProtocolPage('${team.id}');}">${cells}</tr>`;
       }
@@ -8065,14 +8065,21 @@ function scoreCell(team, cg, c, gi, ci, a, rowspan, extraCls) {
   let cls = `cg-tint-${c.tint} m-hide${extraCls || ""}`;
   if (present) {
     const type = c.type || "int";
-    if (type === "bool") display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
-    else if (type === "text") { display = escHtml(v); cls += " cg-text"; }
-    else if (type === "time") { display = `<span class="cg-time-val">${escHtml(formatTimeValue(v))}</span>`; cls += " cg-time"; }
-    else {
+    if (type === "bool")
+      display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
+    else if (type === "text") {
+      display = escHtml(v);
+      cls += " cg-text";
+    } else if (type === "time") {
+      display = `<span class="cg-time-val">${escHtml(formatTimeValue(v))}</span>`;
+      cls += " cg-time";
+    } else {
       const n = parseScoreNumber(v);
       display = type === "decimal" && n !== null ? escHtml(String(v).replace(".", ",")) : escHtml(v);
-      if (c.penalty) { cls += " cg-penalty"; if (n !== null && n > 0) display = "−" + display; }
-      else if (isPtsCol(c) && n !== null) cls += " cg-score";
+      if (c.penalty) {
+        cls += " cg-penalty";
+        if (n !== null && n > 0) display = "−" + display;
+      } else if (isPtsCol(c) && n !== null) cls += " cg-score";
     }
   } else if ((c.type || "int") === "time") {
     display = '<span class="cg-time-val">—</span>';
