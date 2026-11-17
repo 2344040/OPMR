@@ -1445,7 +1445,158 @@
       "tnpa": {
         "date": "28.11.2026",
         "color": "badge-tnpa",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "id": "fmwkr75ynorywo",
+                "name": "Понимание устройства и принципов работы",
+                "short": "Пон. принц.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr75ynh7dls",
+                "name": "Понимание задачи и обоснование инженерного подхода",
+                "short": "Пон. зад.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr75yng8mzl",
+                "name": "Собственный вклад",
+                "short": "Вклад",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr75ynxi2b4",
+                "name": "Инженерная методология",
+                "short": "Метод",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr75ynzqaux",
+                "name": "Ответы на вопросы и эрудиция",
+                "short": "Эрудиция",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ],
+            "attempts": 1,
+            "multi": false
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "id": "fmwkr7cm9d3ryy",
+                "name": "Размерения (ДхШхВ, мм)",
+                "short": "Разм. ДШВ мм",
+                "type": "text",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr7cm9gh2xc",
+                "name": "Вес (кг)",
+                "short": "Вес",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr7cm9s9vdc",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "id": "fmwkr7cm9s2xif",
+                "name": "Квалификационное задание",
+                "short": "Квалиф.",
+                "type": "bool",
+                "sum": false,
+                "penalty": false
+              }
+            ],
+            "attempts": 1,
+            "multi": false
+          },
+          {
+            "section": "Конкурс Задание 1",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwkr9smizw9li",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr9smiv15zx",
+                "name": "Балл за время",
+                "short": "Б. времени",
+                "type": "decimal",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr9smi7mv3i",
+                "name": "Ключи (кол-во)",
+                "short": "Ключи (кол-во)",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr9sminvk1p",
+                "name": "Ключи (балл)",
+                "short": "ключи",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr9smig1bnh",
+                "name": "Соответв. ключи (кол-во)",
+                "short": "Соотв. кл.",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwkr9smijhz6y",
+                "name": "Соответв. ключи (балл)",
+                "short": "соотв. кл.",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "id": "fmwkrdcohpewnr",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          }
+        ],
         "name": "ТНПА"
       },
       "anpa": {
