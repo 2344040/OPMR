@@ -5718,11 +5718,14 @@ function renderMasterTable() {
   if (!container) return;
   const years = [2026, 2025, 2024];
   const enabledClasses = new Set();
-  years.forEach((y) => {
-    Object.keys(competitionSettings[y] || {}).forEach((cid) => enabledClasses.add(cid));
+  years.forEach((y) => Object.keys(competitionSettings[y] || {}).forEach((cid) => enabledClasses.add(cid)));
+  teamsData.forEach((t) => {
+    if (!t.orgId) return;
+    const cid = typeof getTeamClassId === "function" ? getTeamClassId(t) : getClassIdByValue(t.apparatusClass, t.year);
+    if (cid && cid !== "na") enabledClasses.add(cid);
   });
   if (!enabledClasses.size) {
-    container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет включённых классов аппаратов</div>';
+    container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет данных</div>';
     return;
   }
   const byClass = {};
@@ -5732,44 +5735,73 @@ function renderMasterTable() {
     if (!enabledClasses.has(cid)) return;
     if (!byClass[cid]) byClass[cid] = {};
     const orgId = team.orgId;
-    if (!byClass[cid][orgId]) byClass[cid][orgId] = {org: organizations.find((o) => o.id === orgId), years: {}};
+    if (!byClass[cid][orgId]) byClass[cid][orgId] = {org: organizations.find((o) => o.id === orgId), years: {}, bestYear: null};
     const place = getTeamPlace(team);
     const score = teamHasScores(team) ? computeTeamTotal(team) : (team.protocol?.totalScore ?? null);
     const cur = byClass[cid][orgId].years[team.year];
     if (!cur || (place !== null && (cur.place === null || place < cur.place))) {
       byClass[cid][orgId].years[team.year] = {place, score};
     }
+    if (place !== null) {
+      const prev = byClass[cid][orgId].bestYear;
+      if (prev === null || team.year > prev) byClass[cid][orgId].bestYear = team.year;
+    }
   });
   let html = '<div class="detail-section"><h4 class="detail-section-title">Сводная таблица результатов</h4>';
   const classOrder = Array.from(enabledClasses).sort((a, b) => String(getClassInfo(a).name).localeCompare(String(getClassInfo(b).name), "ru"));
   classOrder.forEach((cid) => {
-    const rows = Object.values(byClass[cid] || {}).filter((r) => r.org).sort((a, b) => String(a.org.fullName || "").localeCompare(String(b.org.fullName || ""), "ru"));
+    const rows = Object.values(byClass[cid] || {}).filter((r) => r.org);
+    rows.sort((a, b) => {
+      const ba = bestPlaceOf(a), bb = bestPlaceOf(b);
+      if (ba !== bb) return (ba ?? 999) - (bb ?? 999);
+      const ya = bestYearOf(a), yb = bestYearOf(b);
+      if (ya !== yb) return yb - ya;
+      return String(a.org.fullName || "").localeCompare(String(b.org.fullName || ""), "ru");
+    });
     if (!rows.length) return;
     const info = getClassInfo(cid);
     html += `<div class="master-class-block"><div class="master-class-head"><span class="badge category-badge ${info.color}">${escHtml(info.name)}</span><span class="master-class-title">${escHtml(info.fullName || info.name)}</span></div>
 <div class="table-responsive"><table class="table table-hover master-table">
 <thead><tr><th rowspan="2" class="master-org-col">Организация</th>`;
-    years.forEach((y) => { html += `<th colspan="2" class="master-year-head">${y}</th>`; });
-    html += `<th rowspan="2">Лучшее место</th></tr><tr>`;
-    years.forEach(() => { html += `<th class="master-place-col">Место</th><th class="master-score-col">Баллы</th>`; });
+    years.forEach((y, i) => { html += `<th colspan="2" class="master-year-head${i > 0 ? ' master-year-sep' : ''}">${y}</th>`; });
+    html += `<th rowspan="2 class="master-best-head">Лучшее место</th></tr><tr>`;
+    years.forEach((y, i) => { html += `<th class="master-place-col${i > 0 ? ' master-year-sep' : ''}">Место</th><th class="master-score-col">Баллы</th>`; });
     html += `</tr></thead><tbody>`;
     rows.forEach(({org, years: yd}) => {
-      let best = null;
+      const best = bestPlaceOf({years: yd});
       html += `<tr><td><div class="fw-semibold">${escHtml(org.shortName || org.fullName)}</div><div class="text-muted small">${escHtml(org.city || "")}</div></td>`;
-      years.forEach((y) => {
+      years.forEach((y, i) => {
         const d = yd[y];
         if (d && d.place !== null) {
-          if (best === null || d.place < best) best = d.place;
-          html += `<td class="master-place-cell"><strong>${d.place}</strong></td><td class="master-score-cell">${d.score ?? "—"}</td>`;
+          html += `<td class="master-place-cell${i > 0 ? ' master-year-sep' : ''}">${renderPlaceBadge(d.place)}</td><td class="master-score-cell">${d.score ?? "—"}</td>`;
         } else {
-          html += `<td class="master-place-cell">—</td><td class="master-score-cell">—</td>`;
+          html += `<td class="master-place-cell${i > 0 ? ' master-year-sep' : ''}">—</td><td class="master-score-cell">—</td>`;
         }
       });
-      html += `<td class="master-best-cell${best === 1 ? " best-place" : ""}">${best ?? "—"}</td></tr>`;
+      html += `<td class="master-best-cell">${best ? renderPlaceBadge(best) : "—"}</td></tr>`;
     });
     html += `</tbody></table></div></div>`;
   });
   container.innerHTML = html + "</div>";
+}
+
+function bestPlaceOf(row) {
+  let best = null;
+  for (const y in row.years || {}) {
+    const p = row.years[y].place;
+    if (p !== null && (best === null || p < best)) best = p;
+  }
+  return best;
+}
+function bestYearOf(row) {
+  let best = null, bestP = null;
+  for (const y in row.years || {}) {
+    const p = row.years[y].place;
+    if (p !== null && (bestP === null || p < bestP || (p === bestP && Number(y) > Number(best)))) {
+      bestP = p; best = Number(y);
+    }
+  }
+  return best;
 }
 
 const _integrityOrigSaveEdit = saveEdit;

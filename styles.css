@@ -3158,3 +3158,21 @@ body.sync-floating {
 .best-place {
   color: #b45309;
 }
+
+/* ===== Сводная таблица: границы между годами ===== */
+.master-table .master-year-sep {
+  border-left: 2px solid #cbd5e1 !important;
+}
+.master-table th.master-year-head {
+  text-align: center;
+}
+.master-table th.master-best-head {
+  text-align: center;
+}
+.master-best-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+.master-best-cell .place-badge {
+  margin: 0 auto;
+}
