@@ -1542,8 +1542,8 @@
                 "id": "fmwkr9smizw9li",
                 "name": "Время (сек)",
                 "short": "Время",
-                "type": "decimal",
-                "sum": false,
+                "type": "time",
+                "sum": true,
                 "penalty": false
               },
               {
@@ -1594,7 +1594,121 @@
                 "sum": false,
                 "penalty": true
               }
-            ]
+            ],
+            "attempts": 1,
+            "multi": false
+          },
+          {
+            "section": "Конкурс Задание 2",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwkre2f46kbbf",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "time",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkre2f444zei",
+                "name": "Балл за время",
+                "short": "время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkre2f466cok",
+                "name": "Кольцо (10/0 балл)",
+                "short": "Кольцо",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkre2f45hacd",
+                "name": "Соотв. кольцо (10/0 балл)",
+                "short": "Соотв. кольцо",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkre2f4g2jsj",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ],
+            "attempts": 2,
+            "multi": true
+          },
+          {
+            "section": "Конкурс Задание 3",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwkrhnc1jdav6",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "time",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkrhnc1boogj",
+                "name": "Балл за время",
+                "short": "время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkrhnc1nuilz",
+                "name": "Флаг (10/0 балл)",
+                "short": "флаг",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkrhnc1yugiu",
+                "name": "Фиксация (10/0 балл)",
+                "short": "фиксация",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkrhnc1cj5vi",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ],
+            "attempts": 1,
+            "multi": false
+          },
+          {
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "fields": [
+              {
+                "id": "fmwkrkn7x2d902",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ],
+            "attempts": 1,
+            "multi": false
           }
         ],
         "name": "ТНПА"
@@ -5086,7 +5200,76 @@
       "year": 2026,
       "orgId": "002",
       "apparatusName": "«Агент000» (ТНПА)",
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "scores": {
+        "f:fmwkr75ynorywo": "5",
+        "През.::Понимание устройства и принципов работы": "5",
+        "f:fmwkr75ynh7dls": "5",
+        "През.::Понимание задачи и обоснование инженерного подхода": "5",
+        "f:fmwkr75yng8mzl": "5",
+        "През.::Собственный вклад": "5",
+        "f:fmwkr75ynxi2b4": "5",
+        "През.::Инженерная методология": "5",
+        "f:fmwkr75ynzqaux": "5",
+        "През.::Ответы на вопросы и эрудиция": "5",
+        "f:fmwkr7cm9d3ryy": "100х50х50",
+        "Квал.::Размерения (ДхШхВ, мм)": "100х50х50",
+        "f:fmwkr7cm9gh2xc": "10.5",
+        "Квал.::Вес (кг)": "10.5",
+        "f:fmwkr7cm9s9vdc": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwkr7cm9s2xif": "Да",
+        "Квал.::Квалификационное задание": "Да",
+        "f:fmwkr9smizw9li": "8:58",
+        "Конкурс::Время (сек)": "",
+        "f:fmwkr9smiv15zx": "10",
+        "Конкурс::Балл за время": "",
+        "f:fmwkr9smi7mv3i": "3",
+        "Конкурс::Ключи (кол-во)": "3",
+        "f:fmwkr9sminvk1p": "20",
+        "Конкурс::Ключи (балл)": "20",
+        "f:fmwkr9smig1bnh": "2",
+        "Конкурс::Соответв. ключи (кол-во)": "2",
+        "f:fmwkr9smijhz6y": "10",
+        "Конкурс::Соответв. ключи (балл)": "10",
+        "f:fmwkrdcohpewnr": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwkre2f46kbbf": "",
+        "f:fmwkre2f444zei": "",
+        "f:fmwkre2f466cok": "",
+        "Конкурс::Кольцо (10/0 балл)": "",
+        "f:fmwkre2f45hacd": "",
+        "Конкурс::Соотв. кольцо (10/0 балл)": "",
+        "f:fmwkre2f4g2jsj": "",
+        "f:fmwkre2f46kbbf#2": "",
+        "Конкурс::Время (сек)#2": "",
+        "f:fmwkre2f444zei#2": "",
+        "Конкурс::Балл за время#2": "",
+        "f:fmwkre2f466cok#2": "",
+        "Конкурс::Кольцо (10/0 балл)#2": "",
+        "f:fmwkre2f45hacd#2": "",
+        "Конкурс::Соотв. кольцо (10/0 балл)#2": "",
+        "f:fmwkre2f4g2jsj#2": "",
+        "Конкурс::Штрафные баллы#2": "",
+        "f:fmwkrhnc1jdav6": "",
+        "f:fmwkrhnc1boogj": "",
+        "f:fmwkrhnc1nuilz": "",
+        "Конкурс::Флаг (10/0 балл)": "",
+        "f:fmwkrhnc1yugiu": "",
+        "Конкурс::Фиксация (10/0 балл)": "",
+        "f:fmwkrhnc1cj5vi": "",
+        "f:fmwkrkn7x2d902": "",
+        "Доп.::За внеконкурсное задание": ""
+      },
+      "draw": "1",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "1",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 45
+      }
     },
     {
       "created": "10.11.2026",
