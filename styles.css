@@ -3176,3 +3176,30 @@ body.sync-floating {
 .master-best-cell .place-badge {
   margin: 0 auto;
 }
+
+/* ===== Переключатель режима сводной таблицы ===== */
+.master-view-switch {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.master-view-switch .btn {
+  font-size: 0.82rem;
+}
+
+/* ===== Таблица по командам ===== */
+.master-team-table .master-team-col {
+  width: 32%;
+  min-width: 220px;
+}
+.master-team-table .master-leader-col {
+  width: 18%;
+  min-width: 140px;
+}
+.master-team-table .master-apparatus-col {
+  width: 18%;
+  min-width: 140px;
+}
+.master-team-table td {
+  vertical-align: middle;
+}
