@@ -5814,10 +5814,13 @@ function renderMasterByTeam(cid, years, info) {
   });
   teams.sort((a, b) => {
     const pa = getTeamPlace(a), pb = getTeamPlace(b);
-    if (pa !== null && pb !== null) return pa - pb;
+    if (pa !== null && pb !== null) {
+      if (pa !== pb) return pa - pb;
+      return b.year - a.year;
+    }
     if (pa !== null) return -1;
     if (pb !== null) return 1;
-    return a.year - b.year;
+    return b.year - a.year;
   });
   if (!teams.length) return '<div class="text-muted small py-2">Нет данных</div>';
   let html = `<div class="table-responsive"><table class="table table-hover master-table master-team-table">
@@ -5827,7 +5830,6 @@ function renderMasterByTeam(cid, years, info) {
   years.forEach((y, i) => { html += `<th class="master-place-col${i > 0 ? ' master-year-sep' : ''}">Место</th><th class="master-score-col">Баллы</th>`; });
   html += `<th></th></tr></thead><tbody>`;
   teams.forEach((t) => {
-    const org = organizations.find((o) => o.id === t.orgId);
     const place = getTeamPlace(t);
     const score = teamHasScores(t) ? computeTeamTotal(t) : (t.protocol?.totalScore ?? null);
     const leaderSurname = (t.teamLeader || "").trim().split(/\s+/)[0] || "";
@@ -5835,7 +5837,7 @@ function renderMasterByTeam(cid, years, info) {
     const subLines = [];
     if (leaderSurname) subLines.push(`<div class="master-sub">${escHtml(leaderSurname)}</div>`);
     if (apparatus) subLines.push(`<div class="master-sub">${escHtml(apparatus)}</div>`);
-    html += `<tr><td><div class="fw-semibold">${escHtml(getTeamDisplayName(t))}</div><div class="text-muted" style="font-size:0.72rem">${escHtml(org?.shortName || org?.fullName || "")}</div>${subLines.join("")}</td>`;
+    html += `<tr><td><div class="fw-semibold">${escHtml(getTeamDisplayName(t))}</div>${subLines.join("")}</td>`;
     years.forEach((y, i) => {
       if (t.year === y) {
         html += `<td class="master-place-cell${i > 0 ? ' master-year-sep' : ''}">${place !== null ? renderPlaceBadge(place) : "—"}</td><td class="master-score-cell">${score ?? "—"}</td>`;
