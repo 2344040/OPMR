@@ -8997,7 +8997,7 @@
       "id": "031-2026-tnpa",
       "created": "17.11.2026",
       "year": 2026,
-      "shortName": "",
+      "shortName": "Робототехнический центр ФМЛ №239",
       "city": "Санкт-Петербург",
       "region": "",
       "postalCode": "",
@@ -9006,7 +9006,7 @@
       "email": "krekerele@gmail.com",
       "orgLeader": "Филиппов Сергей Александрович",
       "apparatusClass": "Телеуправляемый необитаемый подводный аппарат (ТНПА)",
-      "apparatusName": "ТНПА Океаника \"Батискаф\", шестимоторный подводный аппарат с манипулятором хватом и камерой",
+      "apparatusName": "ТНПА Океаника \"Батискаф\"",
       "description": "ТНПА Океаника \"Батискаф\", шестимоторный подводный аппарат с манипулятором хватом и камерой",
       "photos": [
         "https://forms.yandex.ru/cloud/files?path=%2F4740727%2F6afc6d25c45c07ff08f062f3_09203d_batiskafnew112902cam001_1.png"
@@ -9044,7 +9044,8 @@
         }
       ],
       "orgId": "031",
-      "applicationNumber": "2598310036"
+      "applicationNumber": "2598310036",
+      "teamName": ""
     }
   ]
 }
