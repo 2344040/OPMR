@@ -3078,3 +3078,18 @@ body.sync-floating {
   white-space: normal;
   text-align: left;
 }
+
+/* ===== Протокол: поля и суммы выровнены по нижней границе ===== */
+#protocolForm .row > [class*="col-"] {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+#protocolForm .row > [class*="col-"] > .form-label {
+  margin-bottom: 4px;
+}
+#protocolForm .col-12:has([id^="protoGroupTotal-"]) .alert {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 0;
+}

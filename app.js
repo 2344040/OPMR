@@ -1007,7 +1007,7 @@ function showTeamDetails(teamId) {
     : "";
 
   document.getElementById("detailContent").innerHTML =
-    `<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2 print-header"><div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a;font-size:1.75rem">${displayName}</h3>${getCategoryBadge(team.apparatusClass, "category-badge-card")}<span class="badge bg-secondary ms-2">${team.year}</span></div><div class="d-flex gap-2">${editButtonDesktop}<button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()"><i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span></button></div></div><div class="d-flex gap-1 mb-2 print-header-mobile">${editButtonMobile}<button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display:none"><i class="fas fa-print"></i></button></div><div class="detail-section print-section-info"><div class="row g-4">
+    /* html */ `<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2 print-header"><div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a;font-size:1.75rem">${displayName}</h3>${getCategoryBadge(team.apparatusClass, "category-badge-card")}<span class="badge bg-secondary ms-2">${team.year}</span></div><div class="d-flex gap-2">${editButtonDesktop}<button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()"><i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span></button></div></div><div class="d-flex gap-1 mb-2 print-header-mobile">${editButtonMobile}<button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display:none"><i class="fas fa-print"></i></button></div><div class="detail-section print-section-info"><div class="row g-4">
     
     <div class="col-md-6"><div class="detail-label">ID команды</div><div class="detail-value">${team.id}</div></div><div class="col-md-6"><div class="detail-label">Номер заявки</div><div class="detail-value">${team.applicationNumber || "—"}</div></div><div class="col-md-6"><div class="detail-label">Название команды</div><div class="detail-value d-flex align-items-center gap-2"><span>${getTeamDisplayName(team)}</span><button class="btn btn-sm btn-outline-secondary" onclick="openTeamNameModal()" title="Задать своё название"><i class="fas fa-pen"></i></button></div></div>
     <div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div><div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${getTeamCity(team) || "—"}</div></div><div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || "—"}</div></div><div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || "—"}</div></div><div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || "—"}</div></div><div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div><div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div><div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || "—"}</div></div></div></div><div class="detail-section print-section-apparatus"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, "category-badge-xl")}</div><div class="row g-4"><div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div><div class="col-12"><div class="detail-label">Название аппарата</div><div class="detail-value">${team.apparatusName || "—"}</div></div><div class="col-12 print-hide-desc"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div><div class="col-12 print-hide-photos"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div></div></div><div class="detail-section print-section-team"><h5 class="detail-section-title">Команда</h5><div class="row g-4"><div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${(team.teamLeaderPhone || "").replace(/\s/g, "")}">${team.teamLeaderPhone || "—"}</a></div></div></div></div><div class="detail-section print-section-members"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>`;
@@ -7495,7 +7495,11 @@ function renderProtocolForm(teamId) {
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const p = team.protocol || {};
   const fullName = getTeamFullName(team);
-  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-md-8"><div class="detail-label">Команда</div><div class="detail-value">${escHtml(fullName)}</div></div><div class="col-md-4"><div class="detail-label">Класс аппарата</div><div class="detail-value">${escHtml(team.apparatusClass || "—")}</div></div><div class="col-md-6"><div class="detail-label">Руководитель</div><div class="detail-value">${escHtml(team.teamLeader || "—")}</div></div><div class="col-md-6"><div class="detail-label">Название аппарата</div><div class="detail-value">${escHtml(team.apparatusName || "—")}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
+  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-md-8"><div class="detail-label">Команда</div><div class="detail-value">${escHtml(fullName)}</div></div><div class="col-md-4"><div class="detail-label">Класс аппарата</div><div class="detail-value">${escHtml(team.apparatusClass || "—")}</div></div>
+  
+  <div class="col-md-8"><div class="detail-label">Руководитель</div><div class="detail-value">${escHtml(team.teamLeader || "—")}</div></div><div class="col-md-4"><div class="detail-label">Название аппарата</div><div class="detail-value">${escHtml(team.apparatusName || "—")}</div></div>
+  
+  </div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
   critGroups.forEach((cg, gi) => {
     const A = cg.attempts || 1;
     html += `<div class="detail-section"><h5 class="detail-section-title">${escHtml(cg.fullTitle || cg.title)}${A > 1 ? ` <span class="proto-attempts-badge">${A} попытки · в зачёт лучшая</span>` : ""}</h5>`;
@@ -7520,7 +7524,7 @@ function renderProtocolForm(teamId) {
         }
         html += `<div class="col-md-3"><label class="form-label ${pen ? "proto-penalty-label" : ""}">${escHtml(c.full || c.title)}${pen ? " (штраф)" : ""}</label>${fieldHtml}</div>`;
       });
-      html += `<div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма попытки ${a}:</strong> <span id="protoGroupTotal-${gi}-a${a}">0</span></div></div></div>`;
+      html += `<div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма баллов${A > 1 ? " " + a : ""}:</strong> <span id="protoGroupTotal-${gi}-a${a}">0</span></div></div></div>`;
     }
     if (A > 1)
       html += `<div class="alert alert-success py-2 mb-0 mt-2"><strong>В зачёт идёт:</strong> <span id="protoGroupBest-${gi}">0</span></div>`;
@@ -8156,7 +8160,11 @@ renderCriteriaOffcanvas = function (...a) {
 // ===== ШИРОКАЯ МАТРИЦА: сворачивание групп колонок + закреплённые колонки =====
 const COMP_COLLAPSE_KEY = "opmr_comp_collapsed";
 function readCollapseMap() {
-  try { return JSON.parse(localStorage.getItem(COMP_COLLAPSE_KEY)) || {}; } catch { return {}; }
+  try {
+    return JSON.parse(localStorage.getItem(COMP_COLLAPSE_KEY)) || {};
+  } catch {
+    return {};
+  }
 }
 function isGroupCollapsed(classId, gkey) {
   const arr = readCollapseMap()[`${currentYear}:${classId}`];
@@ -8167,7 +8175,8 @@ function toggleCompGroup(classId, gkey) {
   const map = readCollapseMap();
   const arr = Array.isArray(map[k]) ? map[k].slice() : [];
   const i = arr.indexOf(gkey);
-  if (i >= 0) arr.splice(i, 1); else arr.push(gkey);
+  if (i >= 0) arr.splice(i, 1);
+  else arr.push(gkey);
   map[k] = arr;
   localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
   renderCompetition();
@@ -8181,7 +8190,8 @@ function setCompGroupsExpanded(classId, expand) {
 }
 function groupBestSubtotal(team, cg, gi) {
   const A = cg.attempts || 1;
-  let has = false, best = null;
+  let has = false,
+    best = null;
   for (let a = 1; a <= A; a++) {
     let any = false;
     cg.cols.forEach((c, ci) => {
@@ -8221,9 +8231,15 @@ function renderCompetition() {
     const extraPool = [2, 3, 4];
     critGroups.forEach((cg) => {
       const t = String(cg.title || "").toLowerCase();
-      const tint = t.includes("презентац") ? 0 : t.includes("квалификац") ? 1 : extraPool[extraIdx++ % extraPool.length];
+      const tint = t.includes("презентац")
+        ? 0
+        : t.includes("квалификац")
+          ? 1
+          : extraPool[extraIdx++ % extraPool.length];
       cg.tint = tint;
-      cg.cols.forEach((c) => { c.tint = tint; });
+      cg.cols.forEach((c) => {
+        c.tint = tint;
+      });
       cg.collapsed = isGroupCollapsed(key, cg.key);
     });
     const bg = (i) => `background:${CG_TINTS[i]} !important`;
@@ -8244,7 +8260,8 @@ function renderCompetition() {
       if (cg.collapsed) {
         head2 += `<th class="cg-tint-${cg.tint} m-hide cg-group-sum-th" style="${bg(cg.tint)}" title="Сумма группы (для нескольких попыток — лучшая)">Σ</th>`;
       } else {
-        if (A > 1) head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ попытки</th>`;
+        if (A > 1)
+          head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ попытки</th>`;
         cg.cols.forEach((c) => {
           head2 += `<th class="cg-tint-${c.tint} m-hide" style="${bg(c.tint)}" title="${escHtml(c.full || c.title)}">${renderCriteriaSubhead(c)}</th>`;
         });
@@ -8391,17 +8408,32 @@ function printCompetitionCard(card) {
 // ===== ИСТОРИЯ НАБОРОВ КРИТЕРИЕВ + ЗАЩИТА ОТ ПОТЕРИ ГРУПП =====
 const CRITERIA_HISTORY_KEY = "opmr_criteria_history";
 function criteriaHistory() {
-  try { return JSON.parse(localStorage.getItem(CRITERIA_HISTORY_KEY)) || []; } catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(CRITERIA_HISTORY_KEY)) || [];
+  } catch {
+    return [];
+  }
 }
 function pushCriteriaHistory(year, classId, criteria) {
   const list = criteriaHistory();
-  list.push({id: "h" + Date.now(), year: String(year), classId, ts: Date.now(), criteria: JSON.parse(JSON.stringify(criteria))});
+  list.push({
+    id: "h" + Date.now(),
+    year: String(year),
+    classId,
+    ts: Date.now(),
+    criteria: JSON.parse(JSON.stringify(criteria)),
+  });
   localStorage.setItem(CRITERIA_HISTORY_KEY, JSON.stringify(list.slice(-60)));
 }
 function restoreCriteriaSnapshot(id) {
   const h = criteriaHistory().find((x) => x.id === id);
   if (!h) return;
-  if (!confirm(`Восстановить набор «${getClassInfo(h.classId).name} · ${h.year}» от ${new Date(h.ts).toLocaleString("ru-RU")} (групп: ${h.criteria.length})?\nТекущий набор перед заменой уйдёт в историю.`)) return;
+  if (
+    !confirm(
+      `Восстановить набор «${getClassInfo(h.classId).name} · ${h.year}» от ${new Date(h.ts).toLocaleString("ru-RU")} (групп: ${h.criteria.length})?\nТекущий набор перед заменой уйдёт в историю.`,
+    )
+  )
+    return;
   const cur = (competitionSettings[h.year] || {})[h.classId];
   if (cur && Array.isArray(cur.criteria) && cur.criteria.length) pushCriteriaHistory(h.year, h.classId, cur.criteria);
   if (!competitionSettings[h.year]) competitionSettings[h.year] = {};
@@ -8411,7 +8443,8 @@ function restoreCriteriaSnapshot(id) {
   renderApparatusManager();
   showToast("Набор критериев восстановлен из истории", "success");
   const gh = getGitHubSettings();
-  if (gh?.owner && gh.repo && gh.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  if (gh?.owner && gh.repo && gh.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
 }
 
 const _histPrevSaveCriteria = saveCriteriaFromOffcanvas;
@@ -8422,7 +8455,12 @@ saveCriteriaFromOffcanvas = function (...a) {
   const before = Array.isArray(prev) ? prev.length : 0;
   const after = Array.isArray(tempCriteria) ? tempCriteria.length : 0;
   if (before > 0 && after < before) {
-    if (!confirm(`Внимание: сохраняемый набор содержит групп: ${after}, а в базе сейчас ${before}.\nГруппы будут удалены из набора этого класса.\n\nПродолжить сохранение?`)) return;
+    if (
+      !confirm(
+        `Внимание: сохраняемый набор содержит групп: ${after}, а в базе сейчас ${before}.\nГруппы будут удалены из набора этого класса.\n\nПродолжить сохранение?`,
+      )
+    )
+      return;
   }
   if (before > 0) pushCriteriaHistory(year, classId, prev);
   return _histPrevSaveCriteria.apply(this, a);
@@ -8442,8 +8480,12 @@ renderCriteriaOffcanvas = function (...a) {
     wrap.className = "dropdown w-100 mt-2";
     wrap.dataset.role = "history";
     wrap.innerHTML = `<button class="btn btn-outline-warning w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-history me-2"></i>История наборов (${items.length})</button><ul class="dropdown-menu w-100" style="max-height:220px;overflow-y:auto">${
-      items.map((h) => `<li><a class="dropdown-item" href="#" onclick="restoreCriteriaSnapshot('${h.id}'); return false;"><i class="fas fa-rotate-left me-2 text-warning"></i>${new Date(h.ts).toLocaleString("ru-RU")} · групп: ${h.criteria.length}</a></li>`).join("") ||
-      '<li><span class="dropdown-item-text text-muted small">Снимков пока нет</span></li>'
+      items
+        .map(
+          (h) =>
+            `<li><a class="dropdown-item" href="#" onclick="restoreCriteriaSnapshot('${h.id}'); return false;"><i class="fas fa-rotate-left me-2 text-warning"></i>${new Date(h.ts).toLocaleString("ru-RU")} · групп: ${h.criteria.length}</a></li>`,
+        )
+        .join("") || '<li><span class="dropdown-item-text text-muted small">Снимков пока нет</span></li>'
     }</ul>`;
     bottom.appendChild(wrap);
   }
