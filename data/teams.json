@@ -1542,8 +1542,8 @@
                 "id": "fmwkr9smizw9li",
                 "name": "Время (сек)",
                 "short": "Время",
-                "type": "decimal",
-                "sum": false,
+                "type": "time",
+                "sum": true,
                 "penalty": false
               },
               {
@@ -1594,7 +1594,121 @@
                 "sum": false,
                 "penalty": true
               }
-            ]
+            ],
+            "attempts": 1,
+            "multi": false
+          },
+          {
+            "section": "Конкурс Задание 2",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwkre2f46kbbf",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "time",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkre2f444zei",
+                "name": "Балл за время",
+                "short": "время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkre2f466cok",
+                "name": "Кольцо (10/0 балл)",
+                "short": "Кольцо",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkre2f45hacd",
+                "name": "Соотв. кольцо (10/0 балл)",
+                "short": "Соотв. кольцо",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkre2f4g2jsj",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ],
+            "attempts": 2,
+            "multi": true
+          },
+          {
+            "section": "Конкурс Задание 3",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwkrhnc1jdav6",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "time",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkrhnc1boogj",
+                "name": "Балл за время",
+                "short": "время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkrhnc1nuilz",
+                "name": "Флаг (10/0 балл)",
+                "short": "флаг",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkrhnc1yugiu",
+                "name": "Фиксация (10/0 балл)",
+                "short": "фиксация",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwkrhnc1cj5vi",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ],
+            "attempts": 1,
+            "multi": false
+          },
+          {
+            "section": "Доп. баллы",
+            "sectionShort": "Доп.",
+            "fields": [
+              {
+                "id": "fmwkrkn7x2d902",
+                "name": "За внеконкурсное задание",
+                "short": "Внеконкурс",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ],
+            "attempts": 1,
+            "multi": false
           }
         ],
         "name": "ТНПА"
