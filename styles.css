@@ -2829,3 +2829,43 @@ body.sync-floating {
 /* ===== Кнопка печати списка — справа, как служебная ===== */
 .print-toolbar { justify-content: flex-end; }
 .print-toolbar-hint { margin-right: auto; }
+
+/* ===== Печать таблиц протокола: корректные ширины колонок ===== */
+@media print {
+  .competition-table {
+    table-layout: auto !important;
+    width: 100% !important;
+    font-size: 7pt !important;
+  }
+  .competition-table th,
+  .competition-table td {
+    padding: 2px 3px !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  .competition-table thead tr:nth-child(2) th {
+    position: static !important;
+    height: auto !important;
+    padding: 3px 3px 4px !important;
+  }
+  .competition-table thead tr:nth-child(2) th .cg-th-stack {
+    position: static !important;
+    top: auto !important; right: auto !important; bottom: auto !important; left: auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    display: inline-flex !important;
+  }
+  .competition-table thead tr:nth-child(2) th > .cg-ico {
+    position: static !important;
+    transform: none !important;
+    display: block !important;
+    margin: 2px auto 0 !important;
+  }
+  .competition-table th:nth-child(1),
+  .competition-table td:nth-child(1) { width: 7mm; }
+  .competition-table th:nth-child(2),
+  .competition-table td:nth-child(2) { min-width: 30mm; }
+}
