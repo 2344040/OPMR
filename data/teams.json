@@ -898,7 +898,204 @@
       "tnpa": {
         "date": "28.11.2025",
         "color": "badge-tnpa",
-        "criteria": [],
+        "criteria": [
+          {
+            "section": "Презентация",
+            "sectionShort": "През.",
+            "fields": [
+              {
+                "id": "fmwjciwc09ro04",
+                "name": "Структура",
+                "short": "Структ.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjciwc0u7b77",
+                "name": "Сравнительный анализ",
+                "short": "Сравн. анализ",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjciwc0ar5rn",
+                "name": "Новизна",
+                "short": "Нов.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjciwc0e89n2",
+                "name": "Качество",
+                "short": "Кач.",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Квалификация",
+            "sectionShort": "Квал.",
+            "fields": [
+              {
+                "id": "fmwjckktbczrzk",
+                "name": "Сумма размерений",
+                "short": "Разм.",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwjckktc6pppg",
+                "name": "Вес (кг)",
+                "short": "Вес",
+                "type": "decimal",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwjckktcqynxw",
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              },
+              {
+                "id": "fmwjckktc744ef",
+                "name": "Квалификационное задание (+/-)",
+                "short": "Квал. задание",
+                "type": "bool",
+                "sum": false,
+                "penalty": false
+              }
+            ]
+          },
+          {
+            "section": "Конкурсное задание 1",
+            "sectionShort": "Конкурс",
+            "fields": [
+              {
+                "id": "fmwjclu8lrl6it",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "time",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjclu8l0ij6b",
+                "name": "Балл за время",
+                "short": "Время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjclu8lg03s2",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          },
+          {
+            "section": "Конкурсное задание 2",
+            "sectionShort": "",
+            "fields": [
+              {
+                "id": "fmwjebuozr415c",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "time",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjebuozm16ss",
+                "name": "Балл за время",
+                "short": "время",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjebuozrgbr9",
+                "name": "Штрафные баллы",
+                "short": "",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          },
+          {
+            "section": "Конкурсное задание 3",
+            "sectionShort": "",
+            "fields": [
+              {
+                "id": "fmwjecnvrpsfbg",
+                "name": "Время (сек)",
+                "short": "Время",
+                "type": "time",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjecnvrp9ecc",
+                "name": "Балл за время",
+                "short": "Б. времени",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjecnvr8d0ic",
+                "name": "кольца",
+                "short": "Кольца",
+                "type": "int",
+                "sum": false,
+                "penalty": false
+              },
+              {
+                "id": "fmwjecnvrzd2vi",
+                "name": "баллы за кольца",
+                "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              },
+              {
+                "id": "fmwjecnvrz5bxh",
+                "name": "Штрафные баллы",
+                "short": "Штраф",
+                "type": "int",
+                "sum": false,
+                "penalty": true
+              }
+            ]
+          },
+          {
+            "section": "Внек. зад.",
+            "sectionShort": "",
+            "fields": [
+              {
+                "id": "fmwjcrzkzfuaw3",
+                "name": "Доп баллы",
+                "short": "",
+                "type": "int",
+                "sum": true,
+                "penalty": false
+              }
+            ]
+          }
+        ],
         "name": "ТНПА"
       },
       "anpa": {
@@ -2463,6 +2660,410 @@
             },
             {
               "id": "fmwjclu8lg03s2",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Внек. зад.",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjcrzkzfuaw3",
+              "name": "Доп баллы",
+              "short": "",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "t1794841693912",
+      "name": "ТНПА 2025 261116-180813",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwjciwc09ro04",
+              "name": "Структура",
+              "short": "Структ.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0u7b77",
+              "name": "Сравнительный анализ",
+              "short": "Сравн. анализ",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0ar5rn",
+              "name": "Новизна",
+              "short": "Нов.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0e89n2",
+              "name": "Качество",
+              "short": "Кач.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwjckktbczrzk",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjckktc6pppg",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjckktcqynxw",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwjckktc744ef",
+              "name": "Квалификационное задание (+/-)",
+              "short": "Квал. задание",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 1",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwjclu8lrl6it",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjclu8l0ij6b",
+              "name": "Балл за время",
+              "short": "Время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjclu8lg03s2",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 2",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjebuozr415c",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjebuozm16ss",
+              "name": "Балл за время",
+              "short": "Б. времени",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjebuozrgbr9",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 3",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjecnvrpsfbg",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrp9ecc",
+              "name": "Балл за время",
+              "short": "Б. времени",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvr8d0ic",
+              "name": "кольца",
+              "short": "Кольца",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrzd2vi",
+              "name": "баллы за кольца",
+              "short": "",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrz5bxh",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Внек. зад.",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjcrzkzfuaw3",
+              "name": "Доп баллы",
+              "short": "",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "t1794841925762",
+      "name": "ТНПА 2025 261116-181205",
+      "criteria": [
+        {
+          "section": "Презентация",
+          "sectionShort": "През.",
+          "fields": [
+            {
+              "id": "fmwjciwc09ro04",
+              "name": "Структура",
+              "short": "Структ.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0u7b77",
+              "name": "Сравнительный анализ",
+              "short": "Сравн. анализ",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0ar5rn",
+              "name": "Новизна",
+              "short": "Нов.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjciwc0e89n2",
+              "name": "Качество",
+              "short": "Кач.",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Квалификация",
+          "sectionShort": "Квал.",
+          "fields": [
+            {
+              "id": "fmwjckktbczrzk",
+              "name": "Сумма размерений",
+              "short": "Разм.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjckktc6pppg",
+              "name": "Вес (кг)",
+              "short": "Вес",
+              "type": "decimal",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjckktcqynxw",
+              "name": "Штрафные баллы",
+              "short": "Штраф",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwjckktc744ef",
+              "name": "Квалификационное задание (+/-)",
+              "short": "Квал. задание",
+              "type": "bool",
+              "sum": false,
+              "penalty": false
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 1",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwjclu8lrl6it",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjclu8l0ij6b",
+              "name": "Балл за время",
+              "short": "Время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjclu8lg03s2",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 2",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjebuozr415c",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjebuozm16ss",
+              "name": "Балл за время",
+              "short": "время",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjebuozrgbr9",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ]
+        },
+        {
+          "section": "Конкурсное задание 3",
+          "sectionShort": "",
+          "fields": [
+            {
+              "id": "fmwjecnvrpsfbg",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrp9ecc",
+              "name": "Балл за время",
+              "short": "Б. времени",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvr8d0ic",
+              "name": "кольца",
+              "short": "Кольца",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrzd2vi",
+              "name": "баллы за кольца",
+              "short": "",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwjecnvrz5bxh",
               "name": "Штрафные баллы",
               "short": "Штраф",
               "type": "int",
@@ -5589,7 +6190,58 @@
       "photos": [],
       "members": [],
       "classId": "tnpa",
-      "teamName": ""
+      "teamName": "",
+      "scores": {
+        "f:fmwjciwc09ro04": "3",
+        "През.::Структура": "3",
+        "f:fmwjciwc0u7b77": "3",
+        "През.::Сравнительный анализ": "3",
+        "f:fmwjciwc0ar5rn": "3",
+        "През.::Новизна": "3",
+        "f:fmwjciwc0e89n2": "2",
+        "През.::Качество": "2",
+        "f:fmwjckktbczrzk": "1380",
+        "Квал.::Сумма размерений": "1380",
+        "f:fmwjckktc6pppg": "7.2",
+        "Квал.::Вес (кг)": "7.2",
+        "f:fmwjckktcqynxw": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwjckktc744ef": "Да",
+        "Квал.::Квалификационное задание (+/-)": "Да",
+        "f:fmwjclu8lrl6it": "2:00",
+        "Конкурс::Время (сек)": "2:00",
+        "f:fmwjclu8l0ij6b": "18",
+        "Конкурс::Балл за время": "18",
+        "f:fmwjclu8lg03s2": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwjebuozr415c": "1:39",
+        "Конкурсное задание 2::Время (сек)": "1:39",
+        "f:fmwjebuozm16ss": "18",
+        "Конкурсное задание 2::Балл за время": "18",
+        "f:fmwjebuozrgbr9": "",
+        "Конкурсное задание 2::Штрафные баллы": "",
+        "f:fmwjecnvrpsfbg": "3:33",
+        "Конкурсное задание 3::Время (сек)": "3:33",
+        "f:fmwjecnvrp9ecc": "16",
+        "Конкурсное задание 3::Балл за время": "16",
+        "f:fmwjecnvr8d0ic": "6",
+        "Конкурсное задание 3::кольца": "6",
+        "f:fmwjecnvrzd2vi": "12",
+        "Конкурсное задание 3::баллы за кольца": "12",
+        "f:fmwjecnvrz5bxh": "",
+        "Конкурсное задание 3::Штрафные баллы": "",
+        "f:fmwjcrzkzfuaw3": "",
+        "Внек. зад.::Доп баллы": ""
+      },
+      "draw": "7",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "7",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 75
+      }
     },
     {
       "id": "028-2025-tnpa",
@@ -5612,7 +6264,58 @@
       "photos": [],
       "members": [],
       "classId": "tnpa",
-      "teamName": ""
+      "teamName": "",
+      "scores": {
+        "f:fmwjciwc09ro04": "2",
+        "През.::Структура": "2",
+        "f:fmwjciwc0u7b77": "1",
+        "През.::Сравнительный анализ": "1",
+        "f:fmwjciwc0ar5rn": "2",
+        "През.::Новизна": "2",
+        "f:fmwjciwc0e89n2": "2",
+        "През.::Качество": "2",
+        "f:fmwjckktbczrzk": "720",
+        "Квал.::Сумма размерений": "720",
+        "f:fmwjckktc6pppg": "2.45",
+        "Квал.::Вес (кг)": "2.45",
+        "f:fmwjckktcqynxw": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwjckktc744ef": "Да",
+        "Квал.::Квалификационное задание (+/-)": "Да",
+        "f:fmwjclu8lrl6it": "3:01",
+        "Конкурс::Время (сек)": "3:01",
+        "f:fmwjclu8l0ij6b": "14",
+        "Конкурс::Балл за время": "14",
+        "f:fmwjclu8lg03s2": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwjebuozr415c": "3:52",
+        "Конкурсное задание 2::Время (сек)": "3:52",
+        "f:fmwjebuozm16ss": "16",
+        "Конкурсное задание 2::Балл за время": "16",
+        "f:fmwjebuozrgbr9": "3",
+        "Конкурсное задание 2::Штрафные баллы": "3",
+        "f:fmwjecnvrpsfbg": "3:26",
+        "Конкурсное задание 3::Время (сек)": "3:26",
+        "f:fmwjecnvrp9ecc": "18",
+        "Конкурсное задание 3::Балл за время": "18",
+        "f:fmwjecnvr8d0ic": "6",
+        "Конкурсное задание 3::кольца": "6",
+        "f:fmwjecnvrzd2vi": "12",
+        "Конкурсное задание 3::баллы за кольца": "12",
+        "f:fmwjecnvrz5bxh": "",
+        "Конкурсное задание 3::Штрафные баллы": "",
+        "f:fmwjcrzkzfuaw3": "",
+        "Внек. зад.::Доп баллы": ""
+      },
+      "draw": "6",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "6",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 64
+      }
     },
     {
       "id": "029-2025-tnpa",
@@ -5635,7 +6338,58 @@
       "photos": [],
       "members": [],
       "classId": "tnpa",
-      "teamName": ""
+      "teamName": "",
+      "scores": {
+        "f:fmwjciwc09ro04": "2",
+        "През.::Структура": "2",
+        "f:fmwjciwc0u7b77": "1",
+        "През.::Сравнительный анализ": "1",
+        "f:fmwjciwc0ar5rn": "2",
+        "През.::Новизна": "2",
+        "f:fmwjciwc0e89n2": "2",
+        "През.::Качество": "2",
+        "f:fmwjckktbczrzk": "760",
+        "Квал.::Сумма размерений": "760",
+        "f:fmwjckktc6pppg": "2.55",
+        "Квал.::Вес (кг)": "2.55",
+        "f:fmwjckktcqynxw": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwjckktc744ef": "Да",
+        "Квал.::Квалификационное задание (+/-)": "Да",
+        "f:fmwjclu8lrl6it": "",
+        "Конкурс::Время (сек)": "",
+        "f:fmwjclu8l0ij6b": "",
+        "Конкурс::Балл за время": "",
+        "f:fmwjclu8lg03s2": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwjebuozr415c": "",
+        "Конкурсное задание 2::Время (сек)": "",
+        "f:fmwjebuozm16ss": "",
+        "Конкурсное задание 2::Балл за время": "",
+        "f:fmwjebuozrgbr9": "",
+        "Конкурсное задание 2::Штрафные баллы": "",
+        "f:fmwjecnvrpsfbg": "",
+        "Конкурсное задание 3::Время (сек)": "",
+        "f:fmwjecnvrp9ecc": "",
+        "Конкурсное задание 3::Балл за время": "",
+        "f:fmwjecnvr8d0ic": "",
+        "Конкурсное задание 3::кольца": "",
+        "f:fmwjecnvrzd2vi": "",
+        "Конкурсное задание 3::баллы за кольца": "",
+        "f:fmwjecnvrz5bxh": "",
+        "Конкурсное задание 3::Штрафные баллы": "",
+        "f:fmwjcrzkzfuaw3": "",
+        "Внек. зад.::Доп баллы": ""
+      },
+      "draw": "1",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "1",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 7
+      }
     },
     {
       "id": "011-2025-tnpa",
@@ -5658,7 +6412,58 @@
       "photos": [],
       "members": [],
       "classId": "tnpa",
-      "teamName": ""
+      "teamName": "",
+      "scores": {
+        "f:fmwjciwc09ro04": "3",
+        "През.::Структура": "3",
+        "f:fmwjciwc0u7b77": "3",
+        "През.::Сравнительный анализ": "3",
+        "f:fmwjciwc0ar5rn": "3",
+        "През.::Новизна": "3",
+        "f:fmwjciwc0e89n2": "2",
+        "През.::Качество": "2",
+        "f:fmwjckktbczrzk": "1070",
+        "Квал.::Сумма размерений": "1070",
+        "f:fmwjckktc6pppg": "5.4",
+        "Квал.::Вес (кг)": "5.4",
+        "f:fmwjckktcqynxw": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwjckktc744ef": "Да",
+        "Квал.::Квалификационное задание (+/-)": "Да",
+        "f:fmwjclu8lrl6it": "2:00",
+        "Конкурс::Время (сек)": "2:00",
+        "f:fmwjclu8l0ij6b": "18",
+        "Конкурс::Балл за время": "18",
+        "f:fmwjclu8lg03s2": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwjebuozr415c": "1:26",
+        "Конкурсное задание 2::Время (сек)": "1:26",
+        "f:fmwjebuozm16ss": "20",
+        "Конкурсное задание 2::Балл за время": "20",
+        "f:fmwjebuozrgbr9": "",
+        "Конкурсное задание 2::Штрафные баллы": "",
+        "f:fmwjecnvrpsfbg": "3:06",
+        "Конкурсное задание 3::Время (сек)": "3:06",
+        "f:fmwjecnvrp9ecc": "20",
+        "Конкурсное задание 3::Балл за время": "20",
+        "f:fmwjecnvr8d0ic": "6",
+        "Конкурсное задание 3::кольца": "6",
+        "f:fmwjecnvrzd2vi": "12",
+        "Конкурсное задание 3::баллы за кольца": "12",
+        "f:fmwjecnvrz5bxh": "",
+        "Конкурсное задание 3::Штрафные баллы": "",
+        "f:fmwjcrzkzfuaw3": "",
+        "Внек. зад.::Доп баллы": ""
+      },
+      "draw": "4",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "4",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 81
+      }
     },
     {
       "id": "030-2025-tnpa",
@@ -5681,7 +6486,58 @@
       "photos": [],
       "members": [],
       "classId": "tnpa",
-      "teamName": ""
+      "teamName": "",
+      "scores": {
+        "f:fmwjciwc09ro04": "3",
+        "През.::Структура": "3",
+        "f:fmwjciwc0u7b77": "1",
+        "През.::Сравнительный анализ": "1",
+        "f:fmwjciwc0ar5rn": "2",
+        "През.::Новизна": "2",
+        "f:fmwjciwc0e89n2": "2",
+        "През.::Качество": "2",
+        "f:fmwjckktbczrzk": "1320",
+        "Квал.::Сумма размерений": "1320",
+        "f:fmwjckktc6pppg": "",
+        "Квал.::Вес (кг)": "",
+        "f:fmwjckktcqynxw": "",
+        "Квал.::Штрафные баллы": "",
+        "f:fmwjckktc744ef": "Да",
+        "Квал.::Квалификационное задание (+/-)": "Да",
+        "f:fmwjclu8lrl6it": "",
+        "Конкурс::Время (сек)": "",
+        "f:fmwjclu8l0ij6b": "",
+        "Конкурс::Балл за время": "",
+        "f:fmwjclu8lg03s2": "",
+        "Конкурс::Штрафные баллы": "",
+        "f:fmwjebuozr415c": "7:13",
+        "Конкурсное задание 2::Время (сек)": "7:13",
+        "f:fmwjebuozm16ss": "10",
+        "Конкурсное задание 2::Балл за время": "10",
+        "f:fmwjebuozrgbr9": "5",
+        "Конкурсное задание 2::Штрафные баллы": "5",
+        "f:fmwjecnvrpsfbg": "6:23",
+        "Конкурсное задание 3::Время (сек)": "6:23",
+        "f:fmwjecnvrp9ecc": "10",
+        "Конкурсное задание 3::Балл за время": "10",
+        "f:fmwjecnvr8d0ic": "6",
+        "Конкурсное задание 3::кольца": "6",
+        "f:fmwjecnvrzd2vi": "12",
+        "Конкурсное задание 3::баллы за кольца": "12",
+        "f:fmwjecnvrz5bxh": "",
+        "Конкурсное задание 3::Штрафные баллы": "",
+        "f:fmwjcrzkzfuaw3": "",
+        "Внек. зад.::Доп баллы": ""
+      },
+      "draw": "5",
+      "extra": 0,
+      "place": 0,
+      "protocol": {
+        "drawNumber": "5",
+        "extraBonus": 0,
+        "place": 0,
+        "totalScore": 35
+      }
     },
     {
       "id": "016-2025-tnpa",
