@@ -4528,6 +4528,77 @@
         }
       ],
       "library": true
+    },
+    {
+      "id": "lib1794924124007",
+      "name": "Конкурс Задание 1 (7 крит.) сек",
+      "criteria": [
+        {
+          "section": "Конкурс Задание 1",
+          "sectionShort": "Конкурс",
+          "fields": [
+            {
+              "id": "fmwkr9smizw9li",
+              "name": "Время (сек)",
+              "short": "Время",
+              "type": "time",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkr9smiv15zx",
+              "name": "Балл за время",
+              "short": "Б. времени",
+              "type": "decimal",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkr9smi7mv3i",
+              "name": "Ключи (кол-во)",
+              "short": "Ключи (кол-во)",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkr9sminvk1p",
+              "name": "Ключи (балл)",
+              "short": "ключи",
+              "type": "int",
+              "sum": true,
+              "penalty": false
+            },
+            {
+              "id": "fmwkr9smig1bnh",
+              "name": "Соответв. ключи (кол-во)",
+              "short": "Соотв. кл.",
+              "type": "int",
+              "sum": false,
+              "penalty": false
+            },
+            {
+              "id": "fmwkr9smijhz6y",
+              "name": "Соответв. ключи (балл)",
+              "short": "соотв. кл.",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            },
+            {
+              "id": "fmwkrdcohpewnr",
+              "name": "Штрафные баллы",
+              "short": "",
+              "type": "int",
+              "sum": false,
+              "penalty": true
+            }
+          ],
+          "attempts": 1,
+          "multi": false
+        }
+      ],
+      "library": true
     }
   ],
   "teams": [
