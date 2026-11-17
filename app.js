@@ -7084,8 +7084,12 @@ function printViaIframe(title, bodyHtml, landscape) {
   frame.id = "opmrPrintFrame";
   frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
   document.body.appendChild(frame);
-  const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]')).map((l) => l.outerHTML).join("");
-  const styles = Array.from(document.querySelectorAll("head style")).map((s) => s.outerHTML).join("");
+  const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+    .map((l) => l.outerHTML)
+    .join("");
+  const styles = Array.from(document.querySelectorAll("head style"))
+    .map((s) => s.outerHTML)
+    .join("");
   const doc = frame.contentWindow.document;
   doc.open();
   doc.write(`<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>${escHtml(title)}</title>${links}${styles}
@@ -7186,7 +7190,12 @@ function normalizeCriteria(criteria) {
           }
         : {id: newFieldId(), name: String(f).trim(), short: "", type: "int"},
     );
-    return {section, sectionShort, fields, attempts: isObj ? Math.min(2, Math.max(1, parseInt(g.attempts, 10) || 1)) : 1};
+    return {
+      section,
+      sectionShort,
+      fields,
+      attempts: isObj ? Math.min(2, Math.max(1, parseInt(g.attempts, 10) || 1)) : 1,
+    };
   });
 }
 
@@ -7222,7 +7231,9 @@ function getClassCriteriaGroups(year, classId) {
   let groups = [];
   if (Array.isArray(raw)) {
     const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
-    groups = looksLikeGroups ? raw.map(mapGroup) : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", attempts: 1, cols: raw.map(mapCol)}];
+    groups = looksLikeGroups
+      ? raw.map(mapGroup)
+      : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", attempts: 1, cols: raw.map(mapCol)}];
   } else if (typeof raw === "object") {
     groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
   }
@@ -7236,7 +7247,16 @@ function getScoreValue(team, group, col, gi, ci, attempt) {
   const s = team.scores || team.results || team.protocol || {};
   const base = [];
   if (col.id) base.push("f:" + col.id);
-  base.push(col.key, col.full, col.title, `${gi}_${ci}`, `${group.key}_${ci}`, `${group.key}_${col.key}`, `${group.title}::${col.full || col.title}`, `${group.fullTitle || group.title}::${col.full || col.title}`);
+  base.push(
+    col.key,
+    col.full,
+    col.title,
+    `${gi}_${ci}`,
+    `${group.key}_${ci}`,
+    `${group.key}_${col.key}`,
+    `${group.title}::${col.full || col.title}`,
+    `${group.fullTitle || group.title}::${col.full || col.title}`,
+  );
   const keys = base.filter((k) => k !== undefined && k !== null && k !== "").map((k) => k + suf);
   const read = (obj) => {
     if (!obj || typeof obj !== "object") return "";
@@ -7260,7 +7280,8 @@ function groupAttemptSubtotal(team, cg, gi, a) {
 }
 
 function computeTeamTotal(team) {
-  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+  const classId =
+    typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
   const groups = getClassCriteriaGroups(team.year, classId);
   let total = 0;
   groups.forEach((cg, gi) => {
@@ -7279,7 +7300,12 @@ function computeTeamTotal(team) {
 
 function isPtsCol(c) {
   const hay = ((c.full || "") + " " + (c.title || "")).toLowerCase();
-  return !c.penalty && c.type !== "text" && c.type !== "time" && (c.sum === true || (c.sum === undefined && (hay.includes("балл") || hay.includes("бонус"))));
+  return (
+    !c.penalty &&
+    c.type !== "text" &&
+    c.type !== "time" &&
+    (c.sum === true || (c.sum === undefined && (hay.includes("балл") || hay.includes("бонус"))))
+  );
 }
 
 function scoreCell(team, cg, c, gi, ci, a, rowspan) {
@@ -7289,14 +7315,21 @@ function scoreCell(team, cg, c, gi, ci, a, rowspan) {
   let cls = `cg-tint-${c.tint} m-hide`;
   if (present) {
     const type = c.type || "int";
-    if (type === "bool") display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
-    else if (type === "text") { display = escHtml(v); cls += " cg-text"; }
-    else if (type === "time") { display = escHtml(formatTimeValue(v)); cls += " cg-time"; }
-    else {
+    if (type === "bool")
+      display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
+    else if (type === "text") {
+      display = escHtml(v);
+      cls += " cg-text";
+    } else if (type === "time") {
+      display = escHtml(formatTimeValue(v));
+      cls += " cg-time";
+    } else {
       const n = parseScoreNumber(v);
       display = type === "decimal" && n !== null ? escHtml(String(v).replace(".", ",")) : escHtml(v);
-      if (c.penalty) { cls += " cg-penalty"; if (n !== null && n > 0) display = "−" + display; }
-      else if (isPtsCol(c) && n !== null) cls += " cg-score";
+      if (c.penalty) {
+        cls += " cg-penalty";
+        if (n !== null && n > 0) display = "−" + display;
+      } else if (isPtsCol(c) && n !== null) cls += " cg-score";
     }
   }
   const rs = rowspan > 1 ? ` rowspan="${rowspan}"` : "";
@@ -7315,9 +7348,15 @@ function renderCompetition() {
     const extraPool = [2, 3, 4];
     critGroups.forEach((cg) => {
       const t = String(cg.title || "").toLowerCase();
-      const tint = t.includes("презентац") ? 0 : t.includes("квалификац") ? 1 : extraPool[extraIdx++ % extraPool.length];
+      const tint = t.includes("презентац")
+        ? 0
+        : t.includes("квалификац")
+          ? 1
+          : extraPool[extraIdx++ % extraPool.length];
       cg.tint = tint;
-      cg.cols.forEach((c) => { c.tint = tint; });
+      cg.cols.forEach((c) => {
+        c.tint = tint;
+      });
     });
     const bg = (i) => `background:${CG_TINTS[i]} !important`;
     const fixedHead = `background:${CG_FIXED_HEAD} !important`;
@@ -7333,7 +7372,8 @@ function renderCompetition() {
       const main = pi > 0 ? full.slice(0, pi).trim() : full;
       const paren = pi > 0 ? full.slice(pi).trim() : "";
       head1 += `<th colspan="${cg.cols.length + (A > 1 ? 1 : 0)}" class="cg-tint-${cg.tint} m-hide" style="${bg(cg.tint)}" title="${escHtml(full)}${A > 1 ? ` · ${A} попытки, в зачёт лучшая` : ""}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
-      if (A > 1) head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ поп.</th>`;
+      if (A > 1)
+        head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ поп.</th>`;
       cg.cols.forEach((c) => {
         head2 += `<th class="cg-tint-${c.tint} m-hide" style="${bg(c.tint)}" title="${escHtml(c.full || c.title)}">${renderCriteriaSubhead(c)}</th>`;
       });
@@ -7349,10 +7389,11 @@ function renderCompetition() {
       let hasAny = false;
       critGroups.forEach((cg, gi) => {
         const A = cg.attempts || 1;
-        for (let a = 1; a <= A; a++) cg.cols.forEach((c, ci) => {
-          const v = getScoreValue(team, cg, c, gi, ci, a);
-          if (v !== "" && v !== undefined && v !== null) hasAny = true;
-        });
+        for (let a = 1; a <= A; a++)
+          cg.cols.forEach((c, ci) => {
+            const v = getScoreValue(team, cg, c, gi, ci, a);
+            if (v !== "" && v !== undefined && v !== null) hasAny = true;
+          });
       });
       for (let r = 0; r < rowsPerTeam; r++) {
         let cells = "";
@@ -7365,9 +7406,13 @@ function renderCompetition() {
           const A = cg.attempts || 1;
           if (A > 1) {
             cells += `<td class="cg-attempt-no cg-tint-${cg.tint} m-hide" style="${bg(cg.tint)}">${r + 1}</td>`;
-            cg.cols.forEach((c, ci) => { cells += scoreCell(team, cg, c, gi, ci, r + 1, 1); });
+            cg.cols.forEach((c, ci) => {
+              cells += scoreCell(team, cg, c, gi, ci, r + 1, 1);
+            });
           } else if (r === 0) {
-            cg.cols.forEach((c, ci) => { cells += scoreCell(team, cg, c, gi, ci, 1, rowsPerTeam); });
+            cg.cols.forEach((c, ci) => {
+              cells += scoreCell(team, cg, c, gi, ci, 1, rowsPerTeam);
+            });
           }
         });
         if (r === 0) {
@@ -7415,7 +7460,9 @@ function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
   const byId = {};
-  teamsData.forEach((t) => { byId[String(t.id)] = t; });
+  teamsData.forEach((t) => {
+    byId[String(t.id)] = t;
+  });
   page.querySelectorAll("table").forEach((table) => {
     table.querySelectorAll("tbody tr").forEach((row) => {
       const nameCell = row.querySelector(".td-team");
@@ -7443,7 +7490,8 @@ function renderProtocolForm(teamId) {
     container.innerHTML = `<div class="detail-section"><div class="alert alert-warning mb-0">Команда не найдена (ID: ${escHtml(teamId)}).</div></div>`;
     return;
   }
-  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+  const classId =
+    typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const p = team.protocol || {};
   const fullName = getTeamFullName(team);
@@ -7452,7 +7500,7 @@ function renderProtocolForm(teamId) {
     const A = cg.attempts || 1;
     html += `<div class="detail-section"><h5 class="detail-section-title">${escHtml(cg.fullTitle || cg.title)}${A > 1 ? ` <span class="proto-attempts-badge">${A} попытки · в зачёт лучшая</span>` : ""}</h5>`;
     for (let a = 1; a <= A; a++) {
-      if (A > 1) html += `<div class="proto-attempt-head">Попытка ${a}</div>`;
+      if (A > 1) html += `<div class="proto-attempt-head" id="protoAttemptHead-${gi}-a${a}">Попытка ${a}</div>`;
       html += `<div class="row g-3">`;
       cg.cols.forEach((c, ci) => {
         const val = getScoreValue(team, cg, c, gi, ci, a);
@@ -7474,7 +7522,8 @@ function renderProtocolForm(teamId) {
       });
       html += `<div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма попытки ${a}:</strong> <span id="protoGroupTotal-${gi}-a${a}">0</span></div></div></div>`;
     }
-    if (A > 1) html += `<div class="alert alert-success py-2 mb-0 mt-2"><strong>В зачёт идёт:</strong> <span id="protoGroupBest-${gi}">0</span></div>`;
+    if (A > 1)
+      html += `<div class="alert alert-success py-2 mb-0 mt-2"><strong>В зачёт идёт:</strong> <span id="protoGroupBest-${gi}">0</span></div>`;
     html += `</div>`;
   });
   html += `<div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="any" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus ?? team.extra ?? 0}"></div></div></div><div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? team.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
@@ -7497,13 +7546,17 @@ function updateProtocolTotals() {
   Object.keys(byGroup).forEach((gi) => {
     const attempts = [...byGroup[gi]].map(Number).sort((x, y) => x - y);
     const subs = {};
-    let best = null, bestA = null;
+    let best = null,
+      bestA = null;
     attempts.forEach((a) => {
       let s = 0;
       document.querySelectorAll(`.proto-calc[data-gi="${gi}"][data-attempt="${a}"]`).forEach((inp) => {
         const type = inp.dataset.type || "int";
         if (type === "text" || type === "time") return;
-        if (type === "bool") { if (inp.dataset.sum === "1" && inp.checked) s += 1; return; }
+        if (type === "bool") {
+          if (inp.dataset.sum === "1" && inp.checked) s += 1;
+          return;
+        }
         const n = parseScoreNumber(inp.value);
         if (n === null) return;
         if (inp.dataset.penalty === "1") s -= Math.abs(n);
@@ -7512,7 +7565,10 @@ function updateProtocolTotals() {
       subs[a] = Math.round(s * 100) / 100;
       const span = document.getElementById(`protoGroupTotal-${gi}-a${a}`);
       if (span) span.textContent = subs[a];
-      if (attempts.length > 1 && (best === null || subs[a] > best)) { best = subs[a]; bestA = a; }
+      if (attempts.length > 1 && (best === null || subs[a] > best)) {
+        best = subs[a];
+        bestA = a;
+      }
     });
     const contrib = attempts.length > 1 ? best || 0 : subs[attempts[0]] || 0;
     const bspan = document.getElementById(`protoGroupBest-${gi}`);
@@ -7527,7 +7583,8 @@ function updateProtocolTotals() {
 function saveProtocol() {
   const team = teamsData.find((t) => t.id === currentProtocolTeamId);
   if (!team) return;
-  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+  const classId =
+    typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const scores = {...(team.scores || {})};
   critGroups.forEach((cg, gi) => {
@@ -7538,7 +7595,8 @@ function saveProtocol() {
         const el = document.getElementById(`proto-${gi}-${ci}-a${a}`);
         if (!el) return;
         const type = c.type || "int";
-        const value = type === "bool" ? (el.checked ? "Да" : "Нет") : type === "time" ? formatTimeValue(el.value) : el.value;
+        const value =
+          type === "bool" ? (el.checked ? "Да" : "Нет") : type === "time" ? formatTimeValue(el.value) : el.value;
         if (c.id) scores["f:" + c.id + suf] = value;
         scores[`${cg.title}::${c.full || c.title}` + suf] = value;
       });
@@ -7552,7 +7610,13 @@ function saveProtocol() {
   team.draw = draw;
   team.extra = extra;
   team.place = place;
-  team.protocol = {...(team.protocol || {}), drawNumber: draw, extraBonus: extra, place, totalScore: computeTeamTotal(team)};
+  team.protocol = {
+    ...(team.protocol || {}),
+    drawNumber: draw,
+    extraBonus: extra,
+    place,
+    totalScore: computeTeamTotal(team),
+  };
   saveData();
   const gh = getGitHubSettings();
   if (gh?.owner && gh?.repo && gh?.token) {
@@ -7590,6 +7654,195 @@ renderCriteriaOffcanvas = function (...a) {
     sel.onchange = () => setGroupAttempts(g, sel.value);
     btnRow.insertBefore(sel, btnRow.firstChild);
   });
+  return r;
+};
+
+// ===== ВИЗУАЛИЗАЦИЯ ЛУЧШЕЙ/ХУДШЕЙ ПОПЫТКИ =====
+function scoreCell(team, cg, c, gi, ci, a, rowspan, extraCls) {
+  const v = getScoreValue(team, cg, c, gi, ci, a);
+  const present = v !== "" && v !== undefined && v !== null;
+  let display = "—";
+  let cls = `cg-tint-${c.tint} m-hide${extraCls || ""}`;
+  if (present) {
+    const type = c.type || "int";
+    if (type === "bool")
+      display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
+    else if (type === "text") {
+      display = escHtml(v);
+      cls += " cg-text";
+    } else if (type === "time") {
+      display = escHtml(formatTimeValue(v));
+      cls += " cg-time";
+    } else {
+      const n = parseScoreNumber(v);
+      display = type === "decimal" && n !== null ? escHtml(String(v).replace(".", ",")) : escHtml(v);
+      if (c.penalty) {
+        cls += " cg-penalty";
+        if (n !== null && n > 0) display = "−" + display;
+      } else if (isPtsCol(c) && n !== null) cls += " cg-score";
+    }
+  }
+  const rs = rowspan > 1 ? ` rowspan="${rowspan}"` : "";
+  return `<td class="${cls}"${rs} style="background:${CG_TINTS[c.tint]} !important">${display}</td>`;
+}
+
+function renderCompetition() {
+  const yearTeams = sortTeamsByName(teamsData.filter((t) => t.year === currentYear));
+  const groups = buildClassGroups(yearTeams);
+  let html = "";
+  for (const key in groups) {
+    const g = groups[key];
+    if (!g.teams.length) continue;
+    const critGroups = getClassCriteriaGroups(currentYear, key);
+    let extraIdx = 0;
+    const extraPool = [2, 3, 4];
+    critGroups.forEach((cg) => {
+      const t = String(cg.title || "").toLowerCase();
+      const tint = t.includes("презентац")
+        ? 0
+        : t.includes("квалификац")
+          ? 1
+          : extraPool[extraIdx++ % extraPool.length];
+      cg.tint = tint;
+      cg.cols.forEach((c) => {
+        c.tint = tint;
+      });
+    });
+    const bg = (i) => `background:${CG_TINTS[i]} !important`;
+    const fixedHead = `background:${CG_FIXED_HEAD} !important`;
+    const fixedBody = `background:${CG_FIXED_BODY} !important`;
+    const rowsPerTeam = critGroups.some((cg) => (cg.attempts || 1) > 1) ? 2 : 1;
+
+    let head1 = `<tr><th rowspan="2" class="cg-fixed" style="${fixedHead}">№</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Команда</th>`;
+    let head2 = `<tr>`;
+    critGroups.forEach((cg) => {
+      const A = cg.attempts || 1;
+      const full = cg.fullTitle || cg.title;
+      const pi = full.indexOf("(");
+      const main = pi > 0 ? full.slice(0, pi).trim() : full;
+      const paren = pi > 0 ? full.slice(pi).trim() : "";
+      head1 += `<th colspan="${cg.cols.length + (A > 1 ? 1 : 0)}" class="cg-tint-${cg.tint} m-hide" style="${bg(cg.tint)}" title="${escHtml(full)}${A > 1 ? ` · ${A} попытки, в зачёт лучшая` : ""}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
+      if (A > 1)
+        head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ поп.</th>`;
+      cg.cols.forEach((c) => {
+        head2 += `<th class="cg-tint-${c.tint} m-hide" style="${bg(c.tint)}" title="${escHtml(c.full || c.title)}">${renderCriteriaSubhead(c)}</th>`;
+      });
+    });
+    head1 += `<th rowspan="2" class="cg-fixed" style="${fixedHead}">Доп.</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Σ</th><th rowspan="2" class="cg-fixed cg-place-col" style="${fixedHead}">Место</th></tr>`;
+    head2 += `</tr>`;
+
+    const mode = getCompSort(key);
+    const sorted = sortClassTeams(g.teams, mode);
+    let rows = "";
+    sorted.forEach((team) => {
+      const total = computeTeamTotal(team);
+      let hasAny = false;
+      critGroups.forEach((cg, gi) => {
+        const A = cg.attempts || 1;
+        for (let a = 1; a <= A; a++)
+          cg.cols.forEach((c, ci) => {
+            const v = getScoreValue(team, cg, c, gi, ci, a);
+            if (v !== "" && v !== undefined && v !== null) hasAny = true;
+          });
+      });
+      const attemptInfo = critGroups.map((cg, gi) => {
+        const A = cg.attempts || 1;
+        if (A < 2) return null;
+        const subs = [];
+        let has = false;
+        for (let a = 1; a <= A; a++) {
+          subs.push(groupAttemptSubtotal(team, cg, gi, a));
+          cg.cols.forEach((c, ci) => {
+            const v = getScoreValue(team, cg, c, gi, ci, a);
+            if (v !== "" && v !== undefined && v !== null) has = true;
+          });
+        }
+        let best = 1;
+        for (let a = 2; a <= A; a++) if (subs[a - 1] > subs[best - 1]) best = a;
+        return {best, has};
+      });
+      for (let r = 0; r < rowsPerTeam; r++) {
+        let cells = "";
+        if (r === 0) {
+          const drawRaw = team.draw ?? team.drawNumber ?? team.lot ?? "";
+          cells += `<td class="cg-fixed" rowspan="${rowsPerTeam}" style="${fixedBody}">${drawRaw === "" ? "—" : escHtml(drawRaw)}</td>`;
+          cells += `<td class="td-team" rowspan="${rowsPerTeam}" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}</td>`;
+        }
+        critGroups.forEach((cg, gi) => {
+          const A = cg.attempts || 1;
+          if (A > 1) {
+            const info = attemptInfo[gi];
+            const aBest = !!(info && info.has && r + 1 === info.best);
+            const aMut = !!(info && info.has && r + 1 !== info.best);
+            cells += `<td class="cg-attempt-no cg-tint-${cg.tint} m-hide${aBest ? " cg-attempt-best" : ""}${aMut ? " cg-attempt-muted" : ""}" style="${bg(cg.tint)}">${r + 1}${aBest ? ' <i class="fas fa-check" style="font-size:0.6rem"></i>' : ""}</td>`;
+            cg.cols.forEach((c, ci) => {
+              cells += scoreCell(team, cg, c, gi, ci, r + 1, 1, aMut ? " cg-cell-muted" : aBest ? " cg-cell-best" : "");
+            });
+          } else if (r === 0) {
+            cg.cols.forEach((c, ci) => {
+              cells += scoreCell(team, cg, c, gi, ci, 1, rowsPerTeam, "");
+            });
+          }
+        });
+        if (r === 0) {
+          const extraRaw = team.extra ?? team.protocol?.extraBonus ?? "";
+          cells += `<td class="cg-fixed" rowspan="${rowsPerTeam}" style="${fixedBody}">${extraRaw === "" ? "—" : escHtml(extraRaw)}</td>`;
+          cells += `<td class="cg-fixed cg-total" rowspan="${rowsPerTeam}" style="${fixedBody}"><strong>${hasAny ? Math.round(total * 100) / 100 : "—"}</strong></td>`;
+          cells += `<td class="cg-fixed cg-place-col" rowspan="${rowsPerTeam}" style="${fixedBody}">${renderPlaceBadge(team.place ?? team.protocol?.place)}</td>`;
+        }
+        rows += `<tr class="competition-row" tabindex="0" title="Открыть протокол команды" onclick="showProtocolPage('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProtocolPage('${team.id}');}">${cells}</tr>`;
+      }
+    });
+
+    const toolbar = `<div class="competition-toolbar">
+<button type="button" class="btn btn-sm btn-outline-primary comp-tool-btn" onclick="calculatePlacesForClass('${key}')"><i class="fas fa-ranking-star me-1"></i>Рассчитать места</button>
+<div class="dropdown">
+<button class="btn btn-sm btn-outline-secondary comp-tool-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-arrow-down-wide-short me-1"></i>Сортировка: ${COMP_SORT_LABELS[mode]}</button>
+<ul class="dropdown-menu">${["draw", "name", "total"].map((m) => `<li><a class="dropdown-item d-flex align-items-center justify-content-between ${m === mode ? "active" : ""}" href="#" onclick="setCompSort('${key}','${m}'); return false;"><span>${COMP_SORT_LABELS[m]}</span>${m === mode ? '<i class="fas fa-check ms-3"></i>' : ""}</a></li>`).join("")}</ul>
+</div>
+<span class="competition-toolbar-hint"><i class="fas fa-hand-pointer me-1"></i>Клик по строке — протокол команды</span>
+</div>`;
+
+    html += `<div class="competition-class-card">
+<div class="group-header competition-class-header">
+<div class="group-header-left">
+<span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span>
+<span class="group-header-title">${escHtml(g.fullName || g.name)}</span>
+</div>
+${g.date ? `<span class="group-date-badge">${escHtml(g.date)}</span>` : ""}
+<span class="competition-class-count">${g.teams.length} команд</span>
+</div>
+${toolbar}
+<div class="table-responsive"><table class="competition-table">
+<thead>${head1}${head2}</thead>
+<tbody>${rows}</tbody>
+</table></div>
+</div>`;
+  }
+  if (!html) html = `<div class="text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
+  const el = document.getElementById("competitionContent") || document.getElementById("competitionPage");
+  if (el) el.innerHTML = html;
+  return html;
+}
+
+function decorateProtocolAttempts() {
+  document.querySelectorAll("[id^='protoGroupBest-']").forEach((span) => {
+    const gi = span.id.replace("protoGroupBest-", "");
+    const totals = Array.from(document.querySelectorAll(`[id^='protoGroupTotal-${gi}-a']`));
+    const allZero = totals.length > 0 && totals.every((s) => parseFloat(s.textContent) === 0);
+    const m = span.textContent.match(/попытка (\d+)/);
+    const best = m && !allZero ? Number(m[1]) : null;
+    document.querySelectorAll(`[id^='protoAttemptHead-${gi}-a']`).forEach((h) => {
+      const a = Number(h.id.split("-a")[1]);
+      h.classList.toggle("is-best", best !== null && a === best);
+      h.classList.toggle("is-muted", best !== null && a !== best);
+    });
+  });
+}
+const _visOrigTotals = updateProtocolTotals;
+updateProtocolTotals = function (...a) {
+  const r = _visOrigTotals.apply(this, a);
+  decorateProtocolAttempts();
   return r;
 };
 

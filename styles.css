@@ -2819,16 +2819,30 @@ body.sync-floating {
     align-items: center;
     gap: 6px !important;
   }
-  .header-mobile-row { order: 0; }
-  #yearDropdownContainer { order: 1; }
-  #headerButtons > .btn-grouping-icon { order: 2; }
-  #headerButtons > .btn-upload { order: 2; }
-  #headerButtons > .btn-grouping-icon:first-of-type { margin-left: auto; }
+  .header-mobile-row {
+    order: 0;
+  }
+  #yearDropdownContainer {
+    order: 1;
+  }
+  #headerButtons > .btn-grouping-icon {
+    order: 2;
+  }
+  #headerButtons > .btn-upload {
+    order: 2;
+  }
+  #headerButtons > .btn-grouping-icon:first-of-type {
+    margin-left: auto;
+  }
 }
 
 /* ===== Кнопка печати списка — справа, как служебная ===== */
-.print-toolbar { justify-content: flex-end; }
-.print-toolbar-hint { margin-right: auto; }
+.print-toolbar {
+  justify-content: flex-end;
+}
+.print-toolbar-hint {
+  margin-right: auto;
+}
 
 /* ===== Печать таблиц протокола: корректные ширины колонок ===== */
 @media print {
@@ -2853,7 +2867,10 @@ body.sync-floating {
   }
   .competition-table thead tr:nth-child(2) th .cg-th-stack {
     position: static !important;
-    top: auto !important; right: auto !important; bottom: auto !important; left: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
     height: auto !important;
     min-height: 0 !important;
     display: inline-flex !important;
@@ -2865,18 +2882,73 @@ body.sync-floating {
     margin: 2px auto 0 !important;
   }
   .competition-table th:nth-child(1),
-  .competition-table td:nth-child(1) { width: 7mm; }
+  .competition-table td:nth-child(1) {
+    width: 7mm;
+  }
   .competition-table th:nth-child(2),
-  .competition-table td:nth-child(2) { min-width: 30mm; }
+  .competition-table td:nth-child(2) {
+    min-width: 30mm;
+  }
 }
 
 /* ===== Попытки в конкурсных заданиях ===== */
-.competition-table .cg-attempt-no { width: 34px; font-weight: 700; color: #64748b; }
+.competition-table .cg-attempt-no {
+  width: 34px;
+  font-weight: 700;
+  color: #64748b;
+}
 .proto-attempt-head {
-  font-family: "Manrope", sans-serif; font-weight: 700; font-size: 0.85rem; color: #1d4ed8;
-  margin: 12px 0 6px; padding-left: 8px; border-left: 3px solid #bfdbfe;
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1d4ed8;
+  margin: 12px 0 6px;
+  padding-left: 8px;
+  border-left: 3px solid #bfdbfe;
 }
 .proto-attempts-badge {
-  font-size: 0.7rem; font-weight: 600; color: #15803d; background: #f0fdf4;
-  border: 1px solid #bbf7d0; border-radius: 999px; padding: 2px 8px; vertical-align: middle; margin-left: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+/* ===== Лучшая / худшая попытка ===== */
+.competition-table td.cg-cell-muted {
+  color: #94a3b8 !important;
+  text-decoration: line-through;
+  font-weight: 400 !important;
+}
+.competition-table td.cg-cell-muted .cg-bool-yes,
+.competition-table td.cg-cell-muted .cg-bool-no {
+  color: #94a3b8 !important;
+}
+.competition-table td.cg-cell-best {
+  font-weight: 700;
+}
+.competition-table td.cg-attempt-no.cg-attempt-muted {
+  color: #94a3b8 !important;
+  text-decoration: line-through;
+}
+.competition-table td.cg-attempt-no.cg-attempt-best {
+  color: #15803d !important;
+  font-weight: 800;
+}
+.proto-attempt-head.is-best {
+  color: #15803d;
+  border-left-color: #86efac;
+}
+.proto-attempt-head.is-best::after {
+  content: " · в зачёт";
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.proto-attempt-head.is-muted {
+  color: #94a3b8;
+  border-left-color: #e2e8f0;
 }
