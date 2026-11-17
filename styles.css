@@ -2811,3 +2811,17 @@ body.sync-floating {
     display: none !important;
   }
 }
+
+/* ===== Мобильная шапка: гамбургер и год слева, раскладка и админ справа ===== */
+@media (max-width: 768px) {
+  #headerButtons {
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: 6px !important;
+  }
+  .header-mobile-row { order: 0; }
+  #yearDropdownContainer { order: 1; }
+  #headerButtons > .btn-grouping-icon { order: 2; }
+  #headerButtons > .btn-upload { order: 2; }
+  #headerButtons > .btn-grouping-icon:first-of-type { margin-left: auto; }
+}
