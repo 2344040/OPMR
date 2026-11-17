@@ -7723,7 +7723,7 @@ function renderCompetition() {
       const paren = pi > 0 ? full.slice(pi).trim() : "";
       head1 += `<th colspan="${cg.cols.length + (A > 1 ? 1 : 0)}" class="cg-tint-${cg.tint} m-hide" style="${bg(cg.tint)}" title="${escHtml(full)}${A > 1 ? ` · ${A} попытки, в зачёт лучшая` : ""}">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""}</th>`;
       if (A > 1)
-        head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ поп.</th>`;
+        head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ попытки</th>`;
       cg.cols.forEach((c) => {
         head2 += `<th class="cg-tint-${c.tint} m-hide" style="${bg(c.tint)}" title="${escHtml(c.full || c.title)}">${renderCriteriaSubhead(c)}</th>`;
       });
@@ -7790,7 +7790,7 @@ function renderCompetition() {
           cells += `<td class="cg-fixed cg-total" rowspan="${rowsPerTeam}" style="${fixedBody}"><strong>${hasAny ? Math.round(total * 100) / 100 : "—"}</strong></td>`;
           cells += `<td class="cg-fixed cg-place-col" rowspan="${rowsPerTeam}" style="${fixedBody}">${renderPlaceBadge(team.place ?? team.protocol?.place)}</td>`;
         }
-        rows += `<tr class="competition-row" tabindex="0" title="Открыть протокол команды" onclick="showProtocolPage('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProtocolPage('${team.id}');}">${cells}</tr>`;
+        rows += `<tr class="competition-row${r === rowsPerTeam - 1 ? " team-block-end" : ""}" data-team-row="${team.id}" tabindex="0" title="Открыть протокол команды" onclick="showProtocolPage('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProtocolPage('${team.id}');}">${cells}</tr>`;
       }
     });
 
@@ -7939,11 +7939,15 @@ function copyCriteriaSetTo(year, classId) {
   const target = `${getClassInfo(classId).name} · ${year}`;
   if (!confirm(`Скопировать текущий набор критериев в «${target}»?\nСуществующий там набор будет заменён.`)) return;
   if (!competitionSettings[year]) competitionSettings[year] = {};
-  competitionSettings[year][classId] = {...(competitionSettings[year][classId] || {date: ""}), criteria: JSON.parse(JSON.stringify(tempCriteria))};
+  competitionSettings[year][classId] = {
+    ...(competitionSettings[year][classId] || {date: ""}),
+    criteria: JSON.parse(JSON.stringify(tempCriteria)),
+  };
   saveData();
   showToast(`Набор скопирован в «${target}»`, "success");
   const gh = getGitHubSettings();
-  if (gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  if (gh?.owner && gh?.repo && gh?.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
 }
 
 const _libPrevRenderCriteria = renderCriteriaOffcanvas;
@@ -8020,6 +8024,36 @@ renderCriteriaOffcanvas = function (...a) {
     wrap.innerHTML = `<button class="btn btn-outline-secondary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-copy me-2"></i>Дублировать набор в…</button><ul class="dropdown-menu w-100" style="max-height:220px;overflow-y:auto">${items || '<li><span class="dropdown-item-text text-muted small">Нет других классов и годов</span></li>'}</ul>`;
     bottom.appendChild(wrap);
   }
+  return r;
+};
+
+// ===== ХОВЕР ВСЕГО БЛОКА КОМАНДЫ + ЗАЩИТА МОБИЛЬНОЙ РАЗМЕТКИ ПРИ ROWSPAN =====
+function markCompetitionMobileColumns() {}
+
+function bindTeamRowHover() {
+  const page = document.getElementById("competitionPage");
+  if (!page || page.dataset.hoverBound) return;
+  page.dataset.hoverBound = "1";
+  const clear = () => page.querySelectorAll("tr.row-hover").forEach((r) => r.classList.remove("row-hover"));
+  page.addEventListener("mouseover", (e) => {
+    const row = e.target.closest("tr[data-team-row]");
+    if (!row) {
+      clear();
+      return;
+    }
+    const id = row.dataset.teamRow;
+    page.querySelectorAll("tr.row-hover").forEach((r) => {
+      if (r.dataset.teamRow !== id) r.classList.remove("row-hover");
+    });
+    page.querySelectorAll(`tr[data-team-row="${id}"]`).forEach((r) => r.classList.add("row-hover"));
+  });
+  page.addEventListener("mouseleave", clear);
+}
+
+const _hoverOrigComp = renderCompetition;
+renderCompetition = function (...a) {
+  const r = _hoverOrigComp.apply(this, a);
+  bindTeamRowHover();
   return r;
 };
 
