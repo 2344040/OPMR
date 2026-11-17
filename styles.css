@@ -3094,6 +3094,9 @@ body.sync-floating {
   margin-bottom: 0;
 }
 
+/* ===== Колонка «Доп.» скрывается, когда доп. баллы ведутся своей группой ===== */
+.competition-table.no-extra-col .cg-extra-col { display: none !important; }
+
 /* ===== Метка авто-группы доп. баллов ===== */
 .crit-extra-badge {
   font-size: 0.65rem; font-weight: 700; color: #15803d;

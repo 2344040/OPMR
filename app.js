@@ -1650,7 +1650,8 @@ function saveProtocol() {
   });
   team.scores = scores;
   const draw = document.getElementById("protoDrawNumber")?.value || "";
-  const extra = parseFloat(document.getElementById("protoExtraBonus")?.value) || 0;
+  const extraEl = document.getElementById("protoExtraBonus");
+  const extra = extraEl ? parseFloat(extraEl.value) || 0 : (team.extra ?? 0);
   const place = parseInt(document.getElementById("protoPlace")?.value) || 0;
   const total = parseFloat(document.getElementById("protoTotal")?.textContent) || 0;
   team.draw = draw;
@@ -8267,7 +8268,7 @@ function renderCompetition() {
         });
       }
     });
-    head1 += `<th rowspan="2" class="cg-fixed" style="${fixedHead}">Доп.</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Σ</th><th rowspan="2" class="cg-fixed cg-place-col" style="${fixedHead}">Место</th></tr>`;
+    head1 += `<th rowspan="2" class="cg-fixed cg-extra-col" style="${fixedHead}">Доп.</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Σ</th><th rowspan="2" class="cg-fixed cg-place-col" style="${fixedHead}">Место</th></tr>`;
     head2 += `</tr>`;
 
     const mode = getCompSort(key);
@@ -8322,7 +8323,7 @@ function renderCompetition() {
         });
         if (r === 0) {
           const extraRaw = team.extra ?? team.protocol?.extraBonus ?? "";
-          cells += `<td class="cg-fixed team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${extraRaw === "" ? "—" : escHtml(extraRaw)}</td>`;
+          cells += `<td class="cg-fixed cg-extra-col team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${extraRaw === "" ? "—" : escHtml(extraRaw)}</td>`;
           cells += `<td class="cg-fixed cg-total team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}"><strong>${hasAny ? Math.round(total * 100) / 100 : "—"}</strong></td>`;
           cells += `<td class="cg-fixed cg-place-col team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${renderPlaceBadge(team.place ?? team.protocol?.place)}</td>`;
         }
@@ -8492,6 +8493,47 @@ renderCriteriaOffcanvas = function (...a) {
   return r;
 };
 
+// ===== ДОП. БАЛЛЫ: фиксированный блок только если в наборе нет своей группы =====
+function classHasExtraGroup(year, classId) {
+  const groups = getClassCriteriaGroups(year, classId);
+  return groups.some((cg) => {
+    const gt = ((cg.fullTitle || "") + " " + (cg.title || "")).toLowerCase();
+    if (gt.includes("доп") && gt.includes("балл")) return true;
+    return cg.cols.some((c) => ((c.full || "") + " " + (c.title || "")).toLowerCase().includes("внеконкурс"));
+  });
+}
+
+const _dupPrevRenderProtocol = renderProtocolForm;
+renderProtocolForm = function (...a) {
+  const r = _dupPrevRenderProtocol.apply(this, a);
+  const team = teamsData.find((t) => t.id === a[0]);
+  if (!team) return r;
+  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+  if (classHasExtraGroup(team.year, classId)) {
+    document.querySelectorAll("#protocolContent .detail-section").forEach((sec) => {
+      const h = sec.querySelector("h5.detail-section-title");
+      if (h && h.textContent.trim() === "Дополнительные баллы") sec.remove();
+    });
+  }
+  return r;
+};
+
+function hideExtraColumnWhenGrouped() {
+  document.querySelectorAll("#competitionPage table").forEach((table) => {
+    const card = table.closest(".competition-class-card");
+    const btn = card && card.querySelector('[onclick*="calculatePlacesForClass("]');
+    const m = btn && (btn.getAttribute("onclick") || "").match(/calculatePlacesForClass\(\s*['"]([^'"]+)['"]/);
+    if (!m) return;
+    table.classList.toggle("no-extra-col", classHasExtraGroup(currentYear, m[1]));
+  });
+}
+const _dupPrevRenderComp = renderCompetition;
+renderCompetition = function (...a) {
+  const r = _dupPrevRenderComp.apply(this, a);
+  hideExtraColumnWhenGrouped();
+  return r;
+};
+
 // ===== ДОП. БАЛЛЫ: авто-группа внутри набора критериев (редактируемая) =====
 function normalizeCriteria(criteria) {
   if (!Array.isArray(criteria)) return [];
@@ -8523,13 +8565,14 @@ function normalizeCriteria(criteria) {
 
 function findExtraGroup(list) {
   return (
-    (Array.isArray(list) &&
-      list.find((g) => g && g.extra === true)) ||
+    (Array.isArray(list) && list.find((g) => g && g.extra === true)) ||
     (Array.isArray(list) &&
       list.find((g) => {
-        const gt = ((g && g.section || "") + " " + (g && g.sectionShort || "")).toLowerCase();
+        const gt = (((g && g.section) || "") + " " + ((g && g.sectionShort) || "")).toLowerCase();
         if (gt.includes("доп") && gt.includes("балл")) return true;
-        return ((g && g.fields) || []).some((f) => ((f.name || "") + " " + (f.short || "")).toLowerCase().includes("внеконкурс"));
+        return ((g && g.fields) || []).some((f) =>
+          ((f.name || "") + " " + (f.short || "")).toLowerCase().includes("внеконкурс"),
+        );
       })) ||
     null
   );
@@ -8555,7 +8598,16 @@ function migrateExtraGroup() {
           sectionShort: "Доп.",
           attempts: 1,
           multi: false,
-          fields: [{id: newFieldId(), name: "За внеконкурсное задание", short: "Внеконкурс", type: "int", sum: true, penalty: false}],
+          fields: [
+            {
+              id: newFieldId(),
+              name: "За внеконкурсное задание",
+              short: "Внеконкурс",
+              type: "int",
+              sum: true,
+              penalty: false,
+            },
+          ],
         });
         changed = true;
       }
@@ -8585,7 +8637,8 @@ runIntegrityMigration = function (...a) {
 };
 
 function computeTeamTotal(team) {
-  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+  const classId =
+    typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
   const groups = getClassCriteriaGroups(team.year, classId);
   let total = 0;
   groups.forEach((cg, gi) => {
@@ -8598,7 +8651,8 @@ function computeTeamTotal(team) {
       total += groupAttemptSubtotal(team, cg, gi, 1);
     }
   });
-  if (!classHasExtraGroup(team.year, classId)) total += parseScoreNumber(team.extra ?? team.protocol?.extraBonus ?? 0) || 0;
+  if (!classHasExtraGroup(team.year, classId))
+    total += parseScoreNumber(team.extra ?? team.protocol?.extraBonus ?? 0) || 0;
   return Math.round(total * 100) / 100;
 }
 
