@@ -5117,6 +5117,16 @@
           ]
         }
       ]
+    },
+    {
+      "id": "arch_2026_anna",
+      "name": "Архив: АННА 2026",
+      "date": "29.11.2026",
+      "criteria": [],
+      "archive": {
+        "year": "2026",
+        "classId": "anna"
+      }
     }
   ],
   "teams": [
