@@ -8407,8 +8407,8 @@ function renderCompetition() {
           const surname = teamLeaderSurname(team);
           const apparatus = (team.apparatusName || "").trim();
           const subLines =
-            (surname ? `<div class="team-leader-line">${escHtml(surname)}</div>` : "") +
-            (apparatus ? `<div class="team-apparatus-line">${escHtml(apparatus)}</div>` : "");
+            (apparatus ? `<div class="team-apparatus-line">${escHtml(apparatus)}</div>` : "") +
+            (surname ? `<div class="team-leader-line">${escHtml(surname)}</div>` : "");
           cells += `<td class="td-team cg-sticky-1 team-block-end" rowspan="${rowsPerTeam}" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}${subLines}</td>`;
         }
         critGroups.forEach((cg, gi) => {
