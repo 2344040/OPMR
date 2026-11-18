@@ -3242,3 +3242,19 @@ body.sync-floating {
   color: #94a3b8;
   margin-top: 1px;
 }
+
+.team-leader-line {
+  font-weight: 400;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+.team-apparatus-line {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: #94a3b8;
+  margin-top: 1px;
+}

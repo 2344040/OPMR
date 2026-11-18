@@ -5715,7 +5715,11 @@ function deleteApparatusClass(idx) {
 
 const MASTER_VIEW_KEY = "opmr_master_view";
 function getMasterView() {
-  try { return localStorage.getItem(MASTER_VIEW_KEY) || "org"; } catch { return "org"; }
+  try {
+    return localStorage.getItem(MASTER_VIEW_KEY) || "org";
+  } catch {
+    return "org";
+  }
 }
 function setMasterView(v) {
   localStorage.setItem(MASTER_VIEW_KEY, v);
@@ -5741,11 +5745,13 @@ function renderMasterTable() {
 
   let html = `<div class="detail-section"><h4 class="detail-section-title">Сводная таблица результатов</h4>
 <div class="master-view-switch">
-<button class="btn btn-sm ${view === 'org' ? 'btn-primary' : 'btn-outline-secondary'}" onclick="setMasterView('org')"><i class="fas fa-building me-1"></i>По организациям</button>
-<button class="btn btn-sm ${view === 'team' ? 'btn-primary' : 'btn-outline-secondary'}" onclick="setMasterView('team')"><i class="fas fa-users me-1"></i>По командам</button>
+<button class="btn btn-sm ${view === "org" ? "btn-primary" : "btn-outline-secondary"}" onclick="setMasterView('org')"><i class="fas fa-building me-1"></i>По организациям</button>
+<button class="btn btn-sm ${view === "team" ? "btn-primary" : "btn-outline-secondary"}" onclick="setMasterView('team')"><i class="fas fa-users me-1"></i>По командам</button>
 </div>`;
 
-  const classOrder = Array.from(enabledClasses).sort((a, b) => String(getClassInfo(a).name).localeCompare(String(getClassInfo(b).name), "ru"));
+  const classOrder = Array.from(enabledClasses).sort((a, b) =>
+    String(getClassInfo(a).name).localeCompare(String(getClassInfo(b).name), "ru"),
+  );
   classOrder.forEach((cid) => {
     const info = getClassInfo(cid);
     html += `<div class="master-class-block"><div class="master-class-head"><span class="badge category-badge ${info.color}">${escHtml(info.name)}</span><span class="master-class-title">${escHtml(info.fullName || info.name)}</span></div>`;
@@ -5764,7 +5770,8 @@ function renderMasterByOrg(cid, years, info) {
   const byOrg = {};
   teamsData.forEach((team) => {
     if (!team.orgId) return;
-    const teamCid = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+    const teamCid =
+      typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
     if (teamCid !== cid) return;
     const orgId = team.orgId;
     if (!byOrg[orgId]) byOrg[orgId] = {org: organizations.find((o) => o.id === orgId), years: {}};
@@ -5777,18 +5784,24 @@ function renderMasterByOrg(cid, years, info) {
   });
   const rows = Object.values(byOrg).filter((r) => r.org);
   rows.sort((a, b) => {
-    const ba = bestPlaceOf(a), bb = bestPlaceOf(b);
+    const ba = bestPlaceOf(a),
+      bb = bestPlaceOf(b);
     if (ba !== bb) return (ba ?? 999) - (bb ?? 999);
-    const ya = bestYearOf(a), yb = bestYearOf(b);
+    const ya = bestYearOf(a),
+      yb = bestYearOf(b);
     if (ya !== yb) return yb - ya;
     return String(a.org.fullName || "").localeCompare(String(b.org.fullName || ""), "ru");
   });
   if (!rows.length) return '<div class="text-muted small py-2">Нет данных</div>';
   let html = `<div class="table-responsive"><table class="table table-hover master-table">
 <thead><tr><th rowspan="2" class="master-org-col">Организация</th>`;
-  years.forEach((y, i) => { html += `<th colspan="2" class="master-year-head${i > 0 ? ' master-year-sep' : ''}">${y}</th>`; });
+  years.forEach((y, i) => {
+    html += `<th colspan="2" class="master-year-head${i > 0 ? " master-year-sep" : ""}">${y}</th>`;
+  });
   html += `<th rowspan="2" class="master-best-head">Лучшее место</th></tr><tr>`;
-  years.forEach((y, i) => { html += `<th class="master-place-col${i > 0 ? ' master-year-sep' : ''}">Место</th><th class="master-score-col">Баллы</th>`; });
+  years.forEach((y, i) => {
+    html += `<th class="master-place-col${i > 0 ? " master-year-sep" : ""}">Место</th><th class="master-score-col">Баллы</th>`;
+  });
   html += `</tr></thead><tbody>`;
   rows.forEach(({org, years: yd}) => {
     const best = bestPlaceOf({years: yd});
@@ -5796,9 +5809,9 @@ function renderMasterByOrg(cid, years, info) {
     years.forEach((y, i) => {
       const d = yd[y];
       if (d && d.place !== null) {
-        html += `<td class="master-place-cell${i > 0 ? ' master-year-sep' : ''}">${renderPlaceBadge(d.place)}</td><td class="master-score-cell">${d.score ?? "—"}</td>`;
+        html += `<td class="master-place-cell${i > 0 ? " master-year-sep" : ""}">${renderPlaceBadge(d.place)}</td><td class="master-score-cell">${d.score ?? "—"}</td>`;
       } else {
-        html += `<td class="master-place-cell${i > 0 ? ' master-year-sep' : ''}">—</td><td class="master-score-cell">—</td>`;
+        html += `<td class="master-place-cell${i > 0 ? " master-year-sep" : ""}">—</td><td class="master-score-cell">—</td>`;
       }
     });
     html += `<td class="master-best-cell">${best ? renderPlaceBadge(best) : "—"}</td></tr>`;
@@ -5809,11 +5822,13 @@ function renderMasterByOrg(cid, years, info) {
 function renderMasterByTeam(cid, years, info) {
   const teams = teamsData.filter((t) => {
     if (!t.orgId) return false;
-    const teamCid = typeof getTeamClassId === "function" ? getTeamClassId(t) : getClassIdByValue(t.apparatusClass, t.year);
+    const teamCid =
+      typeof getTeamClassId === "function" ? getTeamClassId(t) : getClassIdByValue(t.apparatusClass, t.year);
     return teamCid === cid;
   });
   teams.sort((a, b) => {
-    const pa = getTeamPlace(a), pb = getTeamPlace(b);
+    const pa = getTeamPlace(a),
+      pb = getTeamPlace(b);
     if (pa !== null && pb !== null) {
       if (pa !== pb) return pa - pb;
       return b.year - a.year;
@@ -5825,9 +5840,13 @@ function renderMasterByTeam(cid, years, info) {
   if (!teams.length) return '<div class="text-muted small py-2">Нет данных</div>';
   let html = `<div class="table-responsive"><table class="table table-hover master-table master-team-table">
 <thead><tr><th class="master-team-col">Команда</th>`;
-  years.forEach((y, i) => { html += `<th colspan="2" class="master-year-head${i > 0 ? ' master-year-sep' : ''}">${y}</th>`; });
+  years.forEach((y, i) => {
+    html += `<th colspan="2" class="master-year-head${i > 0 ? " master-year-sep" : ""}">${y}</th>`;
+  });
   html += `<th class="master-best-head">Место</th></tr><tr><th></th>`;
-  years.forEach((y, i) => { html += `<th class="master-place-col${i > 0 ? ' master-year-sep' : ''}">Место</th><th class="master-score-col">Баллы</th>`; });
+  years.forEach((y, i) => {
+    html += `<th class="master-place-col${i > 0 ? " master-year-sep" : ""}">Место</th><th class="master-score-col">Баллы</th>`;
+  });
   html += `<th></th></tr></thead><tbody>`;
   teams.forEach((t) => {
     const place = getTeamPlace(t);
@@ -5840,9 +5859,9 @@ function renderMasterByTeam(cid, years, info) {
     html += `<tr><td><div class="fw-semibold">${escHtml(getTeamDisplayName(t))}</div>${subLines.join("")}</td>`;
     years.forEach((y, i) => {
       if (t.year === y) {
-        html += `<td class="master-place-cell${i > 0 ? ' master-year-sep' : ''}">${place !== null ? renderPlaceBadge(place) : "—"}</td><td class="master-score-cell">${score ?? "—"}</td>`;
+        html += `<td class="master-place-cell${i > 0 ? " master-year-sep" : ""}">${place !== null ? renderPlaceBadge(place) : "—"}</td><td class="master-score-cell">${score ?? "—"}</td>`;
       } else {
-        html += `<td class="master-place-cell${i > 0 ? ' master-year-sep' : ''}">—</td><td class="master-score-cell">—</td>`;
+        html += `<td class="master-place-cell${i > 0 ? " master-year-sep" : ""}">—</td><td class="master-score-cell">—</td>`;
       }
     });
     html += `<td class="master-best-cell">${place ? renderPlaceBadge(place) : "—"}</td></tr>`;
@@ -5859,11 +5878,13 @@ function bestPlaceOf(row) {
   return best;
 }
 function bestYearOf(row) {
-  let best = null, bestP = null;
+  let best = null,
+    bestP = null;
   for (const y in row.years || {}) {
     const p = row.years[y].place;
     if (p !== null && (bestP === null || p < bestP || (p === bestP && Number(y) > Number(best)))) {
-      bestP = p; best = Number(y);
+      bestP = p;
+      best = Number(y);
     }
   }
   return best;
@@ -6246,7 +6267,9 @@ function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
   const byId = {};
-  teamsData.forEach((t) => { byId[String(t.id)] = t; });
+  teamsData.forEach((t) => {
+    byId[String(t.id)] = t;
+  });
   page.querySelectorAll("table").forEach((table) => {
     table.querySelectorAll("tbody tr").forEach((row) => {
       const nameCell = row.querySelector(".td-team");
@@ -8381,7 +8404,12 @@ function renderCompetition() {
         if (r === 0) {
           const drawRaw = team.draw ?? team.drawNumber ?? team.lot ?? "";
           cells += `<td class="cg-fixed cg-sticky-0 team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${drawRaw === "" ? "—" : escHtml(drawRaw)}</td>`;
-          cells += `<td class="td-team cg-sticky-1 team-block-end" rowspan="${rowsPerTeam}" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}</td>`;
+          const surname = teamLeaderSurname(team);
+          const apparatus = (team.apparatusName || "").trim();
+          const subLines =
+            (surname ? `<div class="team-leader-line">${escHtml(surname)}</div>` : "") +
+            (apparatus ? `<div class="team-apparatus-line">${escHtml(apparatus)}</div>` : "");
+          cells += `<td class="td-team cg-sticky-1 team-block-end" rowspan="${rowsPerTeam}" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}${subLines}</td>`;
         }
         critGroups.forEach((cg, gi) => {
           const A = cg.attempts || 1;
@@ -8591,7 +8619,8 @@ renderProtocolForm = function (...a) {
   const r = _dupPrevRenderProtocol.apply(this, a);
   const team = teamsData.find((t) => t.id === a[0]);
   if (!team) return r;
-  const classId = typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
+  const classId =
+    typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
   if (classHasExtraGroup(team.year, classId)) {
     document.querySelectorAll("#protocolContent .detail-section").forEach((sec) => {
       const h = sec.querySelector("h5.detail-section-title");
