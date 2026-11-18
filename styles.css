@@ -3251,7 +3251,7 @@ body.sync-floating {
   margin-top: 1px;
 }
 .team-apparatus-line {
-  font-style: italic;
+  /* font-style: italic; */
   font-weight: 400;
   font-size: 0.78rem;
   line-height: 1.25;
