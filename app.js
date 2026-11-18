@@ -8817,32 +8817,45 @@ function pluralizeTeams(n) {
   return "команд";
 }
 
-// ===== СЧЁТЧИК В ОБЩЕМ СПИСКЕ =====
+// ===== СЧЁТЧИКИ КОМАНД =====
 const _cntPrevRenderTeams = renderTeams;
 renderTeams = function (...a) {
   const r = _cntPrevRenderTeams.apply(this, a);
   const container = document.getElementById("teamsContainer");
   if (!container) return r;
-
-  // Общий список: считаем все команды
+  
+  // Общий список: считаем все команды за год
   if (!isGrouped) {
     const total = teamsData.filter((t) => t.year === currentYear).length;
     if (total > 0 && !container.querySelector(".teams-total-count")) {
       const badge = document.createElement("span");
       badge.className = "teams-total-count";
       badge.textContent = `${total} ${pluralizeTeams(total)}`;
-      const title = container.querySelector("h4, .page-title");
-      if (title) title.after(badge);
-      else container.insertAdjacentElement("afterbegin", badge);
+      // Вставляем после заголовка или в начало контейнера
+      const title = container.querySelector("h4, .page-title, .teams-page-title");
+      if (title) {
+        title.style.display = "inline-flex";
+        title.style.alignItems = "center";
+        title.after(badge);
+      } else {
+        container.insertAdjacentElement("afterbegin", badge);
+      }
     }
     return r;
   }
-
-  // Группировка: считаем в каждой группе
+  
+  // Группировка: считаем команды в каждой группе
   document.querySelectorAll(".group-header").forEach((header) => {
     if (header.querySelector(".group-teams-count")) return;
-    const block = header.closest(".teams-class-block") || header.parentElement;
-    const count = (block && block.querySelectorAll(".team-list-row, .team-card").length) || 0;
+    
+    // Находим блок группы — ближайший родитель с командами
+    const groupBlock = header.closest(".teams-class-block, .group-block, [class*='group']") || header.parentElement;
+    
+    // Считаем и карточки, и строки списка внутри этого блока
+    const cards = groupBlock.querySelectorAll(".team-card").length;
+    const rows = groupBlock.querySelectorAll(".team-list-row").length;
+    const count = cards || rows;
+    
     if (!count) return;
     const badge = document.createElement("span");
     badge.className = "group-teams-count";
