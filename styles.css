@@ -3255,6 +3255,21 @@ body.sync-floating {
   font-weight: 400;
   font-size: 0.78rem;
   line-height: 1.25;
-  color: #334155 ;
+  color: #334155;
+  margin-top: 1px;
+}
+
+.td-team {
+  font-size: 0.95rem;
+}
+.team-apparatus-line {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #475569;
+  margin-top: 2px;
+}
+.team-leader-line {
+  font-size: 0.72rem;
+  color: #94a3b8;
   margin-top: 1px;
 }
