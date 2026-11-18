@@ -8807,6 +8807,7 @@ renderCriteriaOffcanvas = function (...a) {
 };
 
 // ===== СКЛОНЕНИЕ «КОМАНДА» + СЧЁТЧИК В ЗАГОЛОВКЕ ГРУППЫ =====
+// ===== СКЛОНЕНИЕ «КОМАНДА» =====
 function pluralizeTeams(n) {
   const abs = Math.abs(n) % 100;
   const last = abs % 10;
@@ -8816,14 +8817,32 @@ function pluralizeTeams(n) {
   return "команд";
 }
 
+// ===== СЧЁТЧИК В ОБЩЕМ СПИСКЕ =====
 const _cntPrevRenderTeams = renderTeams;
 renderTeams = function (...a) {
   const r = _cntPrevRenderTeams.apply(this, a);
-  if (!isGrouped) return r;
+  const container = document.getElementById("teamsContainer");
+  if (!container) return r;
+
+  // Общий список: считаем все команды
+  if (!isGrouped) {
+    const total = teamsData.filter((t) => t.year === currentYear).length;
+    if (total > 0 && !container.querySelector(".teams-total-count")) {
+      const badge = document.createElement("span");
+      badge.className = "teams-total-count";
+      badge.textContent = `${total} ${pluralizeTeams(total)}`;
+      const title = container.querySelector("h4, .page-title");
+      if (title) title.after(badge);
+      else container.insertAdjacentElement("afterbegin", badge);
+    }
+    return r;
+  }
+
+  // Группировка: считаем в каждой группе
   document.querySelectorAll(".group-header").forEach((header) => {
     if (header.querySelector(".group-teams-count")) return;
-    const teamsList = header.closest(".teams-class-block") || header.parentElement;
-    const count = (teamsList && teamsList.querySelectorAll(".team-list-row, .team-card").length) || 0;
+    const block = header.closest(".teams-class-block") || header.parentElement;
+    const count = (block && block.querySelectorAll(".team-list-row, .team-card").length) || 0;
     if (!count) return;
     const badge = document.createElement("span");
     badge.className = "group-teams-count";
@@ -8831,6 +8850,21 @@ renderTeams = function (...a) {
     const existing = header.querySelector(".group-date-badge");
     if (existing) existing.after(badge);
     else header.appendChild(badge);
+  });
+  return r;
+};
+
+// ===== СКЛОНЕНИЕ В ТАБЛИЦАХ ПРОТОКОЛОВ =====
+const _cntPrevRenderComp = renderCompetition;
+renderCompetition = function (...a) {
+  const r = _cntPrevRenderComp.apply(this, a);
+  document.querySelectorAll(".competition-class-count").forEach((el) => {
+    const text = el.textContent.trim();
+    const m = text.match(/^(\d+)/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      el.textContent = `${n} ${pluralizeTeams(n)}`;
+    }
   });
   return r;
 };

@@ -3282,3 +3282,20 @@ body.sync-floating {
   margin-left: 8px;
   white-space: nowrap;
 }
+
+/* ===== Счётчики команд ===== */
+.teams-total-count {
+  display: inline-block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+.group-teams-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-left: 8px;
+  white-space: nowrap;
+}
