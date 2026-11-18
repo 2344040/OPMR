@@ -8806,4 +8806,33 @@ renderCriteriaOffcanvas = function (...a) {
   return r;
 };
 
+// ===== СКЛОНЕНИЕ «КОМАНДА» + СЧЁТЧИК В ЗАГОЛОВКЕ ГРУППЫ =====
+function pluralizeTeams(n) {
+  const abs = Math.abs(n) % 100;
+  const last = abs % 10;
+  if (abs > 10 && abs < 20) return "команд";
+  if (last > 1 && last < 5) return "команды";
+  if (last === 1) return "команда";
+  return "команд";
+}
+
+const _cntPrevRenderTeams = renderTeams;
+renderTeams = function (...a) {
+  const r = _cntPrevRenderTeams.apply(this, a);
+  if (!isGrouped) return r;
+  document.querySelectorAll(".group-header").forEach((header) => {
+    if (header.querySelector(".group-teams-count")) return;
+    const teamsList = header.closest(".teams-class-block") || header.parentElement;
+    const count = (teamsList && teamsList.querySelectorAll(".team-list-row, .team-card").length) || 0;
+    if (!count) return;
+    const badge = document.createElement("span");
+    badge.className = "group-teams-count";
+    badge.textContent = `${count} ${pluralizeTeams(count)}`;
+    const existing = header.querySelector(".group-date-badge");
+    if (existing) existing.after(badge);
+    else header.appendChild(badge);
+  });
+  return r;
+};
+
 opmrInit();
