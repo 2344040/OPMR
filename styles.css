@@ -3362,7 +3362,7 @@ body.sync-floating {
   }
   .group-date-badge {
     order: 2;
-    margin-left: auto;
+    margin-left: 0;
     font-size: 0.85rem !important;
     padding: 4px 8px !important;
     flex-shrink: 0;
@@ -3370,7 +3370,7 @@ body.sync-floating {
   .group-teams-count {
     order: 3;
     font-size: 0.82rem !important;
-    margin-left: 6px !important;
+    margin-left: auto !important;
     flex-shrink: 0;
   }
 }
