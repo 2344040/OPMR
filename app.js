@@ -6246,63 +6246,28 @@ function enhanceCompetitionTables() {
   const page = document.getElementById("competitionPage");
   if (!page) return;
   const byId = {};
-  teamsData.forEach((t) => {
-    byId[String(t.id)] = t;
-  });
-  const rowTeam = (row) => {
-    const direct = row.dataset.teamId;
-    if (direct && byId[direct]) return byId[direct];
-    const m = (row.getAttribute("onclick") || "").match(/showProtocolPage\(\s*['"]([^'"]+)['"]\s*\)/);
-    return m && byId[m[1]] ? byId[m[1]] : null;
-  };
-  const classOf = (table) => {
-    const card = table.closest(".competition-class-card");
-    if (!card) return null;
-    const btn = card.querySelector('[onclick*="calculatePlacesForClass("]');
-    const m = btn && (btn.getAttribute("onclick") || "").match(/calculatePlacesForClass\(\s*['"]([^'"]+)['"]/);
-    if (m) return m[1];
-    const badge = card.querySelector(".category-badge");
-    if (badge) {
-      const txt = badge.textContent.trim().toLowerCase();
-      const found = apparatusClasses.find(
-        (c) => String(c.name).toLowerCase() === txt || String(c.id).toLowerCase() === txt,
-      );
-      if (found) return found.id;
-    }
-    return null;
-  };
+  teamsData.forEach((t) => { byId[String(t.id)] = t; });
   page.querySelectorAll("table").forEach((table) => {
-    const classId = classOf(table);
-    const cols = classId ? getClassCriteriaGroups(currentYear, classId).flatMap((g) => g.cols) : [];
-    const subRow = table.querySelector("thead tr:nth-child(2)");
-    if (subRow && cols.length) {
-      Array.from(subRow.cells).forEach((th, i) => {
-        const c = cols[i];
-        if (!c) return;
-        th.innerHTML = renderCriteriaSubhead(c);
-        th.title = c.full || c.title || "";
-      });
-    }
     table.querySelectorAll("tbody tr").forEach((row) => {
-      const nameCell = row.cells[1];
-      if (nameCell && !nameCell.querySelector(".team-leader-line")) {
-        const team = rowTeam(row);
-        const surname = team ? teamLeaderSurname(team) : "";
-        if (surname) {
-          const div = document.createElement("div");
-          div.className = "team-leader-line";
-          div.textContent = surname;
-          nameCell.appendChild(div);
-        }
+      const nameCell = row.querySelector(".td-team");
+      if (!nameCell || nameCell.dataset.enhanced === "1") return;
+      nameCell.dataset.enhanced = "1";
+      const m = (row.getAttribute("onclick") || "").match(/showProtocolPage\(\s*['"]([^'"]+)['"]\s*\)/);
+      const team = m ? byId[m[1]] : null;
+      const surname = team ? teamLeaderSurname(team) : "";
+      if (surname) {
+        const div = document.createElement("div");
+        div.className = "team-leader-line";
+        div.textContent = surname;
+        nameCell.appendChild(div);
       }
-      if (!subRow) return;
-      Array.from(subRow.cells).forEach((th, i) => {
-        if (!th.querySelector(".cg-ico-sum")) return;
-        const cell = row.cells[i + 2];
-        if (!cell || cell.classList.contains("cg-penalty")) return;
-        const txt = cell.textContent.trim();
-        if (txt && txt !== "—" && !isNaN(parseFloat(txt.replace(",", ".")))) cell.classList.add("cg-score");
-      });
+      const apparatus = team ? (team.apparatusName || "").trim() : "";
+      if (apparatus) {
+        const div = document.createElement("div");
+        div.className = "team-apparatus-line";
+        div.textContent = apparatus;
+        nameCell.appendChild(div);
+      }
     });
   });
 }

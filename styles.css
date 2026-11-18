@@ -3205,11 +3205,40 @@ body.sync-floating {
 }
 
 /* ===== Сводная таблица: режим «По командам» ===== */
-.master-team-table .master-team-col { width: 40%; min-width: 260px; }
-.master-team-table td { vertical-align: middle; }
-.master-sub { color: #64748b; font-size: 0.72rem; line-height: 1.25; }
+.master-team-table .master-team-col {
+  width: 40%;
+  min-width: 260px;
+}
+.master-team-table td {
+  vertical-align: middle;
+}
+.master-sub {
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
 
 /* ===== Сводная таблица: режим «По командам» ===== */
-.master-team-table .master-team-col { width: 40%; min-width: 260px; }
-.master-team-table td { vertical-align: middle; }
-.master-sub { color: #94a3b8; font-size: 0.72rem; line-height: 1.25; }
+.master-team-table .master-team-col {
+  width: 40%;
+  min-width: 260px;
+}
+.master-team-table td {
+  vertical-align: middle;
+}
+.master-sub {
+  color: #94a3b8;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+/* ===== Третья строка в ячейке команды: название аппарата ===== */
+.team-apparatus-line {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: #94a3b8;
+  margin-top: 1px;
+}
