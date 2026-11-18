@@ -3342,3 +3342,34 @@ body.sync-floating {
 .print-toolbar-hint {
   display: none !important;
 }
+
+/* ===== Мобильный заголовок группы: дата и счётчик в одну строку справа ===== */
+@media (max-width: 768px) {
+  .group-header {
+    flex-wrap: nowrap !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+  }
+  .group-header-left {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  .group-header-title {
+    font-size: 0.95rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .group-date-badge {
+    font-size: 0.85rem !important;
+    padding: 4px 8px !important;
+    flex-shrink: 0;
+  }
+  .group-teams-count {
+    font-size: 0.82rem !important;
+    margin-left: 6px !important;
+    flex-shrink: 0;
+  }
+}
