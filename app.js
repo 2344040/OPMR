@@ -8806,7 +8806,6 @@ renderCriteriaOffcanvas = function (...a) {
   return r;
 };
 
-// ===== СКЛОНЕНИЕ «КОМАНДА» + СЧЁТЧИК В ЗАГОЛОВКЕ ГРУППЫ =====
 // ===== СКЛОНЕНИЕ «КОМАНДА» =====
 function pluralizeTeams(n) {
   const abs = Math.abs(n) % 100;
@@ -8831,7 +8830,6 @@ renderTeams = function (...a) {
       const badge = document.createElement("span");
       badge.className = "teams-total-count";
       badge.textContent = `${total} ${pluralizeTeams(total)}`;
-      // Вставляем после заголовка или в начало контейнера
       const title = container.querySelector("h4, .page-title, .teams-page-title");
       if (title) {
         title.style.display = "inline-flex";
@@ -8844,25 +8842,28 @@ renderTeams = function (...a) {
     return r;
   }
   
-  // Группировка: считаем команды в каждой группе
+  // Группировка: считаем команды в каждой группе по данным
+  const groups = buildClassGroups(teamsData.filter((t) => t.year === currentYear));
   document.querySelectorAll(".group-header").forEach((header) => {
     if (header.querySelector(".group-teams-count")) return;
     
-    // Находим блок группы — ближайший родитель с командами
-    const groupBlock = header.closest(".teams-class-block, .group-block, [class*='group']") || header.parentElement;
+    // Находим название класса в заголовке
+    const badge = header.querySelector(".category-badge");
+    if (!badge) return;
+    const className = badge.textContent.trim();
     
-    // Считаем и карточки, и строки списка внутри этого блока
-    const cards = groupBlock.querySelectorAll(".team-card").length;
-    const rows = groupBlock.querySelectorAll(".team-list-row").length;
-    const count = cards || rows;
-    
+    // Ищем соответствующую группу в данных
+    const group = Object.values(groups).find((g) => g.name === className);
+    if (!group) return;
+    const count = group.teams.length;
     if (!count) return;
-    const badge = document.createElement("span");
-    badge.className = "group-teams-count";
-    badge.textContent = `${count} ${pluralizeTeams(count)}`;
+    
+    const countBadge = document.createElement("span");
+    countBadge.className = "group-teams-count";
+    countBadge.textContent = `${count} ${pluralizeTeams(count)}`;
     const existing = header.querySelector(".group-date-badge");
-    if (existing) existing.after(badge);
-    else header.appendChild(badge);
+    if (existing) existing.after(countBadge);
+    else header.appendChild(countBadge);
   });
   return r;
 };
