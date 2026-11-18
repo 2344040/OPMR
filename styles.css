@@ -3233,7 +3233,7 @@ body.sync-floating {
 }
 
 /* ===== Третья строка в ячейке команды: название аппарата ===== */
-.team-apparatus-line {
+/* .team-apparatus-line {
   font-style: italic;
   font-weight: 400;
   font-size: 0.78rem;
@@ -3241,7 +3241,7 @@ body.sync-floating {
   letter-spacing: 0.01em;
   color: #94a3b8;
   margin-top: 1px;
-}
+} */
 
 .team-leader-line {
   font-weight: 400;
