@@ -9115,7 +9115,7 @@
       "id": "032-2026-anpa",
       "created": "18.11.2026",
       "year": 2026,
-      "shortName": "",
+      "shortName": "Судовое ПО / СКБ УОиР",
       "city": "Москва",
       "region": "Москва",
       "postalCode": "105215",
@@ -9124,10 +9124,11 @@
       "email": "kolya.toropof@gmail.com",
       "orgLeader": "Торопов Николай Владимирович",
       "apparatusClass": "Автономный необитаемый подводный аппарат (АНПА)",
-      "apparatusName": "Автономный робот мощностью 1 кВт и длиной кабеля 60 метров",
+      "apparatusName": "АНПА Судовое ПО",
       "description": "Автономный робот мощностью 1 кВт и длиной кабеля 60 метров",
       "photos": [
-        "https://forms.yandex.ru/cloud/files?path=%2F8174359%2F6afd78fede8ec31622d25265_photo2026_11_1813_03_13.jpg"
+        "https://forms.yandex.ru/cloud/files?path=%2F8174359%2F6afd78fede8ec31622d25265_photo2026_11_1813_03_13.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d1%83%d0%b4%d0%be%d0%b2%d0%be%d0%b5%20%d0%9f%d0%9e%20%20%d0%a1%d0%9a%d0%91%20%d0%a3%d0%9e%d0%b8%d0%a0/photo_2026-11-18_13-03-13.jpg"
       ],
       "teamLeader": "Торопов Николай Владимирович",
       "teamLeaderPhone": "+7 916 445 5144",
@@ -9183,7 +9184,8 @@
         }
       ],
       "orgId": "032",
-      "applicationNumber": "2599427135"
+      "applicationNumber": "2599427135",
+      "teamName": ""
     }
   ]
 }
