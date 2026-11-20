@@ -9488,7 +9488,9 @@
           "isStudent": "Нет",
           "order": ""
         }
-      ]
+      ],
+      "classId": "bek",
+      "teamName": ""
     }
   ]
 }
