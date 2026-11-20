@@ -9547,7 +9547,9 @@
           "isStudent": "Да",
           "order": "от 07.08.2026 №2470"
         }
-      ]
+      ],
+      "classId": "tnpa",
+      "teamName": ""
     }
   ]
 }
