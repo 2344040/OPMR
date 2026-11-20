@@ -9385,7 +9385,7 @@
       "orgId": "001",
       "year": 2026,
       "shortName": "СПбГМТУ",
-      "city": "",
+      "city": "Санкт-Петербург",
       "region": "",
       "postalCode": "",
       "address": "",
@@ -9397,7 +9397,10 @@
       "description": "ТНПА «САУиБВТ», размеры (ДхШхВ) 830х280х120 мм, вес 3,17 кг",
       "teamLeader": "Сакович Сергей Юрьевич",
       "teamLeaderPhone": "+7 911 093-68-40",
-      "photos": [],
+      "photos": [
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%90%d0%a3%d0%b8%d0%91%d0%92%d0%a2/IMG_20261119_174928.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%90%d0%a3%d0%b8%d0%91%d0%92%d0%a2/IMG_20261119_175314.jpg"
+      ],
       "members": [
         {
           "fio": "Сакович Сергей Юрьевич",
@@ -9443,7 +9446,7 @@
         }
       ],
       "classId": "tnpa",
-      "teamName": ""
+      "teamName": "СПбГМТУ САУиБВТ"
     }
   ]
 }
