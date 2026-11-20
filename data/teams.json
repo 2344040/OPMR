@@ -9187,6 +9187,77 @@
       "applicationNumber": "2599427135",
       "teamName": "",
       "classId": "anpa"
+    },
+    {
+      "id": "016-2026-tnpa",
+      "created": "20.11.2026",
+      "orgId": "016",
+      "year": 2026,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "Санкт-Петербург",
+      "region": "Санкт-Петербург",
+      "postalCode": "198328",
+      "address": "просп. Кузнецова, д.19, лит.А",
+      "phone": "",
+      "email": "school_375@mail.ru",
+      "orgLeader": "Карпова марина Александровна",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "Океаника \"КИТ\"",
+      "description": "",
+      "teamLeader": "Речкалов Сергей Владимирович",
+      "teamLeaderPhone": "+7 981 739-31-65",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Речкалов Сергей Владимирович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Замолоцкий Владими Львович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Викторова Надежда Максимовна",
+          "birth": "2010-03-26",
+          "passport": "4023 771068",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Клименко Роман Александрович",
+          "birth": "2011-07-11",
+          "passport": "4025 238966",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Клименко Степан Александрович",
+          "birth": "2009-01-28",
+          "passport": "4022 397604",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Qqир-Горяев Баир Баатарович",
+          "birth": "2012-07-17",
+          "passport": "III-AK 6022241",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Петров Александр Евгеньевич",
+          "birth": "2012-10-15",
+          "passport": "4026 635204",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ]
     }
   ]
 }
