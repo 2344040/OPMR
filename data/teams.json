@@ -9260,6 +9260,70 @@
       ],
       "classId": "tnpa",
       "teamName": ""
+    },
+    {
+      "id": "016-2026-bek",
+      "created": "20.11.2026",
+      "orgId": "016",
+      "year": 2026,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "БЭК \"Водомерка\"",
+      "description": "",
+      "teamLeader": "Речкалов Сергей Владимирович",
+      "teamLeaderPhone": "+7 981 739-31-65",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Речкалов С.В.",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Ка аваев Антон Павлович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Андреева Яна Сергеевна",
+          "birth": "2010-02-26",
+          "passport": "4023 770795",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Махов Никита Валерьевич",
+          "birth": "2009-08-06",
+          "passport": "4023 584303",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Меркушев Максим Александ11ювич",
+          "birth": "2010-08-08",
+          "passport": "4024 857143",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Саакян Завен Гагикович",
+          "birth": "2010-03-24",
+          "passport": "4024 822662",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ]
     }
   ]
 }
