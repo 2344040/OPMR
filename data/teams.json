@@ -9326,6 +9326,56 @@
       ],
       "classId": "bek",
       "teamName": ""
+    },
+    {
+      "id": "016-2026-bek-2",
+      "created": "20.11.2026",
+      "orgId": "016",
+      "year": 2026,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "БЭК \"Нова\"",
+      "description": "",
+      "teamLeader": "Речкалов Сергей Владимирович",
+      "teamLeaderPhone": "+7 981 739-31-65",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Речкалов Сергей Владимирович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Алистратов Александр Владимирович",
+          "birth": "2008-11-30",
+          "passport": "4022 359174",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Магеррамов Тимур Алиниязович",
+          "birth": "2009-05-20",
+          "passport": "4023 490275",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Рожкова Екатерина Александровна",
+          "birth": "2009-03-18",
+          "passport": "4623 066172",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ]
     }
   ]
 }
