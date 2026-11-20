@@ -9491,6 +9491,63 @@
       ],
       "classId": "bek",
       "teamName": ""
+    },
+    {
+      "id": "011-2026-tnpa-2",
+      "created": "20.11.2026",
+      "orgId": "011",
+      "year": 2026,
+      "shortName": "САФУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "ТНПА Chasing M2",
+      "description": "ТНПА «Chasing М2», размер 580 х 267 х 165 мм, вес 5.3 кг",
+      "teamLeader": "Ивлев Марк Леонидович",
+      "teamLeaderPhone": "+7 911 560-46-93",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Ивлев Марк Леонидович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Соколов Арсений Александрович",
+          "birth": "2006-03-10",
+          "passport": "1125 625191",
+          "isStudent": "Да",
+          "order": "от 09.08.2024 №2255"
+        },
+        {
+          "fio": "Прошкина Анастасия Сергеевна",
+          "birth": "2006-07-05",
+          "passport": "1126 639324",
+          "isStudent": "Да",
+          "order": "от 30.07.2024 №2219"
+        },
+        {
+          "fio": "Савин Алексей Владимирович",
+          "birth": "2007-11-22",
+          "passport": "1 1 21 4023 51",
+          "isStudent": "Да",
+          "order": "от 07.08.2026 №2470"
+        },
+        {
+          "fio": "Пахомов Семён Дмитриевич",
+          "birth": "2008-05-28",
+          "passport": "1122 424821",
+          "isStudent": "Да",
+          "order": "от 07.08.2026 №2470"
+        }
+      ]
     }
   ]
 }
