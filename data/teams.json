@@ -9566,7 +9566,7 @@
       "id": "034-2026-bek",
       "created": "23.11.2026",
       "year": 2026,
-      "shortName": "",
+      "shortName": "ГБНОУ «СПб ГДТЮ»",
       "city": "Санкт-Петерург",
       "region": "",
       "postalCode": "191011",
@@ -9575,10 +9575,11 @@
       "email": "aleksandrova.ucrop@icloud.com",
       "orgLeader": "Колосов Иван Михайлович",
       "apparatusClass": "Безэкипажный катер (БЭК)",
-      "apparatusName": "БЭК — безэкипажные катера",
+      "apparatusName": "БЭК ГДТЮ",
       "description": "БЭК — безэкипажные катера\n(габариты не более 1000х700х500 мм, масса до 40кг.)",
       "photos": [
-        "https://forms.yandex.ru/cloud/files?path=%2F9708219%2F6b036890902902876f5916a5_photo2026_11_1717_45_03.jpg"
+        "https://forms.yandex.ru/cloud/files?path=%2F9708219%2F6b036890902902876f5916a5_photo2026_11_1717_45_03.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%9f%d0%b1%20%d0%93%d0%94%d0%a2%d0%ae/photo_2026-11-17_17-45-03.jpg"
       ],
       "teamLeader": "Александрова Татьяна Евгеньевна",
       "teamLeaderPhone": "89992195394",
@@ -9624,10 +9625,18 @@
           "passport": "111-АК 742637",
           "isStudent": "Да",
           "order": "111"
+        },
+        {
+          "fio": "Александрова Татьяна Евгеньевна",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
         }
       ],
       "orgId": "034",
-      "applicationNumber": "2605524924"
+      "applicationNumber": "2605524924",
+      "teamName": ""
     }
   ]
 }
