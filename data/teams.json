@@ -5410,11 +5410,11 @@
       },
       "draw": "1",
       "extra": 0,
-      "place": 0,
+      "place": 1,
       "protocol": {
         "drawNumber": "1",
         "extraBonus": 0,
-        "place": 0,
+        "place": 1,
         "totalScore": 133
       }
     },
@@ -5567,7 +5567,12 @@
       "orgId": "014",
       "applicationNumber": "2588916433",
       "id": "014-2026-tnpa",
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "created": "10.11.2026",
@@ -5867,7 +5872,12 @@
           "order": "07.08.2026 №2470"
         }
       ],
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "012-2026-bek",
@@ -6061,11 +6071,11 @@
       },
       "draw": "2",
       "extra": 0,
-      "place": 0,
+      "place": 2,
       "protocol": {
         "drawNumber": "2",
         "extraBonus": 0,
-        "place": 0,
+        "place": 2,
         "totalScore": 77
       }
     },
@@ -9079,7 +9089,12 @@
       "orgId": "031",
       "applicationNumber": "2598310036",
       "teamName": "",
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "031-2026-tnpa-2",
@@ -9126,7 +9141,12 @@
       ],
       "orgId": "031",
       "applicationNumber": "2598303381",
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "032-2026-anpa",
@@ -9276,7 +9296,12 @@
         }
       ],
       "classId": "tnpa",
-      "teamName": ""
+      "teamName": "",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "016-2026-bek",
@@ -9463,7 +9488,12 @@
         }
       ],
       "classId": "tnpa",
-      "teamName": "СПбГМТУ САУиБВТ"
+      "teamName": "СПбГМТУ САУиБВТ",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "033-2026-bek",
@@ -9560,7 +9590,12 @@
         }
       ],
       "classId": "tnpa",
-      "teamName": ""
+      "teamName": "",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "034-2026-bek",
