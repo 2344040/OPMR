@@ -1,3 +1,4 @@
+// v261118_18:43
 let teamsData = [];
 let organizations = [];
 let competitionSettings = {};
@@ -8822,7 +8823,7 @@ renderTeams = function (...a) {
   const r = _cntPrevRenderTeams.apply(this, a);
   const container = document.getElementById("teamsContainer");
   if (!container) return r;
-  
+
   // Общий список: считаем все команды за год
   if (!isGrouped) {
     const total = teamsData.filter((t) => t.year === currentYear).length;
@@ -8841,23 +8842,23 @@ renderTeams = function (...a) {
     }
     return r;
   }
-  
+
   // Группировка: считаем команды в каждой группе по данным
   const groups = buildClassGroups(teamsData.filter((t) => t.year === currentYear));
   document.querySelectorAll(".group-header").forEach((header) => {
     if (header.querySelector(".group-teams-count")) return;
-    
+
     // Находим название класса в заголовке
     const badge = header.querySelector(".category-badge");
     if (!badge) return;
     const className = badge.textContent.trim();
-    
+
     // Ищем соответствующую группу в данных
     const group = Object.values(groups).find((g) => g.name === className);
     if (!group) return;
     const count = group.teams.length;
     if (!count) return;
-    
+
     const countBadge = document.createElement("span");
     countBadge.className = "group-teams-count";
     countBadge.textContent = `${count} ${pluralizeTeams(count)}`;
