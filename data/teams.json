@@ -9801,7 +9801,7 @@
       "id": "032-2026-tnpa",
       "created": "18.11.2026",
       "year": 2026,
-      "shortName": "",
+      "shortName": "Судовое ПО / СКБ УОиР",
       "city": "Москва",
       "region": "Москва",
       "postalCode": "105215",
@@ -9810,7 +9810,7 @@
       "email": "kolya.toropof@gmail.com",
       "orgLeader": "Торопов Николай Владимирович",
       "apparatusClass": "Телеуправляемый необитаемый подводный аппарат (ТНПА)",
-      "apparatusName": "Автономный робот мощностью 1 кВт и длиной кабеля 60 метров",
+      "apparatusName": "ТНПА Судовое ПО",
       "description": "Автономный робот мощностью 1 кВт и длиной кабеля 60 метров",
       "photos": [
         "https://forms.yandex.ru/cloud/files?path=%2F8174359%2F6afd78fede8ec31622d25265_photo2026_11_1813_03_13.jpg"
@@ -9869,7 +9869,8 @@
         }
       ],
       "orgId": "032",
-      "applicationNumber": "2599427135"
+      "applicationNumber": "2599427135",
+      "teamName": ""
     }
   ]
 }
