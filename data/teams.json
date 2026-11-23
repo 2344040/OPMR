@@ -92,7 +92,11 @@
       "id": "020",
       "fullName": "ГБОУ СОШ №385",
       "shortName": "ГБОУ СОШ №385",
-      "city": ""
+      "city": "Санкт-Петербург",
+      "address": "Проспект Ветеранов, д. 173, к. 4, стр. 1",
+      "phone": "8 (812) 417-63-62",
+      "email": "school385@mail.ru",
+      "orgLeader": "Атоманова Надежда Борисовна"
     },
     {
       "id": "021",
@@ -174,6 +178,23 @@
       "phone": "+7 916 445 5144",
       "email": "kolya.toropof@gmail.com",
       "orgLeader": "Торопов Николай Владимирович"
+    },
+    {
+      "id": "033",
+      "fullName": "ГБОУ г. Москвы «Школа №1293»",
+      "shortName": "ГБОУ  №1293",
+      "city": "Москва"
+    },
+    {
+      "id": "034",
+      "fullName": "ГБНОУ «СПб ГДТЮ»",
+      "shortName": "ГБНОУ «СПб ГДТЮ»",
+      "city": "Санкт-Петерург",
+      "postalCode": "191011",
+      "address": "Невский пр., 39, лит. А",
+      "phone": "89992195394",
+      "email": "aleksandrova.ucrop@icloud.com",
+      "orgLeader": "Колосов Иван Михайлович"
     }
   ],
   "apparatusClasses": [
@@ -5332,73 +5353,73 @@
       "apparatusName": "«Агент000» (ТНПА)",
       "classId": "tnpa",
       "scores": {
-        "f:fmwkr75ynorywo": "5",
-        "През.::Понимание устройства и принципов работы": "5",
-        "f:fmwkr75ynh7dls": "5",
-        "През.::Понимание задачи и обоснование инженерного подхода": "5",
-        "f:fmwkr75yng8mzl": "5",
-        "През.::Собственный вклад": "5",
-        "f:fmwkr75ynxi2b4": "5",
-        "През.::Инженерная методология": "5",
-        "f:fmwkr75ynzqaux": "5",
-        "През.::Ответы на вопросы и эрудиция": "5",
-        "f:fmwkr7cm9d3ryy": "100х50х50",
-        "Квал.::Размерения (ДхШхВ, мм)": "100х50х50",
-        "f:fmwkr7cm9gh2xc": "10.5",
-        "Квал.::Вес (кг)": "10.5",
+        "f:fmwkr75ynorywo": "",
+        "През.::Понимание устройства и принципов работы": "",
+        "f:fmwkr75ynh7dls": "",
+        "През.::Понимание задачи и обоснование инженерного подхода": "",
+        "f:fmwkr75yng8mzl": "",
+        "През.::Собственный вклад": "",
+        "f:fmwkr75ynxi2b4": "",
+        "През.::Инженерная методология": "",
+        "f:fmwkr75ynzqaux": "",
+        "През.::Ответы на вопросы и эрудиция": "",
+        "f:fmwkr7cm9d3ryy": "",
+        "Квал.::Размерения (ДхШхВ, мм)": "",
+        "f:fmwkr7cm9gh2xc": "",
+        "Квал.::Вес (кг)": "",
         "f:fmwkr7cm9s9vdc": "",
         "Квал.::Штрафные баллы": "",
-        "f:fmwkr7cm9s2xif": "Да",
-        "Квал.::Квалификационное задание": "Да",
-        "f:fmwkr9smizw9li": "8:58",
-        "Конкурс::Время (сек)": "5:50",
-        "f:fmwkr9smiv15zx": "10",
-        "Конкурс::Балл за время": "10",
-        "f:fmwkr9smi7mv3i": "3",
-        "Конкурс::Ключи (кол-во)": "3",
-        "f:fmwkr9sminvk1p": "20",
-        "Конкурс::Ключи (балл)": "20",
-        "f:fmwkr9smig1bnh": "2",
-        "Конкурс::Соответв. ключи (кол-во)": "2",
-        "f:fmwkr9smijhz6y": "10",
-        "Конкурс::Соответв. ключи (балл)": "10",
+        "f:fmwkr7cm9s2xif": "Нет",
+        "Квал.::Квалификационное задание": "Нет",
+        "f:fmwkr9smizw9li": "",
+        "Конкурс::Время (сек)": "",
+        "f:fmwkr9smiv15zx": "",
+        "Конкурс::Балл за время": "",
+        "f:fmwkr9smi7mv3i": "",
+        "Конкурс::Ключи (кол-во)": "",
+        "f:fmwkr9sminvk1p": "",
+        "Конкурс::Ключи (балл)": "",
+        "f:fmwkr9smig1bnh": "",
+        "Конкурс::Соответв. ключи (кол-во)": "",
+        "f:fmwkr9smijhz6y": "",
+        "Конкурс::Соответв. ключи (балл)": "",
         "f:fmwkrdcohpewnr": "",
         "Конкурс::Штрафные баллы": "",
-        "f:fmwkre2f46kbbf": "5:40",
-        "f:fmwkre2f444zei": "10",
-        "f:fmwkre2f466cok": "20",
-        "Конкурс::Кольцо (10/0 балл)": "20",
-        "f:fmwkre2f45hacd": "20",
-        "Конкурс::Соотв. кольцо (10/0 балл)": "20",
+        "f:fmwkre2f46kbbf": "",
+        "f:fmwkre2f444zei": "",
+        "f:fmwkre2f466cok": "",
+        "Конкурс::Кольцо (10/0 балл)": "",
+        "f:fmwkre2f45hacd": "",
+        "Конкурс::Соотв. кольцо (10/0 балл)": "",
         "f:fmwkre2f4g2jsj": "",
-        "f:fmwkre2f46kbbf#2": "7:10",
-        "Конкурс::Время (сек)#2": "7:10",
-        "f:fmwkre2f444zei#2": "8",
-        "Конкурс::Балл за время#2": "8",
-        "f:fmwkre2f466cok#2": "20",
-        "Конкурс::Кольцо (10/0 балл)#2": "20",
-        "f:fmwkre2f45hacd#2": "30",
-        "Конкурс::Соотв. кольцо (10/0 балл)#2": "30",
+        "f:fmwkre2f46kbbf#2": "",
+        "Конкурс::Время (сек)#2": "",
+        "f:fmwkre2f444zei#2": "",
+        "Конкурс::Балл за время#2": "",
+        "f:fmwkre2f466cok#2": "",
+        "Конкурс::Кольцо (10/0 балл)#2": "",
+        "f:fmwkre2f45hacd#2": "",
+        "Конкурс::Соотв. кольцо (10/0 балл)#2": "",
         "f:fmwkre2f4g2jsj#2": "",
         "Конкурс::Штрафные баллы#2": "",
-        "f:fmwkrhnc1jdav6": "5:50",
-        "f:fmwkrhnc1boogj": "10",
-        "f:fmwkrhnc1nuilz": "10",
-        "Конкурс::Флаг (10/0 балл)": "10",
-        "f:fmwkrhnc1yugiu": "10",
-        "Конкурс::Фиксация (10/0 балл)": "10",
+        "f:fmwkrhnc1jdav6": "",
+        "f:fmwkrhnc1boogj": "",
+        "f:fmwkrhnc1nuilz": "",
+        "Конкурс::Флаг (10/0 балл)": "",
+        "f:fmwkrhnc1yugiu": "",
+        "Конкурс::Фиксация (10/0 балл)": "",
         "f:fmwkrhnc1cj5vi": "",
         "f:fmwkrkn7x2d902": "",
         "Доп.::За внеконкурсное задание": ""
       },
-      "draw": "1",
+      "draw": "",
       "extra": 0,
-      "place": 0,
+      "place": 1,
       "protocol": {
-        "drawNumber": "1",
+        "drawNumber": "",
         "extraBonus": 0,
-        "place": 0,
-        "totalScore": 133
+        "place": 1,
+        "totalScore": 0
       }
     },
     {
@@ -5550,7 +5571,12 @@
       "orgId": "014",
       "applicationNumber": "2588916433",
       "id": "014-2026-tnpa",
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "created": "10.11.2026",
@@ -5731,7 +5757,9 @@
         "f:fmwkon1q27vk5d#2": "",
         "Конкурс::Нужный гараж#2": "",
         "f:fmwkon1q2qrixv#2": "",
-        "Конкурс::Штрафные баллы#2": ""
+        "Конкурс::Штрафные баллы#2": "",
+        "f:fmwkpofc38fjyn": "",
+        "Доп.::За внеконкурсное задание": ""
       },
       "draw": "",
       "extra": 0,
@@ -5850,7 +5878,12 @@
           "order": "07.08.2026 №2470"
         }
       ],
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "012-2026-bek",
@@ -6044,11 +6077,11 @@
       },
       "draw": "2",
       "extra": 0,
-      "place": 0,
+      "place": 2,
       "protocol": {
         "drawNumber": "2",
         "extraBonus": 0,
-        "place": 0,
+        "place": 2,
         "totalScore": 77
       }
     },
@@ -9062,7 +9095,12 @@
       "orgId": "031",
       "applicationNumber": "2598310036",
       "teamName": "",
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "031-2026-tnpa-2",
@@ -9109,7 +9147,12 @@
       ],
       "orgId": "031",
       "applicationNumber": "2598303381",
-      "classId": "tnpa"
+      "classId": "tnpa",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
     },
     {
       "id": "032-2026-anpa",
@@ -9187,6 +9230,569 @@
       "applicationNumber": "2599427135",
       "teamName": "",
       "classId": "anpa"
+    },
+    {
+      "id": "016-2026-tnpa",
+      "created": "20.11.2026",
+      "orgId": "016",
+      "year": 2026,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "Санкт-Петербург",
+      "region": "Санкт-Петербург",
+      "postalCode": "198328",
+      "address": "просп. Кузнецова, д.19, лит.А",
+      "phone": "",
+      "email": "school_375@mail.ru",
+      "orgLeader": "Карпова марина Александровна",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "ТНПА Океаника \"КИТ\"",
+      "description": "",
+      "teamLeader": "Речкалов Сергей Владимирович",
+      "teamLeaderPhone": "+7 981 739-31-65",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Речкалов Сергей Владимирович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Замолоцкий Владими Львович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Викторова Надежда Максимовна",
+          "birth": "2010-03-26",
+          "passport": "4023 771068",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Клименко Роман Александрович",
+          "birth": "2011-07-11",
+          "passport": "4025 238966",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Клименко Степан Александрович",
+          "birth": "2009-01-28",
+          "passport": "4022 397604",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Qqир-Горяев Баир Баатарович",
+          "birth": "2012-07-17",
+          "passport": "III-AK 6022241",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Петров Александр Евгеньевич",
+          "birth": "2012-10-15",
+          "passport": "4026 635204",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ],
+      "classId": "tnpa",
+      "teamName": "",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
+    },
+    {
+      "id": "016-2026-bek",
+      "created": "20.11.2026",
+      "orgId": "016",
+      "year": 2026,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "БЭК \"Водомерка\"",
+      "description": "",
+      "teamLeader": "Речкалов Сергей Владимирович",
+      "teamLeaderPhone": "+7 981 739-31-65",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Речкалов С.В.",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Ка аваев Антон Павлович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Андреева Яна Сергеевна",
+          "birth": "2010-02-26",
+          "passport": "4023 770795",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Махов Никита Валерьевич",
+          "birth": "2009-08-06",
+          "passport": "4023 584303",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Меркушев Максим Александ11ювич",
+          "birth": "2010-08-08",
+          "passport": "4024 857143",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Саакян Завен Гагикович",
+          "birth": "2010-03-24",
+          "passport": "4024 822662",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ],
+      "classId": "bek",
+      "teamName": ""
+    },
+    {
+      "id": "016-2026-bek-2",
+      "created": "20.11.2026",
+      "orgId": "016",
+      "year": 2026,
+      "shortName": "ГБОУ СОШ №375",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "БЭК",
+      "apparatusName": "БЭК \"Нова\"",
+      "description": "",
+      "teamLeader": "Речкалов Сергей Владимирович",
+      "teamLeaderPhone": "+7 981 739-31-65",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Речкалов Сергей Владимирович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Алистратов Александр Владимирович",
+          "birth": "2008-11-30",
+          "passport": "4022 359174",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Магеррамов Тимур Алиниязович",
+          "birth": "2009-05-20",
+          "passport": "4023 490275",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Рожкова Екатерина Александровна",
+          "birth": "2009-03-18",
+          "passport": "4623 066172",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ],
+      "classId": "bek",
+      "teamName": ""
+    },
+    {
+      "id": "001-2026-tnpa",
+      "created": "20.11.2026",
+      "orgId": "001",
+      "year": 2026,
+      "shortName": "СПбГМТУ",
+      "city": "Санкт-Петербург",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "ТНПА \"САУиБВТ\"",
+      "description": "ТНПА «САУиБВТ», размеры (ДхШхВ) 830х280х120 мм, вес 3,17 кг",
+      "teamLeader": "Сакович Сергей Юрьевич",
+      "teamLeaderPhone": "+7 911 093-68-40",
+      "photos": [
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%90%d0%a3%d0%b8%d0%91%d0%92%d0%a2/IMG_20261119_174928.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%90%d0%a3%d0%b8%d0%91%d0%92%d0%a2/IMG_20261119_175314.jpg"
+      ],
+      "members": [
+        {
+          "fio": "Сакович Сергей Юрьевич",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Куликова Дарья Олеговна",
+          "birth": "2005-10-22",
+          "passport": "4025 319257",
+          "isStudent": "Да",
+          "order": "СПбГМТУ №1156(2) от 05.08.2023"
+        },
+        {
+          "fio": "Румянцева Алевтина Александровна",
+          "birth": "2004-05-30",
+          "passport": "4024 855999",
+          "isStudent": "Да",
+          "order": "СПбГМТУ №1156(2) от 05.08.2023"
+        },
+        {
+          "fio": "Рысева Анастасия Александровна",
+          "birth": "2005-03-17",
+          "passport": "4025 125623",
+          "isStudent": "Да",
+          "order": "СПбГМТУ №1156(2) от 05.08.2023"
+        },
+        {
+          "fio": "Тарасов Роман Андреевич",
+          "birth": "2005-01-29",
+          "passport": "4025 029739",
+          "isStudent": "Да",
+          "order": "СПбГМТУ №1156(2) от 05.08.2023"
+        },
+        {
+          "fio": "Фудько Иван Андреевич",
+          "birth": "2005-05-08",
+          "passport": "5325 506329",
+          "isStudent": "Да",
+          "order": "СПбГМТУ №1156(2) от 05.08.2023"
+        }
+      ],
+      "classId": "tnpa",
+      "teamName": "СПбГМТУ САУиБВТ",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
+    },
+    {
+      "id": "033-2026-bek",
+      "created": "20.11.2026",
+      "orgId": "033",
+      "year": 2026,
+      "shortName": "ГБОУ  №1293",
+      "city": "Москва",
+      "region": "Москва",
+      "postalCode": "121552",
+      "address": "г. Москва, ул. Оршанская, дом 10, корпус 1",
+      "phone": "+7 499 141-24-05",
+      "email": "1293@edu.mos.ru",
+      "orgLeader": "Трус Ирина Юрьевна",
+      "apparatusClass": "БЭК",
+      "apparatusName": "БЭК 1293",
+      "description": "БЭК, размеры 900х500х170 мм, вес 16 кг, корпус - тримаран.\nМатериал: Стеклоткань с эпоксидной смолой, пеноплекс, оргстекло и фанера. Оснащение: 2 мотора с контроллерами, вычислительный блок на Raspberry Pi 4, камеры, li-ion аккумулятор",
+      "teamLeader": "Неродигречка Алексей Владимирович",
+      "teamLeaderPhone": "+7 925 472-07-11",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Неродигречка Алексей Владимирович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Арзамасов Дмитрий Кириллович",
+          "birth": "2010-02-18",
+          "passport": "4524 035850",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ],
+      "classId": "bek",
+      "teamName": ""
+    },
+    {
+      "id": "011-2026-tnpa-2",
+      "created": "20.11.2026",
+      "orgId": "011",
+      "year": 2026,
+      "shortName": "САФУ",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "ТНПА Chasing M2",
+      "description": "ТНПА «Chasing М2», размер 580 х 267 х 165 мм, вес 5.3 кг",
+      "teamLeader": "Ивлев Марк Леонидович",
+      "teamLeaderPhone": "+7 911 560-46-93",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Ивлев Марк Леонидович",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        },
+        {
+          "fio": "Соколов Арсений Александрович",
+          "birth": "2006-03-10",
+          "passport": "1125 625191",
+          "isStudent": "Да",
+          "order": "от 09.08.2024 №2255"
+        },
+        {
+          "fio": "Прошкина Анастасия Сергеевна",
+          "birth": "2006-07-05",
+          "passport": "1126 639324",
+          "isStudent": "Да",
+          "order": "от 30.07.2024 №2219"
+        },
+        {
+          "fio": "Савин Алексей Владимирович",
+          "birth": "2007-11-22",
+          "passport": "1 1 21 4023 51",
+          "isStudent": "Да",
+          "order": "от 07.08.2026 №2470"
+        },
+        {
+          "fio": "Пахомов Семён Дмитриевич",
+          "birth": "2008-05-28",
+          "passport": "1122 424821",
+          "isStudent": "Да",
+          "order": "от 07.08.2026 №2470"
+        }
+      ],
+      "classId": "tnpa",
+      "teamName": "",
+      "place": 0,
+      "protocol": {
+        "place": 0,
+        "totalScore": 0
+      }
+    },
+    {
+      "id": "034-2026-bek",
+      "created": "23.11.2026",
+      "year": 2026,
+      "shortName": "ГБНОУ «СПб ГДТЮ»",
+      "city": "Санкт-Петерург",
+      "region": "",
+      "postalCode": "191011",
+      "address": "Невский пр., 39, лит. А",
+      "phone": "89992195394",
+      "email": "aleksandrova.ucrop@icloud.com",
+      "orgLeader": "Колосов Иван Михайлович",
+      "apparatusClass": "Безэкипажный катер (БЭК)",
+      "apparatusName": "БЭК ГДТЮ",
+      "description": "БЭК — безэкипажные катера\n(габариты не более 1000х700х500 мм, масса до 40кг.)",
+      "photos": [
+        "https://forms.yandex.ru/cloud/files?path=%2F9708219%2F6b036890902902876f5916a5_photo2026_11_1717_45_03.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%9f%d0%b1%20%d0%93%d0%94%d0%a2%d0%ae/photo_2026-11-17_17-45-03.jpg"
+      ],
+      "teamLeader": "Александрова Татьяна Евгеньевна",
+      "teamLeaderPhone": "89992195394",
+      "members": [
+        {
+          "fio": "Титов Александр Глебович",
+          "birth": "2014-09-09",
+          "passport": "111-АК 795106",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Лютов Павел",
+          "birth": "2012-02-11",
+          "passport": "4025 398432",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Ищенко Марк",
+          "birth": "2012-08-21",
+          "passport": "4026 618612",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Шайков Владимир",
+          "birth": "2012-06-20",
+          "passport": "4026 555267",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Разувай Фёдор",
+          "birth": "2014-09-23",
+          "passport": "111-АК 787643",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Мурыгин Иван",
+          "birth": "2014-01-24",
+          "passport": "111-АК 742637",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Александрова Татьяна Евгеньевна",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ],
+      "orgId": "034",
+      "applicationNumber": "2605524924",
+      "teamName": "",
+      "classId": "bek"
+    },
+    {
+      "id": "020-2026-tnpa",
+      "created": "23.11.2026",
+      "year": 2026,
+      "shortName": "ГБОУ СОШ №385",
+      "city": "Санкт-Петербург",
+      "region": "",
+      "postalCode": "",
+      "address": "Санкт-Петербург, проспект Ветеранов 173, корпус 4, строение 1",
+      "phone": "+78124176362",
+      "email": "school385@mail.ru",
+      "orgLeader": "Атоманова Надежда Борисовна",
+      "apparatusClass": "Телеуправляемый необитаемый подводный аппарат (ТНПА)",
+      "apparatusName": "ТНПА 385/55×35×23",
+      "description": "Аппарат имеет габариты 55×35×23 см. Установлено 6 движителей, 2 из них для вертикального движения, 4 для горизонтального, манипулятор с поворотным механизмом, камера, колба с управляющими платами.",
+      "photos": [
+        "https://forms.yandex.ru/cloud/files?path=%2F23219520%2F6b0425096d2d73d635cd50f4_img20261123142618051.jpg,",
+        "https://forms.yandex.ru/cloud/files?path=%2F5501007%2F6b0425011f1eb500dc030979_img20261123142720042.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%9e%d0%a8%20385/IMG_20261123_142618051.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%9e%d0%a8%20385/IMG_20261123_142720042.jpg"
+      ],
+      "teamLeader": "Скапцов Владислав Евгеньевич",
+      "teamLeaderPhone": "+79992350205",
+      "members": [
+        {
+          "fio": "Вихляев Владислав Николаевич",
+          "birth": "2009-04-02",
+          "passport": "4023 498113",
+          "isStudent": "Да",
+          "order": "Школьник"
+        },
+        {
+          "fio": "Толокнов Дмитрий Алексеевич",
+          "birth": "2011-11-15",
+          "passport": "4025 347688",
+          "isStudent": "Да",
+          "order": "Школьник"
+        },
+        {
+          "fio": "Башинский Никита Станиславович",
+          "birth": "2011-06-17",
+          "passport": "4025282672",
+          "isStudent": "Да",
+          "order": "Школьник"
+        },
+        {
+          "fio": "Скапцов Владислав Евгеньевич",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ],
+      "orgId": "020",
+      "applicationNumber": "2606369112",
+      "teamName": "",
+      "classId": "tnpa"
+    },
+    {
+      "id": "020-2026-tnpa-2",
+      "created": "23.11.2026",
+      "year": 2026,
+      "shortName": "ГБОУ СОШ №385",
+      "city": "Санкт-Петербург",
+      "region": "",
+      "postalCode": "",
+      "address": "Проспект Ветеранов, д. 173, к. 4, стр. 1",
+      "phone": "8 (812) 417-63-62",
+      "email": "school385@mail.ru",
+      "orgLeader": "Атоманова Надежда Борисовна",
+      "apparatusClass": "Телеуправляемый необитаемый подводный аппарат (ТНПА)",
+      "apparatusName": "ТНПА 385/40×29×15",
+      "description": "Малогабаритный ТНПА, 40×29×15 см. Установлено 3 движетеля, 2 из них для горизонтального движения и 1 для вертикального, манипулятор, камера, колба с платой управления.",
+      "photos": [
+        "https://forms.yandex.ru/cloud/files?path=%2F6219879%2F6b042b7dde8ec3eeaceef8ff_img20261123150302723.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%a1%d0%9e%d0%a8%20385/%d0%a2%d0%9d%d0%9f%d0%90%20%d0%bc%d0%b0%d0%bb%d0%be%d0%b3%d0%b0%d0%b1/IMG_20261123_150302_723.jpg"
+      ],
+      "teamLeader": "Бакашова Оксана Альбертовна",
+      "teamLeaderPhone": "+79992350205",
+      "members": [
+        {
+          "fio": "Ушаков Тимофей Егорович",
+          "birth": "2011-07-18",
+          "passport": "4025241454",
+          "isStudent": "Да",
+          "order": "Школьник"
+        },
+        {
+          "fio": "Малышев Александр Сергееевич",
+          "birth": "2011-05-31",
+          "passport": "4025162034",
+          "isStudent": "Да",
+          "order": "Школьник"
+        },
+        {
+          "fio": "Сулимовский Илья Витальевич",
+          "birth": "2011-10-16",
+          "passport": "4025284420",
+          "isStudent": "Да",
+          "order": "Школьник"
+        },
+        {
+          "fio": "Бакашова Оксана Альбертовна",
+          "birth": "",
+          "passport": "",
+          "isStudent": "Нет",
+          "order": ""
+        }
+      ],
+      "orgId": "020",
+      "applicationNumber": "2606390075",
+      "teamName": "",
+      "classId": "tnpa"
     }
   ]
 }
