@@ -180,6 +180,17 @@
       "fullName": "ГБОУ г. Москвы «Школа №1293»",
       "shortName": "ГБОУ  №1293",
       "city": "Москва"
+    },
+    {
+      "id": "034",
+      "fullName": "ГБНОУ «СПб ГДТЮ»",
+      "shortName": "ГБНОУ «СПб ГДТЮ»",
+      "city": "Санкт-Петерург",
+      "postalCode": "191011",
+      "address": "Невский пр., 39, лит. А",
+      "phone": "89992195394",
+      "email": "aleksandrova.ucrop@icloud.com",
+      "orgLeader": "Колосов Иван Михайлович"
     }
   ],
   "apparatusClasses": [
@@ -9550,6 +9561,73 @@
       ],
       "classId": "tnpa",
       "teamName": ""
+    },
+    {
+      "id": "034-2026-bek",
+      "created": "23.11.2026",
+      "year": 2026,
+      "shortName": "",
+      "city": "Санкт-Петерург",
+      "region": "",
+      "postalCode": "191011",
+      "address": "Невский пр., 39, лит. А",
+      "phone": "89992195394",
+      "email": "aleksandrova.ucrop@icloud.com",
+      "orgLeader": "Колосов Иван Михайлович",
+      "apparatusClass": "Безэкипажный катер (БЭК)",
+      "apparatusName": "БЭК — безэкипажные катера",
+      "description": "БЭК — безэкипажные катера\n(габариты не более 1000х700х500 мм, масса до 40кг.)",
+      "photos": [
+        "https://forms.yandex.ru/cloud/files?path=%2F9708219%2F6b036890902902876f5916a5_photo2026_11_1717_45_03.jpg"
+      ],
+      "teamLeader": "Александрова Татьяна Евгеньевна",
+      "teamLeaderPhone": "89992195394",
+      "members": [
+        {
+          "fio": "Титов Александр Глебович",
+          "birth": "2014-09-09",
+          "passport": "111-АК 795106",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Лютов Павел",
+          "birth": "2012-02-11",
+          "passport": "4025 398432",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Ищенко Марк",
+          "birth": "2012-08-21",
+          "passport": "4026 618612",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Шайков Владимир",
+          "birth": "2012-06-20",
+          "passport": "4026 555267",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Разувай Фёдор",
+          "birth": "2014-09-23",
+          "passport": "111-АК 787643",
+          "isStudent": "Да",
+          "order": "111"
+        },
+        {
+          "fio": "Мурыгин Иван",
+          "birth": "2014-01-24",
+          "passport": "111-АК 742637",
+          "isStudent": "Да",
+          "order": "111"
+        }
+      ],
+      "orgId": "034",
+      "applicationNumber": "2605524924"
     }
   ]
 }
