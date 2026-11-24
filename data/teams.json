@@ -9522,7 +9522,12 @@
       "description": "БЭК, размеры 900х500х170 мм, вес 16 кг, корпус - тримаран.\nМатериал: Стеклоткань с эпоксидной смолой, пеноплекс, оргстекло и фанера. Оснащение: 2 мотора с контроллерами, вычислительный блок на Raspberry Pi 4, камеры, li-ion аккумулятор",
       "teamLeader": "Неродигречка Алексей Владимирович",
       "teamLeaderPhone": "+7 925 472-07-11",
-      "photos": [],
+      "photos": [
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%93%d0%91%d0%9e%d0%a3%201293/171430a1-0b2c-4c26-8544-2d07caf78a13.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%93%d0%91%d0%9e%d0%a3%201293/31c4ea26-192f-40bf-8605-669c4071712d.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%93%d0%91%d0%9e%d0%a3%201293/c25ca5d3-aae2-41ef-aedc-391813eb1f1b.jpg",
+        "https://media.smtu.ru:5001/smtu-main/OPMR-26/%d0%93%d0%91%d0%9e%d0%a3%201293/f30d7dfc-d875-4ce0-9b6e-307b30d3d77e.jpg"
+      ],
       "members": [
         {
           "fio": "Неродигречка Алексей Владимирович",
