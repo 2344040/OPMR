@@ -12,7 +12,47 @@ let apparatusClasses = [];
 let criteriaTemplates = [];
 let currentTeamId = null;
 let isNewTeam = false;
-let isAdmin = localStorage.getItem("opmr_admin_mode") === "true";
+const ROLE_KEY = "opmr_role";
+const JUDGE_PASSWORD = "opmr2026judge"; // ← задайте свой пароль судьи
+let userRole =
+  localStorage.getItem(ROLE_KEY) || (localStorage.getItem("opmr_admin_mode") === "true" ? "admin" : "viewer");
+let isAdmin = userRole === "admin";
+function canEditProtocols() {
+  return userRole !== "viewer";
+}
+function setRole(r) {
+  userRole = r;
+  isAdmin = r === "admin";
+  localStorage.setItem(ROLE_KEY, r);
+  localStorage.setItem("opmr_admin_mode", String(isAdmin));
+  renderHeaderButtons();
+  applyProtocolAccessGuard();
+  if (currentView === "competition") renderCompetition();
+  else if (currentView === "teams") renderTeams(teamsData);
+}
+
+function applyProtocolAccessGuard() {
+  const page = document.getElementById("protocolPage");
+  if (!page || !page.classList.contains("active")) return;
+  const form = document.getElementById("protocolForm");
+  if (!form) return;
+  const allowed = canEditProtocols();
+  form.querySelectorAll("input, select, textarea").forEach((el) => (el.disabled = !allowed));
+  const bar = form.querySelector(".d-flex.gap-2.mt-3");
+  if (!bar) return;
+  const save = bar.querySelector('[onclick="saveProtocol()"]');
+  if (save) save.style.display = allowed ? "" : "none";
+  let note = bar.querySelector(".proto-access-note");
+  if (!allowed && !note) {
+    note = document.createElement("div");
+    note.className = "alert alert-secondary py-2 mb-0 w-100 proto-access-note";
+    note.innerHTML =
+      '<i class="fas fa-lock me-2"></i>Просмотр без права изменения. Нажмите «Вход» в шапке и войдите как судья или администратор.';
+    bar.prepend(note);
+  }
+  if (allowed && note) note.remove();
+}
+
 let isGrouped = localStorage.getItem("opmr_view_grouped") === "true";
 let isListView = localStorage.getItem("opmr_view_list") === "true";
 let currentView = "teams";
@@ -1564,7 +1604,7 @@ function renderHeaderButtons() {
     <span id="yearDropdownContainer" class="ms-2"></span>
     <button class="btn btn-grouping-icon ${isGrouped ? "active" : ""}" onclick="toggleGrouping()" title="${isGrouped ? "Показать без группировки" : "Группировать по классам"}"><i class="fas fa-layer-group"></i></button>
     <button class="btn btn-grouping-icon ${isListView ? "active" : ""}" onclick="toggleListView()" title="${isListView ? "Показать карточками" : "Показать списком"}"><i class="fas fa-${isListView ? "table-cells-large" : "list-ul"}"></i></button>
-    <button class="btn ${isAdmin ? "btn-dark" : "btn-outline-secondary"} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? "Выйти из режима администратора" : "Войти в режим администратора"}"><i class="fas fa-${isAdmin ? "user-shield" : "lock"}"></i><span class="btn-text ms-2">${isAdmin ? "Админ" : "Admin"}</span></button>`;
+    <button class="btn ${userRole === "viewer" ? "btn-outline-secondary" : "btn-dark"} btn-upload" onclick="toggleAdminMode()" title="${userRole === "viewer" ? "Войти как судья или администратор" : "Выйти в режим просмотра"}"><i class="fas fa-${userRole === "admin" ? "user-shield" : userRole === "judge" ? "gavel" : "lock"}"></i><span class="btn-text ms-2">${userRole === "admin" ? "Админ" : userRole === "judge" ? "Судья" : "Вход"}</span></button>`;
   // Служебные пункты меню админа (прямые обработчики, без глобальных onclick)
   if (isAdmin) {
     const pull = container.querySelector("[data-opmr-pull]");
@@ -1637,39 +1677,40 @@ function renderEditPageAdminButtons() {
     ? `<label for="fileInputEdit" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла"><i class="fas fa-file-upload me-2"></i><span class="btn-text">Загрузить JSON</span></label><input type="file" id="fileInputEdit" accept=".json" class="d-none" onchange="handleEditPageFileUpload(event)">`
     : "";
 }
+
 function toggleAdminMode() {
-  if (isAdmin) {
-    isAdmin = false;
-    localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
-    renderHeaderButtons();
+  if (userRole !== "viewer") {
+    setRole("viewer");
+    showToast("Режим редактирования выключен", "info");
     if (currentTeamId && document.getElementById("detailPage").classList.contains("active"))
       showTeamDetails(currentTeamId);
-    showToast("Режим администратора выключен", "info");
-  } else {
-    document.getElementById("adminPasswordInput").value = "";
-    document.getElementById("adminPasswordError").style.display = "none";
-    const modal = new bootstrap.Modal(document.getElementById("adminPasswordModal"));
-    modal.show();
-    setTimeout(() => document.getElementById("adminPasswordInput").focus(), 300);
+    return;
   }
+  document.getElementById("adminPasswordInput").value = "";
+  document.getElementById("adminPasswordError").style.display = "none";
+  new bootstrap.Modal(document.getElementById("adminPasswordModal")).show();
+  setTimeout(() => document.getElementById("adminPasswordInput").focus(), 300);
 }
 function checkAdminPassword() {
   const input = document.getElementById("adminPasswordInput");
   const error = document.getElementById("adminPasswordError");
-  if (input.value === ADMIN_PASSWORD) {
-    isAdmin = true;
-    localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
-    bootstrap.Modal.getInstance(document.getElementById("adminPasswordModal")).hide();
-    renderHeaderButtons();
-    if (currentTeamId && document.getElementById("detailPage").classList.contains("active"))
-      showTeamDetails(currentTeamId);
-    showToast("Режим администратора включён", "success");
-  } else {
+  if (input.value === ADMIN_PASSWORD) setRole("admin");
+  else if (input.value === JUDGE_PASSWORD) setRole("judge");
+  else {
     error.style.display = "block";
     input.value = "";
     input.focus();
+    return;
   }
+  bootstrap.Modal.getInstance(document.getElementById("adminPasswordModal")).hide();
+  showToast(
+    userRole === "admin" ? "Режим администратора включён" : "Режим судьи: доступно редактирование протоколов",
+    "success",
+  );
+  if (currentTeamId && document.getElementById("detailPage").classList.contains("active"))
+    showTeamDetails(currentTeamId);
 }
+
 document.addEventListener("DOMContentLoaded", function () {
   const pwdInput = document.getElementById("adminPasswordInput");
   if (pwdInput)
@@ -4911,6 +4952,7 @@ function decorateProtocolAttempts() {
   });
 }
 function updateProtocolTotals() {
+  applyProtocolAccessGuard();
   const byGroup = {};
   document.querySelectorAll(".proto-calc[data-gi]").forEach((inp) => {
     const gi = inp.dataset.gi;
@@ -4958,6 +5000,10 @@ function updateProtocolTotals() {
 function saveProtocol() {
   const team = teamsData.find((t) => t.id === currentProtocolTeamId);
   if (!team) return;
+  if (!canEditProtocols()) {
+    showToast("Недостаточно прав для сохранения протокола", "error");
+    return;
+  }
   const classId = getTeamClassId(team);
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const scores = {...(team.scores || {})};
