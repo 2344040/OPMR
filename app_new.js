@@ -645,26 +645,23 @@ function persistSyncState() {
     localStorage.setItem(SYNC_STATE_KEY, JSON.stringify({pending: pendingSync, at: lastSyncAt}));
   } catch {}
 }
+
 function saveData() {
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}),
-    );
-    if (!suppressDirty) {
-      pendingSync = true;
-      persistSyncState();
-    }
-  } catch (e) {
-    console.warn("Не удалось сохранить:", e);
+  dataSavedAt = Date.now();
+  writeLocalStorage();
+  if (!suppressDirty) {
+    pendingSync = true;
+    persistSyncState();
   }
   updateSyncIndicator();
 }
+
 function loadData() {
   try {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) {
       const parsed = JSON.parse(data);
+      dataSavedAt = (parsed.meta && Number(parsed.meta.savedAt)) || 0;
       organizations = parsed.organizations || [];
       competitionSettings = normalizeCompetitionSettings(parsed.competitionSettings || getDefaultCompetitionSettings());
       apparatusClasses = parsed.apparatusClasses || [];
@@ -1123,6 +1120,101 @@ async function commitToGitHubManual() {
   showToast(result.message, result.success ? "success" : "error");
 }
 
+// ===== ВЕРСИОННОСТЬ ДАННЫХ И ЧТЕНИЕ С СЕРВЕРА БЕЗ ТОКЕНА =====
+const GH_PUBLIC_FALLBACK = {owner: "2344040", repo: "OPMR", branch: "main"}; // ← впишите владельца и репозиторий один раз
+let dataSavedAt = 0;
+let _lastServerCheck = 0;
+
+function getPublicRepo() {
+  const s = getGitHubSettings();
+  if (s && s.owner && s.repo) return {owner: s.owner, repo: s.repo, branch: s.branch || "main"};
+  if (GH_PUBLIC_FALLBACK.owner && GH_PUBLIC_FALLBACK.repo) return {...GH_PUBLIC_FALLBACK};
+  return null;
+}
+function publicDataUrl() {
+  const r = getPublicRepo();
+  return r
+    ? `https://raw.githubusercontent.com/${r.owner}/${r.repo}/${r.branch}/data/teams.json?ts=${Date.now()}`
+    : null;
+}
+async function tryFetchJson(url) {
+  try {
+    const res = await fetch(url, {cache: "no-store"});
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+function normalizeServerPayload(raw) {
+  if (!raw || !Array.isArray(raw.teams)) return null;
+  return {
+    meta: raw.meta && typeof raw.meta === "object" ? raw.meta : null,
+    organizations: raw.organizations || [],
+    apparatusClasses: raw.apparatusClasses || [],
+    competitionSettings: raw.competitionSettings || null,
+    criteriaTemplates: Array.isArray(raw.criteriaTemplates) ? raw.criteriaTemplates : [],
+    teams: raw.teams,
+  };
+}
+function applyServerData(server) {
+  organizations = server.organizations;
+  competitionSettings = normalizeCompetitionSettings(server.competitionSettings || getDefaultCompetitionSettings());
+  apparatusClasses = server.apparatusClasses || [];
+  ensureApparatusClasses();
+  teamsData = server.teams;
+  criteriaTemplates = server.criteriaTemplates;
+  dataSavedAt = (server.meta && Number(server.meta.savedAt)) || 0;
+}
+function writeLocalStorage() {
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        meta: {savedAt: dataSavedAt},
+        organizations,
+        apparatusClasses,
+        competitionSettings,
+        criteriaTemplates,
+        teams: teamsData,
+      }),
+    );
+  } catch (e) {
+    console.warn("Не удалось сохранить:", e);
+  }
+}
+// silent=true: принимать только если сервер новее и нет несохранённых локальных правок
+async function fetchServerData(silent) {
+  _lastServerCheck = Date.now();
+  let raw = publicDataUrl() ? await tryFetchJson(publicDataUrl()) : null;
+  if (!raw) raw = await tryFetchJson(`data/teams.json?ts=${Date.now()}`);
+  const server = raw && normalizeServerPayload(raw);
+  if (!server) return false;
+  if (!silent) {
+    applyServerData(server);
+    writeLocalStorage();
+    return true;
+  }
+  const serverAt = (server.meta && Number(server.meta.savedAt)) || 0;
+  const newer = serverAt ? serverAt > dataSavedAt : server.teams.length > teamsData.length;
+  if (!newer) return false;
+  if (pendingSync) {
+    showToast("На сервере данные новее, но локально есть несохранённые изменения", "info");
+    return false;
+  }
+  applyServerData(server);
+  writeLocalStorage();
+  return true;
+}
+// Автообновление при возврате на вкладку (не чаще раза в минуту)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (Date.now() - _lastServerCheck < 60000) return;
+  fetchServerData(true).then((changed) => {
+    if (changed) refreshCurrentView();
+  });
+});
+
 // * ===== 10. GITHUB: НАДЁЖНЫЙ КОММИТ (свежий sha, повторы, очередь) =====
 async function commitToGitHubCore() {
   const settings = getGitHubSettings();
@@ -1131,7 +1223,14 @@ async function commitToGitHubCore() {
   const filePath = "data/teams.json";
   const apiUrl = `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${filePath}`;
   const headers = {Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json"};
-  const dataToSave = {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData};
+  const dataToSave = {
+    meta: {savedAt: dataSavedAt || Date.now(), teams: teamsData.length},
+    organizations,
+    apparatusClasses,
+    competitionSettings,
+    criteriaTemplates,
+    teams: teamsData,
+  };
   const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave, null, 2))));
   const readSha = async () => {
     const res = await fetch(`${apiUrl}?ref=${encodeURIComponent(settings.branch)}&_=${Date.now()}`, {
@@ -1219,45 +1318,19 @@ async function syncNow() {
   showToast(r.message, r.success ? "success" : "error");
 }
 // Загрузка с сервера; silent-режим не чаще раза в 5 минут после собственного пуша
+
 async function pullFromGitHub(silent = false) {
-  if (silent) {
-    let t = 0;
-    try {
-      t = parseInt(localStorage.getItem("opmr_last_push_at") || "0", 10) || 0;
-    } catch {}
-    if (Date.now() - t < 5 * 60 * 1000) return false;
-  }
-  const gh = getGitHubSettings();
-  if (!gh?.owner || !gh?.repo) {
-    if (!silent) showToast("GitHub не настроен", "error");
-    return false;
-  }
-  const url = `https://raw.githubusercontent.com/${gh.owner}/${gh.repo}/${gh.branch || "main"}/data/teams.json?ts=${Date.now()}`;
-  try {
-    const res = await fetch(url, {cache: "no-store"});
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const raw = await res.json();
-    if (!raw || !Array.isArray(raw.teams)) throw new Error("неверный формат файла");
-    const prev = suppressDirty;
-    suppressDirty = true;
-    organizations = raw.organizations || [];
-    competitionSettings = normalizeCompetitionSettings(raw.competitionSettings || getDefaultCompetitionSettings());
-    apparatusClasses = raw.apparatusClasses || [];
-    ensureApparatusClasses();
-    teamsData = raw.teams || [];
-    criteriaTemplates = Array.isArray(raw.criteriaTemplates) ? raw.criteriaTemplates : [];
-    saveData();
-    suppressDirty = prev;
+  const changed = await fetchServerData(silent);
+  if (changed) {
     pendingSync = false;
     lastSyncAt = Date.now();
     persistSyncState();
     updateSyncIndicator();
     if (!silent) showToast(`Загружено с сервера: ${teamsData.length} команд`, "success");
-    return true;
-  } catch (e) {
-    if (!silent) showToast("Не удалось загрузить с сервера: " + e.message, "error");
-    return false;
+  } else if (!silent) {
+    showToast("Не удалось загрузить с сервера или данных новее нет", "error");
   }
+  return changed;
 }
 
 // * ===== 11. ИНДИКАТОР СИНХРОНИЗАЦИИ: компактный чип в футере =====
@@ -3614,60 +3687,27 @@ function handleEditPageFileUpload(event) {
   reader.readAsText(file);
   event.target.value = "";
 }
+
 async function loadDefaultData() {
-  if (loadData()) {
-    renderTeams(teamsData);
-    renderHeaderButtons();
-    renderYearSwitcher();
-    attachFileInputListener();
-    return;
-  }
-  if (localStorage.getItem(STORAGE_KEY_OLD)) {
+  const hadLocal = loadData();
+  if (!hadLocal && localStorage.getItem(STORAGE_KEY_OLD)) {
     new bootstrap.Modal(document.getElementById("migrationModal")).show();
-    return;
-  }
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12000);
-    const response = await fetch("data/teams.json", {signal: controller.signal});
-    clearTimeout(timer);
-    if (!response.ok) throw new Error("Файл не найден");
-    const rawData = await response.json();
-    if (rawData.organizations && rawData.teams) {
-      organizations = rawData.organizations || [];
-      competitionSettings = normalizeCompetitionSettings(
-        rawData.competitionSettings || getDefaultCompetitionSettings(),
-      );
-      apparatusClasses = rawData.apparatusClasses || [];
-      ensureApparatusClasses();
-      teamsData = rawData.teams || [];
-      criteriaTemplates = Array.isArray(rawData.criteriaTemplates) ? rawData.criteriaTemplates : [];
-    } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
-      teamsData = transformYandexFormsData(rawData);
-    } else if (
-      Array.isArray(rawData) &&
-      rawData.length > 0 &&
-      typeof rawData[0] === "object" &&
-      rawData[0].organization
-    ) {
-      teamsData = rawData;
-    } else {
-      throw new Error("Неизвестный формат данных");
+  } else if (!hadLocal) {
+    const ok = await fetchServerData(false);
+    if (!ok) {
+      document.getElementById("teamsContainer").innerHTML =
+        `<div class="col-12 text-center text-muted py-5"><i class="fas fa-exclamation-triangle fa-2x mb-2" style="color:#f59e0b"></i><div>Не удалось загрузить данные ни из памяти браузера, ни с сервера.<br>Войдите в режим Админ и загрузите файл вручную.</div></div>`;
     }
-    saveData();
-    renderTeams(teamsData);
-  } catch (error) {
-    const reason =
-      error.name === "AbortError"
-        ? "сервер не ответил за 12 секунд. Если сайт открыт без VPN — включите VPN и обновите страницу"
-        : "файл не найден или недоступен";
-    document.getElementById("teamsContainer").innerHTML =
-      `<div class="col-12 text-center text-muted py-5"><i class="fas fa-exclamation-triangle fa-2x mb-2" style="color:#f59e0b"></i><div>Не удалось загрузить <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px">data/teams.json</code>: ${reason}.<br>Войдите в режим Админ и загрузите файл вручную.</div></div>`;
+  } else {
+    const changed = await fetchServerData(true);
+    if (changed) showToast("Загружены более свежие данные с сервера", "info");
   }
+  renderTeams(teamsData);
   renderHeaderButtons();
   renderYearSwitcher();
   attachFileInputListener();
 }
+
 // ----- Импорт заявки из текста (письмо Яндекс.Форм) -----
 function openTextImportModal() {
   if (!isAdmin) {
