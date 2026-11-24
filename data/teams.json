@@ -1,6 +1,6 @@
 {
   "meta": {
-    "savedAt": 1795526935766,
+    "savedAt": 1795526957047,
     "teams": 69
   },
   "organizations": [
@@ -5236,7 +5236,7 @@
         "place": 0,
         "totalScore": 0
       },
-      "shortName": "СПбГМТУ ФМП",
+      "shortName": "СПбГМТУ",
       "year": 2026,
       "orgId": "001",
       "apparatusName": "БЭК СПбГМТУ",
@@ -5253,8 +5253,7 @@
         "task_score": "8",
         "task_gate": "5"
       },
-      "place": 0,
-      "teamName": ""
+      "place": 0
     },
     {
       "id": "2564426297",
@@ -5409,7 +5408,7 @@
     {
       "created": "10.11.2026",
       "year": 2026,
-      "shortName": "СПБГМТУ СКБ УОиР",
+      "shortName": "СКБ УОиР СПБГМТУ",
       "city": "Санкт-Петербург",
       "region": "Санкт-Петербург",
       "postalCode": "190121",
@@ -5480,8 +5479,7 @@
       "orgId": "014",
       "applicationNumber": "2588905243",
       "id": "014-2026-anpa",
-      "classId": "anpa",
-      "teamName": ""
+      "classId": "anpa"
     },
     {
       "created": "10.11.2026",
@@ -5696,14 +5694,14 @@
       ],
       "classId": "bek",
       "scores": {
-        "f:fmwkoghud3aszz": "5",
-        "През.::Понимание устройства и принципов работы": "5",
-        "f:fmwkoghud7t1hp": "5",
-        "През.::Понимание задачи и обоснование инженерного подхода": "5",
-        "f:fmwkoghud465va": "5",
-        "През.::Собственный вклад": "5",
-        "f:fmwkoghudac8hl": "",
-        "През.::Инженерная методология": "",
+        "f:fmwkoghud3aszz": "1",
+        "През.::Понимание устройства и принципов работы": "1",
+        "f:fmwkoghud7t1hp": "2",
+        "През.::Понимание задачи и обоснование инженерного подхода": "2",
+        "f:fmwkoghud465va": "3",
+        "През.::Собственный вклад": "3",
+        "f:fmwkoghudac8hl": "4",
+        "През.::Инженерная методология": "4",
         "f:fmwkoghudiqavb": "",
         "През.::Ответы на вопросы и эрудиция": "",
         "f:fmwkojse4lq214": "",
@@ -5741,14 +5739,14 @@
         "f:fmwkpofc38fjyn": "",
         "Доп.::За внеконкурсное задание": ""
       },
-      "draw": "1",
+      "draw": "-2",
       "extra": 0,
       "place": 0,
       "protocol": {
-        "drawNumber": "1",
+        "drawNumber": "-2",
         "extraBonus": 0,
         "place": 0,
-        "totalScore": 15
+        "totalScore": 10
       }
     },
     {
