@@ -1092,6 +1092,7 @@ const EMBEDDED_GH_SETTINGS = {
   branch: "main", // ← ветка с data/teams.json
   token: "", // ← fine-grained токен (см. ниже)
 };
+
 function getGitHubSettings() {
   try {
     const s = localStorage.getItem(GH_SETTINGS_KEY);
