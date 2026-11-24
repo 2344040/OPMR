@@ -1,0 +1,5022 @@
+// * ============================================================
+// OPMR NAVIGATOR — чистая сборка (финальная часть 1/4)
+// Секции: состояние · константы · утилиты · справочники · хранилище · целостность
+// Сборка: склеить части 1..4 по порядку в один app.js
+// * ============================================================
+
+// * ===== 1. СОСТОЯНИЕ =====
+let teamsData = [];
+let organizations = [];
+let competitionSettings = {};
+let apparatusClasses = [];
+let criteriaTemplates = [];
+let currentTeamId = null;
+let isNewTeam = false;
+let isAdmin = localStorage.getItem("opmr_admin_mode") === "true";
+let isGrouped = localStorage.getItem("opmr_view_grouped") === "true";
+let isListView = localStorage.getItem("opmr_view_list") === "true";
+let currentView = "teams";
+let currentYear = 2026;
+let returnToView = "list";
+let returnToTeamId = null;
+let currentProtocolTeamId = null;
+let currentCriteriaYear = null;
+let currentCriteriaClass = null;
+let tempCriteria = [];
+let pendingTextImport = null;
+let mergeMode = false;
+let mergeSelectedIds = [];
+let mergeEditor = null;
+// Синхронизация с сервером
+let pendingSync = false;
+let lastSyncAt = null;
+let syncInFlight = false;
+let suppressDirty = true;
+let protocolFormDirty = false;
+let _commitInFlight = null;
+// Навигация и позиция
+let navMode = "push";
+let navDepth = 0;
+let navCurrent = {view: "teams", teamId: null};
+let restoringNav = false;
+let pendingNavTarget = null;
+let opmrScrollTimer = null;
+let _mobResizeTimer = null;
+
+const STORAGE_KEY = "opmr_teams_data_v2";
+const STORAGE_KEY_OLD = "opmr_teams_data";
+const ADMIN_MODE_KEY = "opmr_admin_mode";
+const GH_SETTINGS_KEY = "opmr_gh_settings";
+const ADMIN_PASSWORD = "opmr2026";
+const SYNC_STATE_KEY = "opmr_sync_state";
+const NAV_STATE_KEY = "opmr_nav_state";
+const COMP_SORT_KEY = "opmr_comp_sort";
+const COMP_COLLAPSE_KEY = "opmr_comp_collapsed";
+const CRITERIA_HISTORY_KEY = "opmr_criteria_history";
+const MASTER_VIEW_KEY = "opmr_master_view";
+const CRITERIA_TEMPLATES_KEY = "opmr_criteria_templates";
+try {
+  const _s = JSON.parse(localStorage.getItem(SYNC_STATE_KEY));
+  if (_s) {
+    pendingSync = !!_s.pending;
+    lastSyncAt = _s.at || null;
+  }
+} catch {}
+
+// * ===== 2. СПРАВОЧНЫЕ КОНСТАНТЫ =====
+const DEFAULT_CLASS_NAMES = {bek: "БЭК", tnpa: "ТНПА", anpa: "АНПА", anna: "АННА"};
+const DEFAULT_CLASS_COLORS = {bek: "badge-bek", tnpa: "badge-tnpa", anpa: "badge-anpa", anna: "badge-anna"};
+const DEFAULT_CLASS_FULLNAMES = {
+  bek: "Безэкипажный катер",
+  tnpa: "Телеуправляемый необитаемый подводный аппарат",
+  anpa: "Автономный необитаемый подводный аппарат",
+  anna: "Автономный необитаемый надводный аппарат",
+};
+const CG_TINTS = ["#fbf6e9", "#e9f9f0", "#e8f1fb", "#f2edfb", "#fdecec"];
+const CG_FIXED_HEAD = "#f8fafc";
+const CG_FIXED_BODY = "#f4f6f8";
+const COMP_SORT_LABELS = {draw: "по № жребия", name: "по названию", total: "по сумме баллов"};
+const ORG_CONTACT_FIELDS = [
+  {key: "fullName", label: "Название"},
+  {key: "shortName", label: "Краткое название"},
+  {key: "city", label: "Город"},
+  {key: "postalCode", label: "Почтовый индекс"},
+  {key: "address", label: "Адрес"},
+  {key: "phone", label: "Телефон"},
+  {key: "email", label: "Email"},
+  {key: "orgLeader", label: "ФИО руководителя организации"},
+];
+const OPMR_NAV_CALL_RE =
+  /(showTeamsView|showCompetitionView|showMasterTable|showOrgManager|showApparatusManager|showTeamDetails|showProtocolPage|editTeam|createNewTeam|goHome|goBack|switchYear)\s*\(/;
+
+// Стандартный набор колонок, если критерии класса не заданы
+const COMP_DEFAULT_SPEC = [
+  ["pres", "Презентация", [
+    ["pres_struct", "Структура", "Структ.", "int", 1],
+    ["pres_sa", "Сравнительный анализ", "СА", "int", 1],
+    ["pres_new", "Новизна", "Нов.", "int", 1],
+    ["pres_qual", "Качество", "Кач.", "int", 1],
+  ]],
+  ["qual", "Квалификация", [
+    ["qual_place", "Сумма размерений", "Разм.", "decimal", 0],
+    ["qual_weight", "Вес (кг)", "Вес", "decimal", 0],
+    ["qual_penalty", "Штрафные баллы", "Штраф", "int", -1],
+    ["qual_ok", "Квал. задание выполнено", "Квал.", "bool", 0],
+  ]],
+  ["task", "Конкурсное задание", [
+    ["task_time", "Время (сек)", "Т сек", "decimal", 0],
+    ["task_score", "Балл за время", "Т балл", "int", 1],
+    ["task_gate", "Прохождение ворот", "Вор.", "int", 1],
+    ["task_park", "Парковка", "Парк.", "int", 1],
+    ["task_gar", "Нужный гараж", "Гар.", "int", 1],
+    ["task_penalty", "Штрафные баллы", "Штраф", "int", -1],
+  ]],
+];
+function compDefaultGroups() {
+  return COMP_DEFAULT_SPEC.map(([key, title, cols]) => ({
+    key,
+    title,
+    fullTitle: title,
+    attempts: 1,
+    cols: cols.map(([k, full, short, type, mode]) => ({
+      key: k, title: short, short, full, type, sum: mode === 1, penalty: mode === -1,
+    })),
+  }));
+}
+
+function getDefaultCompetitionSettings() {
+  return {
+    2026: {
+      bek: {date: "28.11.2026", criteria: []},
+      tnpa: {date: "28.11.2026", criteria: []},
+      anpa: {date: "29.11.2026", criteria: []},
+      anna: {date: "29.11.2026", criteria: []},
+    },
+    2025: {
+      bek: {date: "28.11.2025", criteria: []},
+      tnpa: {date: "28.11.2025", criteria: []},
+      anpa: {date: "29.11.2025", criteria: []},
+    },
+    2024: {
+      anna: {
+        date: "01.11.2024",
+        criteria: [
+          {section: "Квалификация", fields: [
+            {name: "Сумма размерений", short: "Разм."},
+            {name: "Штрафные баллы", short: "Штраф"},
+            {name: "Вес (кг)", short: "Вес"},
+            {name: "Бонусные баллы", short: "Бонус"},
+          ]},
+          {section: "Презентация", fields: [
+            {name: "Структура", short: "Структ."},
+            {name: "Эффективность", short: "Эффект."},
+            {name: "Новизна", short: "Нов."},
+            {name: "Перспектива", short: "Персп."},
+            {name: "Качество", short: "Кач."},
+          ]},
+          {section: "Задание 2 (траектория)", fields: [
+            {name: "Среднее отклонение", short: "Отклон."},
+            {name: "Баллы", short: "Баллы"},
+          ]},
+          {section: "Задание 3 (растения)", fields: [
+            {name: "Остров 1", short: "Остр. 1"},
+            {name: "Остров 2", short: "Остр. 2"},
+            {name: "Остров 3", short: "Остр. 3"},
+            {name: "Баллы", short: "Баллы"},
+          ]},
+          {section: "Задание 4 (объекты)", fields: [
+            {name: "Кол-во объектов", short: "Объекты"},
+            {name: "Баллы", short: "Баллы"},
+            {name: "Бонус за непрерывность", short: "Бонус"},
+          ]},
+        ],
+      },
+    },
+  };
+}
+
+// Встроенная библиотека групп редактора критериев
+const CRITERIA_LIBRARY = {
+  groups: [
+    {id: "qualification", name: "Квалификация", short: "Квал.", fields: [
+      {name: "Сумма размерений", short: "Разм."},
+      {name: "Штрафные баллы", short: "Штраф"},
+      {name: "Вес (кг)", short: "Вес"},
+      {name: "Бонусные баллы", short: "Бонус"},
+    ]},
+    {id: "presentation", name: "Презентация", short: "През.", fields: [
+      {name: "Структура", short: "Структ."},
+      {name: "Эффективность", short: "Эффект."},
+      {name: "Новизна", short: "Нов."},
+      {name: "Перспектива", short: "Персп."},
+      {name: "Качество", short: "Кач."},
+    ]},
+    {id: "task2", name: "Задание 2 (движение по траектории)", short: "Зад. 2", fields: [
+      {name: "Среднее отклонение", short: "Отклон."},
+      {name: "Баллы", short: "Баллы"},
+    ]},
+    {id: "task3", name: "Задание 3 (растения на островах)", short: "Зад. 3", fields: [
+      {name: "Остров 1", short: "Остр. 1"},
+      {name: "Остров 2", short: "Остр. 2"},
+      {name: "Остров 3", short: "Остр. 3"},
+      {name: "Баллы", short: "Баллы"},
+    ]},
+    {id: "task4", name: "Задание 4 (подводные объекты)", short: "Зад. 4", fields: [
+      {name: "Кол-во объектов", short: "Объекты"},
+      {name: "Баллы", short: "Баллы"},
+      {name: "Бонус за непрерывность", short: "Бонус"},
+    ]},
+    {id: "competition", name: "Конкурсное задание", short: "Конкурс", fields: [
+      {name: "Время (сек)", short: "Время"},
+      {name: "Балл за время", short: "Б. времени"},
+      {name: "Прохождение ворот", short: "Ворота"},
+      {name: "Парковка", short: "Парковка"},
+      {name: "Нужный гараж", short: "Гараж"},
+      {name: "Штрафные баллы", short: "Штраф"},
+    ]},
+    {id: "extra", name: "Дополнительные баллы", short: "Доп.", fields: [
+      {name: "За внеконкурсное задание", short: "Внеконкурс"},
+    ]},
+  ],
+};
+
+// * ===== 3. ЧИСТЫЕ УТИЛИТЫ =====
+function escHtml(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+function showToast(message, type = "info") {
+  const container = document.getElementById("toastContainer");
+  const toast = document.createElement("div");
+  toast.className = `toast-msg ${type}`;
+  toast.innerHTML = `<i class="fas fa-${type === "success" ? "check-circle" : type === "error" ? "exclamation-circle" : "info-circle"} me-2"></i>${message}`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(100%)";
+    toast.style.transition = "all 0.3s";
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
+}
+function formatDate(dateStr) {
+  if (!dateStr) return "—";
+  const parts = String(dateStr).trim().split("-");
+  if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
+  return dateStr;
+}
+function formatFio(fio) {
+  if (!fio) return "—";
+  const parts = fio.trim().split(/\s+/);
+  if (parts.length >= 2)
+    return `<span class="fio-cell"><span class="fio-surname">${parts[0]}</span> <span class="fio-name-patronymic">${parts.slice(1).join(" ")}</span></span>`;
+  return `<span class="fio-cell"><span class="fio-surname">${fio}</span></span>`;
+}
+function formatDescription(desc) {
+  if (!desc || desc.trim() === "") return '<div class="detail-value text-muted">—</div>';
+  return desc.split("\n").filter((p) => p.trim() !== "").map((para) => {
+    const sentences = para.split(". ").filter((s) => s.trim() !== "");
+    if (sentences.length > 1)
+      return sentences.map((s) => `<p style="margin-bottom:0.5rem;color:#334155;font-size:1rem;line-height:1.6">${s.endsWith(".") ? s : s + "."}</p>`).join("");
+    return `<p style="margin-bottom:0.5rem;color:#334155;font-size:1rem;line-height:1.6">${para.trim()}</p>`;
+  }).join("");
+}
+function parsePhotosField(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter((v) => v.length > 0);
+  return String(value).split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+}
+function isDirectImageLink(url) {
+  return /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url);
+}
+function lcLetters(s) {
+  return String(s).replace(/[A-ZА-ЯЁ]/g, (ch) => ch.toLowerCase());
+}
+function parseScoreNumber(v) {
+  const n = parseFloat(String(v).replace(",", "."));
+  return isNaN(n) ? null : n;
+}
+function isBoolTrue(v) {
+  return v === true || ["да", "true", "1", "yes", "on", "✓"].includes(String(v).trim().toLowerCase());
+}
+// Вклад поля в сумму: текст и время не участвуют; штраф вычитается по модулю
+function scoreContribution(col, v) {
+  if (v === "" || v === undefined || v === null) return null;
+  const type = col.type || "int";
+  if (type === "text" || type === "time") return null;
+  if (type === "bool") return col.sum !== false && isBoolTrue(v) ? 1 : 0;
+  const n = parseScoreNumber(v);
+  if (n === null) return null;
+  if (col.penalty) return -Math.abs(n);
+  return col.sum !== false ? n : 0;
+}
+function parseTimeValue(v) {
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return null;
+  const m = s.match(/^(\d+):([0-5]?\d)(?:[.,](\d+))?$/);
+  if (m) {
+    let sec = parseInt(m[2], 10);
+    if (m[3]) sec += parseFloat("0." + m[3]);
+    return parseInt(m[1], 10) * 60 + sec;
+  }
+  if (/^\d+(?:[.,]\d+)?$/.test(s)) return parseFloat(s.replace(",", "."));
+  return null;
+}
+function formatTimeValue(v) {
+  const total = parseTimeValue(v);
+  if (total === null) return String(v == null ? "" : v).trim();
+  let mins = Math.floor(total / 60);
+  let secs = Math.round(total - mins * 60);
+  if (secs === 60) { mins += 1; secs = 0; }
+  return `${mins}:${String(secs).padStart(2, "0")}`;
+}
+function pluralizeTeams(n) {
+  const abs = Math.abs(n) % 100;
+  const last = abs % 10;
+  if (abs > 10 && abs < 20) return "команд";
+  if (last > 1 && last < 5) return "команды";
+  if (last === 1) return "команда";
+  return "команд";
+}
+function backupTimestamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}-${p(d.getSeconds())}`;
+}
+function criteriaTemplateStamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getFullYear() % 100)}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+}
+function newFieldId() {
+  return "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+// Ключ сортировки записей библиотеки/шаблонов «от новых к старым»
+function entrySortKey(id, name) {
+  let m = String(id || "").match(/^(?:t|lib|h)(\d{10,})$/);
+  if (m) return Number(m[1]);
+  m = String(name || "").match(/(\d{6})-(\d{6})$/);
+  if (m) {
+    const d = m[1], t = m[2];
+    return new Date(2000 + Number(d.slice(0, 2)), Number(d.slice(2, 4)) - 1, Number(d.slice(4, 6)),
+      Number(t.slice(0, 2)), Number(t.slice(2, 4)), Number(t.slice(4, 6))).getTime();
+  }
+  return 0;
+}
+
+// * ===== 4. КОМАНДЫ: ИМЕНА, ID, СЛУЖЕБНЫЕ ПОЛЯ =====
+function sortTeamsByName(teams) {
+  return [...teams].sort((a, b) =>
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru"));
+}
+function getTeamDupIndex(team) {
+  const m = String(team.id || "").match(/-(\d+)$/);
+  return m ? parseInt(m[1], 10) : 1;
+}
+function getTeamDisplayName(team) {
+  if (team.teamName && team.teamName.trim()) return team.teamName.trim();
+  const org = organizations.find((o) => o.id === team.orgId);
+  const base = org ? org.shortName || org.fullName : team.shortName || team.organization || "Без названия";
+  const n = getTeamDupIndex(team);
+  return n > 1 ? `${base} (${n})` : base;
+}
+function getTeamFullName(team) {
+  const org = organizations.find((o) => o.id === team.orgId);
+  return org?.fullName || team.organization || "Без названия";
+}
+function getTeamCity(team) {
+  const org = organizations.find((o) => o.id === team.orgId);
+  return org?.city || team.city || "";
+}
+function teamLeaderSurname(team) {
+  const parts = String(team.teamLeader || "").trim().split(/\s+/);
+  return parts[0] || "";
+}
+function getTeamPlace(team) {
+  const p = parseInt(team.place ?? team.protocol?.place, 10);
+  return p > 0 ? p : null;
+}
+function teamHasScores(team) {
+  return !!(team.scores && Object.values(team.scores).some((v) => v !== "" && v !== null && v !== undefined));
+}
+// Формат ID: IDорг-Год-Класс(лат)-[номер при дубле]
+function generateTeamId(orgId, year, classId, extra) {
+  const base = `${orgId}-${year}-${classId || "na"}`;
+  let id = base;
+  let n = 2;
+  const exists = (x) => teamsData.some((t) => t.id === x) || (extra && extra.has(x));
+  while (exists(id)) {
+    id = `${base}-${n}`;
+    n++;
+  }
+  return id;
+}
+
+// * ===== 5. СПРАВОЧНИК КЛАССОВ =====
+function getClassFullName(classId) {
+  const info = apparatusClasses.find((c) => c.id === classId);
+  if (info && info.fullName && info.fullName.trim()) return info.fullName.trim();
+  return DEFAULT_CLASS_FULLNAMES[classId] || (info ? info.name : String(classId).toUpperCase());
+}
+function ensureApparatusClasses() {
+  if (Array.isArray(apparatusClasses) && apparatusClasses.length > 0) {
+    apparatusClasses.forEach((c) => {
+      if (!c.name) c.name = DEFAULT_CLASS_NAMES[c.id] || c.id.toUpperCase();
+      if (!c.color) c.color = "badge-gray";
+      if (!c.fullName) c.fullName = DEFAULT_CLASS_FULLNAMES[c.id] || "";
+    });
+    return;
+  }
+  const map = {};
+  Object.entries(DEFAULT_CLASS_NAMES).forEach(([id, name]) => {
+    map[id] = {id, name, fullName: DEFAULT_CLASS_FULLNAMES[id] || "", color: DEFAULT_CLASS_COLORS[id] || "badge-gray"};
+  });
+  for (const year in competitionSettings) {
+    for (const key in competitionSettings[year]) {
+      if (!map[key]) {
+        const cfg = competitionSettings[year][key];
+        map[key] = {
+          id: key,
+          name: cfg.name || DEFAULT_CLASS_NAMES[key] || key.toUpperCase(),
+          fullName: cfg.fullName || DEFAULT_CLASS_FULLNAMES[key] || "",
+          color: cfg.color || "badge-gray",
+        };
+      }
+    }
+  }
+  apparatusClasses = Object.values(map);
+}
+function getClassInfo(classId) {
+  return apparatusClasses.find((c) => c.id === classId) || {
+    id: classId,
+    name: DEFAULT_CLASS_NAMES[classId] || String(classId).toUpperCase(),
+    color: "badge-gray",
+  };
+}
+function normalizeCompetitionSettings(settings) {
+  for (const year in settings) {
+    for (const key in settings[year]) {
+      const cfg = settings[year][key];
+      if (!cfg.name) cfg.name = DEFAULT_CLASS_NAMES[key] || key.toUpperCase();
+      if (!cfg.color) cfg.color = DEFAULT_CLASS_COLORS[key] || "badge-gray";
+      if (!Array.isArray(cfg.criteria)) cfg.criteria = [];
+    }
+  }
+  return settings;
+}
+function getClassIdByValue(apparatusClass, year = currentYear) {
+  const value = String(apparatusClass || "").trim().toLowerCase();
+  if (!value) return "na";
+  const yearSettings = competitionSettings[year] || {};
+  for (const key in yearSettings) {
+    const info = getClassInfo(key);
+    if (value.includes(key.toLowerCase()) || value.includes(String(info.name).toLowerCase())) return key;
+  }
+  for (const c of apparatusClasses) {
+    if (value.includes(String(c.id).toLowerCase()) || value.includes(String(c.name || "").toLowerCase())) return c.id;
+  }
+  return "na";
+}
+function getTeamClassId(team) {
+  if (team.classId && apparatusClasses.some((c) => c.id === team.classId)) return team.classId;
+  return getClassIdByValue(team.apparatusClass, team.year);
+}
+function getCategoryBadge(apparatusClass, extraClass = "") {
+  const value = String(apparatusClass || "").trim().toLowerCase();
+  const info = apparatusClasses.find((c) => value.includes(c.id) || value.includes(c.name.toLowerCase()));
+  if (!info) return `<span class="badge category-badge ${extraClass} bg-secondary text-white">Н/Д</span>`;
+  return `<span class="badge category-badge ${extraClass} ${info.color}">${info.name}</span>`;
+}
+function buildClassGroups(sortedTeams) {
+  const yearSettings = competitionSettings[currentYear] || {};
+  const groups = {};
+  for (const key in yearSettings) {
+    const info = getClassInfo(key);
+    groups[key] = {...yearSettings[key], id: key, name: info.name, fullName: getClassFullName(key), color: info.color, teams: []};
+  }
+  groups.other = {name: "Н/Д", fullName: "Класс не определён", color: "bg-secondary text-white", date: "", teams: []};
+  sortedTeams.forEach((t) => {
+    const cid = getTeamClassId(t);
+    (groups[cid] || groups.other).teams.push(t);
+  });
+  return groups;
+}
+
+// * ===== 6. ОРГАНИЗАЦИИ: БАЗОВЫЕ ОПЕРАЦИИ =====
+function getNextOrgId() {
+  if (organizations.length === 0) return "001";
+  const maxId = Math.max(...organizations.map((o) => parseInt(o.id)));
+  return String(maxId + 1).padStart(3, "0");
+}
+function findOrCreateOrg(fullName, shortName, city) {
+  let org = organizations.find((o) => o.fullName.toLowerCase() === fullName.toLowerCase());
+  if (!org) {
+    org = {id: getNextOrgId(), fullName, shortName: shortName || fullName, city: city || ""};
+    organizations.push(org);
+  } else {
+    if (shortName && !org.shortName) org.shortName = shortName;
+    if (city && !org.city) org.city = city;
+  }
+  return org;
+}
+// Эталон контактов: карточка организации, пустые поля добираются из заявок
+function getOrgEffective(org) {
+  const base = {};
+  ORG_CONTACT_FIELDS.forEach((f) => { base[f.key] = String(org[f.key] || "").trim(); });
+  const teams = teamsData.filter((t) => t.orgId === org.id);
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    if (base[f.key]) return;
+    for (const t of teams) {
+      const v = String(t[f.key] || "").trim();
+      if (v) { base[f.key] = v; break; }
+    }
+  });
+  return base;
+}
+function mergeOrgEmptyFromApplication(org, t) {
+  if (!org || !t) return false;
+  let changed = false;
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    if (f.key === "fullName") return;
+    const v = String(t[f.key] || "").trim();
+    if (v && !String(org[f.key] || "").trim()) {
+      org[f.key] = v;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+// * ===== 7. ХРАНИЛИЩЕ И МИГРАЦИИ =====
+function persistSyncState() {
+  try {
+    localStorage.setItem(SYNC_STATE_KEY, JSON.stringify({pending: pendingSync, at: lastSyncAt}));
+  } catch {}
+}
+function saveData() {
+  try {
+    localStorage.setItem(STORAGE_KEY,
+      JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}));
+    if (!suppressDirty) {
+      pendingSync = true;
+      persistSyncState();
+    }
+  } catch (e) {
+    console.warn("Не удалось сохранить:", e);
+  }
+  updateSyncIndicator();
+}
+function loadData() {
+  try {
+    const data = localStorage.getItem(STORAGE_KEY);
+    if (data) {
+      const parsed = JSON.parse(data);
+      organizations = parsed.organizations || [];
+      competitionSettings = normalizeCompetitionSettings(parsed.competitionSettings || getDefaultCompetitionSettings());
+      apparatusClasses = parsed.apparatusClasses || [];
+      ensureApparatusClasses();
+      teamsData = parsed.teams || [];
+      criteriaTemplates = Array.isArray(parsed.criteriaTemplates) ? parsed.criteriaTemplates : [];
+      if (criteriaTemplates.length === 0) {
+        try {
+          const legacy = JSON.parse(localStorage.getItem(CRITERIA_TEMPLATES_KEY));
+          if (Array.isArray(legacy) && legacy.length) {
+            criteriaTemplates = legacy;
+            localStorage.removeItem(CRITERIA_TEMPLATES_KEY);
+            saveData();
+          }
+        } catch {}
+      }
+      return true;
+    }
+  } catch (e) {
+    console.warn("Ошибка чтения:", e);
+  }
+  return false;
+}
+function migrateData() {
+  const oldData = localStorage.getItem(STORAGE_KEY_OLD);
+  if (!oldData) return false;
+  try {
+    const oldTeams = JSON.parse(oldData);
+    if (!Array.isArray(oldTeams) || oldTeams.length === 0) return false;
+    organizations = [];
+    competitionSettings = getDefaultCompetitionSettings();
+    apparatusClasses = [];
+    ensureApparatusClasses();
+    teamsData = [];
+    const orgMap = {};
+    oldTeams.forEach((team) => {
+      const orgName = team.organization || "Без названия";
+      if (!orgMap[orgName.toLowerCase()]) {
+        const org = findOrCreateOrg(orgName, team.shortName || "", team.city || "");
+        orgMap[orgName.toLowerCase()] = org.id;
+      }
+      const hasProtocol = team.protocol && (team.protocol.totalScore > 0 || team.protocol.place > 0 || team.protocol.competition);
+      teamsData.push({...team, orgId: orgMap[orgName.toLowerCase()], year: hasProtocol ? 2025 : 2026, shortName: team.shortName});
+      delete teamsData[teamsData.length - 1].organization;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}));
+    localStorage.removeItem(STORAGE_KEY_OLD);
+    return true;
+  } catch (e) {
+    console.error("Ошибка миграции:", e);
+    return false;
+  }
+}
+function runMigration() {
+  bootstrap.Modal.getInstance(document.getElementById("migrationModal")).hide();
+  const success = migrateData();
+  if (success) {
+    saveData();
+    showToast("Миграция завершена успешно!", "success");
+    loadData();
+    renderTeams(teamsData);
+    renderHeaderButtons();
+    showTeamsView();
+  } else {
+    showToast("Миграция не удалась", "error");
+  }
+}
+
+// * ===== 8. ЦЕЛОСТНОСТЬ БАЗЫ =====
+function legacyProtocolToScores(team) {
+  const p = team.protocol;
+  if (!p) return null;
+  const pres = p.presentation || {}, qual = p.qualification || {}, comp = p.competition || {};
+  const map = {
+    pres_struct: pres.structure, pres_sa: pres.analysis, pres_new: pres.novelty, pres_qual: pres.quality,
+    qual_place: p.dimensions, qual_weight: p.weight, qual_penalty: qual.penalty,
+    qual_ok: qual.completed ? "Да" : "",
+    task_time: comp.time, task_score: comp.timeScore, task_gate: comp.gates,
+    task_park: comp.parking, task_gar: comp.garage, task_penalty: comp.penalty,
+  };
+  const out = {};
+  let any = false;
+  for (const k in map) {
+    const v = map[k];
+    if (v !== undefined && v !== null && v !== "" && v !== 0) {
+      out[k] = String(v);
+      any = true;
+    }
+  }
+  return any ? out : null;
+}
+// Группа доп. баллов: помеченная extra или узнаваемая по названию
+function findExtraGroup(list) {
+  if (!Array.isArray(list)) return null;
+  return (
+    list.find((g) => g && g.extra === true) ||
+    list.find((g) => {
+      const gt = (((g && g.section) || "") + " " + ((g && g.sectionShort) || "")).toLowerCase();
+      if (gt.includes("доп") && gt.includes("балл")) return true;
+      return ((g && g.fields) || []).some((f) => ((f.name || "") + " " + (f.short || "")).toLowerCase().includes("внеконкурс"));
+    }) ||
+    null
+  );
+}
+// Авто-группа «Доп. баллы» + перенос legacy-значения team.extra в её поле
+function migrateExtraGroup() {
+  let changed = false;
+  for (const y in competitionSettings) {
+    for (const cid in competitionSettings[y]) {
+      const cfg = competitionSettings[y][cid];
+      if (!cfg || cfg.extraGroupDisabled) continue;
+      if (!Array.isArray(cfg.criteria)) cfg.criteria = [];
+      let grp = findExtraGroup(cfg.criteria);
+      if (grp) {
+        if (!grp.extra) { grp.extra = true; changed = true; }
+      } else if (cfg.criteria.length) {
+        cfg.criteria.push({
+          extra: true, section: "Доп. баллы", sectionShort: "Доп.", attempts: 1, multi: false,
+          fields: [{id: newFieldId(), name: "За внеконкурсное задание", short: "Внеконкурс", type: "int", sum: true, penalty: false}],
+        });
+        changed = true;
+      }
+    }
+  }
+  teamsData.forEach((t) => {
+    const cid = getTeamClassId(t);
+    const cfg = (competitionSettings[t.year] || {})[cid];
+    const grp = cfg && findExtraGroup(cfg.criteria);
+    if (!grp || !grp.fields || !grp.fields[0]) return;
+    const fid = "f:" + grp.fields[0].id;
+    const cur = (t.scores || {})[fid];
+    const legacy = t.extra ?? t.protocol?.extraBonus ?? "";
+    if ((cur === undefined || cur === "" || cur === null) && legacy !== "" && legacy !== null && legacy !== 0) {
+      t.scores = {...(t.scores || {}), [fid]: String(legacy)};
+      changed = true;
+    }
+  });
+  return changed;
+}
+function runIntegrityMigration() {
+  let changed = false;
+  for (const y in competitionSettings) {
+    for (const cid in competitionSettings[y]) {
+      const cfg = competitionSettings[y][cid];
+      if (!Array.isArray(cfg.criteria)) continue;
+      cfg.criteria.forEach((g) => {
+        if (!Array.isArray(g.fields)) return;
+        g.fields.forEach((f) => {
+          if (f && typeof f === "object" && !f.id) { f.id = newFieldId(); changed = true; }
+        });
+      });
+    }
+  }
+  const seen = new Set();
+  teamsData.forEach((t) => {
+    if (!t.id || seen.has(t.id)) {
+      t.id = generateTeamId(t.orgId, t.year, getTeamClassId(t), seen);
+      changed = true;
+    }
+    seen.add(t.id);
+    const cid = getTeamClassId(t);
+    if (t.classId !== cid) { t.classId = cid; changed = true; }
+    if (!teamHasScores(t)) {
+      const legacy = legacyProtocolToScores(t);
+      if (legacy) { t.scores = legacy; changed = true; }
+    }
+    if (!t.scores) return;
+    const groups = getClassCriteriaGroups(t.year, cid);
+    groups.forEach((cg, gi) =>
+      cg.cols.forEach((c, ci) => {
+        if (!c.id) return;
+        const idKey = "f:" + c.id;
+        if (t.scores[idKey] !== undefined && t.scores[idKey] !== "") return;
+        const legacyKeys = [
+          `${cg.title}::${c.full || c.title}`,
+          `${cg.fullTitle || cg.title}::${c.full || c.title}`,
+          c.full, c.title, c.key, `${gi}_${ci}`,
+        ];
+        for (const k of legacyKeys) {
+          if (k && t.scores[k] !== undefined && t.scores[k] !== "") {
+            t.scores[idKey] = t.scores[k];
+            changed = true;
+            break;
+          }
+        }
+      }),
+    );
+  });
+  teamsData.forEach((t) => {
+    if (!t.protocol || !teamHasScores(t)) return;
+    const live = computeTeamTotal(t);
+    if (Number(t.protocol.totalScore) !== live) { t.protocol.totalScore = live; changed = true; }
+    const p = getTeamPlace(t);
+    if (p && t.protocol.place !== p) { t.protocol.place = p; changed = true; }
+  });
+  const extraChanged = migrateExtraGroup();
+  return changed || extraChanged;
+}
+function auditDatabase() {
+  const issues = [];
+  const add = (level, text) => issues.push({level, text});
+  const ids = new Set();
+  let dup = 0, noFieldId = 0, idMismatch = 0, orphanScores = 0, staleTotal = 0, legacy = 0;
+  for (const y in competitionSettings) {
+    for (const cid in competitionSettings[y]) {
+      const cfg = competitionSettings[y][cid];
+      (cfg.criteria || []).forEach((g) => (g.fields || []).forEach((f) => {
+        if (f && typeof f === "object" && !f.id) noFieldId++;
+      }));
+      if (!Array.isArray(cfg.criteria) || !cfg.criteria.length) {
+        const cnt = teamsData.filter((t) => String(t.year) === String(y) && getTeamClassId(t) === cid).length;
+        if (cnt) add("info", `${y} · ${getClassInfo(cid).name}: набор критериев не задан, используется стандартный (${cnt} команд).`);
+      }
+    }
+  }
+  teamsData.forEach((t) => {
+    if (ids.has(t.id)) dup++;
+    ids.add(t.id);
+    const cid = getTeamClassId(t);
+    if (!(competitionSettings[t.year] || {})[cid]) {
+      add("error", `«${getTeamDisplayName(t)}» (${t.year}): класс «${getClassInfo(cid).name}» не включён в этом году — команда попадает в «Н/Д».`);
+    }
+    const idParts = String(t.id || "").split("-");
+    if (idParts.length >= 3 && (idParts[1] !== String(t.year) || idParts[2] !== cid)) idMismatch++;
+    if (!teamHasScores(t) && legacyProtocolToScores(t)) legacy++;
+    if (teamHasScores(t)) {
+      const groups = getClassCriteriaGroups(t.year, cid);
+      const known = new Set();
+      groups.forEach((cg) => cg.cols.forEach((c) => {
+        if (c.id) known.add("f:" + c.id);
+        known.add(`${cg.title}::${c.full || c.title}`);
+      }));
+      const orphans = Object.keys(t.scores).filter((k) => !k.startsWith("f:") && !known.has(k) && t.scores[k] !== "");
+      if (orphans.length) orphanScores++;
+      const live = computeTeamTotal(t);
+      if (t.protocol && Number(t.protocol.totalScore) !== live) staleTotal++;
+    }
+  });
+  if (dup) add("error", `Дублирующихся ID команд: ${dup}.`);
+  if (noFieldId) add("warn", `Полей критериев без постоянного ID: ${noFieldId} (переименование может оборвать связь с оценками).`);
+  if (idMismatch) add("warn", `Команд, у которых ID не совпадает с фактическим годом/классом: ${idMismatch}.`);
+  if (orphanScores) add("warn", `Команд с оценками-сиротами (поля переименованы или удалены): ${orphanScores}.`);
+  if (staleTotal) add("warn", `Команд с устаревшей сохранённой суммой баллов: ${staleTotal}.`);
+  if (legacy) add("warn", `Протоколов старого формата, которые будут переведены в новый: ${legacy}.`);
+  const emptyOrgs = organizations.filter((o) => !teamsData.some((t) => t.orgId === o.id)).length;
+  if (emptyOrgs) add("info", `Организаций без команд: ${emptyOrgs}.`);
+  if (!issues.length) add("ok", "Нарушений связей не найдено. База целостна.");
+  return issues;
+}
+function repairDatabase() {
+  const changed = runIntegrityMigration();
+  saveData();
+  refreshCurrentView();
+  showToast(changed ? "Целостность восстановлена" : "Исправлять нечего — всё в порядке", changed ? "success" : "info");
+  const gh = getGitHubSettings();
+  if (changed && gh?.owner && gh?.repo && gh?.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  openIntegrityReport();
+}
+function openIntegrityReport() {
+  let el = document.getElementById("integrityModal");
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "modal fade";
+    el.id = "integrityModal";
+    el.tabIndex = -1;
+    el.innerHTML = `<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title"><i class="fas fa-stethoscope me-2 text-primary"></i>Целостность базы</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="integrityReportBody"></div><div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Закрыть</button><button type="button" class="btn btn-primary" onclick="repairDatabase()"><i class="fas fa-wand-magic-sparkles me-2"></i>Исправить автоматически</button></div></div></div>`;
+    document.body.appendChild(el);
+  }
+  const icons = {
+    error: "fa-circle-exclamation text-danger",
+    warn: "fa-triangle-exclamation text-warning",
+    info: "fa-circle-info text-primary",
+    ok: "fa-circle-check text-success",
+  };
+  document.getElementById("integrityReportBody").innerHTML =
+    `<p class="text-muted small">Проверяются связи: год → класс → набор критериев → команда → оценки. Автопочинка проставляет постоянные ID полей, привязку команд к классу, переносит старые ключи оценок и пересчитывает суммы.</p><ul class="integrity-list">` +
+    auditDatabase().map((i) => `<li class="integrity-item"><i class="fas ${icons[i.level]}"></i><span>${escHtml(i.text)}</span></li>`).join("") +
+    `</ul>`;
+  bootstrap.Modal.getOrCreateInstance(el).show();
+}
+// Архив набора критериев при отключении класса/года
+function archiveClassCriteria(year, classId) {
+  const cfg = (competitionSettings[year] || {})[classId];
+  if (!cfg || (!(cfg.criteria || []).length && !cfg.date)) return;
+  const list = loadCriteriaTemplates().filter(
+    (t) => !(t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId));
+  list.push({
+    id: "arch_" + year + "_" + classId,
+    name: `Архив: ${getClassInfo(classId).name} ${year}`,
+    date: cfg.date || "",
+    criteria: JSON.parse(JSON.stringify(cfg.criteria || [])),
+    archive: {year: String(year), classId},
+  });
+  saveCriteriaTemplates(list);
+}
+
+// * ============================================================
+// OPMR NAVIGATOR — чистая сборка (финальная часть 2/4)
+// Секции: GitHub · индикатор синхронизации · защита протокола ·
+//         шапка и мобильное меню · навигация и восстановление
+// * ============================================================
+
+// * ===== 9. GITHUB: НАСТРОЙКИ И ПРОВЕРКА СОЕДИНЕНИЯ =====
+function getGitHubSettings() {
+  try {
+    const s = localStorage.getItem(GH_SETTINGS_KEY);
+    return s ? JSON.parse(s) : null;
+  } catch {
+    return null;
+  }
+}
+function saveGitHubSettings() {
+  const settings = {
+    owner: document.getElementById("ghOwner").value.trim(),
+    repo: document.getElementById("ghRepo").value.trim(),
+    branch: document.getElementById("ghBranch").value.trim() || "main",
+    token: document.getElementById("ghToken").value.trim(),
+  };
+  if (!settings.owner || !settings.repo || !settings.token) {
+    showToast("Заполните все обязательные поля", "error");
+    return;
+  }
+  localStorage.setItem(GH_SETTINGS_KEY, JSON.stringify(settings));
+  bootstrap.Modal.getInstance(document.getElementById("githubSettingsModal")).hide();
+  showToast("Настройки GitHub сохранены", "success");
+  renderHeaderButtons();
+}
+function openGitHubSettings() {
+  const settings = getGitHubSettings();
+  document.getElementById("ghOwner").value = settings?.owner || "";
+  document.getElementById("ghRepo").value = settings?.repo || "";
+  document.getElementById("ghBranch").value = settings?.branch || "main";
+  document.getElementById("ghToken").value = settings?.token || "";
+  new bootstrap.Modal(document.getElementById("githubSettingsModal")).show();
+}
+function toggleTokenVisibility() {
+  const input = document.getElementById("ghToken");
+  const icon = document.getElementById("tokenToggleIcon");
+  if (input.type === "password") {
+    input.type = "text";
+    icon.className = "fas fa-eye-slash";
+  } else {
+    input.type = "password";
+    icon.className = "fas fa-eye";
+  }
+}
+async function testGitHubConnection() {
+  const settings = {
+    owner: document.getElementById("ghOwner").value.trim(),
+    repo: document.getElementById("ghRepo").value.trim(),
+    token: document.getElementById("ghToken").value.trim(),
+  };
+  if (!settings.owner || !settings.repo || !settings.token) {
+    showToast("Заполните owner, repo и token", "error");
+    return;
+  }
+  showToast("Проверка соединения...", "info");
+  try {
+    const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}`, {
+      headers: {Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json"},
+    });
+    if (res.ok) showToast(`✓ Подключено: ${(await res.json()).full_name}`, "success");
+    else showToast(`✗ Ошибка: ${(await res.json()).message}`, "error");
+  } catch (e) {
+    showToast(`✗ Ошибка сети: ${e.message}`, "error");
+  }
+}
+async function commitToGitHubManual() {
+  const settings = getGitHubSettings();
+  if (!settings?.owner || !settings?.repo || !settings?.token) {
+    showToast("Сначала настройте подключение к GitHub", "error");
+    openGitHubSettings();
+    return;
+  }
+  showToast("Отправка данных на GitHub...", "info");
+  const result = await commitToGitHub();
+  showToast(result.message, result.success ? "success" : "error");
+}
+
+// * ===== 10. GITHUB: НАДЁЖНЫЙ КОММИТ (свежий sha, повторы, очередь) =====
+async function commitToGitHubCore() {
+  const settings = getGitHubSettings();
+  if (!settings || !settings.owner || !settings.repo || !settings.token)
+    return {success: false, message: "Настройки GitHub не заданы"};
+  const filePath = "data/teams.json";
+  const apiUrl = `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${filePath}`;
+  const headers = {Authorization: `token ${settings.token}`, Accept: "application/vnd.github.v3+json"};
+  const dataToSave = {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData};
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataToSave, null, 2))));
+  const readSha = async () => {
+    const res = await fetch(`${apiUrl}?ref=${encodeURIComponent(settings.branch)}&_=${Date.now()}`, {
+      headers,
+      cache: "no-store",
+    });
+    if (res.ok) return (await res.json()).sha;
+    if (res.status === 404) return null;
+    const j = await res.json().catch(() => ({}));
+    throw new Error(j.message || "HTTP " + res.status);
+  };
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    let sha;
+    try {
+      sha = await readSha();
+    } catch (e) {
+      return {success: false, message: `Ошибка чтения файла: ${e.message}`};
+    }
+    const body = {
+      message: `Обновление базы участников (${new Date().toLocaleString("ru-RU")})`,
+      content,
+      branch: settings.branch,
+    };
+    if (sha) body.sha = sha;
+    try {
+      const putRes = await fetch(apiUrl, {
+        method: "PUT",
+        headers: {...headers, "Content-Type": "application/json"},
+        body: JSON.stringify(body),
+      });
+      if (putRes.ok) return {success: true, message: "Данные сохранены в GitHub"};
+      const err = await putRes.json().catch(() => ({}));
+      const msg = err.message || `HTTP ${putRes.status}`;
+      if (/does not match|conflict/i.test(msg) && attempt < 5) {
+        await new Promise((r) => setTimeout(r, 300 * attempt));
+        continue;
+      }
+      return {success: false, message: `Ошибка коммита: ${msg}`};
+    } catch (e) {
+      if (attempt < 5) {
+        await new Promise((r) => setTimeout(r, 300 * attempt));
+        continue;
+      }
+      return {success: false, message: `Ошибка сети: ${e.message}`};
+    }
+  }
+  return {success: false, message: "Не удалось сохранить после 5 попыток: файл на сервере меняется параллельно"};
+}
+// Единая точка коммита: индикатор + состояние синхронизации + очередь параллельных вызовов
+function commitToGitHub() {
+  if (_commitInFlight) return _commitInFlight;
+  _commitInFlight = (async () => {
+    syncInFlight = true;
+    updateSyncIndicator();
+    let res;
+    try {
+      res = await commitToGitHubCore();
+    } catch (e) {
+      res = {success: false, message: "Ошибка сети: " + e.message};
+    }
+    syncInFlight = false;
+    if (res && res.success) {
+      pendingSync = false;
+      lastSyncAt = Date.now();
+      persistSyncState();
+      try {
+        localStorage.setItem("opmr_last_push_at", String(Date.now()));
+      } catch {}
+    }
+    updateSyncIndicator();
+    return res;
+  })().finally(() => {
+    _commitInFlight = null;
+  });
+  return _commitInFlight;
+}
+async function syncNow() {
+  const gh = getGitHubSettings();
+  if (!gh?.owner || !gh?.repo || !gh?.token) {
+    showToast("Сначала настройте подключение к GitHub", "error");
+    openGitHubSettings();
+    return;
+  }
+  const r = await commitToGitHub();
+  showToast(r.message, r.success ? "success" : "error");
+}
+// Загрузка с сервера; silent-режим не чаще раза в 5 минут после собственного пуша
+async function pullFromGitHub(silent = false) {
+  if (silent) {
+    let t = 0;
+    try {
+      t = parseInt(localStorage.getItem("opmr_last_push_at") || "0", 10) || 0;
+    } catch {}
+    if (Date.now() - t < 5 * 60 * 1000) return false;
+  }
+  const gh = getGitHubSettings();
+  if (!gh?.owner || !gh?.repo) {
+    if (!silent) showToast("GitHub не настроен", "error");
+    return false;
+  }
+  const url = `https://raw.githubusercontent.com/${gh.owner}/${gh.repo}/${gh.branch || "main"}/data/teams.json?ts=${Date.now()}`;
+  try {
+    const res = await fetch(url, {cache: "no-store"});
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const raw = await res.json();
+    if (!raw || !Array.isArray(raw.teams)) throw new Error("неверный формат файла");
+    const prev = suppressDirty;
+    suppressDirty = true;
+    organizations = raw.organizations || [];
+    competitionSettings = normalizeCompetitionSettings(raw.competitionSettings || getDefaultCompetitionSettings());
+    apparatusClasses = raw.apparatusClasses || [];
+    ensureApparatusClasses();
+    teamsData = raw.teams || [];
+    criteriaTemplates = Array.isArray(raw.criteriaTemplates) ? raw.criteriaTemplates : [];
+    saveData();
+    suppressDirty = prev;
+    pendingSync = false;
+    lastSyncAt = Date.now();
+    persistSyncState();
+    updateSyncIndicator();
+    if (!silent) showToast(`Загружено с сервера: ${teamsData.length} команд`, "success");
+    return true;
+  } catch (e) {
+    if (!silent) showToast("Не удалось загрузить с сервера: " + e.message, "error");
+    return false;
+  }
+}
+
+// * ===== 11. ИНДИКАТОР СИНХРОНИЗАЦИИ: компактный чип в футере =====
+function ensureFooterSyncSlot() {
+  let slot = document.getElementById("footerSyncSlot");
+  if (slot) return slot;
+  slot = document.createElement("div");
+  slot.id = "footerSyncSlot";
+  slot.className = "footer-sync-slot";
+  const row =
+    document.querySelector(".app-footer-row") ||
+    document.querySelector(".app-footer-inner") ||
+    document.querySelector(".app-footer");
+  (row || document.body).appendChild(slot);
+  return slot;
+}
+function ensureSyncPill() {
+  let el = document.getElementById("syncPill");
+  if (el) return el;
+  el = document.createElement("div");
+  el.id = "syncPill";
+  el.className = "sync-chip";
+  el.innerHTML = `<i class="sync-chip-icon fas fa-circle-check"></i><span class="sync-chip-text" id="syncPillText">Проверка…</span><button type="button" class="sync-chip-btn" id="syncPillAction" title="Сохранить на сервер"><i class="fas fa-cloud-arrow-up"></i><span class="sync-chip-btn-label">Сохранить</span></button><button type="button" class="sync-chip-mini" id="syncPillPull" title="Загрузить свежую версию с сервера"><i class="fas fa-rotate"></i></button>`;
+  ensureFooterSyncSlot().appendChild(el);
+  el.querySelector("#syncPillAction").addEventListener("click", async () => {
+    const gh = getGitHubSettings();
+    if (!gh?.owner || !gh?.repo || !gh?.token) {
+      openGitHubSettings();
+      return;
+    }
+    if (protocolFormDirty && document.getElementById("protocolForm")) {
+      saveProtocol();
+      return;
+    }
+    await syncNow();
+  });
+  el.querySelector("#syncPillPull").addEventListener("click", async () => {
+    if (pendingSync && !confirm("Есть изменения, не сохранённые на сервере. Загрузка перезапишет их. Продолжить?"))
+      return;
+    if (await pullFromGitHub(false)) refreshCurrentView();
+  });
+  return el;
+}
+function updateSyncIndicator() {
+  const el = ensureSyncPill();
+  const gh = getGitHubSettings();
+  const configured = !!(gh && gh.owner && gh.repo && gh.token);
+  const text = el.querySelector("#syncPillText");
+  const btn = el.querySelector("#syncPillAction");
+  const label = el.querySelector(".sync-chip-btn-label");
+  const pull = el.querySelector("#syncPillPull");
+  const icon = el.querySelector(".sync-chip-icon");
+  el.classList.remove("is-local", "is-dirty", "is-saving", "is-synced");
+  pull.style.display = configured ? "" : "none";
+  btn.disabled = false;
+  let state, iconClass, message, action;
+  if (syncInFlight) {
+    state = "is-saving";
+    iconClass = "fas fa-spinner fa-spin";
+    message = "Сохранение…";
+    action = "…";
+    btn.disabled = true;
+  } else if (!configured) {
+    state = "is-local";
+    iconClass = "fas fa-hard-drive";
+    message = protocolFormDirty ? "Протокол не сохранён" : "Только локально";
+    action = "Настроить";
+  } else if (protocolFormDirty) {
+    state = "is-dirty";
+    iconClass = "fas fa-pen-to-square";
+    message = "Протокол не сохранён";
+    action = "Сохранить";
+  } else if (pendingSync) {
+    state = "is-dirty";
+    iconClass = "fas fa-cloud-arrow-up";
+    message = "Не сохранено на сервере";
+    action = "Сохранить";
+  } else {
+    state = "is-synced";
+    iconClass = "fas fa-circle-check";
+    const t = lastSyncAt ? new Date(lastSyncAt).toLocaleTimeString("ru-RU", {hour: "2-digit", minute: "2-digit"}) : "";
+    message = t ? `Сохранено · ${t}` : "Сохранено на сервере";
+    action = "Сохранить";
+  }
+  el.classList.add(state);
+  icon.className = "sync-chip-icon " + iconClass;
+  text.textContent = message;
+  label.textContent = action;
+  btn.title = action;
+  // Требует внимания — плавающая плашка; на мобильных всегда в футере
+  const needsAttention = state !== "is-synced";
+  if (needsAttention && !window.matchMedia("(max-width: 768px)").matches) {
+    if (el.parentElement !== document.body) document.body.appendChild(el);
+    el.classList.add("is-floating");
+    document.body.classList.add("sync-floating");
+  } else {
+    const slot = ensureFooterSyncSlot();
+    if (el.parentElement !== slot) slot.appendChild(el);
+    el.classList.remove("is-floating");
+    document.body.classList.remove("sync-floating");
+  }
+}
+window.addEventListener("resize", () => {
+  clearTimeout(_mobResizeTimer);
+  _mobResizeTimer = setTimeout(() => updateSyncIndicator(), 200);
+});
+
+// * ===== 12. ЗАЩИТА НЕСОХРАНЁННОГО ПРОТОКОЛА =====
+function ensureUnsavedModal() {
+  let el = document.getElementById("unsavedChangesModal");
+  if (el) return el;
+  el = document.createElement("div");
+  el.className = "modal fade";
+  el.id = "unsavedChangesModal";
+  el.tabIndex = -1;
+  el.innerHTML = `<div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title"><i class="fas fa-triangle-exclamation text-warning me-2"></i>Несохранённые изменения</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>
+<div class="modal-body"><p class="mb-0">В протоколе есть изменения, которые ещё не сохранены. Сохранить их перед переходом?</p></div>
+<div class="modal-footer flex-wrap gap-2"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Остаться</button><button type="button" class="btn btn-outline-danger" id="unsavedDiscard">Уйти без сохранения</button><button type="button" class="btn btn-primary" id="unsavedSave"><i class="fas fa-floppy-disk me-2"></i>Сохранить и продолжить</button></div>
+</div></div>`;
+  document.body.appendChild(el);
+  return el;
+}
+function askUnsavedThen(target) {
+  pendingNavTarget = target;
+  const el = ensureUnsavedModal();
+  const modal = bootstrap.Modal.getOrCreateInstance(el);
+  const saveBtn = el.querySelector("#unsavedSave");
+  const discardBtn = el.querySelector("#unsavedDiscard");
+  const go = () => {
+    const t = pendingNavTarget;
+    pendingNavTarget = null;
+    if (t) setTimeout(() => t.click(), 80);
+  };
+  const cleanup = () => {
+    saveBtn.removeEventListener("click", onSave);
+    discardBtn.removeEventListener("click", onDiscard);
+  };
+  const onSave = () => {
+    cleanup();
+    protocolFormDirty = false;
+    modal.hide();
+    saveProtocol();
+    go();
+  };
+  const onDiscard = () => {
+    cleanup();
+    protocolFormDirty = false;
+    updateSyncIndicator();
+    modal.hide();
+    go();
+  };
+  saveBtn.addEventListener("click", onSave);
+  discardBtn.addEventListener("click", onDiscard);
+  el.addEventListener("hidden.bs.modal", cleanup, {once: true});
+  modal.show();
+}
+// Переход по кнопкам навигации при грязном протоколе — сначала вопрос
+document.addEventListener(
+  "click",
+  (e) => {
+    if (!protocolFormDirty) return;
+    const el = e.target.closest("[onclick]");
+    if (!el || el.closest("#unsavedChangesModal")) return;
+    const code = el.getAttribute("onclick") || "";
+    if (!OPMR_NAV_CALL_RE.test(code)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    askUnsavedThen(el);
+  },
+  true,
+);
+window.addEventListener("beforeunload", (e) => {
+  if (protocolFormDirty || pendingSync) {
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
+window.addEventListener("online", () => {
+  if (pendingSync && !syncInFlight) syncNow();
+});
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && pendingSync && !syncInFlight) commitToGitHub();
+});
+
+// * ===== 13. ШАПКА: кнопки, год, мобильное меню, служебные пункты =====
+function renderHeaderButtons() {
+  const container = document.getElementById("headerButtons");
+  if (!container) return;
+  const adminButtons = isAdmin
+    ? `<div class="dropdown">
+        <button class="btn btn-outline-primary btn-upload dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-folder-open"></i><span class="btn-text ms-2">Проект</span></button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><label for="fileInput" class="dropdown-item" style="cursor:pointer"><i class="fas fa-file-upload me-2 text-primary"></i>Загрузить JSON</label></li>
+          <li><a class="dropdown-item" href="#" onclick="downloadJSON(); return false;"><i class="fas fa-download me-2 text-success"></i>Скачать JSON (бэкап БД)</a></li>
+          <li><a class="dropdown-item" href="#" onclick="backupProject(); return false;"><i class="fas fa-file-zipper me-2 text-warning"></i>Бэкап проекта (ZIP)</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="#" onclick="commitToGitHubManual(); return false;"><i class="fab fa-github me-2"></i>Отправить данные на GitHub</a></li>
+          <li><a class="dropdown-item" href="#" data-opmr-pull><i class="fas fa-cloud-arrow-down me-2 text-primary"></i>Загрузить с сервера (GitHub)</a></li>
+          <li><a class="dropdown-item" href="#" data-opmr-integrity><i class="fas fa-stethoscope me-2 text-primary"></i>Целостность базы…</a></li>
+          <li><a class="dropdown-item" href="#" onclick="openGitHubSettings(); return false;"><i class="fas fa-cog me-2 text-muted"></i>Настройки GitHub…</a></li>
+        </ul>
+      </div>
+      <div class="dropdown">
+        <button class="btn btn-outline-info btn-upload dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-book"></i><span class="btn-text ms-2">Справочники</span></button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#" onclick="showOrgManager(); return false;"><i class="fas fa-building me-2 text-primary"></i>Организации</a></li>
+          <li><a class="dropdown-item" href="#" onclick="showApparatusManager(); return false;"><i class="fas fa-robot me-2 text-warning"></i>Классы аппаратов</a></li>
+        </ul>
+      </div>
+      <div class="dropdown">
+        <button class="btn btn-primary btn-upload dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fas fa-plus"></i><span class="btn-text ms-2">Команда</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#" onclick="createNewTeam(); return false;"><i class="fas fa-pen-to-square me-2 text-primary"></i>Создать вручную</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><h6 class="dropdown-header">Импорт</h6></li>
+          <li><a class="dropdown-item" href="#" onclick="openTextImportModal(); return false;"><i class="fas fa-file-lines me-2 text-info"></i>Из текста (Яндекс.Формы)</a></li>
+          <li><a class="dropdown-item" href="#" onclick="importTeamsFromJSONPick(); return false;"><i class="fas fa-file-code me-2 text-success"></i>Из JSON (файл)</a></li>
+          <li><a class="dropdown-item" href="#" onclick="importTeamsFromExcelPick(); return false;"><i class="fas fa-file-excel me-2 text-success"></i>Из Excel / CSV (файл)</a></li>
+          <li><a class="dropdown-item" href="#" onclick="importTeamsFromPDFPick(); return false;"><i class="fas fa-file-pdf me-2 text-danger"></i>Из PDF (файл)</a></li>
+        </ul>
+      </div>`
+    : "";
+  container.innerHTML = `${adminButtons}
+    <div class="btn-group view-switcher" role="group" style="overflow:hidden">
+      <button class="btn ${currentView === "teams" ? "btn-primary" : "btn-outline-primary"}" onclick="showTeamsView()" style="border-right:none;border-radius:8px 0 0 8px"><i class="fas fa-users"></i><span class="btn-text ms-2">Команды</span></button>
+      <button class="btn ${currentView === "competition" ? "btn-primary" : "btn-outline-primary"}" onclick="showCompetitionView()" style="border-radius:0 8px 8px 0"><i class="fas fa-trophy"></i><span class="btn-text ms-2">Соревнования</span></button>
+    </div>
+    <span id="yearDropdownContainer" class="ms-2"></span>
+    <button class="btn btn-grouping-icon ${isGrouped ? "active" : ""}" onclick="toggleGrouping()" title="${isGrouped ? "Показать без группировки" : "Группировать по классам"}"><i class="fas fa-layer-group"></i></button>
+    <button class="btn btn-grouping-icon ${isListView ? "active" : ""}" onclick="toggleListView()" title="${isListView ? "Показать карточками" : "Показать списком"}"><i class="fas fa-${isListView ? "table-cells-large" : "list-ul"}"></i></button>
+    <button class="btn ${isAdmin ? "btn-dark" : "btn-outline-secondary"} btn-upload" onclick="toggleAdminMode()" title="${isAdmin ? "Выйти из режима администратора" : "Войти в режим администратора"}"><i class="fas fa-${isAdmin ? "user-shield" : "lock"}"></i><span class="btn-text ms-2">${isAdmin ? "Админ" : "Admin"}</span></button>`;
+  // Служебные пункты меню админа (прямые обработчики, без глобальных onclick)
+  if (isAdmin) {
+    const pull = container.querySelector("[data-opmr-pull]");
+    if (pull)
+      pull.addEventListener("click", async (ev) => {
+        ev.preventDefault();
+        if (pendingSync && !confirm("Локальные изменения не сохранены на сервере и будут перезаписаны. Продолжить?"))
+          return;
+        if (await pullFromGitHub(false)) refreshCurrentView();
+      });
+    const integ = container.querySelector("[data-opmr-integrity]");
+    if (integ)
+      integ.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        openIntegrityReport();
+      });
+  }
+  // Мобильная компоновка: меню в гамбургер, год/раскладка/админ в строке
+  if (!container.querySelector(".header-menus")) {
+    const wrap = document.createElement("div");
+    wrap.className = "header-menus";
+    while (container.firstElementChild && container.firstElementChild.id !== "yearDropdownContainer") {
+      wrap.appendChild(container.firstElementChild);
+    }
+    container.insertBefore(wrap, container.firstElementChild);
+  }
+  let mobRow = document.querySelector(".header-mobile-row");
+  if (!mobRow) {
+    mobRow = document.createElement("div");
+    mobRow.className = "header-mobile-row";
+    mobRow.innerHTML = `<button class="btn btn-dark header-menu-btn" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-label="Меню"><i class="fas fa-bars"></i></button>`;
+  }
+  if (container.firstChild !== mobRow) container.insertBefore(mobRow, container.firstChild);
+  buildMobileMenu();
+  renderEditPageAdminButtons();
+  updateSyncIndicator();
+}
+function renderYearSwitcher() {
+  const container = document.getElementById("yearDropdownContainer");
+  if (!container) return;
+  const isMaster = currentView === "master";
+  const years = [2026, 2025, 2024];
+  const label = isMaster
+    ? `<i class="fas fa-table me-1"></i>Сводная`
+    : `<i class="fas fa-calendar-day me-1"></i>${currentYear}`;
+  let items = `<h6 class="dropdown-header">Год соревнований</h6>`;
+  years.forEach((y) => {
+    const active = !isMaster && currentYear === y;
+    items += `<li><a class="dropdown-item d-flex align-items-center justify-content-between ${active ? "active" : ""}" href="#" onclick="switchYear(${y}); return false;">${y}${active ? '<i class="fas fa-check"></i>' : ""}</a></li>`;
+  });
+  items += `<li><hr class="dropdown-divider"></li>`;
+  items += `<li><a class="dropdown-item d-flex align-items-center justify-content-between ${isMaster ? "active" : ""}" href="#" onclick="showMasterTable(); return false;"><span><i class="fas fa-table me-2"></i>Сводная таблица</span>${isMaster ? '<i class="fas fa-check"></i>' : ""}</a></li>`;
+  container.innerHTML = `<div class="dropdown year-dropdown">
+    <button class="btn year-dropdown-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">${label}</button>
+    <ul class="dropdown-menu dropdown-menu-end">${items}</ul>
+  </div>`;
+}
+function switchYear(y) {
+  currentYear = y;
+  persistNavState({year: y, scrollY: 0});
+  renderYearSwitcher();
+  if (currentView === "teams") renderTeams(teamsData);
+  else if (currentView === "competition") renderCompetition();
+  else if (currentView === "master") showTeamsView();
+}
+function renderEditPageAdminButtons() {
+  const container = document.getElementById("editPageAdminButtons");
+  if (!container) return;
+  container.innerHTML = isAdmin
+    ? `<label for="fileInputEdit" class="btn btn-outline-primary btn-upload mb-0" title="Импортировать данные из JSON файла"><i class="fas fa-file-upload me-2"></i><span class="btn-text">Загрузить JSON</span></label><input type="file" id="fileInputEdit" accept=".json" class="d-none" onchange="handleEditPageFileUpload(event)">`
+    : "";
+}
+function toggleAdminMode() {
+  if (isAdmin) {
+    isAdmin = false;
+    localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
+    renderHeaderButtons();
+    if (currentTeamId && document.getElementById("detailPage").classList.contains("active"))
+      showTeamDetails(currentTeamId);
+    showToast("Режим администратора выключен", "info");
+  } else {
+    document.getElementById("adminPasswordInput").value = "";
+    document.getElementById("adminPasswordError").style.display = "none";
+    const modal = new bootstrap.Modal(document.getElementById("adminPasswordModal"));
+    modal.show();
+    setTimeout(() => document.getElementById("adminPasswordInput").focus(), 300);
+  }
+}
+function checkAdminPassword() {
+  const input = document.getElementById("adminPasswordInput");
+  const error = document.getElementById("adminPasswordError");
+  if (input.value === ADMIN_PASSWORD) {
+    isAdmin = true;
+    localStorage.setItem(ADMIN_MODE_KEY, isAdmin);
+    bootstrap.Modal.getInstance(document.getElementById("adminPasswordModal")).hide();
+    renderHeaderButtons();
+    if (currentTeamId && document.getElementById("detailPage").classList.contains("active"))
+      showTeamDetails(currentTeamId);
+    showToast("Режим администратора включён", "success");
+  } else {
+    error.style.display = "block";
+    input.value = "";
+    input.focus();
+  }
+}
+document.addEventListener("DOMContentLoaded", function () {
+  const pwdInput = document.getElementById("adminPasswordInput");
+  if (pwdInput)
+    pwdInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") checkAdminPassword();
+    });
+});
+function hideMobileMenu() {
+  const el = document.getElementById("mobileMenu");
+  const inst = el && bootstrap.Offcanvas.getInstance(el);
+  if (inst) inst.hide();
+}
+function buildMobileMenu() {
+  const body = document.getElementById("mobileMenuBody");
+  if (!body) return;
+  let html = `<div class="mobile-menu">
+<div class="mobile-menu-section">Раздел</div>
+<button class="mobile-menu-item ${currentView === "teams" ? "active" : ""}" onclick="showTeamsView(); hideMobileMenu();"><i class="fas fa-users"></i>Команды</button>
+<button class="mobile-menu-item ${currentView === "competition" ? "active" : ""}" onclick="showCompetitionView(); hideMobileMenu();"><i class="fas fa-trophy"></i>Соревнования</button>
+<button class="mobile-menu-item ${currentView === "master" ? "active" : ""}" onclick="showMasterTable(); hideMobileMenu();"><i class="fas fa-table"></i>Сводная таблица</button>
+<div class="mobile-menu-section">Год</div>`;
+  [2026, 2025, 2024].forEach((yy) => {
+    html += `<button class="mobile-menu-item ${currentYear === yy ? "active" : ""}" onclick="switchYear(${yy}); hideMobileMenu();"><i class="fas fa-calendar-day"></i>${yy}</button>`;
+  });
+  if (isAdmin) {
+    html += `<div class="mobile-menu-section">Проект</div>
+<label for="fileInput" class="mobile-menu-item" onclick="hideMobileMenu()"><i class="fas fa-file-upload"></i>Загрузить JSON</label>
+<button class="mobile-menu-item" onclick="downloadJSON(); hideMobileMenu();"><i class="fas fa-download"></i>Скачать JSON</button>
+<button class="mobile-menu-item" onclick="backupProject(); hideMobileMenu();"><i class="fas fa-file-zipper"></i>Бэкап ZIP</button>
+<button class="mobile-menu-item" onclick="commitToGitHubManual(); hideMobileMenu();"><i class="fab fa-github"></i>Отправить на GitHub</button>
+<button class="mobile-menu-item" onclick="pullFromGitHub(false).then((ok) => { if (ok) refreshCurrentView(); }); hideMobileMenu();"><i class="fas fa-cloud-arrow-down"></i>Загрузить с сервера</button>
+<button class="mobile-menu-item" onclick="openGitHubSettings(); hideMobileMenu();"><i class="fas fa-cog"></i>Настройки GitHub</button>
+<button class="mobile-menu-item" onclick="openIntegrityReport(); hideMobileMenu();"><i class="fas fa-stethoscope"></i>Целостность базы</button>
+<div class="mobile-menu-section">Справочники</div>
+<button class="mobile-menu-item" onclick="showOrgManager(); hideMobileMenu();"><i class="fas fa-building"></i>Организации</button>
+<button class="mobile-menu-item" onclick="showApparatusManager(); hideMobileMenu();"><i class="fas fa-robot"></i>Классы аппаратов</button>
+<div class="mobile-menu-section">Команда</div>
+<button class="mobile-menu-item" onclick="createNewTeam(); hideMobileMenu();"><i class="fas fa-pen-to-square"></i>Создать вручную</button>
+<button class="mobile-menu-item" onclick="openTextImportModal(); hideMobileMenu();"><i class="fas fa-file-lines"></i>Импорт из текста</button>
+<button class="mobile-menu-item" onclick="importTeamsFromJSONPick(); hideMobileMenu();"><i class="fas fa-file-code"></i>Импорт из JSON</button>
+<button class="mobile-menu-item" onclick="importTeamsFromExcelPick(); hideMobileMenu();"><i class="fas fa-file-excel"></i>Импорт из Excel</button>
+<button class="mobile-menu-item" onclick="importTeamsFromPDFPick(); hideMobileMenu();"><i class="fas fa-file-pdf"></i>Импорт из PDF</button>`;
+  }
+  html += `</div>`;
+  body.innerHTML = html;
+}
+
+// * ===== 14. ВЕРСИЯ ПРИЛОЖЕНИЯ В ФУТЕРЕ =====
+const APP_MAJOR_VERSION = 1;
+function getAppVersionString() {
+  const script = document.querySelector('script[src*="app.js"]');
+  const m = script && script.src.match(/[?&]v=(\d+)/);
+  const build = m ? parseInt(m[1], 10) : 0;
+  return `${APP_MAJOR_VERSION}.${build}`;
+}
+function renderFooterVersion() {
+  const el = document.getElementById("appVersion");
+  if (el) el.textContent = getAppVersionString();
+}
+
+// * ===== 15. НАВИГАЦИЯ: СОСТОНИЕ, ВОССТАНОВЛЕНИЕ ПОЗИЦИИ =====
+function readNavState() {
+  try {
+    return JSON.parse(localStorage.getItem(NAV_STATE_KEY)) || null;
+  } catch {
+    return null;
+  }
+}
+function persistNavState(patch) {
+  try {
+    localStorage.setItem(NAV_STATE_KEY, JSON.stringify({...(readNavState() || {}), ...patch}));
+  } catch {}
+}
+function navRecord(state) {
+  const same = navCurrent.view === state.view && (navCurrent.teamId || null) === (state.teamId || null);
+  if (navMode === "replace" || same) history.replaceState(state, "");
+  else {
+    history.pushState(state, "");
+    navDepth++;
+  }
+  navCurrent = state;
+  navMode = "push";
+  if (!restoringNav) persistNavState({view: state.view, teamId: state.teamId || null, year: currentYear, scrollY: 0});
+}
+function refreshCurrentView() {
+  const v = navCurrent?.view || currentView;
+  navMode = "replace";
+  if (v === "competition") showCompetitionView();
+  else if (v === "master") showMasterTable();
+  else if (v === "org" && isAdmin) showOrgManager();
+  else if (v === "apparatus" && isAdmin) showApparatusManager();
+  else if (v === "detail" && currentTeamId) showTeamDetails(currentTeamId);
+  else if (v === "protocol" && currentProtocolTeamId) showProtocolPage(currentProtocolTeamId);
+  else showTeamsView();
+  navMode = "push";
+  renderYearSwitcher();
+}
+function restoreNavState() {
+  const s = readNavState();
+  if (!s) return;
+  restoringNav = true;
+  if (s.year && [2024, 2025, 2026].includes(Number(s.year))) currentYear = Number(s.year);
+  navMode = "replace";
+  const id = s.teamId;
+  const has = (x) => teamsData.some((t) => t.id === x);
+  try {
+    if (s.view === "competition") showCompetitionView();
+    else if (s.view === "master") showMasterTable();
+    else if (s.view === "org" && isAdmin) showOrgManager();
+    else if (s.view === "apparatus" && isAdmin) showApparatusManager();
+    else if (s.view === "detail" && has(id)) showTeamDetails(id);
+    else if (s.view === "protocol" && has(id)) showProtocolPage(id);
+    else if (s.view === "edit" && id && has(id)) editTeam(id);
+    else showTeamsView();
+  } catch {
+    showTeamsView();
+  }
+  navMode = "push";
+  restoringNav = false;
+  history.replaceState(navCurrent, "");
+  const y = Number(s.scrollY) || 0;
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({top: y, behavior: "auto"})));
+}
+window.addEventListener(
+  "scroll",
+  () => {
+    if (restoringNav) return;
+    clearTimeout(opmrScrollTimer);
+    opmrScrollTimer = setTimeout(() => persistNavState({scrollY: window.scrollY}), 250);
+  },
+  {passive: true},
+);
+
+// * ============================================================
+// OPMR NAVIGATOR — чистая сборка (финальная часть 3/5)
+// Секции: навигация · списки команд · карточка команды ·
+//         форма редактирования · справочник организаций · справочник классов
+// * ============================================================
+
+// * ===== 16. НАВИГАЦИЯ ПО СТРАНИЦАМ =====
+function hideAllPages() {
+  ["listPage", "detailPage", "editPage", "competitionPage", "protocolPage", "masterPage", "orgManagerPage", "apparatusPage"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove("active");
+      if (id === "listPage") el.classList.add("hidden");
+    }
+  });
+  window.scrollTo({top: 0, left: 0, behavior: "auto"});
+}
+function showTeamsView() {
+  currentView = "teams";
+  returnToView = "list";
+  hideAllPages();
+  document.getElementById("listPage").classList.remove("hidden");
+  document.getElementById("headerButtons").style.display = "flex";
+  document.getElementById("yearSwitcher").style.display = "flex";
+  renderHeaderButtons();
+  renderYearSwitcher();
+  renderTeams(teamsData);
+}
+function showCompetitionView() {
+  currentView = "competition";
+  returnToView = "competition";
+  hideAllPages();
+  document.getElementById("competitionPage").classList.add("active");
+  document.getElementById("headerButtons").style.display = "none";
+  document.getElementById("yearSwitcher").style.display = "flex";
+  renderHeaderButtons();
+  renderYearSwitcher();
+  renderCompetition();
+}
+function showProtocolPage(teamId) {
+  currentProtocolTeamId = teamId;
+  hideAllPages();
+  document.getElementById("protocolPage").classList.add("active");
+  document.getElementById("yearSwitcher").style.display = "none";
+  try {
+    renderProtocolForm(teamId);
+  } catch (e) {
+    console.error("Ошибка открытия протокола:", e);
+    document.getElementById("protocolPage").classList.add("active");
+    document.getElementById("protocolContent").innerHTML =
+      `<div class="detail-section"><div class="alert alert-danger mb-0"><i class="fas fa-bug me-2"></i>Не удалось построить форму протокола: ${escHtml(e.message)}</div></div>`;
+    showToast("Ошибка формы протокола: " + e.message, "error");
+  }
+}
+function showDetailPage() {
+  hideAllPages();
+  document.getElementById("detailPage").classList.add("active");
+  document.getElementById("headerButtons").style.display = "none";
+  document.getElementById("yearSwitcher").style.display = "none";
+}
+function showEditPage() {
+  hideAllPages();
+  document.getElementById("editPage").classList.add("active");
+  document.getElementById("headerButtons").style.display = "none";
+  document.getElementById("yearSwitcher").style.display = "none";
+}
+function showMasterTable() {
+  currentView = "master";
+  hideAllPages();
+  document.getElementById("masterPage").classList.add("active");
+  document.getElementById("headerButtons").style.display = "none";
+  document.getElementById("yearSwitcher").style.display = "flex";
+  renderYearSwitcher();
+  renderMasterTable();
+}
+function showOrgManager() {
+  if (!isAdmin) {
+    showToast("Доступно только администратору", "error");
+    return;
+  }
+  currentView = "orgManager";
+  hideAllPages();
+  document.getElementById("orgManagerPage").classList.add("active");
+  document.getElementById("headerButtons").style.display = "none";
+  document.getElementById("yearSwitcher").style.display = "none";
+  renderOrgManager();
+}
+function showApparatusManager() {
+  if (!isAdmin) {
+    showToast("Доступно только администратору", "error");
+    return;
+  }
+  currentView = "apparatus";
+  hideAllPages();
+  document.getElementById("apparatusPage").classList.add("active");
+  document.getElementById("headerButtons").style.display = "none";
+  document.getElementById("yearSwitcher").style.display = "none";
+  renderApparatusManager();
+}
+function goHome() {
+  showTeamsView();
+}
+
+// * ===== 17. СПИСКИ КОМАНД: карточки, таблица, счётчики =====
+function toggleGrouping() {
+  isGrouped = !isGrouped;
+  localStorage.setItem("opmr_view_grouped", isGrouped);
+  renderHeaderButtons();
+  renderYearSwitcher();
+  renderTeams(teamsData);
+}
+function toggleListView() {
+  isListView = !isListView;
+  localStorage.setItem("opmr_view_list", isListView);
+  renderHeaderButtons();
+  renderYearSwitcher();
+  renderTeams(teamsData);
+}
+function renderTeamCard(team) {
+  const displayName = getTeamDisplayName(team);
+  const city = getTeamCity(team);
+  return `<div class="col-md-6 col-lg-4"><div class="card team-card h-100 p-3" onclick="showTeamDetails('${team.id}')"><div class="team-card-head mb-2"><div class="flex-grow-1"><div class="org-name">${displayName}</div><div class="team-meta">${city || "Город не указан"}</div></div>${getCategoryBadge(team.apparatusClass, "category-badge-card")}</div><div class="mt-auto pt-3 border-top"><div class="d-flex justify-content-between align-items-center"><span class="team-meta"><i class="fas fa-users me-2"></i> ${team.members?.length || 0} участн.</span><span class="team-meta"><i class="fas fa-user-tie me-2"></i> ${team.teamLeader?.split(" ")[0] || "—"}</span></div></div></div></div>`;
+}
+// Заголовок группы: бейдж + название + дата + счётчик команд
+function groupHeaderHtml(g) {
+  return `<div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span><span class="group-header-title">${escHtml(g.fullName || g.name)}</span></div>${g.date ? `<span class="group-date-badge">${escHtml(g.date)}</span>` : ""}<span class="group-teams-count">${g.teams.length} ${pluralizeTeams(g.teams.length)}</span></div>`;
+}
+function renderTeamListRow(team) {
+  const name = escHtml(getTeamDisplayName(team));
+  const city = escHtml(getTeamCity(team) || "—");
+  const leader = escHtml(team.teamLeader || "—");
+  const apparatus = escHtml(team.apparatusName || "—");
+  const count = team.members?.length || 0;
+  return `<tr class="team-list-row" tabindex="0" onclick="showTeamDetails('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showTeamDetails('${team.id}');}">
+    <td class="tl-name"><span class="tl-ellipsis" title="${name}">${name}</span></td>
+    <td><span class="tl-ellipsis" title="${city}">${city}</span></td>
+    <td><span class="tl-ellipsis" title="${leader}">${leader}</span></td>
+    <td class="tl-count">${count}</td>
+    <td class="tl-class">${getCategoryBadge(team.apparatusClass, "category-badge-list", team.year)}</td>
+    <td><span class="tl-ellipsis" title="${apparatus}">${apparatus}</span></td>
+    <td class="tl-print"><button type="button" class="btn btn-sm btn-outline-secondary print-btn-desktop" title="Печать заявки" onclick="event.stopPropagation(); printTeamApplication('${team.id}')"><i class="fas fa-print"></i></button></td>
+  </tr>`;
+}
+function renderTeamsTable(teams) {
+  return `<div class="team-list-wrap"><table class="team-list-table">
+    <colgroup><col class="tl-col-name"><col class="tl-col-city"><col class="tl-col-leader"><col class="tl-col-count"><col class="tl-col-class"><col class="tl-col-apparatus"><col class="tl-col-print"></colgroup>
+    <thead><tr><th>Название команды</th><th>Город</th><th>Руководитель</th><th class="tl-count">Участников</th><th class="tl-class">Класс</th><th>Название аппарата</th><th class="tl-print">Печать</th></tr></thead>
+    <tbody>${teams.map((t) => renderTeamListRow(t)).join("")}</tbody>
+  </table></div>`;
+}
+function renderTeamsList(sortedTeams) {
+  if (!isGrouped) return renderTeamsTable(sortedTeams);
+  const groups = buildClassGroups(sortedTeams);
+  let html = "";
+  for (const key in groups) {
+    const g = groups[key];
+    if (!g.teams.length) continue;
+    html += groupHeaderHtml(g) + renderTeamsTable(g.teams);
+  }
+  return html;
+}
+function renderTeams(teams) {
+  // Страховка: команда без ID не открывается по клику — восстанавливаем ID на лету
+  let repaired = false;
+  teamsData.forEach((t) => {
+    if (!t.id || t.id === "undefined") {
+      const org =
+        organizations.find((o) => o.id === t.orgId) ||
+        findOrCreateOrg(t.organization || t.shortName || "Без названия", t.shortName || "", t.city || "");
+      t.orgId = org.id;
+      t.year = t.year || currentYear;
+      t.id = generateTeamId(org.id, t.year, getClassIdByValue(t.apparatusClass, t.year));
+      repaired = true;
+    }
+  });
+  if (repaired) saveData();
+  const container = document.getElementById("teamsContainer");
+  if (!container) return;
+  const filtered = teams.filter((t) => t.year === currentYear);
+  if (!filtered.length) {
+    container.innerHTML = `<div class="col-12 text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
+    return;
+  }
+  const sortedTeams = sortTeamsByName(filtered);
+  let html = "";
+  if (isListView) {
+    html += `<div class="print-toolbar print-btn-desktop"><button type="button" class="btn btn-sm btn-outline-secondary" onclick="printTeamsList()"><i class="fas fa-print me-1"></i>Печать списка</button><span class="print-toolbar-hint">Печатается текущий список (${isGrouped ? "с группировкой по классам" : "без группировки"}) за ${currentYear} год</span></div>`;
+    html += renderTeamsList(sortedTeams);
+  } else if (!isGrouped) {
+    html += `<div class="row g-3">${sortedTeams.map((t) => renderTeamCard(t)).join("")}</div>`;
+  } else {
+    const groups = buildClassGroups(sortedTeams);
+    for (const key in groups) {
+      const g = groups[key];
+      if (!g.teams.length) continue;
+      html += `<div class="mt-4 group-header-wrap">${groupHeaderHtml(g)}</div><div class="row g-3 mb-4">${g.teams.map((t) => renderTeamCard(t)).join("")}</div>`;
+    }
+  }
+  if (!isGrouped) html = `<span class="teams-total-count">${filtered.length} ${pluralizeTeams(filtered.length)}</span>` + html;
+  container.innerHTML = html;
+}
+
+// * ===== 18. КАРТОЧКА КОМАНДЫ, ЛАЙТБОКС, СВОЁ НАЗВАНИЕ =====
+function showTeamDetails(teamId) {
+  returnToView = currentView;
+  returnToTeamId = teamId;
+  currentTeamId = teamId;
+  isNewTeam = false;
+  const team = teamsData.find((t) => t.id === teamId);
+  if (!team) return;
+  const phoneLink = team.phone ? `<a href="tel:${team.phone.replace(/\s/g, "")}">${team.phone}</a>` : "—";
+  const emailLink = team.email ? `<a href="mailto:${team.email}">${team.email}</a>` : "—";
+  let sortedMembers = [...(team.members || [])];
+  const leaderFio = (team.teamLeader || "").trim().toLowerCase();
+  const captainIdx = sortedMembers.findIndex((m) => (m.fio || "").trim().toLowerCase() === leaderFio);
+  if (captainIdx > 0) sortedMembers.unshift(sortedMembers.splice(captainIdx, 1)[0]);
+  const membersTableHtml =
+    sortedMembers.length > 0
+      ? `<table class="members-table"><thead><tr><th class="col-fio">ФИО</th><th class="col-birth">Дата рождения</th><th class="col-passport">Паспорт/Св-во</th><th class="col-student">Студент</th><th class="col-order">Приказ о зачислении</th></tr></thead><tbody>${sortedMembers
+          .map((m) => {
+            const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
+            const captainBadge = isCaptain
+              ? ' <span class="badge bg-primary" style="font-size:0.7rem;vertical-align:middle;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0">К</span>'
+              : "";
+            return `<tr><td>${formatFio(m.fio)}${captainBadge}</td><td>${formatDate(m.birth)}</td><td>${m.passport || "—"}</td><td>${m.isStudent === "Да" ? '<span class="badge badge-tnpa" style="font-size:0.75rem;padding:0.35em 0.65em">Да</span>' : "—"}</td><td>${m.isStudent === "Да" ? m.order || "—" : "—"}</td></tr>`;
+          })
+          .join("")}</tbody></table>`
+      : '<div class="text-muted py-3">Состав команды не указан</div>';
+  const membersCardsHtml =
+    sortedMembers.length > 0
+      ? sortedMembers
+          .map((m) => {
+            const isCaptain = (m.fio || "").trim().toLowerCase() === leaderFio && leaderFio !== "";
+            const captainBadge = isCaptain
+              ? '<span class="badge bg-primary ms-2" style="font-size:0.75rem;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;padding:0">К</span>'
+              : "";
+            return `<div class="member-card"><div class="member-fio">${m.fio}${captainBadge}</div><div class="member-info"><i class="fas fa-birthday-cake"></i> ${formatDate(m.birth)}</div><div class="member-info"><i class="fas fa-id-card"></i> ${m.passport || "Не указан"}</div>${m.isStudent === "Да" ? `<div class="member-info mt-2"><span class="badge badge-tnpa" style="font-size:0.75rem;padding:0.35em 0.65em">Студент</span></div><div class="member-info"><i class="fas fa-file-alt"></i> ${m.order || "—"}</div>` : ""}</div>`;
+          })
+          .join("")
+      : '<div class="text-muted py-3">Состав команды не указан</div>';
+  const descHtml = formatDescription(team.description);
+  const photos = team.photos || [];
+  let photosHtml;
+  if (photos.length === 0) photosHtml = `<div class="detail-value text-muted" style="font-size:1rem">Фото не загружено</div>`;
+  else {
+    const gridClass = photos.length === 1 ? "apparatus-photo-grid single-photo" : "apparatus-photo-grid";
+    const items = photos
+      .map((src, idx) => {
+        const isDirect = isDirectImageLink(src);
+        if (isDirect)
+          return `<div class="apparatus-photo-item"><img src="${src}" alt="Фото ${idx + 1}" onclick="openLightbox('${src.replace(/'/g, "\\'")}')" onerror="this.parentElement.innerHTML='<a href=\\'${src}\\' target=\\'_blank\\' class=\\'photo-link-card\\'><i class=\\'fas fa-image\\'></i><span>Фото ${idx + 1}</span></a>'"></div>`;
+        else
+          return `<div class="apparatus-photo-item"><a href="${src}" target="_blank" rel="noopener" class="photo-link-card"><i class="fas fa-external-link-alt"></i><span>Открыть фото ${idx + 1}</span></a></div>`;
+      })
+      .join("");
+    photosHtml = `<div style="width:100%;max-width:100%;overflow:hidden;box-sizing:border-box"><div class="${gridClass}" style="width:100%;max-width:100%;overflow:hidden">${items}</div></div>`;
+  }
+  const displayName = getTeamDisplayName(team);
+  const editButtonDesktop = isAdmin
+    ? `<button class="btn btn-outline-primary btn-action edit-btn-desktop" onclick="editTeam('${team.id}')"><i class="fas fa-edit me-2"></i><span class="edit-btn-text">Редактировать</span></button>`
+    : "";
+  const editButtonMobile = isAdmin
+    ? `<button class="btn btn-outline-primary btn-sm edit-btn-mobile" onclick="editTeam('${team.id}')" title="Редактировать" style="display:none"><i class="fas fa-edit"></i></button>`
+    : "";
+  document.getElementById("detailContent").innerHTML =
+    `<div class="d-flex justify-content-between align-items-start mb-2 flex-wrap gap-2 print-header"><div class="d-flex align-items-center gap-3 flex-wrap"><h3 class="fw-bold mb-0" style="font-family:'Manrope',sans-serif;color:#0f172a;font-size:1.75rem">${displayName}</h3>${getCategoryBadge(team.apparatusClass, "category-badge-card")}<span class="badge bg-secondary ms-2">${team.year}</span></div><div class="d-flex gap-2">${editButtonDesktop}<button class="btn btn-outline-secondary btn-action edit-btn-desktop" onclick="window.print()"><i class="fas fa-print me-2"></i><span class="edit-btn-text">Печать</span></button></div></div><div class="d-flex gap-1 mb-2 print-header-mobile">${editButtonMobile}<button class="btn btn-outline-secondary btn-sm edit-btn-mobile" onclick="window.print()" title="Печать" style="display:none"><i class="fas fa-print"></i></button></div><div class="detail-section print-section-info"><div class="row g-4">
+<div class="col-md-6"><div class="detail-label">ID команды</div><div class="detail-value">${team.id}</div></div><div class="col-md-6"><div class="detail-label">Номер заявки</div><div class="detail-value">${team.applicationNumber || "—"}</div></div><div class="col-md-6"><div class="detail-label">Название команды</div><div class="detail-value d-flex align-items-center gap-2"><span>${getTeamDisplayName(team)}</span><button class="btn btn-sm btn-outline-secondary" onclick="openTeamNameModal()" title="Задать своё название"><i class="fas fa-pen"></i></button></div></div>
+<div class="col-md-6"><div class="detail-label">Дата заявки</div><div class="detail-value">${team.created}</div></div><div class="col-md-6"><div class="detail-label">Город / Населённый пункт</div><div class="detail-value">${getTeamCity(team) || "—"}</div></div><div class="col-md-6"><div class="detail-label">Республика / край / область</div><div class="detail-value">${team.region || "—"}</div></div><div class="col-md-6"><div class="detail-label">Почтовый индекс</div><div class="detail-value">${team.postalCode || "—"}</div></div><div class="col-md-6"><div class="detail-label">Адрес</div><div class="detail-value">${team.address || "—"}</div></div><div class="col-md-6"><div class="detail-label">Телефон / факс</div><div class="detail-value">${phoneLink}</div></div><div class="col-md-6"><div class="detail-label">Email</div><div class="detail-value">${emailLink}</div></div><div class="col-12"><div class="detail-label">ФИО руководителя организации</div><div class="detail-value">${team.orgLeader || "—"}</div></div></div></div><div class="detail-section print-section-apparatus"><div class="detail-section-head"><h5 class="detail-section-title">Аппарат</h5>${getCategoryBadge(team.apparatusClass, "category-badge-xl")}</div><div class="row g-4"><div class="col-12"><div class="detail-label">Класс аппарата</div><div class="detail-value">${team.apparatusClass || "—"}</div></div><div class="col-12"><div class="detail-label">Название аппарата</div><div class="detail-value">${team.apparatusName || "—"}</div></div><div class="col-12 print-hide-desc"><div class="detail-label">Краткое описание</div><div class="detail-value">${descHtml}</div></div><div class="col-12 print-hide-photos"><div class="detail-label">Фото аппарата (${photos.length})</div>${photosHtml}</div></div></div><div class="detail-section print-section-team"><h5 class="detail-section-title">Команда</h5><div class="row g-4"><div class="col-md-6"><div class="detail-label">ФИО руководителя</div><div class="detail-value">${team.teamLeader || "—"}</div></div><div class="col-md-6"><div class="detail-label">Контактный телефон</div><div class="detail-value"><a href="tel:${(team.teamLeaderPhone || "").replace(/\s/g, "")}">${team.teamLeaderPhone || "—"}</a></div></div></div></div><div class="detail-section print-section-members"><h5 class="detail-section-title">Участники (${sortedMembers.length})</h5><div class="members-table-desktop">${membersTableHtml}</div><div class="members-cards-mobile">${membersCardsHtml}</div></div>`;
+  showDetailPage();
+}
+function openLightbox(src) {
+  document.getElementById("lightboxImg").src = src;
+  document.getElementById("lightbox").classList.add("active");
+  document.body.style.overflow = "hidden";
+}
+function closeLightbox() {
+  document.getElementById("lightbox").classList.remove("active");
+  document.getElementById("lightboxImg").src = "";
+  document.body.style.overflow = "";
+}
+function openTeamNameModal() {
+  const team = teamsData.find((t) => t.id === currentTeamId);
+  if (!team) return;
+  document.getElementById("teamNameInput").value = team.teamName || "";
+  new bootstrap.Modal(document.getElementById("teamNameModal")).show();
+}
+function saveTeamName() {
+  const team = teamsData.find((t) => t.id === currentTeamId);
+  if (!team) return;
+  const v = document.getElementById("teamNameInput").value.trim();
+  team.teamName = v;
+  saveData();
+  const inst = bootstrap.Modal.getInstance(document.getElementById("teamNameModal"));
+  if (inst) inst.hide();
+  showTeamDetails(team.id);
+  showToast(v ? `Название команды: «${v}»` : "Возвращено авто-имя организации", "success");
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+function addPhotoLinkField(url = "") {
+  const container = document.getElementById("photoLinksContainer");
+  const field = document.createElement("div");
+  field.className = "photo-link-field";
+  field.innerHTML = `<img class="preview-thumb" src="${url}" alt="Превью" style="display:${url && isDirectImageLink(url) ? "block" : "none"}" onerror="this.style.display='none'"><input type="text" class="photo-link-input" placeholder="Вставьте ссылку на фото..." value="${url}" oninput="updatePhotoPreview(this)"><button type="button" class="remove-link-btn" onclick="this.closest('.photo-link-field').remove()" title="Удалить ссылку"><i class="fas fa-times"></i></button>`;
+  container.appendChild(field);
+}
+function updatePhotoPreview(input) {
+  const field = input.closest(".photo-link-field");
+  const img = field.querySelector(".preview-thumb");
+  const url = input.value.trim();
+  if (url && isDirectImageLink(url)) {
+    img.src = url;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
+}
+function getPhotoLinks() {
+  return Array.from(document.querySelectorAll(".photo-link-input"))
+    .map((input) => input.value.trim())
+    .filter((url) => url.length > 0);
+}
+
+// * ===== 19. ФОРМА РЕДАКТИРОВАНИЯ КОМАНДЫ =====
+function ensureTeamNameField() {
+  if (document.getElementById("editTeamName")) return true;
+  const anchor = document.getElementById("editOrgSearch") || document.getElementById("editApparatusName");
+  if (!anchor) return false;
+  const col = anchor.closest('[class*="col-"]') || anchor.parentElement;
+  if (!col || !col.parentNode) return false;
+  const wrap = document.createElement("div");
+  wrap.className = col.className || "col-12";
+  wrap.innerHTML = `<label class="form-label">Своё название команды (необязательно)</label><input type="text" class="form-control" id="editTeamName" placeholder="Например: ФМЛ №239 · Юниоры"><div class="form-text">Если оставить пустым, команда называется по организации; при нескольких командах одной организации в одной номинации добавляется индекс (2), (3)…</div>`;
+  col.parentNode.insertBefore(wrap, col.nextSibling);
+  return true;
+}
+function readTeamNameField() {
+  const inp = document.getElementById("editTeamName");
+  return inp ? inp.value.trim() : null;
+}
+function createNewTeam() {
+  currentTeamId = null;
+  isNewTeam = true;
+  returnToView = "list";
+  document.getElementById("editFormTitle").textContent = `Новая команда (${currentYear})`;
+  ["editOrgSearch", "editShortName", "editCity", "editRegion", "editPostalCode", "editAddress", "editPhone", "editEmail", "editOrgLeader", "editApparatusClass", "editApparatusName", "editDescription", "editTeamLeader", "editTeamLeaderPhone"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  document.getElementById("editOrgId").value = "";
+  document.getElementById("editYear").value = currentYear;
+  const now = new Date();
+  document.getElementById("editCreated").value =
+    `${String(now.getDate()).padStart(2, "0")}.${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
+  document.getElementById("photoLinksContainer").innerHTML = "";
+  addPhotoLinkField();
+  document.getElementById("editMembersContainer").innerHTML = "";
+  addMemberField();
+  document.getElementById("btnDeleteTeam").style.display = "none";
+  if (ensureTeamNameField()) document.getElementById("editTeamName").value = "";
+  updateOrgDatalist();
+  updateClassDatalist();
+  updateTeamIdPreview();
+  showEditPage();
+}
+function editTeam(teamId) {
+  const team = teamsData.find((t) => t.id === teamId);
+  if (!team) return;
+  currentTeamId = teamId;
+  isNewTeam = false;
+  returnToView = currentView === "competition" ? "competition" : "detail";
+  returnToTeamId = teamId;
+  document.getElementById("editFormTitle").textContent = "Редактирование команды";
+  const org = organizations.find((o) => o.id === team.orgId);
+  document.getElementById("editOrgSearch").value = org?.fullName || team.organization || "";
+  document.getElementById("editOrgId").value = team.orgId || "";
+  document.getElementById("editShortName").value = team.shortName || org?.shortName || "";
+  document.getElementById("editYear").value = team.year || 2026;
+  document.getElementById("editId").value = team.id;
+  document.getElementById("editCreated").value = team.created;
+  document.getElementById("editCity").value = team.city || org?.city || "";
+  document.getElementById("editRegion").value = team.region;
+  document.getElementById("editPostalCode").value = team.postalCode;
+  document.getElementById("editAddress").value = team.address;
+  document.getElementById("editPhone").value = team.phone;
+  document.getElementById("editEmail").value = team.email;
+  document.getElementById("editOrgLeader").value = team.orgLeader;
+  document.getElementById("editApparatusClass").value = team.apparatusClass;
+  document.getElementById("editApparatusName").value = team.apparatusName || "";
+  document.getElementById("editDescription").value = team.description;
+  document.getElementById("editTeamLeader").value = team.teamLeader;
+  document.getElementById("editTeamLeaderPhone").value = team.teamLeaderPhone;
+  document.getElementById("photoLinksContainer").innerHTML = "";
+  (team.photos || []).length === 0 ? addPhotoLinkField() : team.photos.forEach((url) => addPhotoLinkField(url));
+  document.getElementById("editMembersContainer").innerHTML = "";
+  (team.members || []).forEach((m) => addMemberField(m));
+  document.getElementById("btnDeleteTeam").style.display = "inline-flex";
+  if (ensureTeamNameField()) document.getElementById("editTeamName").value = team.teamName || "";
+  updateOrgDatalist();
+  updateClassDatalist();
+  updateTeamIdPreview();
+  showEditPage();
+}
+function updateOrgDatalist() {
+  const datalist = document.getElementById("orgDatalist");
+  if (!datalist) return;
+  datalist.innerHTML = organizations
+    .slice()
+    .sort((a, b) => String(a.fullName || "").localeCompare(String(b.fullName || ""), "ru"))
+    .map((o) => `<option value="${escHtml(o.fullName)}" data-id="${o.id}">${escHtml(o.shortName ? o.shortName + " - " + o.fullName : o.fullName)}</option>`)
+    .join("");
+}
+document.addEventListener("input", function (e) {
+  if (e.target.id === "editOrgSearch") {
+    const val = e.target.value.trim();
+    const org = organizations.find((o) => o.fullName.toLowerCase() === val.toLowerCase());
+    document.getElementById("editOrgId").value = org ? org.id : "";
+    if (org && org.shortName) document.getElementById("editShortName").value = org.shortName;
+    updateTeamIdPreview();
+  }
+  if (e.target.id === "editApparatusClass") updateTeamIdPreview();
+});
+function updateTeamIdPreview() {
+  const idEl = document.getElementById("editId");
+  const orgViewEl = document.getElementById("editOrgIdView");
+  if (!idEl) return;
+  const year = parseInt(document.getElementById("editYear").value) || currentYear;
+  const orgId = document.getElementById("editOrgId").value;
+  const displayOrgId = orgId || getNextOrgId();
+  if (orgViewEl) orgViewEl.value = displayOrgId;
+  if (!isNewTeam && currentTeamId) return; // при редактировании существующей команды ID не меняем
+  const classId = getClassIdByValue(document.getElementById("editApparatusClass").value, year);
+  idEl.value = generateTeamId(displayOrgId, year, classId);
+}
+function updateClassDatalist() {
+  const datalist = document.getElementById("classDatalist");
+  if (!datalist) return;
+  const year = parseInt(document.getElementById("editYear").value) || currentYear;
+  const yearSettings = competitionSettings[year] || {};
+  datalist.innerHTML = Object.keys(yearSettings)
+    .map((key) => getClassInfo(key).name)
+    .sort((a, b) => String(a).localeCompare(String(b), "ru"))
+    .map((name) => `<option value="${escHtml(name)}"></option>`)
+    .join("");
+}
+function onEditYearChange() {
+  updateClassDatalist();
+  updateTeamIdPreview();
+}
+function addMemberField(member = null) {
+  const container = document.getElementById("editMembersContainer");
+  const idx = container.children.length;
+  const div = document.createElement("div");
+  div.className = "border rounded p-3 mb-3";
+  div.style.borderColor = "#e2e8f0";
+  div.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3"><h6 class="mb-0 fw-bold" style="font-family:'Manrope',sans-serif;color:#0f172a">Участник ${idx + 1}</h6><button type="button" class="btn btn-outline-danger btn-sm" style="border-radius:6px" onclick="this.closest('.border').remove()"><i class="fas fa-trash"></i></button></div><div class="row g-3"><div class="col-md-6"><label class="form-label">ФИО</label><input type="text" class="form-control member-fio-input" value="${member?.fio || ""}"></div><div class="col-md-6"><label class="form-label">Дата рождения</label><input type="date" class="form-control member-birth-input" value="${member?.birth || ""}"></div><div class="col-md-6"><label class="form-label">Паспорт/Св-во</label><input type="text" class="form-control member-passport-input" value="${member?.passport || ""}"></div><div class="col-md-6"><label class="form-label">Студент</label><select class="form-select member-student-input"><option value="Нет" ${member?.isStudent !== "Да" ? "selected" : ""}>Нет</option><option value="Да" ${member?.isStudent === "Да" ? "selected" : ""}>Да</option></select></div><div class="col-12"><label class="form-label">Приказ о зачислении</label><input type="text" class="form-control member-order-input" value="${member?.order || ""}"></div></div>`;
+  container.appendChild(div);
+}
+async function saveEdit() {
+  const orgSearch = document.getElementById("editOrgSearch").value.trim();
+  if (!orgSearch) {
+    showToast("Укажите название организации", "error");
+    return;
+  }
+  const orgId = document.getElementById("editOrgId").value;
+  const shortName = document.getElementById("editShortName").value.trim();
+  const city = document.getElementById("editCity").value.trim();
+  let org = orgId ? organizations.find((o) => o.id === orgId) : null;
+  if (!org) org = findOrCreateOrg(orgSearch, shortName, city);
+  else {
+    if (shortName) org.shortName = shortName;
+    if (city) org.city = city;
+  }
+  const year = parseInt(document.getElementById("editYear").value) || 2026;
+  const photoLinks = getPhotoLinks();
+  const memberDivs = document.querySelectorAll("#editMembersContainer .border");
+  const members = [];
+  memberDivs.forEach((div) => {
+    const fio = div.querySelector(".member-fio-input").value.trim();
+    if (fio)
+      members.push({
+        fio,
+        birth: div.querySelector(".member-birth-input").value,
+        passport: div.querySelector(".member-passport-input").value,
+        isStudent: div.querySelector(".member-student-input").value,
+        order: div.querySelector(".member-order-input").value,
+      });
+  });
+  const teamData = {
+    orgId: org.id,
+    year,
+    shortName,
+    city,
+    region: document.getElementById("editRegion").value,
+    postalCode: document.getElementById("editPostalCode").value,
+    address: document.getElementById("editAddress").value,
+    phone: document.getElementById("editPhone").value,
+    email: document.getElementById("editEmail").value,
+    orgLeader: document.getElementById("editOrgLeader").value,
+    apparatusClass: document.getElementById("editApparatusClass").value,
+    apparatusName: document.getElementById("editApparatusName").value,
+    description: document.getElementById("editDescription").value,
+    teamLeader: document.getElementById("editTeamLeader").value,
+    teamLeaderPhone: document.getElementById("editTeamLeaderPhone").value,
+    photos: photoLinks,
+    members,
+  };
+  const tn = readTeamNameField();
+  if (isNewTeam || !currentTeamId) {
+    const newTeam = {
+      id: generateTeamId(org.id, year, getClassIdByValue(teamData.apparatusClass, year)),
+      created: document.getElementById("editCreated").value,
+      ...teamData,
+    };
+    if (tn !== null) newTeam.teamName = tn;
+    teamsData.push(newTeam);
+    currentTeamId = newTeam.id;
+    isNewTeam = false;
+  } else {
+    const team = teamsData.find((t) => t.id === currentTeamId);
+    if (team) {
+      // Защита целостности: перенос команды с заполненным протоколом в другой год/класс
+      const newClass = getClassIdByValue(teamData.apparatusClass, year);
+      const oldClass = getTeamClassId(team);
+      if (teamHasScores(team) && (year !== team.year || newClass !== oldClass)) {
+        if (
+          !confirm(
+            `У команды заполнен протокол: ${team.year} год, класс «${getClassInfo(oldClass).name}».\n\nВы переносите её в ${year} год, класс «${getClassInfo(newClass).name}». Оценки уйдут в архив команды, протокол начнётся заново.\n\nПродолжить?`,
+          )
+        )
+          return;
+        team.scoresArchive = {...(team.scoresArchive || {}), [`${team.year}:${oldClass}`]: team.scores};
+        team.scores = {};
+        team.place = 0;
+        team.protocol = {...(team.protocol || {}), place: 0, totalScore: 0};
+      }
+      Object.assign(team, teamData);
+      if (tn !== null) team.teamName = tn;
+    }
+  }
+  const after = teamsData.find((t) => t.id === currentTeamId);
+  if (after) {
+    const cid = getTeamClassId(after);
+    if (after.classId !== cid) {
+      after.classId = cid;
+    }
+  }
+  saveData();
+  const ghSettings = getGitHubSettings();
+  if (ghSettings?.owner && ghSettings?.repo && ghSettings?.token) {
+    showToast("Сохранение в GitHub...", "info");
+    const result = await commitToGitHub();
+    showToast(result.message, result.success ? "success" : "error");
+  } else {
+    showToast("Данные сохранены локально", "success");
+  }
+  if (returnToView === "competition") showCompetitionView();
+  else showTeamDetails(currentTeamId);
+}
+function deleteTeam() {
+  if (!currentTeamId || isNewTeam) {
+    showToast("Нечего удалять", "error");
+    return;
+  }
+  const team = teamsData.find((t) => t.id === currentTeamId);
+  if (!team) return;
+  const displayName = getTeamDisplayName(team);
+  if (!confirm(`Вы уверены, что хотите удалить команду "${displayName}"? Это действие необратимо.`)) return;
+  teamsData = teamsData.filter((t) => t.id !== currentTeamId);
+  saveData();
+  const ghSettings = getGitHubSettings();
+  if (ghSettings?.owner && ghSettings?.repo && ghSettings?.token) {
+    showToast("Удаление команды...", "info");
+    commitToGitHub().then((result) => {
+      showToast(
+        result.success ? `Команда "${displayName}" удалена` : result.message + " (удалено локально)",
+        result.success ? "success" : "error",
+      );
+    });
+  } else {
+    showToast(`Команда "${displayName}" удалена`, "success");
+  }
+  showTeamsView();
+}
+
+// * ===== 20. СПРАВОЧНИК ОРГАНИЗАЦИЙ: список, объединение, карточка =====
+function toggleMergeMode() {
+  mergeMode = !mergeMode;
+  mergeSelectedIds = [];
+  mergeEditor = null;
+  renderOrgManager();
+}
+function toggleMergeSelection(orgId) {
+  const i = mergeSelectedIds.indexOf(orgId);
+  if (i >= 0) mergeSelectedIds.splice(i, 1);
+  else mergeSelectedIds.push(orgId);
+  renderOrgManager();
+}
+function openMergeEditor() {
+  if (mergeSelectedIds.length < 2) {
+    showToast("Отметьте минимум две записи", "error");
+    return;
+  }
+  const orgs = mergeSelectedIds.map((id) => organizations.find((o) => o.id === id)).filter(Boolean);
+  const longest = orgs.reduce((a, b) => ((b.fullName || "").length > (a.fullName || "").length ? b : a));
+  const firstNonEmpty = (f) => {
+    for (const o of orgs) if (o[f]) return o[f];
+    return "";
+  };
+  mergeEditor = {
+    ids: mergeSelectedIds.slice(),
+    keepId: longest.id,
+    choices: {fullName: longest.fullName || "", shortName: firstNonEmpty("shortName"), city: firstNonEmpty("city")},
+  };
+  renderOrgManager();
+}
+function cancelMergeEditor() {
+  mergeEditor = null;
+  renderOrgManager();
+}
+function setMergeChoice(field, value) {
+  if (mergeEditor) mergeEditor.choices[field] = value;
+}
+function setMergeKeep(id) {
+  if (mergeEditor) {
+    mergeEditor.keepId = id;
+    renderOrgManager();
+  }
+}
+function applyMerge() {
+  if (!mergeEditor) return;
+  const kept = organizations.find((o) => o.id === mergeEditor.keepId);
+  if (!kept) {
+    showToast("Оставляемая запись не найдена", "error");
+    return;
+  }
+  if (!mergeEditor.choices.fullName || !mergeEditor.choices.fullName.trim()) {
+    showToast("Укажите полное название", "error");
+    return;
+  }
+  const removeIds = mergeEditor.ids.filter((id) => id !== mergeEditor.keepId);
+  const moved = removeIds.reduce((s, id) => s + teamsData.filter((t) => t.orgId === id).length, 0);
+  if (
+    !confirm(
+      `Объединить записи?\n\nОстанется: ${mergeEditor.keepId} — «${mergeEditor.choices.fullName}»\nБудут удалены: ${removeIds.join(", ") || "—"}\nКоманд будет перенесено: ${moved}\n\nПродолжить?`,
+    )
+  )
+    return;
+  kept.fullName = mergeEditor.choices.fullName.trim();
+  kept.shortName = (mergeEditor.choices.shortName || "").trim();
+  kept.city = (mergeEditor.choices.city || "").trim();
+  teamsData.forEach((t) => {
+    if (removeIds.includes(t.orgId)) t.orgId = kept.id;
+  });
+  organizations = organizations.filter((o) => !removeIds.includes(o.id));
+  mergeEditor = null;
+  mergeMode = false;
+  mergeSelectedIds = [];
+  saveData();
+  renderOrgManager();
+  updateOrgDatalist();
+  showToast(`Записи объединены. Команд перенесено: ${moved}.`, "success");
+}
+function renderOrgManager() {
+  const container = document.getElementById("orgManagerContent");
+  if (mergeEditor) {
+    const orgs = mergeEditor.ids.map((id) => organizations.find((o) => o.id === id)).filter(Boolean);
+    let html = `<div class="detail-section"><h4 class="detail-section-title">Объединение записей организаций</h4>
+<p class="text-muted small">Выберите, какие значения сохранить в каждом поле. Запись с выбранным ID останется, остальные будут удалены, а их команды привязаны к оставленной.</p>
+<h6 class="mb-2">Оставить ID записи:</h6><div class="mb-3">`;
+    orgs.forEach((o) => {
+      const cnt = teamsData.filter((t) => t.orgId === o.id).length;
+      html += `<div class="form-check form-check-inline">
+<input class="form-check-input" type="radio" name="mergeKeep" id="keep_${o.id}" ${mergeEditor.keepId === o.id ? "checked" : ""} onchange="setMergeKeep('${o.id}')">
+<label class="form-check-label" for="keep_${o.id}"><code>${o.id}</code> (команд: ${cnt})</label>
+</div>`;
+    });
+    html += `</div>`;
+    const fields = [
+      {key: "fullName", label: "Полное название", required: true},
+      {key: "shortName", label: "Краткое название", required: false},
+      {key: "city", label: "Город", required: false},
+    ];
+    fields.forEach((f) => {
+      const values = [];
+      orgs.forEach((o) => {
+        const v = o[f.key] || "";
+        if (!values.includes(v)) values.push(v);
+      });
+      if (!f.required && !values.includes("")) values.push("");
+      html += `<div class="mb-3"><h6 class="mb-2">${f.label}:</h6>`;
+      values.forEach((v, i) => {
+        html += `<div class="form-check">
+<input class="form-check-input" type="radio" name="merge_${f.key}" id="mf_${f.key}_${i}" ${mergeEditor.choices[f.key] === v ? "checked" : ""} onchange="setMergeChoice('${f.key}', this.value)" value="${v.replace(/"/g, "&quot;")}">
+<label class="form-check-label" for="mf_${f.key}_${i}">${v ? v : "<em class='text-muted'>(не указано)</em>"}</label>
+</div>`;
+      });
+      html += `</div>`;
+    });
+    const removeIds = mergeEditor.ids.filter((id) => id !== mergeEditor.keepId);
+    const movedPreview = removeIds.reduce((s, id) => s + teamsData.filter((t) => t.orgId === id).length, 0);
+    html += `<div class="alert alert-warning small"><i class="fas fa-exclamation-triangle me-2"></i>Будет удалено записей: <strong>${removeIds.length}</strong> (${removeIds.map((id) => `<code>${id}</code>`).join(", ") || "—"}). Команд будет привязано к оставленной записи: <strong>${movedPreview}</strong>.</div>
+<div class="d-flex gap-2">
+<button class="btn btn-primary" onclick="applyMerge()"><i class="fas fa-code-merge me-2"></i>Объединить</button>
+<button class="btn btn-outline-secondary" onclick="cancelMergeEditor()">Отмена</button>
+</div></div>`;
+    container.innerHTML = html;
+    return;
+  }
+  let html =
+    '<div class="detail-section"><h4 class="detail-section-title">Справочник организаций</h4><div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2"><p class="text-muted mb-0">Всего организаций: ' +
+    organizations.length +
+    '</p><div class="d-flex gap-2"><button class="btn btn-outline-warning btn-sm" onclick="mergeDuplicateOrganizations()"><i class="fas fa-wand-magic-sparkles me-1"></i>Убрать дубликаты (авто)</button><button class="btn btn-outline-secondary btn-sm" onclick="toggleMergeMode()"><i class="fas fa-code-merge me-1"></i>' +
+    (mergeMode ? "Отменить объединение" : "Объединить записи…") +
+    "</button></div></div>";
+  if (mergeMode) {
+    html += `<div class="alert alert-info py-2 small"><i class="fas fa-info-circle me-2"></i>Отметьте галочками записи, которые нужно объединить.${mergeSelectedIds.length >= 2 ? ` <button class="btn btn-primary btn-sm ms-2" onclick="openMergeEditor()">Объединить выбранные (${mergeSelectedIds.length})</button>` : ""}</div>`;
+  }
+  organizations
+    .slice()
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .forEach((org) => {
+      const teamCount = teamsData.filter((t) => t.orgId === org.id).length;
+      const checked = mergeSelectedIds.includes(org.id);
+      const checkbox = mergeMode
+        ? `<input class="form-check-input me-2" type="checkbox" style="min-width:20px" ${checked ? "checked" : ""} onchange="toggleMergeSelection('${org.id}')">`
+        : "";
+      const contactBits = [org.shortName, org.city, org.phone, org.email].filter((v) => v && String(v).trim());
+      html += `<div class="org-manager-item" ${checked ? 'style="border-color:#0d6efd;background:#f8f9ff"' : ""}><span class="org-id">${org.id}</span>${checkbox}<div class="org-info"><div class="full-name"><a href="#" class="org-edit-link" onclick="openOrgEditor('${org.id}'); return false;">${org.fullName}</a></div><div class="meta">${contactBits.join(" | ") || "—"} | Команд: ${teamCount}</div></div><div class="d-flex gap-1"><button class="btn btn-outline-primary btn-sm" onclick="openOrgEditor('${org.id}')" title="Редактировать организацию"><i class="fas fa-pen"></i></button><button class="btn btn-outline-danger btn-sm" onclick="deleteOrganization('${org.id}')" title="Удалить"><i class="fas fa-trash"></i></button></div></div>`;
+    });
+  html += "</div>";
+  container.innerHTML = html;
+}
+function addOrganization() {
+  const fullName = prompt("Полное название организации:");
+  if (!fullName) return;
+  const shortName = prompt("Краткое название (необязательно):") || "";
+  const city = prompt("Город (необязательно):") || "";
+  const org = findOrCreateOrg(fullName, shortName, city);
+  saveData();
+  renderOrgManager();
+  updateOrgDatalist();
+  showToast(`Организация "${org.shortName || org.fullName}" добавлена (ID: ${org.id})`, "success");
+}
+function deleteOrganization(orgId) {
+  const teamCount = teamsData.filter((t) => t.orgId === orgId).length;
+  if (teamCount > 0 && !confirm(`Эта организация используется в ${teamCount} командах. Удалить справочную запись?`)) return;
+  organizations = organizations.filter((o) => o.id !== orgId);
+  saveData();
+  renderOrgManager();
+  updateOrgDatalist();
+  showToast("Организация удалена", "success");
+}
+function mergeDuplicateOrganizations() {
+  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const n = organizations.length;
+  const parent = organizations.map((_, i) => i);
+  const find = (i) => {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
+    }
+    return i;
+  };
+  const union = (a, b) => {
+    parent[find(a)] = find(b);
+  };
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const a = organizations[i], b = organizations[j];
+      const af = norm(a.fullName), bf = norm(b.fullName);
+      const as = norm(a.shortName), bs = norm(b.shortName);
+      const isDup = (af && af === bf) || (as && bs && as === bs) || (as && as === bf) || (bs && bs === af);
+      if (isDup) union(i, j);
+    }
+  }
+  const clusters = {};
+  for (let i = 0; i < n; i++) {
+    const r = find(i);
+    (clusters[r] = clusters[r] || []).push(i);
+  }
+  const merges = Object.values(clusters).filter((c) => c.length > 1);
+  if (!merges.length) {
+    showToast("Дубликаты не найдены", "info");
+    return;
+  }
+  const report = merges.map((c) => c.map((i) => `«${organizations[i].fullName}»`).join("  =  ")).join("\n");
+  if (!confirm(`Будут объединены дубликаты:\n\n${report}\n\nОстанется запись с самым полным названием, все команды будут привязаны к ней. Продолжить?`)) return;
+  const removeIds = new Set();
+  merges.forEach((c) => {
+    const keepIdx = c.reduce((best, i) => (organizations[i].fullName.length > organizations[best].fullName.length ? i : best), c[0]);
+    const keep = organizations[keepIdx];
+    c.forEach((i) => {
+      if (i === keepIdx) return;
+      const dup = organizations[i];
+      teamsData.forEach((t) => {
+        if (t.orgId === dup.id) t.orgId = keep.id;
+      });
+      if (!keep.shortName && dup.shortName) keep.shortName = dup.shortName;
+      if (!keep.city && dup.city) keep.city = dup.city;
+      removeIds.add(dup.id);
+    });
+  });
+  organizations = organizations.filter((o) => !removeIds.has(o.id));
+  saveData();
+  renderOrgManager();
+  updateOrgDatalist();
+  showToast("Дубликаты объединены", "success");
+}
+function ensureOrgEditModal() {
+  let el = document.getElementById("orgEditModal");
+  if (el) return el;
+  el = document.createElement("div");
+  el.className = "modal fade";
+  el.id = "orgEditModal";
+  el.tabIndex = -1;
+  el.innerHTML = `<div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title"><i class="fas fa-building me-2 text-primary"></i>Организация <code id="orgEditId" class="ms-2"></code></h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>
+<div class="modal-body"><div class="row g-3">${ORG_CONTACT_FIELDS.map((f) => `<div class="${f.key === "fullName" || f.key === "address" ? "col-12" : "col-md-6"}"><label class="form-label">${f.label}</label><input type="text" class="form-control" id="orgEdit_${f.key}"></div>`).join("")}</div>
+<div class="form-text mt-2">При первом открытии пустые поля подставляются из заявок команд этой организации; после сохранения эталоном становится карточка.</div></div>
+<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button><button type="button" class="btn btn-primary" onclick="saveOrgEditor()"><i class="fas fa-save me-2"></i>Сохранить</button></div>
+</div></div>`;
+  document.body.appendChild(el);
+  return el;
+}
+function openOrgEditor(orgId) {
+  const org = organizations.find((o) => o.id === orgId);
+  if (!org) return;
+  const el = ensureOrgEditModal();
+  const eff = getOrgEffective(org);
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    const inp = el.querySelector(`#orgEdit_${f.key}`);
+    if (inp) inp.value = eff[f.key] || "";
+  });
+  el.querySelector("#orgEditId").textContent = org.id;
+  el.dataset.orgId = org.id;
+  bootstrap.Modal.getOrCreateInstance(el).show();
+}
+function saveOrgEditor() {
+  const el = document.getElementById("orgEditModal");
+  const org = organizations.find((o) => o.id === el.dataset.orgId);
+  if (!org) return;
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    const inp = el.querySelector(`#orgEdit_${f.key}`);
+    if (inp) org[f.key] = inp.value.trim();
+  });
+  saveData();
+  const inst = bootstrap.Modal.getInstance(el);
+  if (inst) inst.hide();
+  renderOrgManager();
+  updateOrgDatalist();
+  showToast("Данные организации сохранены", "success");
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+function ensureOrgMismatchModal() {
+  let el = document.getElementById("orgMismatchModal");
+  if (el) return el;
+  el = document.createElement("div");
+  el.className = "modal fade";
+  el.id = "orgMismatchModal";
+  el.tabIndex = -1;
+  el.innerHTML = `<div class="modal-dialog modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title"><i class="fas fa-triangle-exclamation text-warning me-2"></i>Данные организации не совпадают с базой</h5></div>
+<div class="modal-body" id="orgMismatchBody"></div>
+<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" id="orgMismatchKeep">Не менять</button><button type="button" class="btn btn-primary" id="orgMismatchReplace">Заменить на новые</button></div>
+</div></div>`;
+  document.body.appendChild(el);
+  return el;
+}
+function askOrgMismatch(org, diffs) {
+  return new Promise((resolve) => {
+    const el = ensureOrgMismatchModal();
+    document.getElementById("orgMismatchBody").innerHTML =
+      `<p class="small text-muted mb-2">Новая заявка содержит данные организации «${escHtml(org.fullName)}», отличающиеся от сохранённых в базе. Сравните значения и выберите действие.</p>
+<table class="table table-sm align-middle mb-0"><thead><tr><th style="width:32%">Поле</th><th>В базе</th><th>В заявке</th></tr></thead><tbody>${diffs
+        .map((d) => `<tr><td class="fw-semibold">${escHtml(d.label)}</td><td class="org-diff-old">${escHtml(d.old) || "—"}</td><td class="org-diff-new">${escHtml(d.neu)}</td></tr>`)
+        .join("")}</tbody></table>`;
+    const modal = bootstrap.Modal.getOrCreateInstance(el);
+    const rep = el.querySelector("#orgMismatchReplace");
+    const keep = el.querySelector("#orgMismatchKeep");
+    const onHidden = () => finish(false);
+    function finish(val) {
+      el.removeEventListener("hidden.bs.modal", onHidden);
+      rep.onclick = null;
+      keep.onclick = null;
+      const inst = bootstrap.Modal.getInstance(el);
+      if (inst) inst.hide();
+      resolve(val);
+    }
+    rep.onclick = () => finish(true);
+    keep.onclick = () => finish(false);
+    el.addEventListener("hidden.bs.modal", onHidden, {once: true});
+    modal.show();
+  });
+}
+async function reconcileOrgFromApplication(org, t) {
+  if (!org || !t) return;
+  mergeOrgEmptyFromApplication(org, t);
+  const eff = getOrgEffective(org);
+  const diffs = ORG_CONTACT_FIELDS.filter((f) => f.key !== "fullName")
+    .map((f) => ({key: f.key, label: f.label, old: eff[f.key], neu: String(t[f.key] || "").trim()}))
+    .filter((d) => {
+      const a = d.old.toLowerCase();
+      const b = d.neu.toLowerCase();
+      return a && b && a !== b;
+    });
+  if (!diffs.length) return;
+  const replace = await askOrgMismatch(org, diffs);
+  if (replace) diffs.forEach((d) => (org[d.key] = d.neu));
+}
+
+// * ===== 21. СПРАВОЧНИК КЛАССОВ И УЧАСТИЕ ПО ГОДАМ =====
+function classColorOptions(selected) {
+  const opts = [
+    {val: "badge-bek", label: "Синий"},
+    {val: "badge-tnpa", label: "Зелёный"},
+    {val: "badge-anpa", label: "Фиолетовый"},
+    {val: "badge-anna", label: "Оранжевый"},
+    {val: "badge-red", label: "Красный"},
+    {val: "badge-yellow", label: "Жёлтый"},
+    {val: "badge-gray", label: "Серый"},
+  ];
+  return opts.map((o) => `<option value="${o.val}" ${o.val === selected ? "selected" : ""}>${o.label}</option>`).join("");
+}
+function renderApparatusManager() {
+  const container = document.getElementById("apparatusContent");
+  let html = `<div class="detail-section">
+<h4 class="detail-section-title">Справочник классов аппаратов</h4>
+<p class="text-muted small">Название и цвет бейджа задаются здесь и используются во всех карточках и таблицах. ID класса (латиницей) входит в состав ID команд.</p>
+<div class="table-responsive"><table class="table align-middle mb-0" style="font-size:0.9rem">
+<thead><tr><th style="width:80px">ID</th><th>Название класса</th><th>Полное название</th><th style="width:200px">Цвет бейджа</th><th style="width:110px">Команд</th><th style="width:60px"></th></tr></thead>
+<tbody>`;
+  apparatusClasses.forEach((info, idx) => {
+    const totalTeams = teamsData.filter((t) => getTeamClassId(t) === info.id).length;
+    html += `<tr>
+<td><code>${info.id}</code></td>
+<td><input type="text" class="form-control form-control-sm" value="${info.name}" onchange="updateApparatusClass(${idx}, 'name', this.value)"></td>
+<td><input type="text" class="form-control form-control-sm" value="${info.fullName || ""}" placeholder="Полное название класса" onchange="updateApparatusClass(${idx}, 'fullName', this.value)"></td>
+<td><select class="form-select form-select-sm" onchange="updateApparatusClass(${idx}, 'color', this.value)">${classColorOptions(info.color)}</select></td>
+<td class="text-muted">${totalTeams}</td>
+<td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="deleteApparatusClass(${idx})" title="Удалить класс"><i class="fas fa-trash"></i></button></td>
+</tr>`;
+  });
+  html += `</tbody></table></div>
+<button class="btn btn-success btn-sm mt-3" onclick="addApparatusClass()"><i class="fas fa-plus me-2"></i>Добавить класс</button>
+</div>
+<div class="detail-section">
+<h4 class="detail-section-title">Участие классов в соревнованиях по годам</h4>
+<p class="text-muted small">Отметьте классы, участвующие в каждом году, и укажите даты проведения. Критерии оценки настраиваются отдельно.</p>`;
+  const years = Object.keys(competitionSettings).sort((a, b) => b - a);
+  years.forEach((year) => {
+    html += `<h5 class="mt-4 mb-2 text-primary"><i class="fas fa-calendar me-2"></i>${year} год</h5><div class="list-group mb-4 shadow-sm">`;
+    apparatusClasses.forEach((info) => {
+      const cfg = competitionSettings[year]?.[info.id];
+      const active = !!cfg;
+      const teamCount = teamsData.filter((t) => t.year == year && getTeamClassId(t) === info.id).length;
+      html += `<div class="list-group-item d-flex align-items-center gap-3 py-3">
+<div class="form-check form-switch mb-0" style="min-width:44px">
+<input class="form-check-input" type="checkbox" role="switch" ${active ? "checked" : ""} onchange="toggleYearClass('${year}', '${info.id}', this.checked)">
+</div>
+<span class="badge category-badge ${info.color}" style="min-width:70px">${info.name}</span>
+<div class="flex-grow-1">
+<div class="fw-semibold ${active ? "" : "text-muted"}">${info.name}</div>
+<div class="small text-muted">${active ? `Участвует · команд в базе: ${teamCount}` : "Не участвует в этом году"}</div>
+</div>
+${
+  active
+    ? `<div style="width:170px"><label class="form-label small mb-1">Дата соревнований</label><input type="text" class="form-control form-control-sm" value="${cfg.date || ""}" placeholder="ДД.ММ.ГГГГ" onchange="updateYearClassDate('${year}', '${info.id}', this.value)"></div>
+<button class="btn btn-outline-primary btn-sm" style="min-width:180px" onclick="openCriteriaEditor('${year}', '${info.id}')"><i class="fas fa-list-check me-1"></i>Критерии оценки</button>`
+    : `<span class="text-muted small me-2">—</span>`
+}
+</div>`;
+    });
+    html += `</div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+}
+function toggleYearClass(year, classId, checked) {
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  const info = getClassInfo(classId);
+  if (checked) {
+    if (!competitionSettings[year][classId]) {
+      const arch = loadCriteriaTemplates().find(
+        (t) => t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId,
+      );
+      competitionSettings[year][classId] = {date: arch?.date || "", criteria: arch ? normalizeCriteria(arch.criteria) : []};
+      if (arch) showToast("Набор критериев восстановлен из архива", "success");
+    }
+  } else {
+    const teamCount = teamsData.filter((t) => String(t.year) === String(year) && getTeamClassId(t) === classId).length;
+    let msg = `Отключить класс ${info.name} за ${year} год?`;
+    if (teamCount) msg += `\n\nКоманд в базе: ${teamCount}. Они сохранятся, но попадут в группу «Н/Д», пока класс не включён.`;
+    msg += `\n\nНабор критериев и дата уйдут в архив и вернутся при повторном включении.`;
+    if (!confirm(msg)) {
+      renderApparatusManager();
+      return;
+    }
+    archiveClassCriteria(year, classId);
+    delete competitionSettings[year][classId];
+  }
+  saveData();
+  renderApparatusManager();
+}
+function updateYearClassDate(year, classId, value) {
+  if (competitionSettings[year]?.[classId]) {
+    competitionSettings[year][classId].date = value;
+    saveData();
+    showToast("Дата сохранена", "success");
+  }
+}
+function updateApparatusClass(idx, field, value) {
+  const info = apparatusClasses[idx];
+  if (!info) return;
+  if (field === "name") {
+    const v = value.trim();
+    if (!v) {
+      renderApparatusManager();
+      return;
+    }
+    info.name = v.toUpperCase();
+  } else if (field === "fullName") {
+    info.fullName = value.trim();
+  } else {
+    info[field] = value;
+  }
+  saveData();
+  renderApparatusManager();
+  showToast("Справочник классов обновлён", "success");
+}
+function addApparatusClass() {
+  const rawId = prompt("ID нового класса (латинскими буквами, без пробелов,\nнапример: mrs — будет использоваться в ID команд):");
+  if (!rawId) return;
+  const id = rawId.trim().toLowerCase();
+  if (!/^[a-z]+$/.test(id)) {
+    alert("ID должен состоять только из латинских букв без пробелов");
+    return;
+  }
+  if (apparatusClasses.some((c) => c.id === id)) {
+    alert("Класс с таким ID уже существует");
+    return;
+  }
+  apparatusClasses.push({id, name: id.toUpperCase(), fullName: "", color: "badge-gray"});
+  saveData();
+  renderApparatusManager();
+  showToast(`Класс "${id.toUpperCase()}" добавлен — укажите название и цвет в таблице`, "success");
+}
+function deleteApparatusClass(idx) {
+  const info = apparatusClasses[idx];
+  if (!info) return;
+  const usedYears = Object.keys(competitionSettings).filter((y) => competitionSettings[y][info.id]);
+  const teamCount = teamsData.filter((t) => getTeamClassId(t) === info.id).length;
+  if (usedYears.length || teamCount) {
+    if (
+      !confirm(
+        `Класс «${info.name}» используется:\n· годы: ${usedYears.join(", ") || "—"}\n· команд: ${teamCount}\n\nНаборы критериев будут заархивированы. Удалить класс?`,
+      )
+    )
+      return;
+    usedYears.forEach((y) => {
+      archiveClassCriteria(y, info.id);
+      delete competitionSettings[y][info.id];
+    });
+  }
+  apparatusClasses.splice(idx, 1);
+  saveData();
+  renderApparatusManager();
+  showToast("Класс удалён, критерии заархивированы", "success");
+}
+// Алиас для кнопки в шапке страницы настроек
+function addNewClassToYear() {
+  addApparatusClass();
+}
+
+// * ============================================================
+// OPMR NAVIGATOR — чистая сборка (финальная часть 4/5)
+// Секции: редактор критериев · шаблоны/библиотека/история ·
+//         авто-группа доп. баллов · импорт/экспорт · бэкапы
+// * ============================================================
+
+// * ===== 22. РЕДАКТОР КРИТЕРИЕВ: ЕДИНСТВЕННЫЙ РЕНДЕР БЕЗ ОБЁРТОК =====
+function normalizeCriteria(criteria) {
+  if (!Array.isArray(criteria)) return [];
+  return criteria.map((g) => {
+    const isObj = typeof g === "object" && g !== null;
+    const section = isObj ? g.section || g.name || "Группа" : String(g);
+    const sectionShort = isObj ? String(g.sectionShort ?? g.short ?? "").trim() : "";
+    const rawFields = isObj ? g.fields || [] : [];
+    const fields = rawFields.map((f) =>
+      typeof f === "object" && f !== null
+        ? {
+            id: f.id || newFieldId(),
+            name: String(f.name ?? "").trim(),
+            short: String(f.short ?? "").trim(),
+            type: f.type || "int",
+            ...(f.sum !== undefined ? {sum: !!f.sum} : {}),
+            ...(f.penalty !== undefined ? {penalty: !!f.penalty} : {}),
+          }
+        : {id: newFieldId(), name: String(f).trim(), short: "", type: "int"},
+    );
+    let attempts = isObj ? Math.min(2, Math.max(1, parseInt(g.attempts, 10) || 1)) : 1;
+    let multi = isObj && g.multi !== undefined ? !!g.multi : attempts > 1;
+    if (!multi) attempts = 1;
+    const out = {section, sectionShort, fields, attempts, multi};
+    if (isObj && g.extra) out.extra = true;
+    return out;
+  });
+}
+// Живая запись значений из DOM-инпутов редактора в tempCriteria
+function syncCriteriaFromDom() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body || body.dataset.critOwner !== `${currentCriteriaYear}:${currentCriteriaClass}`) return;
+  body.querySelectorAll("[data-crit-group]").forEach((el) => {
+    const g = Number(el.dataset.g);
+    if (!tempCriteria[g]) return;
+    const n = el.querySelector('[data-role="section"]');
+    const s = el.querySelector('[data-role="sectionShort"]');
+    if (n) tempCriteria[g].section = n.value;
+    if (s) tempCriteria[g].sectionShort = s.value;
+  });
+  body.querySelectorAll("[data-crit-field]").forEach((el) => {
+    const g = Number(el.dataset.g);
+    const f = Number(el.dataset.f);
+    const field = tempCriteria[g] && tempCriteria[g].fields[f];
+    if (!field || typeof field !== "object") return;
+    const n = el.querySelector('[data-role="name"]');
+    const s = el.querySelector('[data-role="short"]');
+    const su = el.querySelector('[data-role="sum"]');
+    const pe = el.querySelector('[data-role="penalty"]');
+    if (n) field.name = n.value;
+    if (s) field.short = s.value;
+    if (su) field.sum = su.checked;
+    if (pe) field.penalty = pe.checked;
+  });
+}
+function trimCriteriaInPlace(list) {
+  list.forEach((g) => {
+    g.section = String(g.section || "").trim();
+    g.sectionShort = String(g.sectionShort || "").trim();
+    (g.fields || []).forEach((f) => {
+      if (typeof f !== "object" || f === null) return;
+      f.name = String(f.name || "").trim();
+      f.short = String(f.short || "").trim();
+      f.type = f.type || "int";
+    });
+  });
+  return list;
+}
+function attachCriteriaLiveBindings() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body || body.dataset.liveBound) return;
+  body.dataset.liveBound = "1";
+  const write = (target) => {
+    const role = target.dataset ? target.dataset.role : null;
+    if (!role) return;
+    const groupEl = target.closest("[data-crit-group]");
+    if (!groupEl) return;
+    const g = Number(groupEl.dataset.g);
+    const fieldEl = target.closest("[data-crit-field]");
+    if (fieldEl) {
+      const f = Number(fieldEl.dataset.f);
+      const field = tempCriteria[g] && tempCriteria[g].fields ? tempCriteria[g].fields[f] : null;
+      if (!field || typeof field !== "object") return;
+      if (role === "name") field.name = target.value;
+      else if (role === "short") field.short = target.value;
+      else if (role === "sum") field.sum = target.checked;
+      else if (role === "penalty") field.penalty = target.checked;
+    } else {
+      const grp = tempCriteria[g];
+      if (!grp) return;
+      if (role === "section") grp.section = target.value;
+      else if (role === "sectionShort") grp.sectionShort = target.value;
+    }
+  };
+  body.addEventListener("input", (e) => write(e.target));
+  body.addEventListener("change", (e) => write(e.target));
+}
+function ensureCriteriaFooter() {
+  const el = document.getElementById("criteriaOffcanvas");
+  if (!el) return;
+  el.querySelectorAll(".offcanvas-footer, #criteriaOffcanvasFooter").forEach((f) => f.remove());
+  const footer = document.createElement("div");
+  footer.id = "criteriaOffcanvasFooter";
+  footer.className = "criteria-offcanvas-footer";
+  footer.innerHTML = `<button type="button" class="btn btn-primary" onclick="saveCriteriaFromOffcanvas()"><i class="fas fa-floppy-disk me-2"></i>Сохранить набор критериев</button>
+<button type="button" class="btn btn-outline-success" onclick="saveCriteriaAsTemplate()"><i class="fas fa-layer-group me-2"></i>Сохранить как шаблон</button>
+<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Отмена</button>`;
+  el.appendChild(footer);
+}
+function renderCriteriaOffcanvas() {
+  const body = document.getElementById("criteriaOffcanvasBody");
+  if (!body) return;
+  body.dataset.critOwner = `${currentCriteriaYear}:${currentCriteriaClass}`;
+  const title = `${getClassInfo(currentCriteriaClass).name} — ${currentCriteriaYear} год`;
+  const customLib = criteriaLibraryCustom()
+    .slice()
+    .sort((a, b) => entrySortKey(b.id, b.name) - entrySortKey(a.id, a.name));
+  const templates = loadCriteriaTemplates()
+    .slice()
+    .sort((a, b) => entrySortKey(b.id, b.name) - entrySortKey(a.id, a.name));
+  let html = `<div class="alert alert-info d-flex align-items-start py-2"><i class="fas fa-info-circle me-2 mt-1"></i><div class="small"><strong>Настройка критериев:</strong> ${escHtml(title)}<br><strong>Σ</strong> — поле входит в сумму; <strong>−</strong> — штраф. Пустое «Сокр.» у расчётного поля оставляет в таблице только иконку.</div></div>`;
+  if (!tempCriteria.length) {
+    html += `<div class="alert alert-light text-center py-4"><i class="fas fa-clipboard-list fa-2x text-muted mb-2 d-block"></i><p class="mb-0 small">Критерии не заданы. Добавьте группы ниже.</p></div>`;
+  }
+  tempCriteria.forEach((group, gIdx) => {
+    html += `<div class="card mb-3 border shadow-sm" data-crit-group data-g="${gIdx}">
+<div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+<div class="d-flex align-items-center gap-2 flex-grow-1 me-3">
+<span class="badge bg-primary rounded-pill">${gIdx + 1}</span>
+${group.extra ? '<span class="crit-extra-badge" title="Группа дополнительных баллов: добавляется автоматически, но полностью редактируется">авто</span>' : ""}
+<div class="flex-grow-1">
+<input type="text" data-role="section" class="form-control form-control-sm fw-bold border-0 bg-transparent p-0" value="${escHtml(group.section)}" placeholder="Название группы">
+<input type="text" data-role="sectionShort" class="form-control form-control-sm text-muted border-0 bg-transparent p-0" value="${escHtml(group.sectionShort || "")}" placeholder="Сокращение группы (необязательно)">
+</div>
+</div>
+<div class="d-flex gap-1 align-items-center">
+<label class="crit-flag crit-flag-multi me-1" title="Разрешить несколько попыток в этой группе"><input type="checkbox" class="form-check-input mt-0" ${group.multi ? "checked" : ""} onchange="setGroupMulti(${gIdx}, this.checked)"><span>Несколько попыток</span></label>
+<select class="form-select form-select-sm" data-role="attempts" style="width:150px;font-weight:600;${group.multi ? "" : "display:none;"}${group.multi ? "border-color:#86b7f8;" : ""}" title="Количество попыток в группе" onchange="setGroupAttempts(${gIdx}, this.value)">
+<option value="1" ${(group.attempts || 1) === 1 ? "selected" : ""}>1 попытка</option>
+<option value="2" ${(group.attempts || 1) === 2 ? "selected" : ""}>2 попытки</option>
+</select>
+<button type="button" class="btn btn-sm btn-outline-success" onclick="saveGroupToLibrary(${gIdx})" title="Сохранить группу в библиотеку"><i class="fas fa-bookmark"></i></button>
+<button type="button" class="btn btn-sm btn-outline-secondary" onclick="duplicateCriteriaGroup(${gIdx})" title="Дублировать группу"><i class="fas fa-clone"></i></button>
+<button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, -1)" ${gIdx === 0 ? "disabled" : ""} title="Вверх"><i class="fas fa-chevron-up"></i></button>
+<button class="btn btn-sm btn-outline-secondary" onclick="moveGroup(${gIdx}, 1)" ${gIdx === tempCriteria.length - 1 ? "disabled" : ""} title="Вниз"><i class="fas fa-chevron-down"></i></button>
+<button class="btn btn-sm btn-outline-danger" onclick="removeGroup(${gIdx})" title="Удалить группу"><i class="fas fa-trash"></i></button>
+</div>
+</div>
+<div class="card-body p-0"><div class="list-group list-group-flush">`;
+    group.fields.forEach((field, fIdx) => {
+      const isObj = typeof field === "object" && field !== null;
+      const fName = isObj ? field.name || "" : String(field);
+      const fShort = isObj ? field.short || "" : "";
+      const fType = isObj ? field.type || "int" : "int";
+      const fSum = isObj ? field.sum !== false : true;
+      const fPen = isObj ? !!field.penalty : false;
+      const numeric = fType === "int" || fType === "decimal";
+      html += `<div class="list-group-item py-2 px-3" data-crit-field data-g="${gIdx}" data-f="${fIdx}">
+<div class="d-flex align-items-center gap-2">
+<span class="badge bg-light text-dark rounded-circle flex-shrink-0" style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:0.7rem">${fIdx + 1}</span>
+<input type="text" data-role="name" class="form-control form-control-sm" value="${escHtml(fName)}" placeholder="Полное название поля">
+<div class="crit-short-wrap">
+<input type="text" data-role="short" class="form-control form-control-sm" value="${escHtml(fShort)}" placeholder="Сокр.">
+<button type="button" class="crit-short-clear" onclick="clearFieldShort(${gIdx}, ${fIdx})" title="Убрать сокращение" ${fShort ? "" : "disabled"}><i class="fas fa-xmark"></i></button>
+</div>
+<button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="removeField(${gIdx}, ${fIdx})" title="Удалить"><i class="fas fa-times"></i></button>
+</div>
+<div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+<select data-role="type" class="form-select form-select-sm" style="max-width:160px" onchange="setFieldType(${gIdx}, ${fIdx}, this.value)" title="Формат поля">
+<option value="int" ${fType === "int" ? "selected" : ""}>Целое число</option>
+<option value="decimal" ${fType === "decimal" ? "selected" : ""}>Дробное число</option>
+<option value="text" ${fType === "text" ? "selected" : ""}>Текст</option>
+<option value="bool" ${fType === "bool" ? "selected" : ""}>Да / Нет</option>
+<option value="time" ${fType === "time" ? "selected" : ""}>Время (мин:сек)</option>
+</select>
+<label class="crit-flag ${numeric || fType === "bool" ? "" : "crit-flag-disabled"}" title="Включать в общую сумму (для «Да/Нет» = 1 балл)"><input type="checkbox" data-role="sum" class="form-check-input mt-0" ${fSum ? "checked" : ""} ${numeric || fType === "bool" ? "" : "disabled"}><span>Σ</span></label>
+<label class="crit-flag crit-flag-penalty ${numeric ? "" : "crit-flag-disabled"}" title="Штраф: вычитать и показывать красным"><input type="checkbox" data-role="penalty" class="form-check-input mt-0" ${fPen ? "checked" : ""} ${numeric ? "" : "disabled"}><span>−</span></label>
+<span class="ms-auto d-flex gap-1">
+<button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, -1)" ${fIdx === 0 ? "disabled" : ""} title="Выше"><i class="fas fa-chevron-up"></i></button>
+<button class="btn btn-sm btn-outline-secondary py-0 px-1" onclick="moveField(${gIdx}, ${fIdx}, 1)" ${fIdx === group.fields.length - 1 ? "disabled" : ""} title="Ниже"><i class="fas fa-chevron-down"></i></button>
+</span>
+</div>
+</div>`;
+    });
+    html += `</div><div class="p-2 bg-light border-top"><button class="btn btn-sm btn-outline-primary w-100" onclick="addFieldToGroup(${gIdx})"><i class="fas fa-plus me-1"></i>Добавить поле</button></div></div></div>`;
+  });
+  // Нижняя панель: библиотека, шаблоны, дублирование набора, история
+  html += `<div class="card border-dashed border-2 bg-light"><div class="card-body text-center py-3">
+<div class="row g-2 justify-content-center mb-2">
+<div class="col-md-8"><div class="dropdown w-100"><button class="btn btn-success w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-book me-2"></i>Добавить из библиотеки</button><ul class="dropdown-menu w-100" style="max-height:250px;overflow-y:auto">`;
+  customLib.forEach((t) => {
+    const cnt = ((t.criteria && t.criteria[0] && t.criteria[0].fields) || []).length;
+    html += `<li class="d-flex align-items-center"><a class="dropdown-item flex-grow-1" href="#" onclick="addGroupFromLibraryCustom('${t.id}'); return false;"><i class="fas fa-bookmark me-2 text-success"></i>${escHtml(t.name)}<span class="badge bg-light text-dark ms-2">${cnt} полей</span></a><button class="btn btn-sm btn-outline-danger me-2 py-0 px-1" onclick="deleteLibraryGroup('${t.id}')" title="Удалить из библиотеки"><i class="fas fa-times"></i></button></li>`;
+  });
+  CRITERIA_LIBRARY.groups.forEach((libGroup) => {
+    html += `<li><a class="dropdown-item" href="#" onclick="addGroupFromLibrary('${libGroup.id}'); return false;"><i class="fas fa-folder me-2 text-primary"></i>${escHtml(libGroup.name)}<span class="badge bg-light text-dark ms-2">${libGroup.fields.length} полей</span></a></li>`;
+  });
+  html += `</ul></div></div>
+<div class="col-md-4"><button class="btn btn-outline-primary w-100" onclick="addCustomGroup()"><i class="fas fa-folder-plus me-2"></i>Своя группа</button></div>
+</div>
+<div class="dropdown w-100 mb-2"><button class="btn btn-outline-primary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-layer-group me-2"></i>Шаблоны наборов (${templates.length})</button><ul class="dropdown-menu w-100" style="max-height:250px;overflow-y:auto">`;
+  if (!templates.length) html += `<li><span class="dropdown-item-text text-muted small">Шаблонов пока нет</span></li>`;
+  templates.forEach((t) => {
+    html += `<li class="d-flex align-items-center"><a class="dropdown-item flex-grow-1" href="#" onclick="applyCriteriaTemplate('${t.id}'); return false;"><i class="fas fa-file-import me-2 text-primary"></i>${escHtml(t.name)}</a><button class="btn btn-sm btn-outline-danger me-2 py-0 px-1" onclick="deleteCriteriaTemplate('${t.id}')" title="Удалить шаблон"><i class="fas fa-times"></i></button></li>`;
+  });
+  html += `</ul></div>`;
+  // Дублировать набор в другой класс/год
+  let copyItems = "";
+  Object.keys(competitionSettings)
+    .sort((x, y) => y - x)
+    .forEach((yy) => {
+      Object.keys(competitionSettings[yy]).forEach((cid) => {
+        if (String(yy) === String(currentCriteriaYear) && cid === currentCriteriaClass) return;
+        copyItems += `<li><a class="dropdown-item" href="#" onclick="copyCriteriaSetTo('${yy}','${cid}'); return false;">${getClassInfo(cid).name} · ${yy}</a></li>`;
+      });
+    });
+  html += `<div class="dropdown w-100 mb-2"><button class="btn btn-outline-secondary w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-copy me-2"></i>Дублировать набор в…</button><ul class="dropdown-menu w-100" style="max-height:220px;overflow-y:auto">${copyItems || '<li><span class="dropdown-item-text text-muted small">Нет других классов и годов</span></li>'}</ul></div>`;
+  // История наборов (локальные снимки перед каждым сохранением)
+  const hist = criteriaHistory()
+    .filter((h) => h.classId === currentCriteriaClass && String(h.year) === String(currentCriteriaYear))
+    .reverse();
+  html += `<div class="dropdown w-100 mb-2"><button class="btn btn-outline-warning w-100 dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-history me-2"></i>История наборов (${hist.length})</button><ul class="dropdown-menu w-100" style="max-height:220px;overflow-y:auto">${
+    hist
+      .map(
+        (h) =>
+          `<li><a class="dropdown-item" href="#" onclick="restoreCriteriaSnapshot('${h.id}'); return false;"><i class="fas fa-rotate-left me-2 text-warning"></i>${new Date(h.ts).toLocaleString("ru-RU")} · групп: ${h.criteria.length}</a></li>`,
+      )
+      .join("") || '<li><span class="dropdown-item-text text-muted small">Снимков пока нет</span></li>'
+  }</ul></div>
+<div class="small text-muted mt-2">Сохранение набора и шаблона — раздельные кнопки внизу панели.</div>
+</div></div>`;
+  body.innerHTML = html;
+  ensureCriteriaFooter();
+  attachCriteriaLiveBindings();
+}
+function openCriteriaEditor(year, classId) {
+  currentCriteriaYear = year;
+  currentCriteriaClass = classId;
+  const config = competitionSettings[year]?.[classId];
+  tempCriteria = normalizeCriteria(config?.criteria || []);
+  renderCriteriaOffcanvas();
+  bootstrap.Offcanvas.getOrCreateInstance(document.getElementById("criteriaOffcanvas")).show();
+}
+// ----- Действия над группами и полями (синхронизация DOM → модель перед мутацией) -----
+function clearFieldShort(gIdx, fIdx) {
+  syncCriteriaFromDom();
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "object" && f !== null) f.short = "";
+  renderCriteriaOffcanvas();
+  const input = document.querySelector(`[data-crit-field][data-g="${gIdx}"][data-f="${fIdx}"] [data-role="short"]`);
+  if (input) input.focus();
+}
+function setFieldFlag(gIdx, fIdx, flag, value) {
+  syncCriteriaFromDom();
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: "", type: "int", sum: true, penalty: false};
+  tempCriteria[gIdx].fields[fIdx][flag] = value;
+}
+function setFieldType(gIdx, fIdx, type) {
+  syncCriteriaFromDom();
+  const f = tempCriteria[gIdx].fields[fIdx];
+  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: "", type: "int", sum: true, penalty: false};
+  const field = tempCriteria[gIdx].fields[fIdx];
+  field.type = type;
+  if (type === "text" || type === "bool" || type === "time") {
+    field.sum = false;
+    field.penalty = false;
+  } else {
+    field.sum = true;
+    field.penalty = /штраф/i.test(field.name || "");
+  }
+  renderCriteriaOffcanvas();
+}
+function moveField(gIdx, fIdx, direction) {
+  syncCriteriaFromDom();
+  const arr = tempCriteria[gIdx].fields;
+  const n = fIdx + direction;
+  if (n < 0 || n >= arr.length) return;
+  const t = arr[fIdx];
+  arr[fIdx] = arr[n];
+  arr[n] = t;
+  renderCriteriaOffcanvas();
+}
+function moveGroup(gIdx, direction) {
+  syncCriteriaFromDom();
+  const n = gIdx + direction;
+  if (n < 0 || n >= tempCriteria.length) return;
+  const t = tempCriteria[gIdx];
+  tempCriteria[gIdx] = tempCriteria[n];
+  tempCriteria[n] = t;
+  renderCriteriaOffcanvas();
+}
+function addFieldToGroup(gIdx) {
+  syncCriteriaFromDom();
+  tempCriteria[gIdx].fields.push({id: newFieldId(), name: "Новое поле", short: "", type: "int", sum: true, penalty: false});
+  renderCriteriaOffcanvas();
+}
+function removeField(gIdx, fIdx) {
+  syncCriteriaFromDom();
+  tempCriteria[gIdx].fields.splice(fIdx, 1);
+  renderCriteriaOffcanvas();
+}
+function addCustomGroup() {
+  syncCriteriaFromDom();
+  tempCriteria.push({section: "Новая группа", sectionShort: "", fields: [], attempts: 1, multi: false});
+  renderCriteriaOffcanvas();
+}
+function removeGroup(gIdx) {
+  syncCriteriaFromDom();
+  if (!confirm(`Удалить группу "${tempCriteria[gIdx].section}" со всеми полями?`)) return;
+  tempCriteria.splice(gIdx, 1);
+  renderCriteriaOffcanvas();
+}
+function addGroupFromLibrary(libGroupId) {
+  syncCriteriaFromDom();
+  const libGroup = CRITERIA_LIBRARY.groups.find((g) => g.id === libGroupId);
+  if (!libGroup) return;
+  tempCriteria.push({
+    section: libGroup.name,
+    sectionShort: libGroup.short || "",
+    attempts: 1,
+    multi: false,
+    fields: libGroup.fields.map((f) => ({
+      id: newFieldId(),
+      name: f.name,
+      short: f.short,
+      type: f.type || (/вес|отклон|время/i.test(f.name) ? "decimal" : "int"),
+      sum: !/штраф|вес|размер|отклон|время|кол-во|остров/i.test(f.name),
+      penalty: /штраф/i.test(f.name),
+    })),
+  });
+  renderCriteriaOffcanvas();
+}
+function setGroupMulti(gIdx, checked) {
+  syncCriteriaFromDom();
+  const g = tempCriteria[gIdx];
+  g.multi = !!checked;
+  g.attempts = checked ? (parseInt(g.attempts, 10) > 1 ? parseInt(g.attempts, 10) : 2) : 1;
+  renderCriteriaOffcanvas();
+}
+function setGroupAttempts(gIdx, value) {
+  syncCriteriaFromDom();
+  const n = Math.min(2, Math.max(1, parseInt(value, 10) || 1));
+  tempCriteria[gIdx].attempts = n;
+  if (n > 1) tempCriteria[gIdx].multi = true;
+  renderCriteriaOffcanvas();
+}
+
+// * ===== 23. ШАБЛОНЫ, БИБЛИОТЕКА ГРУПП, ИСТОРИЯ НАБОРОВ =====
+function loadCriteriaTemplates() {
+  return Array.isArray(criteriaTemplates) ? criteriaTemplates : [];
+}
+function saveCriteriaTemplates(list) {
+  criteriaTemplates = Array.isArray(list) ? list : [];
+  saveData();
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+function saveCriteriaAsTemplate() {
+  syncCriteriaFromDom();
+  trimCriteriaInPlace(tempCriteria);
+  const base = prompt(
+    "Название шаблона набора критериев:",
+    `${getClassInfo(currentCriteriaClass).name} ${currentCriteriaYear}`,
+  );
+  if (base === null) return;
+  let name = String(base).trim();
+  if (!name) name = `${getClassInfo(currentCriteriaClass).name} ${currentCriteriaYear}`;
+  name = name.replace(/\s+\d{6}-\d{6}$/, "");
+  const fullName = `${name} ${criteriaTemplateStamp()}`;
+  const list = loadCriteriaTemplates();
+  list.push({id: "t" + Date.now(), name: fullName, criteria: JSON.parse(JSON.stringify(tempCriteria))});
+  saveCriteriaTemplates(list);
+  renderCriteriaOffcanvas();
+  showToast(`Шаблон «${fullName}» сохранён`, "success");
+}
+function applyCriteriaTemplate(id) {
+  const t = loadCriteriaTemplates().find((x) => x.id === id);
+  if (!t) return;
+  tempCriteria = normalizeCriteria(t.criteria);
+  renderCriteriaOffcanvas();
+  showToast(`Шаблон «${t.name}» загружен — не забудьте сохранить`, "info");
+}
+function deleteCriteriaTemplate(id) {
+  const list = loadCriteriaTemplates();
+  const t = list.find((x) => x.id === id);
+  if (!t) return;
+  if (!confirm(`Удалить шаблон «${t.name}»?`)) return;
+  saveCriteriaTemplates(list.filter((x) => x.id !== id));
+  renderCriteriaOffcanvas();
+  showToast("Шаблон удалён", "success");
+}
+// Пользовательская библиотека групп (хранится в шаблонах с флагом library)
+function criteriaLibraryCustom() {
+  return loadCriteriaTemplates().filter((t) => t && t.library);
+}
+function saveGroupToLibrary(gIdx) {
+  syncCriteriaFromDom();
+  const g = tempCriteria[gIdx];
+  if (!g) return;
+  const def = `${g.section} (${g.fields.length} крит.)`;
+  const name = prompt("Название группы в библиотеке:", def);
+  if (name === null) return;
+  const finalName = name.trim() || def;
+  const list = loadCriteriaTemplates();
+  list.push({id: "lib" + Date.now(), name: finalName, criteria: [JSON.parse(JSON.stringify(g))], library: true});
+  saveCriteriaTemplates(list);
+  renderCriteriaOffcanvas();
+  showToast(`Группа «${finalName}» сохранена в библиотеку`, "success");
+}
+function deleteLibraryGroup(id) {
+  const list = loadCriteriaTemplates();
+  const t = list.find((x) => x.id === id);
+  if (!t) return;
+  if (!confirm(`Удалить «${t.name}» из библиотеки групп?`)) return;
+  saveCriteriaTemplates(list.filter((x) => x.id !== id));
+  renderCriteriaOffcanvas();
+  showToast("Группа удалена из библиотеки", "success");
+}
+function addGroupFromLibraryCustom(id) {
+  syncCriteriaFromDom();
+  const t = criteriaLibraryCustom().find((x) => x.id === id);
+  if (!t || !t.criteria || !t.criteria[0]) return;
+  const src = JSON.parse(JSON.stringify(t.criteria[0]));
+  (src.fields || []).forEach((f) => {
+    f.id = newFieldId();
+  });
+  tempCriteria.push(src);
+  renderCriteriaOffcanvas();
+}
+function duplicateCriteriaGroup(gIdx) {
+  syncCriteriaFromDom();
+  const src = JSON.parse(JSON.stringify(tempCriteria[gIdx]));
+  (src.fields || []).forEach((f) => {
+    f.id = newFieldId();
+  });
+  src.section = (src.section || "Группа") + " (копия)";
+  tempCriteria.splice(gIdx + 1, 0, src);
+  renderCriteriaOffcanvas();
+}
+function copyCriteriaSetTo(year, classId) {
+  syncCriteriaFromDom();
+  trimCriteriaInPlace(tempCriteria);
+  const target = `${getClassInfo(classId).name} · ${year}`;
+  if (!confirm(`Скопировать текущий набор критериев в «${target}»?\nСуществующий там набор будет заменён.`)) return;
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  competitionSettings[year][classId] = {
+    ...(competitionSettings[year][classId] || {date: ""}),
+    criteria: JSON.parse(JSON.stringify(tempCriteria)),
+  };
+  saveData();
+  showToast(`Набор скопирован в «${target}»`, "success");
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+// Локальная история наборов: снимок перед каждым сохранением, откат в один клик
+function criteriaHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(CRITERIA_HISTORY_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+function pushCriteriaHistory(year, classId, criteria) {
+  const list = criteriaHistory();
+  list.push({id: "h" + Date.now(), year: String(year), classId, ts: Date.now(), criteria: JSON.parse(JSON.stringify(criteria))});
+  localStorage.setItem(CRITERIA_HISTORY_KEY, JSON.stringify(list.slice(-60)));
+}
+function restoreCriteriaSnapshot(id) {
+  const h = criteriaHistory().find((x) => x.id === id);
+  if (!h) return;
+  if (
+    !confirm(
+      `Восстановить набор «${getClassInfo(h.classId).name} · ${h.year}» от ${new Date(h.ts).toLocaleString("ru-RU")} (групп: ${h.criteria.length})?\nТекущий набор перед заменой уйдёт в историю.`,
+    )
+  )
+    return;
+  const cur = (competitionSettings[h.year] || {})[h.classId];
+  if (cur && Array.isArray(cur.criteria) && cur.criteria.length) pushCriteriaHistory(h.year, h.classId, cur.criteria);
+  if (!competitionSettings[h.year]) competitionSettings[h.year] = {};
+  if (!competitionSettings[h.year][h.classId]) competitionSettings[h.year][h.classId] = {date: "", criteria: []};
+  competitionSettings[h.year][h.classId].criteria = JSON.parse(JSON.stringify(h.criteria));
+  saveData();
+  renderApparatusManager();
+  showToast("Набор критериев восстановлен из истории", "success");
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh.repo && gh.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+// Сохранение набора: защита от потери групп + снимок + флаг авто-группы доп. баллов
+function saveCriteriaFromOffcanvas() {
+  syncCriteriaFromDom();
+  trimCriteriaInPlace(tempCriteria);
+  const year = currentCriteriaYear;
+  const cid = currentCriteriaClass;
+  const cfgBefore = (competitionSettings[year] || {})[cid];
+  const prev = (cfgBefore || {}).criteria || [];
+  const before = Array.isArray(prev) ? prev.length : 0;
+  const after = Array.isArray(tempCriteria) ? tempCriteria.length : 0;
+  if (before > 0 && after < before) {
+    if (
+      !confirm(
+        `Внимание: сохраняемый набор содержит групп: ${after}, а в базе сейчас ${before}.\nГруппы будут удалены из набора этого класса.\n\nПродолжить сохранение?`,
+      )
+    )
+      return;
+  }
+  if (before > 0) pushCriteriaHistory(year, cid, prev);
+  const hadExtra = !!(cfgBefore && findExtraGroup(cfgBefore.criteria));
+  const willExtra = Array.isArray(tempCriteria) && tempCriteria.some((g) => g && g.extra === true);
+  if (!competitionSettings[year]) competitionSettings[year] = {};
+  if (!competitionSettings[year][cid]) competitionSettings[year][cid] = {date: "", criteria: []};
+  competitionSettings[year][cid].criteria = JSON.parse(JSON.stringify(tempCriteria));
+  const cfg = competitionSettings[year][cid];
+  if (hadExtra && !willExtra) cfg.extraGroupDisabled = true;
+  if (willExtra) delete cfg.extraGroupDisabled;
+  if (!cfg.extraGroupDisabled) migrateExtraGroup();
+  saveData();
+  const oc = bootstrap.Offcanvas.getInstance(document.getElementById("criteriaOffcanvas"));
+  if (oc) oc.hide();
+  renderApparatusManager();
+  showToast("Набор критериев сохранён", "success");
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+
+// * ===== 24. АВТО-ГРУППА «ДОП. БАЛЛЫ» =====
+function findExtraGroup(list) {
+  if (!Array.isArray(list)) return null;
+  return (
+    list.find((g) => g && g.extra === true) ||
+    list.find((g) => {
+      const gt = (((g && g.section) || "") + " " + ((g && g.sectionShort) || "")).toLowerCase();
+      if (gt.includes("доп") && gt.includes("балл")) return true;
+      return ((g && g.fields) || []).some((f) =>
+        ((f.name || "") + " " + (f.short || "")).toLowerCase().includes("внеконкурс"),
+      );
+    }) ||
+    null
+  );
+}
+function migrateExtraGroup() {
+  let changed = false;
+  for (const y in competitionSettings) {
+    for (const cid in competitionSettings[y]) {
+      const cfg = competitionSettings[y][cid];
+      if (!cfg || cfg.extraGroupDisabled) continue;
+      if (!Array.isArray(cfg.criteria)) cfg.criteria = [];
+      let grp = findExtraGroup(cfg.criteria);
+      if (grp) {
+        if (!grp.extra) {
+          grp.extra = true;
+          changed = true;
+        }
+      } else if (cfg.criteria.length) {
+        cfg.criteria.push({
+          extra: true,
+          section: "Доп. баллы",
+          sectionShort: "Доп.",
+          attempts: 1,
+          multi: false,
+          fields: [{id: newFieldId(), name: "За внеконкурсное задание", short: "Внеконкурс", type: "int", sum: true, penalty: false}],
+        });
+        changed = true;
+      }
+    }
+  }
+  teamsData.forEach((t) => {
+    const cid = getTeamClassId(t);
+    const cfg = (competitionSettings[t.year] || {})[cid];
+    const grp = cfg && findExtraGroup(cfg.criteria);
+    if (!grp || !grp.fields || !grp.fields[0]) return;
+    const fid = "f:" + grp.fields[0].id;
+    const cur = (t.scores || {})[fid];
+    const legacy = t.extra ?? t.protocol?.extraBonus ?? "";
+    if ((cur === undefined || cur === "" || cur === null) && legacy !== "" && legacy !== null && legacy !== 0) {
+      t.scores = {...(t.scores || {}), [fid]: String(legacy)};
+      changed = true;
+    }
+  });
+  return changed;
+}
+function classHasExtraGroup(year, classId) {
+  const groups = getClassCriteriaGroups(year, classId);
+  return groups.some((cg) => {
+    const gt = ((cg.fullTitle || "") + " " + (cg.title || "")).toLowerCase();
+    if (gt.includes("доп") && gt.includes("балл")) return true;
+    return cg.cols.some((c) => ((c.full || "") + " " + (c.title || "")).toLowerCase().includes("внеконкурс"));
+  });
+}
+
+// * ===== 25. ИМПОРТ / ЭКСПОРТ =====
+function downloadJSON() {
+  if (teamsData.length === 0 && organizations.length === 0) {
+    showToast("Нет данных", "error");
+    return;
+  }
+  const dataToSave = {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData};
+  const dataStr = JSON.stringify(dataToSave, null, 2);
+  const blob = new Blob([dataStr], {type: "application/json"});
+  const url = URL.createObjectURL(blob);
+  const name = `OPMR_teamsBackup_${backupTimestamp()}.json`;
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = name;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast(`База сохранена: ${name} (команд: ${teamsData.length})`, "success");
+}
+function normalizeImportedTeams(teams, defaultYear, base) {
+  const baseTeams = base !== undefined ? base : teamsData;
+  const seen = new Set(baseTeams.map((t) => t.id));
+  teams.forEach((t) => {
+    if (!t.year) t.year = defaultYear;
+    if (!t.orgId) {
+      const name = t.organization || t.shortName || "Без названия";
+      const org = findOrCreateOrg(name, t.shortName || "", t.city || "");
+      t.orgId = org.id;
+      delete t.organization;
+    }
+    if (!t.id || seen.has(t.id) || baseTeams.some((x) => x.id === t.id)) {
+      t.id = generateTeamId(t.orgId, t.year, getClassIdByValue(t.apparatusClass, t.year), seen);
+    }
+    seen.add(t.id);
+    if (!Array.isArray(t.members)) t.members = [];
+    if (!Array.isArray(t.photos)) t.photos = parsePhotosField(t.photos || "");
+    if (!t.created) t.created = new Date().toLocaleDateString("ru-RU");
+  });
+  return teams;
+}
+function importRawData(rawData) {
+  // Полный формат (резервная копия) — замещает базу
+  if (rawData && rawData.organizations && rawData.teams) {
+    organizations = rawData.organizations || [];
+    competitionSettings = normalizeCompetitionSettings(rawData.competitionSettings || getDefaultCompetitionSettings());
+    apparatusClasses = rawData.apparatusClasses || [];
+    ensureApparatusClasses();
+    teamsData = normalizeImportedTeams(rawData.teams || [], currentYear, []);
+    criteriaTemplates = Array.isArray(rawData.criteriaTemplates) ? rawData.criteriaTemplates : [];
+    saveData();
+    showTeamsView();
+    showToast(`Данные загружены: ${teamsData.length} команд (полное замещение)`, "success");
+    return;
+  }
+  // Массив заявок — добавляется к текущей базе
+  let incoming;
+  if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+    incoming = transformYandexFormsData(rawData);
+  } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === "object" && rawData[0].organization) {
+    incoming = rawData;
+  } else {
+    throw new Error("Неизвестный формат данных");
+  }
+  incoming = normalizeImportedTeams(incoming, currentYear);
+  let added = 0;
+  incoming.forEach((t) => {
+    if (!teamsData.some((x) => x.id === t.id)) {
+      teamsData.push(t);
+      added++;
+    }
+  });
+  saveData();
+  showTeamsView();
+  showToast(`Добавлено команд: ${added} (год ${currentYear}). Пропущено дубликатов: ${incoming.length - added}.`, "success");
+}
+function attachFileInputListener() {
+  const input = document.getElementById("fileInput");
+  if (!input || input.dataset.bound) return;
+  input.dataset.bound = "1";
+  input.addEventListener("change", function (event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      try {
+        importRawData(JSON.parse(e.target.result));
+      } catch (err) {
+        showToast("Ошибка чтения JSON: " + err.message, "error");
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = "";
+  });
+}
+function handleEditPageFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    try {
+      importRawData(JSON.parse(e.target.result));
+    } catch (err) {
+      showToast("Ошибка чтения JSON: " + err.message, "error");
+      console.error(err);
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+async function loadDefaultData() {
+  if (loadData()) {
+    renderTeams(teamsData);
+    renderHeaderButtons();
+    renderYearSwitcher();
+    attachFileInputListener();
+    return;
+  }
+  if (localStorage.getItem(STORAGE_KEY_OLD)) {
+    new bootstrap.Modal(document.getElementById("migrationModal")).show();
+    return;
+  }
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    const response = await fetch("data/teams.json", {signal: controller.signal});
+    clearTimeout(timer);
+    if (!response.ok) throw new Error("Файл не найден");
+    const rawData = await response.json();
+    if (rawData.organizations && rawData.teams) {
+      organizations = rawData.organizations || [];
+      competitionSettings = normalizeCompetitionSettings(rawData.competitionSettings || getDefaultCompetitionSettings());
+      apparatusClasses = rawData.apparatusClasses || [];
+      ensureApparatusClasses();
+      teamsData = rawData.teams || [];
+      criteriaTemplates = Array.isArray(rawData.criteriaTemplates) ? rawData.criteriaTemplates : [];
+    } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+      teamsData = transformYandexFormsData(rawData);
+    } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === "object" && rawData[0].organization) {
+      teamsData = rawData;
+    } else {
+      throw new Error("Неизвестный формат данных");
+    }
+    saveData();
+    renderTeams(teamsData);
+  } catch (error) {
+    const reason =
+      error.name === "AbortError"
+        ? "сервер не ответил за 12 секунд. Если сайт открыт без VPN — включите VPN и обновите страницу"
+        : "файл не найден или недоступен";
+    document.getElementById("teamsContainer").innerHTML =
+      `<div class="col-12 text-center text-muted py-5"><i class="fas fa-exclamation-triangle fa-2x mb-2" style="color:#f59e0b"></i><div>Не удалось загрузить <code style="background:#f1f5f9;padding:2px 6px;border-radius:4px">data/teams.json</code>: ${reason}.<br>Войдите в режим Админ и загрузите файл вручную.</div></div>`;
+  }
+  renderHeaderButtons();
+  renderYearSwitcher();
+  attachFileInputListener();
+}
+// ----- Импорт заявки из текста (письмо Яндекс.Форм) -----
+function openTextImportModal() {
+  if (!isAdmin) {
+    showToast("Доступно только администратору", "error");
+    return;
+  }
+  document.getElementById("textImportInput").value = "";
+  document.getElementById("textImportPreview").innerHTML = "";
+  document.getElementById("textImportFooter").style.display = "none";
+  pendingTextImport = null;
+  new bootstrap.Modal(document.getElementById("textImportModal")).show();
+}
+function parseTextApplication() {
+  const raw = document.getElementById("textImportInput").value.trim();
+  if (!raw) {
+    showToast("Вставьте текст письма", "error");
+    return;
+  }
+  const footerIdx = raw.indexOf("Это письмо содержит ответы");
+  const body = (footerIdx >= 0 ? raw.substring(0, footerIdx) : raw).replace(/\r\n?/g, "\n").trim();
+  let id = "",
+    created = "",
+    orgFromTitle = "";
+  const titleMatch = body.match(/Заявка\s+на\s+\S+\s+от\s+(.+)/i);
+  if (titleMatch) orgFromTitle = titleMatch[1].trim();
+  const numMatch = body.match(/Заявка\s+№(\d+)\s+от\s+(\d{2}\.\d{2}\.\d{4})/);
+  if (numMatch) {
+    id = numMatch[1];
+    created = numMatch[2];
+  }
+  const headerRe = /^([A-Za-zА-Яа-яЁё0-9 \/.\-()№]+?):\s*$/;
+  const fields = {};
+  let memberBlocks = [];
+  let curKey = null;
+  let curBlock = null;
+  let inMembers = false;
+  body.split("\n").forEach((line) => {
+    const t = line.trim();
+    if (/^Участник команды:?$/.test(t)) {
+      inMembers = true;
+      curKey = null;
+      if (t.endsWith(":")) return;
+      curBlock = {};
+      memberBlocks.push(curBlock);
+      return;
+    }
+    const hm = t.match(headerRe);
+    if (hm) {
+      inMembers = false;
+      curBlock = null;
+      curKey = hm[1].trim();
+      fields[curKey] = "";
+      return;
+    }
+    if (inMembers) {
+      const dash = t.indexOf(" - ");
+      if (dash > 0) {
+        if (!curBlock) {
+          curBlock = {};
+          memberBlocks.push(curBlock);
+        }
+        curBlock[t.substring(0, dash).trim()] = t.substring(dash + 3).trim();
+      }
+      return;
+    }
+    if (curKey && t) fields[curKey] = fields[curKey] ? fields[curKey] + "\n" + t : t;
+  });
+  memberBlocks = memberBlocks.filter((b) => Object.keys(b).length > 0);
+  const get = (...keys) => {
+    for (const k of keys) if (fields[k]) return fields[k];
+    return "";
+  };
+  const known = [
+    "Организация", "Город (населённый пункт)", "Город", "Республика/край/область", "Регион",
+    "Почтовый индекс", "Индекс", "Адрес", "Телефон/факс", "Телефон", "Email", "E-mail",
+    "ФИО руководителя организации", "Класс аппарата", "Краткое описание аппарата", "Фото аппарата",
+    "ФИО руководителя команды", "Контактный телефон руководителя команды",
+    "Даю согласие на обработку персональных данных",
+  ];
+  let description = get("Краткое описание аппарата");
+  const extras = [];
+  for (const k in fields) {
+    if (!known.includes(k) && fields[k] && k !== "Краткое описание аппарата") extras.push(k + ":\n" + fields[k]);
+  }
+  if (extras.length) description = (description ? description + "\n\n" : "") + extras.join("\n\n");
+  const members = memberBlocks
+    .map((b) => ({
+      fio: b["Ф.И.О."] || b["ФИО"] || "",
+      birth: b["Дата рождения"] || "",
+      passport: b["Паспорт/Свидетельство о рождении"] || b["Паспорт"] || "",
+      isStudent: (b["Студент"] || "Нет").trim(),
+      order: b["Приказ о зачислении (для студентов)"] || b["Приказ о зачислении"] || "",
+    }))
+    .filter((m) => m.fio);
+  const photos = (get("Фото аппарата") || "")
+    .split(/\s+/)
+    .map((s) => s.trim())
+    .filter((s) => /^https?:\/\//i.test(s));
+  pendingTextImport = {
+    id: id || "",
+    created: created || new Date().toLocaleDateString("ru-RU"),
+    year: currentYear,
+    organization: get("Организация") || orgFromTitle,
+    shortName: "",
+    city: get("Город (населённый пункт)", "Город"),
+    region: get("Республика/край/область", "Регион"),
+    postalCode: get("Почтовый индекс", "Индекс"),
+    address: get("Адрес"),
+    phone: get("Телефон/факс", "Телефон"),
+    email: get("Email", "E-mail"),
+    orgLeader: get("ФИО руководителя организации"),
+    apparatusClass: get("Класс аппарата"),
+    apparatusName: description.split("\n")[0].trim(),
+    description,
+    photos,
+    teamLeader: get("ФИО руководителя команды"),
+    teamLeaderPhone: get("Контактный телефон руководителя команды"),
+    members,
+  };
+  renderTextImportPreview();
+  document.getElementById("textImportFooter").style.display = "flex";
+}
+function importPreviewEsc(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+function renderImportPreviewFields(t) {
+  const esc = importPreviewEsc;
+  const input = (label, key, cls) => `<div class="${cls || "col-md-6"}">
+<label class="form-label small mb-1">${label}</label>
+<input type="text" class="form-control form-control-sm" value="${esc(t[key])}" oninput="pendingTextImport.${key} = this.value">
+</div>`;
+  let html = input("Организация", "organization", "col-12");
+  html += input("Город", "city") + input("Регион", "region");
+  html += input("Индекс", "postalCode") + input("Телефон/факс", "phone");
+  html += input("Email", "email", "col-12");
+  html += input("ФИО руководителя организации", "orgLeader", "col-12");
+  html += input("Класс аппарата", "apparatusClass") + input("Название аппарата", "apparatusName");
+  html += input("ФИО руководителя команды", "teamLeader") + input("Телефон руководителя", "teamLeaderPhone");
+  html += input("Дата заявки", "created") + input("Номер заявки", "id");
+  html += `<div class="col-12">
+<label class="form-label small mb-1">Краткое описание аппарата</label>
+<textarea class="form-control form-control-sm" rows="4" oninput="pendingTextImport.description = this.value">${esc(t.description)}</textarea>
+</div>`;
+  return html;
+}
+function renderImportPreviewMembers(t, rerenderFn) {
+  const esc = importPreviewEsc;
+  let html = `<h6 class="mb-2">Участники (${t.members.length}):</h6>`;
+  t.members.forEach((m, i) => {
+    html += `<div class="border rounded p-2 mb-2 bg-white">
+<div class="row g-2 align-items-end">
+<div class="col-md-4"><label class="form-label small mb-1">ФИО</label><input type="text" class="form-control form-control-sm" value="${esc(m.fio)}" oninput="pendingTextImport.members[${i}].fio = this.value"></div>
+<div class="col-md-2"><label class="form-label small mb-1">Дата рождения</label><input type="text" class="form-control form-control-sm" value="${esc(m.birth)}" oninput="pendingTextImport.members[${i}].birth = this.value"></div>
+<div class="col-md-3"><label class="form-label small mb-1">Паспорт/св-во</label><input type="text" class="form-control form-control-sm" value="${esc(m.passport)}" oninput="pendingTextImport.members[${i}].passport = this.value"></div>
+<div class="col-md-2"><label class="form-label small mb-1">Студент</label><select class="form-select form-select-sm" onchange="pendingTextImport.members[${i}].isStudent = this.value"><option value="Нет" ${m.isStudent !== "Да" ? "selected" : ""}>Нет</option><option value="Да" ${m.isStudent === "Да" ? "selected" : ""}>Да</option></select></div>
+<div class="col-md-2"><label class="form-label small mb-1">Приказ</label><input type="text" class="form-control form-control-sm" value="${esc(m.order)}" oninput="pendingTextImport.members[${i}].order = this.value"></div>
+<div class="col-md-1 text-end"><button type="button" class="btn btn-sm btn-outline-danger" onclick="pendingTextImport.members.splice(${i}, 1); ${rerenderFn}();" title="Убрать участника"><i class="fas fa-times"></i></button></div>
+</div>
+</div>`;
+  });
+  return html;
+}
+function renderTextImportPreview() {
+  const t = pendingTextImport;
+  if (!t) return;
+  let html = `<div class="alert alert-info small mb-2"><i class="fas fa-pen me-1"></i>Заявка разобрана. Поля можно исправить прямо здесь, затем «Добавить в базу». Год: <strong>${t.year}</strong> (меняется кнопкой года в шапке).</div>
+<div class="border rounded p-3 mb-3" style="background:#f8fafc"><div class="row g-2">`;
+  html += renderImportPreviewFields(t);
+  html += `<div class="col-12">
+<label class="form-label small mb-1">Фото (по одной ссылке в строке)</label>
+<textarea class="form-control form-control-sm" rows="2" oninput="pendingTextImport.photos = this.value.split(/\\s+/).map(s => s.trim()).filter(s => s)">${importPreviewEsc(t.photos.join("\n"))}</textarea>
+</div>
+</div></div>`;
+  html += renderImportPreviewMembers(t, "renderTextImportPreview");
+  document.getElementById("textImportPreview").innerHTML = html;
+}
+function renderPDFImportPreview() {
+  const t = pendingTextImport;
+  if (!t) return;
+  let html = `<div class="border rounded p-3 mb-3" style="background:#f8fafc"><div class="row g-2">`;
+  html += renderImportPreviewFields(t);
+  html += `</div></div>`;
+  html += renderImportPreviewMembers(t, "renderPDFImportPreview");
+  document.getElementById("pdfImportPreview").innerHTML = html;
+}
+function loadTextFileIntoModal(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    document.getElementById("textImportInput").value = e.target.result;
+    parseTextApplication();
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+// ----- Импорт из файлов: JSON / Excel / PDF -----
+function pickFile(accept, onFile) {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = accept;
+  input.style.display = "none";
+  input.addEventListener("change", () => {
+    const f = input.files[0];
+    input.remove();
+    if (f) onFile(f);
+  });
+  document.body.appendChild(input);
+  input.click();
+}
+function transformObjectRows(rows) {
+  return rows
+    .map((obj) => {
+      const members = [];
+      for (let i = 1; i <= 10; i++) {
+        const fio = obj[`Ф.И.О. [${i}]`];
+        if (fio)
+          members.push({
+            fio: String(fio).trim(),
+            birth: obj[`Дата рождения [${i}]`] || "",
+            passport: obj[`Паспорт/Свидетельство о рождении [${i}]`] || "",
+            isStudent: obj[`Студент [${i}]`] || "Нет",
+            order: obj[`Приказ о зачислении (для студентов) [${i}]`] || "",
+          });
+      }
+      return {
+        id: String(obj["ID"] || ""),
+        created: obj["Время создания"] ? String(obj["Время создания"]).trim().split(" ")[0] : "",
+        organization: obj["Организация"] || "",
+        city: obj["Город (населённый пункт)"] || "",
+        region: obj["Республика/край/область"] || "",
+        postalCode: obj["Почтовый индекс"] || "",
+        address: obj["Адрес"] || "",
+        phone: obj["Телефон/факс"] || "",
+        email: obj["Email"] || "",
+        orgLeader: obj["ФИО руководителя организации"] || "",
+        apparatusClass: obj["Класс аппарата"] || "",
+        description: obj["Краткое описание аппарата"] || "",
+        photos: parsePhotosField(obj["Фото аппарата"]),
+        teamLeader: obj["ФИО руководителя команды"] || "",
+        teamLeaderPhone: obj["Контактный телефон руководителя команды"] || "",
+        members,
+      };
+    })
+    .filter((t) => t.organization);
+}
+function appendTeamsFromData(rawData, label) {
+  let list = null;
+  if (Array.isArray(rawData)) list = rawData;
+  else if (rawData && Array.isArray(rawData.teams)) list = rawData.teams;
+  else if (rawData && (rawData.organization || rawData.orgId)) list = [rawData];
+  else throw new Error("ожидалась команда, массив команд или объект с полем teams");
+  if (list.length && Array.isArray(list[0])) list = transformYandexFormsData(list);
+  else if (list.length && typeof list[0] === "object" && ("Организация" in list[0] || "Ф.И.О. [1]" in list[0]))
+    list = transformObjectRows(list);
+  const incoming = normalizeImportedTeams(list, currentYear);
+  incoming.forEach((t) => {
+    const org = organizations.find((o) => o.id === t.orgId);
+    if (org) mergeOrgEmptyFromApplication(org, t);
+  });
+  let added = 0;
+  incoming.forEach((t) => {
+    if (!teamsData.some((x) => x.id === t.id)) {
+      teamsData.push(t);
+      added++;
+    }
+  });
+  saveData();
+  showTeamsView();
+  showToast(`Добавлено команд из ${label}: ${added} (год ${currentYear}). Пропущено: ${incoming.length - added}.`, "success");
+}
+function importTeamsFromJSONPick() {
+  pickFile(".json,application/json", (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        appendTeamsFromData(JSON.parse(e.target.result), "JSON");
+      } catch (err) {
+        showToast("Ошибка чтения JSON: " + err.message, "error");
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+function importTeamsFromExcelPick() {
+  if (typeof XLSX === "undefined") {
+    showToast("Библиотека Excel не подключена: положите xlsx.full.min.js в lib/ и добавьте script в index.html", "error");
+    return;
+  }
+  pickFile(".xlsx,.xls,.csv", (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type: "array"});
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ""});
+        if (!rows.length) {
+          showToast("Файл пуст или заголовки не распознаны", "error");
+          return;
+        }
+        appendTeamsFromData(rows, "Excel");
+      } catch (err) {
+        showToast("Ошибка чтения Excel: " + err.message, "error");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+function importTeamsFromPDFPick() {
+  pickFile(".pdf,application/pdf", async (file) => {
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "lib/pdf.worker.min.js";
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+      let fullText = "";
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        fullText += textContent.items.map((item) => item.str).join(" ") + "\n";
+      }
+      parsePDFOrganizationApplication(fullText);
+    } catch (err) {
+      showToast("Ошибка чтения PDF: " + err.message, "error");
+      console.error(err);
+    }
+  });
+}
+function parsePDFOrganizationApplication(text) {
+  try {
+    text = text.replace(/\r\n?/g, " ").replace(/\s+/g, " ").trim();
+    const directionMatch = text.match(/по\s+направлению\s+[_\s]*(БЭК|ТНПА|АНПА|АННА|BEK|TNPA|ANPA|ANNA)[_\s]*/i);
+    const direction = directionMatch ? directionMatch[1].toUpperCase() : "";
+    const anchors = [];
+    for (let i = 1; i <= 10; i++) {
+      const regex = new RegExp(`(?<!\\d)${i}(?!\\d)\\s`, "g");
+      const match = regex.exec(text);
+      if (match) anchors.push({num: i, pos: match.index + String(i).length});
+    }
+    const participantsPos = text.indexOf("Список участников");
+    if (participantsPos > 0) anchors.push({num: 11, pos: participantsPos});
+    anchors.sort((a, b) => a.pos - b.pos);
+    const blocks = {};
+    for (let i = 0; i < anchors.length - 1; i++) {
+      blocks[anchors[i].num] = text.substring(anchors[i].pos, anchors[i + 1].pos).trim();
+    }
+    const fieldNames = {
+      1: "Республика/край/область",
+      2: ["Город(населенный пункт)", "Город (населенный пункт)", "Город"],
+      3: "Организация",
+      4: "ФИО руководителя организации",
+      5: ["Почтовый индекс, адрес", "Почтовый индекс"],
+      6: ["Рабочий телефон/факс", "Рабочий телефон"],
+      7: ["E – mail", "E-mail", "Email"],
+      8: "ФИО руководителя команды",
+      9: ["Контактные телефоны руководителя команды", "Контактный телефон руководителя команды"],
+      10: ["Предлагаемый к соревнованиям аппарат", "аппарат"],
+    };
+    const fields = {};
+    for (const num in blocks) {
+      const block = blocks[num];
+      const names = Array.isArray(fieldNames[num]) ? fieldNames[num] : [fieldNames[num]];
+      let value = block;
+      for (const name of names) {
+        const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const match = block.match(new RegExp(escapedName, "i"));
+        if (match) {
+          value = block.substring(match.index + match[0].length).trim();
+          break;
+        }
+      }
+      fields[num] = value;
+    }
+    const region = fields[1] || "";
+    const city = fields[2] || "";
+    const organization = fields[3] || "";
+    const orgLeader = fields[4] || "";
+    const addressBlock = fields[5] || "";
+    const phone = fields[6] || "";
+    const email = (fields[7] || "").replace(/\s+/g, "");
+    const teamLeader = fields[8] || "";
+    const teamLeaderPhone = fields[9] || "";
+    const apparatus = fields[10] || "";
+    const postalCodeMatch = addressBlock.match(/^(\d{6})/);
+    const postalCode = postalCodeMatch ? postalCodeMatch[1] : "";
+    const address = addressBlock.replace(/^\d{6}\s*,?\s*/, "").trim();
+    const participants = [];
+    if (participantsPos > 0) {
+      const participantsText = text.substring(participantsPos);
+      const rowRegex =
+        /\s(\d{1,2})\s([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+)\s(\d{2}\.\d{2}\.\d{4})\s([^0-9]+?)(?=\s\d{1,2}\s[А-ЯЁ]|\sВсего к|$)/gi;
+      let rm;
+      while ((rm = rowRegex.exec(participantsText)) !== null) {
+        const fio = rm[2].trim();
+        const birth = rm[3].trim();
+        const passport = rm[4].trim();
+        if (fio && birth.match(/\d{2}\.\d{2}\.\d{4}/)) {
+          participants.push({fio, birth, passport, order: "", isStudent: "Нет"});
+        }
+      }
+    }
+    pendingTextImport = {
+      id: "",
+      created: new Date().toLocaleDateString("ru-RU"),
+      year: currentYear,
+      organization,
+      shortName: "",
+      city,
+      region,
+      postalCode,
+      address,
+      phone,
+      email,
+      orgLeader,
+      apparatusClass: direction,
+      apparatusName: apparatus.split(/[,]/)[0].trim(),
+      description: apparatus,
+      photos: [],
+      teamLeader,
+      teamLeaderPhone,
+      members: participants,
+    };
+    document.getElementById("pdfImportYear").textContent = currentYear;
+    renderPDFImportPreview();
+    new bootstrap.Modal(document.getElementById("pdfImportModal")).show();
+    showToast(`PDF разобран: ${participants.length} участников`, "success");
+  } catch (err) {
+    console.error("Ошибка парсинга PDF:", err);
+    showToast("Ошибка парсинга PDF: " + err.message, "error");
+  }
+}
+// ----- Единое сохранение импортированной команды (со сверкой контактов организации) -----
+async function finalizeImportedTeam(t, modalId) {
+  const org = findOrCreateOrg(t.organization || t.shortName || "Без названия", t.shortName || "", t.city || "");
+  await reconcileOrgFromApplication(org, t);
+  const year = t.year || currentYear;
+  const finalId = generateTeamId(org.id, year, getClassIdByValue(t.apparatusClass, year));
+  const team = {
+    ...t,
+    orgId: org.id,
+    year,
+    id: finalId,
+    applicationNumber: t.applicationNumber || t.id || "",
+    members: Array.isArray(t.members) ? t.members : [],
+    photos: Array.isArray(t.photos) ? t.photos : [],
+  };
+  delete team.organization;
+  teamsData.push(team);
+  saveData();
+  const inst = bootstrap.Modal.getInstance(document.getElementById(modalId));
+  if (inst) inst.hide();
+  showTeamsView();
+  showToast(
+    `Команда «${org.shortName || org.fullName}» добавлена в ${year} год (ID: ${finalId}, участников: ${team.members.length})`,
+    "success",
+  );
+  pendingTextImport = null;
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo && gh.token) {
+    showToast("Отправка в GitHub...", "info");
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  } else {
+    showToast("⚠ GitHub не настроен — данные только в браузере. Сделайте бэкап: Проект → Скачать JSON.", "info");
+  }
+}
+function applyTextImport() {
+  if (pendingTextImport) finalizeImportedTeam(pendingTextImport, "textImportModal");
+}
+function applyPDFImport() {
+  if (pendingTextImport) finalizeImportedTeam(pendingTextImport, "pdfImportModal");
+}
+
+// * ===== 26. ПОЛНЫЙ БЭКАП ПРОЕКТА (ZIP) =====
+async function backupProject() {
+  if (typeof JSZip === "undefined") {
+    showToast("JSZip не подключён: положите jszip.min.js в lib/ и добавьте script в index.html", "error");
+    return;
+  }
+  showToast("Собираю полный бэкап проекта...", "info");
+  const zip = new JSZip();
+  const included = [];
+  const skipped = [];
+  zip.file(
+    "data/teams.json",
+    JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}, null, 2),
+  );
+  included.push("data/teams.json (актуальные данные на момент бэкапа)");
+  const assets = [
+    "index.html", "app.js", "styles.css", "favicon.svg",
+    "lib/bootstrap.min.css", "lib/all.min.css", "lib/bootstrap.bundle.min.js",
+    "lib/xlsx.full.min.js", "lib/pdf.min.js", "lib/pdf.worker.min.js", "lib/jszip.min.js",
+    "webfonts/fa-solid-900.woff2", "webfonts/fa-brands-400.woff2", "webfonts/fa-regular-400.woff2",
+    "webfonts/fa-solid-900.ttf", "webfonts/fa-brands-400.ttf", "webfonts/fa-regular-400.ttf",
+    "lib/webfonts/fa-solid-900.woff2", "lib/webfonts/fa-brands-400.woff2", "lib/webfonts/fa-regular-400.woff2",
+  ];
+  for (const path of assets) {
+    try {
+      const res = await fetch(path + "?backup=" + Date.now());
+      if (!res.ok) {
+        skipped.push(path);
+        continue;
+      }
+      zip.file(path, await res.arrayBuffer());
+      included.push(path);
+    } catch (e) {
+      skipped.push(path);
+    }
+  }
+  zip.file(
+    "BACKUP_INFO.txt",
+    `Полный бэкап проекта ОПМР\nСоздан: ${new Date().toLocaleString("ru-RU")}\nКоманд: ${teamsData.length}\nОрганизаций: ${organizations.length}\n\nВключено:\n${included.join("\n")}\n\nПропущено (не найдено на сервере):\n${skipped.join("\n") || "—"}\n\nВосстановление: распакуйте архив в папку сайта и опубликуйте (GitHub Pages или локальный сервер). Токен GitHub в бэкап не входит.`,
+  );
+  try {
+    const blob = await zip.generateAsync({type: "blob", compression: "DEFLATE", compressionOptions: {level: 6}});
+    const name = `OPMR_siteBackup_${backupTimestamp()}.zip`;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast(`Бэкап сохранён: ${name} (${(blob.size / 1024 / 1024).toFixed(1)} МБ)`, "success");
+  } catch (e) {
+    showToast("Ошибка создания ZIP: " + e.message, "error");
+  }
+}
+
+// * ============================================================
+// OPMR NAVIGATOR — чистая сборка (финальная часть 5/5)
+// Секции: колонки и суммы · места и сортировки · таблица соревнований ·
+//         протокол команды · сводная таблица · печать ·
+//         обёртки навигации и запуск
+// * ============================================================
+
+// * ===== 27. СОРЕВНОВАНИЯ: КАРТА КОЛОНОК, СУММЫ, ЯЧЕЙКИ =====
+function compColKey(c, i) {
+  if (typeof c === "string") return c;
+  if (c && c.key !== undefined && c.key !== null && String(c.key).trim()) return String(c.key);
+  if (c && c.id !== undefined && c.id !== null && String(c.id).trim()) return String(c.id);
+  return "c" + i;
+}
+function getClassCriteriaGroups(year, classId) {
+  const cfg = (competitionSettings[year] || {})[classId] || {};
+  let raw = cfg.criteria;
+  if (raw && typeof raw === "object" && !Array.isArray(raw) && raw.groups) raw = raw.groups;
+  if (!raw || (Array.isArray(raw) && !raw.length)) return compDefaultGroups();
+  const mapCol = (c, ci) => {
+    const name = (c && String(c.name ?? "").trim()) || "";
+    const short = (c && String(c.short ?? "").trim()) || "";
+    return {
+      id: (c && c.id) || "",
+      key: compColKey(c, ci),
+      short,
+      title: short || name || String(ci + 1),
+      full: name,
+      type: (c && c.type) || "int",
+      sum: c && c.sum !== undefined ? !!c.sum : undefined,
+      penalty: c && c.penalty !== undefined ? !!c.penalty : /штраф/i.test(name),
+    };
+  };
+  const mapGroup = (g, gi) => ({
+    key: g && g.key != null ? String(g.key) : g && g.id != null ? String(g.id) : "g" + gi,
+    title:
+      (g && String(g.sectionShort || g.title || g.name || "").trim()) ||
+      (g && String(g.section || "").trim()) ||
+      "Группа " + (gi + 1),
+    fullTitle: (g && String(g.section || "").trim()) || "",
+    attempts: Math.min(2, Math.max(1, parseInt(g.attempts, 10) || 1)),
+    extra: !!(g && g.extra),
+    cols: ((g && (g.fields || g.cols || g.columns || g.items)) || []).map(mapCol),
+  });
+  let groups = [];
+  if (Array.isArray(raw)) {
+    const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
+    groups = looksLikeGroups
+      ? raw.map(mapGroup)
+      : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", attempts: 1, extra: false, cols: raw.map(mapCol)}];
+  } else if (typeof raw === "object") {
+    groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
+  }
+  groups = groups.filter((g) => g.cols && g.cols.length);
+  return groups.length ? groups : compDefaultGroups();
+}
+function isPtsCol(c) {
+  const hay = ((c.full || "") + " " + (c.title || "")).toLowerCase();
+  return (
+    !c.penalty &&
+    c.type !== "text" &&
+    c.type !== "time" &&
+    (c.sum === true || (c.sum === undefined && (hay.includes("балл") || hay.includes("бонус"))))
+  );
+}
+function renderCriteriaSubhead(c) {
+  const short = String(c.short || "").trim();
+  const isPen = !!c.penalty;
+  const isPts = isPtsCol(c);
+  if (isPen || isPts) {
+    const ico = isPen
+      ? '<i class="fas fa-circle-minus cg-ico cg-ico-pen" aria-hidden="true"></i>'
+      : '<i class="fas fa-circle-plus cg-ico cg-ico-sum" aria-hidden="true"></i>';
+    return short
+      ? `<span class="cg-th-stack">${ico}<span class="cg-th-short">${escHtml(lcLetters(short))}</span></span>`
+      : ico;
+  }
+  return escHtml(lcLetters(short || String(c.title || "")));
+}
+function getScoreValue(team, group, col, gi, ci, attempt) {
+  const a = attempt || 1;
+  const suf = a > 1 ? "#" + a : "";
+  const s = team.scores || team.results || team.protocol || {};
+  const base = [];
+  if (col.id) base.push("f:" + col.id);
+  base.push(
+    col.key,
+    col.full,
+    col.title,
+    `${gi}_${ci}`,
+    `${group.key}_${ci}`,
+    `${group.key}_${col.key}`,
+    `${group.title}::${col.full || col.title}`,
+    `${group.fullTitle || group.title}::${col.full || col.title}`,
+  );
+  const keys = base.filter((k) => k !== undefined && k !== null && k !== "").map((k) => k + suf);
+  const read = (obj) => {
+    if (!obj || typeof obj !== "object") return "";
+    for (const k of keys) if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k];
+    return "";
+  };
+  let v = read(s);
+  if (v === "" && s && s[group.key]) v = read(s[group.key]);
+  if (v === "" && team[group.key]) v = read(team[group.key]);
+  if (v === "") v = read(team);
+  return v;
+}
+function groupAttemptSubtotal(team, cg, gi, a) {
+  let s = 0;
+  cg.cols.forEach((c, ci) => {
+    const contrib = scoreContribution(c, getScoreValue(team, cg, c, gi, ci, a));
+    if (contrib !== null) s += contrib;
+  });
+  return Math.round(s * 100) / 100;
+}
+function computeTeamTotal(team) {
+  const classId = getTeamClassId(team);
+  const groups = getClassCriteriaGroups(team.year, classId);
+  let total = 0;
+  groups.forEach((cg, gi) => {
+    const A = cg.attempts || 1;
+    if (A > 1) {
+      let best = 0;
+      for (let a = 1; a <= A; a++) best = Math.max(best, groupAttemptSubtotal(team, cg, gi, a));
+      total += best;
+    } else {
+      total += groupAttemptSubtotal(team, cg, gi, 1);
+    }
+  });
+  if (!classHasExtraGroup(team.year, classId))
+    total += parseScoreNumber(team.extra ?? team.protocol?.extraBonus ?? 0) || 0;
+  return Math.round(total * 100) / 100;
+}
+function groupBestSubtotal(team, cg, gi) {
+  const A = cg.attempts || 1;
+  let has = false,
+    best = null;
+  for (let a = 1; a <= A; a++) {
+    let any = false;
+    cg.cols.forEach((c, ci) => {
+      const v = getScoreValue(team, cg, c, gi, ci, a);
+      if (v !== "" && v !== undefined && v !== null) any = true;
+    });
+    if (any) {
+      has = true;
+      const s = groupAttemptSubtotal(team, cg, gi, a);
+      if (best === null || s > best) best = s;
+    }
+  }
+  return has ? best : null;
+}
+function teamHasAnyValue(team, critGroups) {
+  for (let gi = 0; gi < critGroups.length; gi++) {
+    const cg = critGroups[gi];
+    const A = cg.attempts || 1;
+    for (let a = 1; a <= A; a++)
+      for (let ci = 0; ci < cg.cols.length; ci++) {
+        const v = getScoreValue(team, cg, cg.cols[ci], gi, ci, a);
+        if (v !== "" && v !== undefined && v !== null) return true;
+      }
+  }
+  return false;
+}
+// Ячейка таблицы: значение/прочерк, форматы, подсветка попытки, m-hide для мобильных
+function scoreCell(team, cg, c, gi, ci, a, rowspan, extraCls) {
+  const v = getScoreValue(team, cg, c, gi, ci, a);
+  const present = v !== "" && v !== undefined && v !== null;
+  let display = "—";
+  let cls = `cg-tint-${c.tint} m-hide${extraCls || ""}`;
+  if (present) {
+    const type = c.type || "int";
+    if (type === "bool") display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
+    else if (type === "text") {
+      display = escHtml(v);
+      cls += " cg-text";
+    } else if (type === "time") {
+      display = `<span class="cg-time-val">${escHtml(formatTimeValue(v))}</span>`;
+      cls += " cg-time";
+    } else {
+      const n = parseScoreNumber(v);
+      display = type === "decimal" && n !== null ? escHtml(String(v).replace(".", ",")) : escHtml(v);
+      if (c.penalty) {
+        cls += " cg-penalty";
+        if (n !== null && n > 0) display = "−" + display;
+      } else if (isPtsCol(c) && n !== null) cls += " cg-score";
+    }
+  } else if ((c.type || "int") === "time") {
+    display = '<span class="cg-time-val">—</span>';
+    cls += " cg-time";
+  }
+  const rs = rowspan > 1 ? ` rowspan="${rowspan}"` : "";
+  return `<td class="${cls}"${rs} style="background:${CG_TINTS[c.tint]} !important">${display}</td>`;
+}
+
+// * ===== 28. МЕСТА И СОРТИРОВКИ =====
+function readCompSortMap() {
+  try {
+    return JSON.parse(localStorage.getItem(COMP_SORT_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+function getCompSort(classId) {
+  return readCompSortMap()[`${currentYear}:${classId}`] || "name";
+}
+function setCompSort(classId, mode) {
+  const map = readCompSortMap();
+  map[`${currentYear}:${classId}`] = mode;
+  try {
+    localStorage.setItem(COMP_SORT_KEY, JSON.stringify(map));
+  } catch {}
+  renderCompetition();
+}
+function sortClassTeams(teams, mode) {
+  const arr = [...teams];
+  const byName = (a, b) =>
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru");
+  const drawOf = (t) => parseScoreNumber(t.draw ?? t.drawNumber ?? t.lot ?? "");
+  if (mode === "draw") {
+    arr.sort((a, b) => {
+      const da = drawOf(a),
+        db = drawOf(b);
+      if (da === null && db === null) return byName(a, b);
+      if (da === null) return 1;
+      if (db === null) return -1;
+      return da - db || byName(a, b);
+    });
+  } else if (mode === "total") {
+    arr.sort((a, b) => {
+      const ta = computeTeamTotal(a),
+        tb = computeTeamTotal(b);
+      if ((ta === 0) !== (tb === 0)) return ta === 0 ? 1 : -1;
+      return tb - ta || byName(a, b);
+    });
+  } else {
+    arr.sort(byName);
+  }
+  return arr;
+}
+function renderPlaceBadge(place) {
+  const p = parseInt(place, 10);
+  if (!p || p < 1) return '<span class="cg-place-empty">—</span>';
+  if (p <= 3) return `<span class="place-badge place-${p}" title="${p} место">${p}</span>`;
+  return `<span class="place-plain">${p}</span>`;
+}
+function classTeamsOf(classId) {
+  return teamsData.filter((t) => t.year === currentYear && getTeamClassId(t) === classId);
+}
+function hasFilledScores(teams) {
+  return teams.some(
+    (t) =>
+      (t.scores && Object.values(t.scores).some((v) => v !== "" && v !== null && v !== undefined)) ||
+      (parseScoreNumber(t.extra ?? t.protocol?.extraBonus ?? "") || 0) !== 0,
+  );
+}
+// Ноль баллов = без места; одинаковые суммы делят место
+function assignPlaces(teams) {
+  const byName = (a, b) =>
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru");
+  const scored = teams.map((t) => ({t, total: computeTeamTotal(t)}));
+  scored.forEach((x) => {
+    x.ranked = x.total !== 0;
+  });
+  scored.sort((a, b) => {
+    if (a.ranked !== b.ranked) return a.ranked ? -1 : 1;
+    if (a.ranked) return b.total - a.total || byName(a.t, b.t);
+    return byName(a.t, b.t);
+  });
+  let rankedCount = 0;
+  let prevTotal = null;
+  let prevPlace = 0;
+  scored.forEach((x) => {
+    if (!x.ranked) {
+      x.t.place = 0;
+      x.t.protocol = {...(x.t.protocol || {}), place: 0, totalScore: x.total};
+      return;
+    }
+    rankedCount++;
+    const place = prevTotal !== null && x.total === prevTotal ? prevPlace : rankedCount;
+    prevTotal = x.total;
+    prevPlace = place;
+    x.t.place = place;
+    x.t.protocol = {...(x.t.protocol || {}), place, totalScore: x.total};
+  });
+  return rankedCount;
+}
+function afterPlacesUpdate(message) {
+  saveData();
+  renderCompetition();
+  showToast(message, "success");
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+}
+function calculatePlacesForClass(classId) {
+  const teams = classTeamsOf(classId);
+  const className = getClassInfo(classId).name;
+  if (!teams.length) {
+    showToast(`В классе «${className}» за ${currentYear} год нет команд`, "error");
+    return;
+  }
+  if (!hasFilledScores(teams)) {
+    showToast("Сначала заполните хотя бы один протокол в этом классе", "error");
+    return;
+  }
+  if (!confirm(`Рассчитать места в классе «${className}» за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`))
+    return;
+  const count = assignPlaces(teams);
+  const map = readCompSortMap();
+  map[`${currentYear}:${classId}`] = "total";
+  try {
+    localStorage.setItem(COMP_SORT_KEY, JSON.stringify(map));
+  } catch {}
+  afterPlacesUpdate(`Места рассчитаны: ${className} · ${currentYear} (${count} команд)`);
+}
+function calculatePlaces() {
+  const yearSettings = competitionSettings[currentYear] || {};
+  const classes = Object.keys(yearSettings).filter((id) => classTeamsOf(id).length);
+  if (!classes.length) {
+    showToast(`За ${currentYear} год нет команд ни в одном классе`, "error");
+    return;
+  }
+  if (!confirm(`Рассчитать места во всех классах за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`))
+    return;
+  let total = 0;
+  const map = readCompSortMap();
+  classes.forEach((id) => {
+    const teams = classTeamsOf(id);
+    if (!hasFilledScores(teams)) return;
+    total += assignPlaces(teams);
+    map[`${currentYear}:${id}`] = "total";
+  });
+  try {
+    localStorage.setItem(COMP_SORT_KEY, JSON.stringify(map));
+  } catch {}
+  if (!total) {
+    showToast("Нет заполненных протоколов — места не рассчитаны", "error");
+    return;
+  }
+  afterPlacesUpdate(`Места рассчитаны: ${total} команд за ${currentYear} год`);
+}
+
+// * ===== 29. ТАБЛИЦА СОРЕВНОВАНИЙ: сворачивание групп, попытки, sticky, ховер =====
+function readCollapseMap() {
+  try {
+    return JSON.parse(localStorage.getItem(COMP_COLLAPSE_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+function isGroupCollapsed(classId, gkey) {
+  const arr = readCollapseMap()[`${currentYear}:${classId}`];
+  return Array.isArray(arr) ? arr.includes(gkey) : true;
+}
+function toggleCompGroup(classId, gkey) {
+  const k = `${currentYear}:${classId}`;
+  const map = readCollapseMap();
+  const arr = Array.isArray(map[k]) ? map[k].slice() : [];
+  const i = arr.indexOf(gkey);
+  if (i >= 0) arr.splice(i, 1);
+  else arr.push(gkey);
+  map[k] = arr;
+  localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
+  renderCompetition();
+}
+function setCompGroupsExpanded(classId, expand) {
+  const k = `${currentYear}:${classId}`;
+  const map = readCollapseMap();
+  map[k] = expand ? [] : getClassCriteriaGroups(currentYear, classId).map((g) => g.key);
+  localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
+  renderCompetition();
+}
+function bindTeamRowHover() {
+  const page = document.getElementById("competitionPage");
+  if (!page || page.dataset.hoverBound) return;
+  page.dataset.hoverBound = "1";
+  const clear = () => page.querySelectorAll("tr.row-hover").forEach((r) => r.classList.remove("row-hover"));
+  page.addEventListener("mouseover", (e) => {
+    const row = e.target.closest("tr[data-team-row]");
+    if (!row) {
+      clear();
+      return;
+    }
+    const id = row.dataset.teamRow;
+    page.querySelectorAll("tr.row-hover").forEach((r) => {
+      if (r.dataset.teamRow !== id) r.classList.remove("row-hover");
+    });
+    page.querySelectorAll(`tr[data-team-row="${id}"]`).forEach((r) => r.classList.add("row-hover"));
+  });
+  page.addEventListener("mouseleave", clear);
+}
+function renderCompetition() {
+  const yearTeams = sortTeamsByName(teamsData.filter((t) => t.year === currentYear));
+  const groups = buildClassGroups(yearTeams);
+  let html = "";
+  for (const key in groups) {
+    const g = groups[key];
+    if (!g.teams.length) continue;
+    const critGroups = getClassCriteriaGroups(currentYear, key);
+    let extraIdx = 0;
+    const extraPool = [2, 3, 4];
+    critGroups.forEach((cg) => {
+      const t = String(cg.title || "").toLowerCase();
+      const tint = t.includes("презентац") ? 0 : t.includes("квалификац") ? 1 : extraPool[extraIdx++ % extraPool.length];
+      cg.tint = tint;
+      cg.cols.forEach((c) => {
+        c.tint = tint;
+      });
+      cg.collapsed = isGroupCollapsed(key, cg.key);
+    });
+    const hideExtra = classHasExtraGroup(currentYear, key);
+    const bg = (i) => `background:${CG_TINTS[i]} !important`;
+    const fixedHead = `background:${CG_FIXED_HEAD} !important`;
+    const fixedBody = `background:${CG_FIXED_BODY} !important`;
+    const rowsPerTeam = critGroups.some((cg) => (cg.attempts || 1) > 1 && !cg.collapsed) ? 2 : 1;
+    let head1 = `<tr><th rowspan="2" class="cg-fixed cg-sticky-0 m-hide" style="${fixedHead}">№</th><th rowspan="2" class="cg-fixed cg-sticky-1" style="${fixedHead}">Команда</th>`;
+    let head2 = `<tr>`;
+    critGroups.forEach((cg) => {
+      const A = cg.attempts || 1;
+      const full = cg.fullTitle || cg.title;
+      const pi = full.indexOf("(");
+      const main = pi > 0 ? full.slice(0, pi).trim() : full;
+      const paren = pi > 0 ? full.slice(pi).trim() : "";
+      const span = cg.collapsed ? 1 : cg.cols.length + (A > 1 ? 1 : 0);
+      head1 += `<th colspan="${span}" class="cg-tint-${cg.tint} m-hide cg-group-th${cg.collapsed ? " is-collapsed" : ""}" style="${bg(cg.tint)}" title="${escHtml(full)} — нажмите, чтобы ${cg.collapsed ? "развернуть" : "свернуть"}" onclick="toggleCompGroup('${key}','${cg.key}')">${escHtml(main)}${paren ? ` <span class="cg-group-paren">${escHtml(lcLetters(paren))}</span>` : ""} <i class="fas fa-chevron-${cg.collapsed ? "down" : "up"} cg-group-chev"></i></th>`;
+      if (cg.collapsed) {
+        head2 += `<th class="cg-tint-${cg.tint} m-hide cg-group-sum-th" style="${bg(cg.tint)}" title="Сумма группы (для нескольких попыток — лучшая)">Σ</th>`;
+      } else {
+        if (A > 1)
+          head2 += `<th class="cg-tint-${cg.tint} cg-attempt-no m-hide" style="${bg(cg.tint)}" title="Номер попытки">№ попытки</th>`;
+        cg.cols.forEach((c) => {
+          head2 += `<th class="cg-tint-${c.tint} m-hide" style="${bg(c.tint)}" title="${escHtml(c.full || c.title)}">${renderCriteriaSubhead(c)}</th>`;
+        });
+      }
+    });
+    head1 += `<th rowspan="2" class="cg-fixed cg-extra-col m-hide" style="${fixedHead}">Доп.</th><th rowspan="2" class="cg-fixed" style="${fixedHead}">Σ</th><th rowspan="2" class="cg-fixed cg-place-col" style="${fixedHead}">Место</th></tr>`;
+    head2 += `</tr>`;
+    const mode = getCompSort(key);
+    const sorted = sortClassTeams(g.teams, mode);
+    let rows = "";
+    sorted.forEach((team) => {
+      const total = computeTeamTotal(team);
+      const hasAny = teamHasAnyValue(team, critGroups);
+      const attemptInfo = critGroups.map((cg, gi) => {
+        const A = cg.attempts || 1;
+        if (A < 2 || cg.collapsed) return null;
+        const subs = [];
+        let has = false;
+        for (let a = 1; a <= A; a++) {
+          subs.push(groupAttemptSubtotal(team, cg, gi, a));
+          cg.cols.forEach((c, ci) => {
+            const v = getScoreValue(team, cg, c, gi, ci, a);
+            if (v !== "" && v !== undefined && v !== null) has = true;
+          });
+        }
+        let best = 1;
+        for (let a = 2; a <= A; a++) if (subs[a - 1] > subs[best - 1]) best = a;
+        return {best, has};
+      });
+      for (let r = 0; r < rowsPerTeam; r++) {
+        let cells = "";
+        if (r === 0) {
+          const drawRaw = team.draw ?? team.drawNumber ?? team.lot ?? "";
+          cells += `<td class="cg-fixed cg-sticky-0 m-hide team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${drawRaw === "" ? "—" : escHtml(drawRaw)}</td>`;
+          const apparatus = (team.apparatusName || "").trim();
+          const surname = teamLeaderSurname(team);
+          const subLines =
+            (apparatus ? `<div class="team-apparatus-line">${escHtml(apparatus)}</div>` : "") +
+            (surname ? `<div class="team-leader-line">${escHtml(surname)}</div>` : "");
+          cells += `<td class="td-team cg-sticky-1 team-block-end" rowspan="${rowsPerTeam}" style="background:#fff !important">${escHtml(getTeamDisplayName(team))}${subLines}</td>`;
+        }
+        critGroups.forEach((cg, gi) => {
+          const A = cg.attempts || 1;
+          if (cg.collapsed) {
+            if (r === 0) {
+              const sub = groupBestSubtotal(team, cg, gi);
+              cells += `<td class="cg-tint-${cg.tint} m-hide cg-group-sum team-block-end${sub !== null && sub > 0 ? " cg-score" : ""}" rowspan="${rowsPerTeam}" style="${bg(cg.tint)}">${sub === null ? "—" : sub}</td>`;
+            }
+          } else if (A > 1) {
+            const info = attemptInfo[gi];
+            const aBest = !!(info && info.has && r + 1 === info.best);
+            const aMut = !!(info && info.has && r + 1 !== info.best);
+            cells += `<td class="cg-attempt-no cg-tint-${cg.tint} m-hide${aBest ? " cg-attempt-best" : ""}${aMut ? " cg-attempt-muted" : ""}" style="${bg(cg.tint)}">${r + 1}${aBest ? ' <i class="fas fa-check" style="font-size:0.6rem"></i>' : ""}</td>`;
+            cg.cols.forEach((c, ci) => {
+              cells += scoreCell(team, cg, c, gi, ci, r + 1, 1, aMut ? " cg-cell-muted" : aBest ? " cg-cell-best" : "");
+            });
+          } else if (r === 0) {
+            cg.cols.forEach((c, ci) => {
+              cells += scoreCell(team, cg, c, gi, ci, 1, rowsPerTeam, "");
+            });
+          }
+        });
+        if (r === 0) {
+          const extraRaw = team.extra ?? team.protocol?.extraBonus ?? "";
+          cells += `<td class="cg-fixed cg-extra-col m-hide team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${extraRaw === "" ? "—" : escHtml(extraRaw)}</td>`;
+          cells += `<td class="cg-fixed cg-total team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}"><strong>${hasAny ? Math.round(total * 100) / 100 : "—"}</strong></td>`;
+          cells += `<td class="cg-fixed cg-place-col team-block-end" rowspan="${rowsPerTeam}" style="${fixedBody}">${renderPlaceBadge(team.place ?? team.protocol?.place)}</td>`;
+        }
+        rows += `<tr class="competition-row${r === rowsPerTeam - 1 ? " team-block-end" : ""}" data-team-row="${team.id}" tabindex="0" title="Открыть протокол команды" onclick="showProtocolPage('${team.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showProtocolPage('${team.id}');}">${cells}</tr>`;
+      }
+    });
+    const anyCollapsed = critGroups.some((cg) => cg.collapsed);
+    const toolbar = `<div class="competition-toolbar">
+<button type="button" class="btn btn-sm btn-outline-primary comp-tool-btn" onclick="calculatePlacesForClass('${key}')"><i class="fas fa-ranking-star me-1"></i>Рассчитать места</button>
+<div class="dropdown">
+<button class="btn btn-sm btn-outline-secondary comp-tool-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="fas fa-arrow-down-wide-short me-1"></i>Сортировка: ${COMP_SORT_LABELS[mode]}</button>
+<ul class="dropdown-menu">${["draw", "name", "total"].map((m) => `<li><a class="dropdown-item d-flex align-items-center justify-content-between ${m === mode ? "active" : ""}" href="#" onclick="setCompSort('${key}','${m}'); return false;"><span>${COMP_SORT_LABELS[m]}</span>${m === mode ? '<i class="fas fa-check ms-3"></i>' : ""}</a></li>`).join("")}</ul>
+</div>
+<button type="button" class="btn btn-sm btn-outline-secondary comp-tool-btn" onclick="setCompGroupsExpanded('${key}', ${anyCollapsed})"><i class="fas fa-${anyCollapsed ? "expand" : "compress"} me-1"></i>${anyCollapsed ? "Развернуть все группы" : "Свернуть все группы"}</button>
+<button type="button" class="btn btn-sm btn-outline-secondary comp-tool-btn print-btn-desktop" onclick="printCompetitionCard(this.closest('.competition-class-card'))"><i class="fas fa-print me-1"></i>Печать таблицы</button>
+<span class="competition-toolbar-hint"><i class="fas fa-hand-pointer me-1"></i>Клик по строке — протокол; клик по заголовку группы — развернуть/свернуть поля</span>
+</div>`;
+    html += `<div class="competition-class-card">
+<div class="group-header competition-class-header">
+<div class="group-header-left">
+<span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${g.name}</span>
+<span class="group-header-title">${escHtml(g.fullName || g.name)}</span>
+</div>
+${g.date ? `<span class="group-date-badge">${escHtml(g.date)}</span>` : ""}
+<span class="competition-class-count">${g.teams.length} ${pluralizeTeams(g.teams.length)}</span>
+</div>
+${toolbar}
+<div class="table-responsive"><table class="competition-table${hideExtra ? " no-extra-col" : ""}">
+<thead>${head1}${head2}</thead>
+<tbody>${rows}</tbody>
+</table></div>
+</div>`;
+  }
+  if (!html) html = `<div class="text-center text-muted py-5">Нет команд для ${currentYear} года</div>`;
+  const el = document.getElementById("competitionContent") || document.getElementById("competitionPage");
+  if (el) el.innerHTML = html;
+  bindTeamRowHover();
+  return html;
+}
+
+// * ===== 30. ПРОТОКОЛ КОМАНДЫ: попытки, суммы, авто-скрытие доп. баллов =====
+function renderProtocolForm(teamId) {
+  const container = document.getElementById("protocolContent");
+  if (!container) return;
+  const team = teamsData.find((t) => t.id === teamId);
+  if (!team) {
+    container.innerHTML = `<div class="detail-section"><div class="alert alert-warning mb-0">Команда не найдена (ID: ${escHtml(teamId)}).</div></div>`;
+    return;
+  }
+  const classId = getTeamClassId(team);
+  const critGroups = getClassCriteriaGroups(team.year, classId);
+  const p = team.protocol || {};
+  const fullName = getTeamFullName(team);
+  let html = `<div class="detail-section"><h4 class="detail-section-title">Протокол команды (${team.year})</h4><div class="row g-3 mb-4"><div class="col-md-8"><div class="detail-label">Команда</div><div class="detail-value">${escHtml(fullName)}</div></div><div class="col-md-4"><div class="detail-label">Класс аппарата</div><div class="detail-value">${escHtml(team.apparatusClass || "—")}</div></div><div class="col-md-8"><div class="detail-label">Руководитель</div><div class="detail-value">${escHtml(team.teamLeader || "—")}</div></div><div class="col-md-4"><div class="detail-label">Название аппарата</div><div class="detail-value">${escHtml(team.apparatusName || "—")}</div></div></div></div><form id="protocolForm" class="edit-form"><div class="detail-section"><h5 class="detail-section-title">Жеребьёвка</h5><div class="row g-3"><div class="col-md-4"><label class="form-label">№ по жребию</label><input type="number" class="form-control" id="protoDrawNumber" value="${p.drawNumber ?? team.draw ?? ""}"></div></div></div>`;
+  critGroups.forEach((cg, gi) => {
+    const A = cg.attempts || 1;
+    html += `<div class="detail-section"><h5 class="detail-section-title">${escHtml(cg.fullTitle || cg.title)}${A > 1 ? ` <span class="proto-attempts-badge">${A} попытки · в зачёт лучшая</span>` : ""}</h5>`;
+    for (let a = 1; a <= A; a++) {
+      if (A > 1) html += `<div class="proto-attempt-head" id="protoAttemptHead-${gi}-a${a}">Попытка ${a}</div>`;
+      html += `<div class="row g-3">`;
+      cg.cols.forEach((c, ci) => {
+        const val = getScoreValue(team, cg, c, gi, ci, a);
+        const pen = !!c.penalty;
+        const type = c.type || "int";
+        const id = `proto-${gi}-${ci}-a${a}`;
+        let fieldHtml;
+        if (type === "bool") {
+          fieldHtml = `<div class="form-check mt-2"><input class="form-check-input proto-calc" type="checkbox" id="${id}" data-gi="${gi}" data-ci="${ci}" data-attempt="${a}" data-type="bool" data-sum="${c.sum !== false ? 1 : 0}" ${isBoolTrue(val) ? "checked" : ""}><label class="form-check-label" for="${id}">Да</label></div>`;
+        } else if (type === "text") {
+          fieldHtml = `<input type="text" class="form-control proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-attempt="${a}" data-type="text" value="${escHtml(val)}" placeholder="Текст">`;
+        } else if (type === "time") {
+          fieldHtml = `<input type="text" inputmode="numeric" class="form-control proto-calc cg-time-input" id="${id}" data-gi="${gi}" data-ci="${ci}" data-attempt="${a}" data-type="time" value="${escHtml(val)}" placeholder="мин:сек">`;
+        } else {
+          const numVal = val === "" || val === undefined || val === null ? "" : escHtml(String(val).replace(",", "."));
+          fieldHtml = `<input type="number" step="${type === "decimal" ? "0.01" : "1"}" class="form-control proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-attempt="${a}" data-type="${type}" data-sum="${c.sum !== false ? 1 : 0}" data-penalty="${pen ? 1 : 0}" value="${numVal}" placeholder="0">`;
+        }
+        html += `<div class="col-md-3"><label class="form-label ${pen ? "proto-penalty-label" : ""}">${escHtml(c.full || c.title)}${pen ? " (штраф)" : ""}</label>${fieldHtml}</div>`;
+      });
+      html += `<div class="col-12"><div class="alert alert-info py-2 mb-0"><strong>Сумма баллов${A > 1 ? " " + a : ""}:</strong> <span id="protoGroupTotal-${gi}-a${a}">0</span></div></div></div>`;
+    }
+    if (A > 1)
+      html += `<div class="alert alert-success py-2 mb-0 mt-2"><strong>В зачёт идёт:</strong> <span id="protoGroupBest-${gi}">0</span></div>`;
+    html += `</div>`;
+  });
+  if (!classHasExtraGroup(team.year, classId)) {
+    html += `<div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="any" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus ?? team.extra ?? 0}"></div></div></div>`;
+  }
+  html += `<div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? team.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
+  container.innerHTML = html;
+  const form = document.getElementById("protocolForm");
+  const onEdit = () => {
+    updateProtocolTotals();
+    protocolFormDirty = true;
+    updateSyncIndicator();
+  };
+  form.addEventListener("input", onEdit);
+  form.addEventListener("change", onEdit);
+  protocolFormDirty = false;
+  updateProtocolTotals();
+  updateSyncIndicator();
+}
+// Подсветка заголовков попыток: зачётная / незачётная
+function decorateProtocolAttempts() {
+  document.querySelectorAll("[id^='protoGroupBest-']").forEach((span) => {
+    const gi = span.id.replace("protoGroupBest-", "");
+    const totals = Array.from(document.querySelectorAll(`[id^='protoGroupTotal-${gi}-a']`));
+    const allZero = totals.length > 0 && totals.every((s) => parseFloat(s.textContent) === 0);
+    const m = span.textContent.match(/попытка (\d+)/);
+    const best = m && !allZero ? Number(m[1]) : null;
+    document.querySelectorAll(`[id^='protoAttemptHead-${gi}-a']`).forEach((h) => {
+      const a = Number(h.id.split("-a")[1]);
+      h.classList.toggle("is-best", best !== null && a === best);
+      h.classList.toggle("is-muted", best !== null && a !== best);
+    });
+  });
+}
+function updateProtocolTotals() {
+  const byGroup = {};
+  document.querySelectorAll(".proto-calc[data-gi]").forEach((inp) => {
+    const gi = inp.dataset.gi;
+    byGroup[gi] = byGroup[gi] || new Set();
+    byGroup[gi].add(inp.dataset.attempt || "1");
+  });
+  let grand = 0;
+  Object.keys(byGroup).forEach((gi) => {
+    const attempts = [...byGroup[gi]].map(Number).sort((x, y) => x - y);
+    const subs = {};
+    let best = null,
+      bestA = null;
+    attempts.forEach((a) => {
+      let s = 0;
+      document.querySelectorAll(`.proto-calc[data-gi="${gi}"][data-attempt="${a}"]`).forEach((inp) => {
+        const type = inp.dataset.type || "int";
+        if (type === "text" || type === "time") return;
+        if (type === "bool") {
+          if (inp.dataset.sum === "1" && inp.checked) s += 1;
+          return;
+        }
+        const n = parseScoreNumber(inp.value);
+        if (n === null) return;
+        if (inp.dataset.penalty === "1") s -= Math.abs(n);
+        else if (inp.dataset.sum === "1") s += n;
+      });
+      subs[a] = Math.round(s * 100) / 100;
+      const spanEl = document.getElementById(`protoGroupTotal-${gi}-a${a}`);
+      if (spanEl) spanEl.textContent = subs[a];
+      if (attempts.length > 1 && (best === null || subs[a] > best)) {
+        best = subs[a];
+        bestA = a;
+      }
+    });
+    const contrib = attempts.length > 1 ? best || 0 : subs[attempts[0]] || 0;
+    const bspan = document.getElementById(`protoGroupBest-${gi}`);
+    if (bspan) bspan.textContent = attempts.length > 1 ? `${contrib} (попытка ${bestA})` : String(contrib);
+    grand += contrib;
+  });
+  grand += parseScoreNumber(document.getElementById("protoExtraBonus")?.value) || 0;
+  const t = document.getElementById("protoTotal");
+  if (t) t.textContent = Math.round(grand * 100) / 100;
+  decorateProtocolAttempts();
+}
+function saveProtocol() {
+  const team = teamsData.find((t) => t.id === currentProtocolTeamId);
+  if (!team) return;
+  const classId = getTeamClassId(team);
+  const critGroups = getClassCriteriaGroups(team.year, classId);
+  const scores = {...(team.scores || {})};
+  critGroups.forEach((cg, gi) => {
+    const A = cg.attempts || 1;
+    for (let a = 1; a <= A; a++) {
+      const suf = a > 1 ? "#" + a : "";
+      cg.cols.forEach((c, ci) => {
+        const el = document.getElementById(`proto-${gi}-${ci}-a${a}`);
+        if (!el) return;
+        const type = c.type || "int";
+        const value = type === "bool" ? (el.checked ? "Да" : "Нет") : type === "time" ? formatTimeValue(el.value) : el.value;
+        if (c.id) scores["f:" + c.id + suf] = value;
+        scores[`${cg.title}::${c.full || c.title}` + suf] = value;
+      });
+    }
+  });
+  team.scores = scores;
+  team.classId = classId;
+  const draw = document.getElementById("protoDrawNumber")?.value || "";
+  const extraEl = document.getElementById("protoExtraBonus");
+  const extra = extraEl ? parseFloat(extraEl.value) || 0 : team.extra ?? 0;
+  const place = parseInt(document.getElementById("protoPlace")?.value) || 0;
+  team.draw = draw;
+  team.extra = extra;
+  team.place = place;
+  team.protocol = {...(team.protocol || {}), drawNumber: draw, extraBonus: extra, place, totalScore: computeTeamTotal(team)};
+  protocolFormDirty = false;
+  saveData();
+  updateSyncIndicator();
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token) {
+    showToast("Сохранение в GitHub...", "info");
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  } else {
+    showToast("Протокол сохранён локально", "success");
+  }
+  showCompetitionView();
+}
+
+// * ===== 31. СВОДНАЯ ТАБЛИЦА: два режима =====
+function getMasterView() {
+  try {
+    return localStorage.getItem(MASTER_VIEW_KEY) || "org";
+  } catch {
+    return "org";
+  }
+}
+function setMasterView(v) {
+  localStorage.setItem(MASTER_VIEW_KEY, v);
+  renderMasterTable();
+}
+function bestPlaceOf(row) {
+  let best = null;
+  for (const y in row.years || {}) {
+    const p = row.years[y].place;
+    if (p !== null && (best === null || p < best)) best = p;
+  }
+  return best;
+}
+function bestYearOf(row) {
+  let best = null,
+    bestP = null;
+  for (const y in row.years || {}) {
+    const p = row.years[y].place;
+    if (p !== null && (bestP === null || p < bestP || (p === bestP && Number(y) > Number(best)))) {
+      bestP = p;
+      best = Number(y);
+    }
+  }
+  return best;
+}
+function renderMasterTable() {
+  const container = document.getElementById("masterContent");
+  if (!container) return;
+  const view = getMasterView();
+  const years = [2026, 2025, 2024];
+  const enabledClasses = new Set();
+  years.forEach((y) => Object.keys(competitionSettings[y] || {}).forEach((cid) => enabledClasses.add(cid)));
+  teamsData.forEach((t) => {
+    if (!t.orgId) return;
+    const cid = getTeamClassId(t);
+    if (cid && cid !== "na") enabledClasses.add(cid);
+  });
+  if (!enabledClasses.size) {
+    container.innerHTML = '<div class="col-12 text-center text-muted py-5">Нет данных</div>';
+    return;
+  }
+  let html = `<div class="detail-section"><h4 class="detail-section-title">Сводная таблица результатов</h4>
+<div class="master-view-switch">
+<button class="btn btn-sm ${view === "org" ? "btn-primary" : "btn-outline-secondary"}" onclick="setMasterView('org')"><i class="fas fa-building me-1"></i>По организациям</button>
+<button class="btn btn-sm ${view === "team" ? "btn-primary" : "btn-outline-secondary"}" onclick="setMasterView('team')"><i class="fas fa-users me-1"></i>По командам</button>
+</div>`;
+  const classOrder = Array.from(enabledClasses).sort((a, b) =>
+    String(getClassInfo(a).name).localeCompare(String(getClassInfo(b).name), "ru"),
+  );
+  classOrder.forEach((cid) => {
+    const info = getClassInfo(cid);
+    html += `<div class="master-class-block"><div class="master-class-head"><span class="badge category-badge ${info.color}">${escHtml(info.name)}</span><span class="master-class-title">${escHtml(info.fullName || info.name)}</span></div>`;
+    html += view === "org" ? renderMasterByOrg(cid, years) : renderMasterByTeam(cid, years);
+    html += `</div>`;
+  });
+  container.innerHTML = html + "</div>";
+}
+function renderMasterByOrg(cid, years) {
+  const byOrg = {};
+  teamsData.forEach((team) => {
+    if (!team.orgId || getTeamClassId(team) !== cid) return;
+    if (!byOrg[team.orgId]) byOrg[team.orgId] = {org: organizations.find((o) => o.id === team.orgId), years: {}};
+    const place = getTeamPlace(team);
+    const score = teamHasScores(team) ? computeTeamTotal(team) : team.protocol?.totalScore ?? null;
+    const cur = byOrg[team.orgId].years[team.year];
+    if (!cur || (place !== null && (cur.place === null || place < cur.place))) {
+      byOrg[team.orgId].years[team.year] = {place, score};
+    }
+  });
+  const rows = Object.values(byOrg).filter((r) => r.org);
+  rows.sort((a, b) => {
+    const ba = bestPlaceOf(a),
+      bb = bestPlaceOf(b);
+    if (ba !== bb) return (ba ?? 999) - (bb ?? 999);
+    const ya = bestYearOf(a),
+      yb = bestYearOf(b);
+    if (ya !== yb) return yb - ya;
+    return String(a.org.fullName || "").localeCompare(String(b.org.fullName || ""), "ru");
+  });
+  if (!rows.length) return '<div class="text-muted small py-2">Нет данных</div>';
+  let html = `<div class="table-responsive"><table class="table table-hover master-table">
+<thead><tr><th rowspan="2" class="master-org-col">Организация</th>`;
+  years.forEach((y, i) => {
+    html += `<th colspan="2" class="master-year-head${i > 0 ? " master-year-sep" : ""}">${y}</th>`;
+  });
+  html += `<th rowspan="2" class="master-best-head">Лучшее место</th></tr><tr>`;
+  years.forEach((y, i) => {
+    html += `<th class="master-place-col${i > 0 ? " master-year-sep" : ""}">Место</th><th class="master-score-col">Баллы</th>`;
+  });
+  html += `</tr></thead><tbody>`;
+  rows.forEach(({org, years: yd}) => {
+    const best = bestPlaceOf({years: yd});
+    html += `<tr><td><div class="fw-semibold">${escHtml(org.shortName || org.fullName)}</div><div class="text-muted small">${escHtml(org.city || "")}</div></td>`;
+    years.forEach((y, i) => {
+      const d = yd[y];
+      if (d && d.place !== null) {
+        html += `<td class="master-place-cell${i > 0 ? " master-year-sep" : ""}">${renderPlaceBadge(d.place)}</td><td class="master-score-cell">${d.score ?? "—"}</td>`;
+      } else {
+        html += `<td class="master-place-cell${i > 0 ? " master-year-sep" : ""}">—</td><td class="master-score-cell">—</td>`;
+      }
+    });
+    html += `<td class="master-best-cell">${best ? renderPlaceBadge(best) : "—"}</td></tr>`;
+  });
+  return html + `</tbody></table></div>`;
+}
+function renderMasterByTeam(cid, years) {
+  const teams = teamsData.filter((t) => t.orgId && getTeamClassId(t) === cid);
+  teams.sort((a, b) => {
+    const pa = getTeamPlace(a),
+      pb = getTeamPlace(b);
+    if (pa !== null && pb !== null) {
+      if (pa !== pb) return pa - pb;
+      return b.year - a.year;
+    }
+    if (pa !== null) return -1;
+    if (pb !== null) return 1;
+    return b.year - a.year;
+  });
+  if (!teams.length) return '<div class="text-muted small py-2">Нет данных</div>';
+  let html = `<div class="table-responsive"><table class="table table-hover master-table master-team-table">
+<thead><tr><th class="master-team-col">Команда</th>`;
+  years.forEach((y, i) => {
+    html += `<th colspan="2" class="master-year-head${i > 0 ? " master-year-sep" : ""}">${y}</th>`;
+  });
+  html += `<th class="master-best-head">Место</th></tr><tr><th></th>`;
+  years.forEach((y, i) => {
+    html += `<th class="master-place-col${i > 0 ? " master-year-sep" : ""}">Место</th><th class="master-score-col">Баллы</th>`;
+  });
+  html += `<th></th></tr></thead><tbody>`;
+  teams.forEach((t) => {
+    const place = getTeamPlace(t);
+    const score = teamHasScores(t) ? computeTeamTotal(t) : t.protocol?.totalScore ?? null;
+    const leaderSurname = teamLeaderSurname(t);
+    const apparatus = (t.apparatusName || "").trim();
+    const subLines =
+      (leaderSurname ? `<div class="master-sub">${escHtml(leaderSurname)}</div>` : "") +
+      (apparatus ? `<div class="master-sub">${escHtml(apparatus)}</div>` : "");
+    html += `<tr><td><div class="fw-semibold">${escHtml(getTeamDisplayName(t))}</div>${subLines}</td>`;
+    years.forEach((y, i) => {
+      if (t.year === y) {
+        html += `<td class="master-place-cell${i > 0 ? " master-year-sep" : ""}">${place !== null ? renderPlaceBadge(place) : "—"}</td><td class="master-score-cell">${score ?? "—"}</td>`;
+      } else {
+        html += `<td class="master-place-cell${i > 0 ? " master-year-sep" : ""}">—</td><td class="master-score-cell">—</td>`;
+      }
+    });
+    html += `<td class="master-best-cell">${place ? renderPlaceBadge(place) : "—"}</td></tr>`;
+  });
+  return html + `</tbody></table></div>`;
+}
+
+// * ===== 32. ПЕЧАТЬ: таблицы, заявки, списки =====
+function printViaIframe(title, bodyHtml, landscape) {
+  const old = document.getElementById("opmrPrintFrame");
+  if (old) old.remove();
+  const frame = document.createElement("iframe");
+  frame.id = "opmrPrintFrame";
+  frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+  document.body.appendChild(frame);
+  const links = Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+    .map((l) => l.outerHTML)
+    .join("");
+  const styles = Array.from(document.querySelectorAll("head style"))
+    .map((s) => s.outerHTML)
+    .join("");
+  const doc = frame.contentWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>${escHtml(title)}</title>${links}${styles}
+<style>
+@page { size: A4 ${landscape ? "landscape" : "portrait"}; margin: 8mm; }
+html, body { background: #fff !important; }
+body { padding: 10px; color: #0f172a; }
+* { scrollbar-width: none !important; }
+::-webkit-scrollbar { display: none !important; }
+.print-sheet-title { font-family: "Manrope", sans-serif; font-size: 14pt; font-weight: 800; margin: 0 0 4px; }
+.print-sheet-sub { font-size: 9pt; color: #475569; margin: 0 0 10px; }
+.print-sheet-head { display: flex; align-items: center; gap: 10px; margin: 0 0 8px; }
+.print-sheet-head .print-class-name { font-family: "Manrope", sans-serif; font-weight: 800; font-size: 13pt; }
+.print-sheet-head .print-sheet-date { margin-left: auto; font-weight: 700; font-size: 11pt; }
+table { width: 100%; border-collapse: collapse; }
+.group-header { display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: space-between !important; flex-wrap: nowrap !important; margin: 0 0 8px; }
+.group-header-left { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.group-date-badge { margin-left: auto; flex-shrink: 0; }
+.team-list-wrap { overflow: visible !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+.team-list-table { min-width: 0 !important; }
+.team-list-table .tl-print { display: none !important; }
+.competition-table .m-hide { display: table-cell !important; }
+.competition-table { table-layout: auto !important; font-size: 7.5pt !important; }
+.competition-table th, .competition-table td { padding: 2px 3px !important; white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
+.competition-table thead tr:nth-child(2) th { height: 40px !important; }
+.competition-table thead tr:nth-child(2) th .cg-th-stack { top: 3px !important; bottom: 3px !important; }
+.print-class-block { page-break-after: always; }
+.print-class-block:last-child { page-break-after: auto; }
+.print-toolbar, .print-btn-desktop { display: none !important; }
+.print-kv-table, .print-members-table { border-collapse: collapse; width: 100%; font-size: 9pt; }
+.print-kv-table th, .print-kv-table td, .print-members-table th, .print-members-table td { border: 1px solid #94a3b8; padding: 3px 6px; text-align: left; vertical-align: top; }
+.print-kv-table th { background: #f1f5f9; width: 16%; font-weight: 700; }
+.print-members-table th { background: #f1f5f9; }
+@media print { body { padding: 0; } }
+</style></head><body>${bodyHtml}</body></html>`);
+  doc.close();
+  const run = () => {
+    frame.contentWindow.focus();
+    frame.contentWindow.print();
+    setTimeout(() => frame.remove(), 1500);
+  };
+  if (doc.readyState === "complete") setTimeout(run, 200);
+  else frame.onload = () => setTimeout(run, 200);
+}
+// Печать таблицы класса: временно разворачиваем свёрнутые группы
+function printCompetitionCard(card) {
+  const btn = card.querySelector('[onclick*="calculatePlacesForClass("]');
+  const m = btn && (btn.getAttribute("onclick") || "").match(/calculatePlacesForClass\(\s*['"]([^'"]+)['"]/);
+  const classId = m ? m[1] : null;
+  const k = classId ? `${currentYear}:${classId}` : null;
+  const map = readCollapseMap();
+  const saved = k ? map[k] : undefined;
+  if (k) {
+    map[k] = [];
+    localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
+    renderCompetition();
+  }
+  const target =
+    (k &&
+      Array.from(document.querySelectorAll("#competitionPage .competition-class-card")).find((c) => {
+        const b = c.querySelector('[onclick*="calculatePlacesForClass("]');
+        const mm = b && (b.getAttribute("onclick") || "").match(/calculatePlacesForClass\(\s*['"]([^'"]+)['"]/);
+        return mm && mm[1] === classId;
+      })) ||
+    card;
+  const table = target.querySelector("table");
+  if (!table) return;
+  const badge = target.querySelector(".category-badge");
+  const titleEl = target.querySelector(".group-header-title");
+  const dateEl = target.querySelector(".group-date-badge");
+  const tclone = table.cloneNode(true);
+  tclone.querySelectorAll(".m-hide").forEach((n) => n.classList.remove("m-hide"));
+  tclone.querySelectorAll(".cg-group-chev").forEach((n) => n.remove());
+  const className = titleEl ? titleEl.textContent.trim() : "";
+  const head = `<div class="print-sheet-title">Протокол соревнований</div>
+<div class="print-sheet-head">${badge ? badge.outerHTML : ""}<span class="print-class-name">${escHtml(className)}</span><span class="print-sheet-date">${escHtml(dateEl ? dateEl.textContent.trim() : "")}</span></div>
+<div class="print-sheet-sub">ОПМР Navigator · ${currentYear} год · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>`;
+  printViaIframe(`Протокол соревнований · ${className}`, head + tclone.outerHTML, true);
+  if (k) {
+    if (saved === undefined) delete map[k];
+    else map[k] = saved;
+    localStorage.setItem(COMP_COLLAPSE_KEY, JSON.stringify(map));
+    renderCompetition();
+  }
+}
+function buildTeamApplicationPrintHtml(team) {
+  const org = organizations.find((o) => o.id === team.orgId);
+  const displayName = getTeamDisplayName(team);
+  const members = [...(team.members || [])];
+  const leaderFio = (team.teamLeader || "").trim().toLowerCase();
+  const captainIdx = members.findIndex((m) => (m.fio || "").trim().toLowerCase() === leaderFio);
+  if (captainIdx > 0) members.unshift(members.splice(captainIdx, 1)[0]);
+  const rows = members
+    .map((m, i) => {
+      const isCap = leaderFio !== "" && (m.fio || "").trim().toLowerCase() === leaderFio;
+      return `<tr><td>${i + 1}</td><td>${escHtml(m.fio || "")}${isCap ? " <b>(капитан)</b>" : ""}</td><td>${escHtml(formatDate(m.birth))}</td><td>${escHtml(m.passport || "—")}</td><td>${escHtml(m.isStudent || "Нет")}</td><td>${escHtml(m.isStudent === "Да" ? m.order || "—" : "—")}</td></tr>`;
+    })
+    .join("");
+  return `<div class="print-sheet-title">${escHtml(displayName)} — заявка (${team.year})</div>
+<div class="print-sheet-sub">ОПМР Navigator · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>
+<table class="print-kv-table"><tbody>
+<tr><th>Организация</th><td>${escHtml(org?.fullName || "—")}</td><th>Краткое название</th><td>${escHtml(org?.shortName || team.shortName || "—")}</td></tr>
+<tr><th>Город</th><td>${escHtml(getTeamCity(team) || "—")}</td><th>Регион</th><td>${escHtml(team.region || "—")}</td></tr>
+<tr><th>Индекс</th><td>${escHtml(team.postalCode || "—")}</td><th>Адрес</th><td>${escHtml(team.address || "—")}</td></tr>
+<tr><th>Телефон</th><td>${escHtml(team.phone || "—")}</td><th>Email</th><td>${escHtml(team.email || "—")}</td></tr>
+<tr><th>Руководитель организации</th><td>${escHtml(team.orgLeader || "—")}</td><th>№ заявки</th><td>${escHtml(team.applicationNumber || team.id || "—")}</td></tr>
+<tr><th>Класс аппарата</th><td>${escHtml(team.apparatusClass || "—")}</td><th>Название аппарата</th><td>${escHtml(team.apparatusName || "—")}</td></tr>
+<tr><th>Руководитель команды</th><td>${escHtml(team.teamLeader || "—")}</td><th>Телефон руководителя</th><td>${escHtml(team.teamLeaderPhone || "—")}</td></tr>
+</tbody></table>
+<div class="print-sheet-title" style="font-size:11pt;margin-top:10px">Участники (${members.length})</div>
+<table class="print-members-table"><thead><tr><th style="width:24px">№</th><th>ФИО</th><th style="width:90px">Дата рожд.</th><th style="width:140px">Паспорт/св-во</th><th style="width:60px">Студент</th><th>Приказ</th></tr></thead><tbody>${rows || '<tr><td colspan="6">Состав команды не указан</td></tr>'}</tbody></table>`;
+}
+function printTeamApplication(teamId) {
+  const team = teamsData.find((t) => t.id === teamId);
+  if (!team) return;
+  printViaIframe(`${getTeamDisplayName(team)} — заявка`, buildTeamApplicationPrintHtml(team), false);
+}
+function printTeamsList() {
+  const sorted = sortTeamsByName(teamsData.filter((t) => t.year === currentYear));
+  if (!sorted.length) {
+    showToast("Нет команд для печати", "error");
+    return;
+  }
+  let body = `<div class="print-sheet-title">Список команд · ${currentYear} год${isGrouped ? " · по классам" : ""}</div><div class="print-sheet-sub">ОПМР Navigator · сформировано ${new Date().toLocaleDateString("ru-RU")}</div>`;
+  if (!isGrouped) {
+    body += `<section class="print-class-block">${renderTeamsTable(sorted)}</section>`;
+  } else {
+    const groups = buildClassGroups(sorted);
+    for (const key in groups) {
+      const g = groups[key];
+      if (!g.teams.length) continue;
+      body += `<section class="print-class-block"><div class="group-header"><div class="group-header-left"><span class="badge category-badge ${g.color}" style="font-size:1rem;padding:0.5rem 0.85rem">${escHtml(g.name)}</span><span class="group-header-title">${escHtml(g.fullName || g.name)}</span></div>${g.date ? `<span class="group-date-badge">${escHtml(g.date)}</span>` : ""}</div>${renderTeamsTable(g.teams)}</section>`;
+    }
+  }
+  printViaIframe(`Список команд ${currentYear}`, body, true);
+}
+
+// * ===== 33. ОБЁРТКИ НАВИГАЦИИ (аппаратная «Назад») И ЗАПУСК =====
+const _navOrig = {
+  teams: showTeamsView,
+  competition: showCompetitionView,
+  master: showMasterTable,
+  org: showOrgManager,
+  apparatus: showApparatusManager,
+  detail: showTeamDetails,
+  edit: editTeam,
+  create: createNewTeam,
+  protocol: showProtocolPage,
+  saveEdit: saveEdit,
+  saveProtocol: saveProtocol,
+  deleteTeam: deleteTeam,
+  finalize: finalizeImportedTeam,
+};
+function wrapNav(key, getState) {
+  const orig = _navOrig[key];
+  return function (...args) {
+    navRecord(getState(...args));
+    return orig.apply(this, args);
+  };
+}
+showTeamsView = wrapNav("teams", () => ({view: "teams", teamId: null}));
+showCompetitionView = wrapNav("competition", () => ({view: "competition", teamId: null}));
+showMasterTable = wrapNav("master", () => ({view: "master", teamId: null}));
+showOrgManager = wrapNav("org", () => ({view: "org", teamId: null}));
+showApparatusManager = wrapNav("apparatus", () => ({view: "apparatus", teamId: null}));
+showTeamDetails = wrapNav("detail", (id) => ({view: "detail", teamId: id}));
+editTeam = wrapNav("edit", (id) => ({view: "edit", teamId: id}));
+createNewTeam = wrapNav("create", () => ({view: "edit", teamId: null}));
+showProtocolPage = wrapNav("protocol", (id) => ({view: "protocol", teamId: id}));
+function wrapReplace(key) {
+  const orig = _navOrig[key];
+  return async function (...args) {
+    navMode = "replace";
+    try {
+      return await orig.apply(this, args);
+    } finally {
+      navMode = "push";
+    }
+  };
+}
+saveEdit = wrapReplace("saveEdit");
+saveProtocol = wrapReplace("saveProtocol");
+deleteTeam = wrapReplace("deleteTeam");
+finalizeImportedTeam = wrapReplace("finalize");
+function goBack() {
+  if (navDepth > 0) history.back();
+  else showTeamsView();
+}
+window.addEventListener("popstate", (e) => {
+  // Сначала «Назад» закрывает оверлеи, а не уходит с экрана
+  const lb = document.getElementById("lightbox");
+  if (lb && lb.classList.contains("active")) {
+    closeLightbox();
+    history.pushState(navCurrent, "");
+    navDepth++;
+    return;
+  }
+  const modalEl = document.querySelector(".modal.show");
+  if (modalEl) {
+    const inst = bootstrap.Modal.getInstance(modalEl);
+    if (inst) inst.hide();
+    history.pushState(navCurrent, "");
+    navDepth++;
+    return;
+  }
+  const ocEl = document.querySelector(".offcanvas.show");
+  if (ocEl) {
+    const inst = bootstrap.Offcanvas.getInstance(ocEl);
+    if (inst) inst.hide();
+    history.pushState(navCurrent, "");
+    navDepth++;
+    return;
+  }
+  navDepth = Math.max(0, navDepth - 1);
+  const s = e.state && e.state.view ? e.state : {view: "teams", teamId: null};
+  navCurrent = s;
+  if (s.view === "competition") _navOrig.competition();
+  else if (s.view === "master") _navOrig.master();
+  else if (s.view === "org" && isAdmin) _navOrig.org();
+  else if (s.view === "apparatus" && isAdmin) _navOrig.apparatus();
+  else if (s.view === "detail" && teamsData.some((t) => t.id === s.teamId)) _navOrig.detail(s.teamId);
+  else if (s.view === "edit" && s.teamId && teamsData.some((t) => t.id === s.teamId)) _navOrig.edit(s.teamId);
+  else if (s.view === "edit" && !s.teamId) _navOrig.create();
+  else if (s.view === "protocol" && teamsData.some((t) => t.id === s.teamId)) _navOrig.protocol(s.teamId);
+  else _navOrig.teams();
+});
+history.replaceState({view: "teams", teamId: null}, "");
+
+async function opmrInit() {
+  suppressDirty = true;
+  renderFooterVersion();
+  renderHeaderButtons();
+  await loadDefaultData();
+  const changed = runIntegrityMigration();
+  if (changed) saveData();
+  suppressDirty = false;
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && !pendingSync) await pullFromGitHub(true);
+  restoreNavState();
+  if (changed) {
+    pendingSync = true;
+    persistSyncState();
+    refreshCurrentView();
+  }
+  updateSyncIndicator();
+  if (pendingSync) showToast("Есть изменения, не сохранённые на сервере — нажмите «Сохранить» на индикаторе", "info");
+}
+opmrInit();
