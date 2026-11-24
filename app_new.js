@@ -91,26 +91,38 @@ const OPMR_NAV_CALL_RE =
 
 // Стандартный набор колонок, если критерии класса не заданы
 const COMP_DEFAULT_SPEC = [
-  ["pres", "Презентация", [
-    ["pres_struct", "Структура", "Структ.", "int", 1],
-    ["pres_sa", "Сравнительный анализ", "СА", "int", 1],
-    ["pres_new", "Новизна", "Нов.", "int", 1],
-    ["pres_qual", "Качество", "Кач.", "int", 1],
-  ]],
-  ["qual", "Квалификация", [
-    ["qual_place", "Сумма размерений", "Разм.", "decimal", 0],
-    ["qual_weight", "Вес (кг)", "Вес", "decimal", 0],
-    ["qual_penalty", "Штрафные баллы", "Штраф", "int", -1],
-    ["qual_ok", "Квал. задание выполнено", "Квал.", "bool", 0],
-  ]],
-  ["task", "Конкурсное задание", [
-    ["task_time", "Время (сек)", "Т сек", "decimal", 0],
-    ["task_score", "Балл за время", "Т балл", "int", 1],
-    ["task_gate", "Прохождение ворот", "Вор.", "int", 1],
-    ["task_park", "Парковка", "Парк.", "int", 1],
-    ["task_gar", "Нужный гараж", "Гар.", "int", 1],
-    ["task_penalty", "Штрафные баллы", "Штраф", "int", -1],
-  ]],
+  [
+    "pres",
+    "Презентация",
+    [
+      ["pres_struct", "Структура", "Структ.", "int", 1],
+      ["pres_sa", "Сравнительный анализ", "СА", "int", 1],
+      ["pres_new", "Новизна", "Нов.", "int", 1],
+      ["pres_qual", "Качество", "Кач.", "int", 1],
+    ],
+  ],
+  [
+    "qual",
+    "Квалификация",
+    [
+      ["qual_place", "Сумма размерений", "Разм.", "decimal", 0],
+      ["qual_weight", "Вес (кг)", "Вес", "decimal", 0],
+      ["qual_penalty", "Штрафные баллы", "Штраф", "int", -1],
+      ["qual_ok", "Квал. задание выполнено", "Квал.", "bool", 0],
+    ],
+  ],
+  [
+    "task",
+    "Конкурсное задание",
+    [
+      ["task_time", "Время (сек)", "Т сек", "decimal", 0],
+      ["task_score", "Балл за время", "Т балл", "int", 1],
+      ["task_gate", "Прохождение ворот", "Вор.", "int", 1],
+      ["task_park", "Парковка", "Парк.", "int", 1],
+      ["task_gar", "Нужный гараж", "Гар.", "int", 1],
+      ["task_penalty", "Штрафные баллы", "Штраф", "int", -1],
+    ],
+  ],
 ];
 function compDefaultGroups() {
   return COMP_DEFAULT_SPEC.map(([key, title, cols]) => ({
@@ -119,7 +131,13 @@ function compDefaultGroups() {
     fullTitle: title,
     attempts: 1,
     cols: cols.map(([k, full, short, type, mode]) => ({
-      key: k, title: short, short, full, type, sum: mode === 1, penalty: mode === -1,
+      key: k,
+      title: short,
+      short,
+      full,
+      type,
+      sum: mode === 1,
+      penalty: mode === -1,
     })),
   }));
 }
@@ -141,34 +159,49 @@ function getDefaultCompetitionSettings() {
       anna: {
         date: "01.11.2024",
         criteria: [
-          {section: "Квалификация", fields: [
-            {name: "Сумма размерений", short: "Разм."},
-            {name: "Штрафные баллы", short: "Штраф"},
-            {name: "Вес (кг)", short: "Вес"},
-            {name: "Бонусные баллы", short: "Бонус"},
-          ]},
-          {section: "Презентация", fields: [
-            {name: "Структура", short: "Структ."},
-            {name: "Эффективность", short: "Эффект."},
-            {name: "Новизна", short: "Нов."},
-            {name: "Перспектива", short: "Персп."},
-            {name: "Качество", short: "Кач."},
-          ]},
-          {section: "Задание 2 (траектория)", fields: [
-            {name: "Среднее отклонение", short: "Отклон."},
-            {name: "Баллы", short: "Баллы"},
-          ]},
-          {section: "Задание 3 (растения)", fields: [
-            {name: "Остров 1", short: "Остр. 1"},
-            {name: "Остров 2", short: "Остр. 2"},
-            {name: "Остров 3", short: "Остр. 3"},
-            {name: "Баллы", short: "Баллы"},
-          ]},
-          {section: "Задание 4 (объекты)", fields: [
-            {name: "Кол-во объектов", short: "Объекты"},
-            {name: "Баллы", short: "Баллы"},
-            {name: "Бонус за непрерывность", short: "Бонус"},
-          ]},
+          {
+            section: "Квалификация",
+            fields: [
+              {name: "Сумма размерений", short: "Разм."},
+              {name: "Штрафные баллы", short: "Штраф"},
+              {name: "Вес (кг)", short: "Вес"},
+              {name: "Бонусные баллы", short: "Бонус"},
+            ],
+          },
+          {
+            section: "Презентация",
+            fields: [
+              {name: "Структура", short: "Структ."},
+              {name: "Эффективность", short: "Эффект."},
+              {name: "Новизна", short: "Нов."},
+              {name: "Перспектива", short: "Персп."},
+              {name: "Качество", short: "Кач."},
+            ],
+          },
+          {
+            section: "Задание 2 (траектория)",
+            fields: [
+              {name: "Среднее отклонение", short: "Отклон."},
+              {name: "Баллы", short: "Баллы"},
+            ],
+          },
+          {
+            section: "Задание 3 (растения)",
+            fields: [
+              {name: "Остров 1", short: "Остр. 1"},
+              {name: "Остров 2", short: "Остр. 2"},
+              {name: "Остров 3", short: "Остр. 3"},
+              {name: "Баллы", short: "Баллы"},
+            ],
+          },
+          {
+            section: "Задание 4 (объекты)",
+            fields: [
+              {name: "Кол-во объектов", short: "Объекты"},
+              {name: "Баллы", short: "Баллы"},
+              {name: "Бонус за непрерывность", short: "Бонус"},
+            ],
+          },
         ],
       },
     },
@@ -178,53 +211,89 @@ function getDefaultCompetitionSettings() {
 // Встроенная библиотека групп редактора критериев
 const CRITERIA_LIBRARY = {
   groups: [
-    {id: "qualification", name: "Квалификация", short: "Квал.", fields: [
-      {name: "Сумма размерений", short: "Разм."},
-      {name: "Штрафные баллы", short: "Штраф"},
-      {name: "Вес (кг)", short: "Вес"},
-      {name: "Бонусные баллы", short: "Бонус"},
-    ]},
-    {id: "presentation", name: "Презентация", short: "През.", fields: [
-      {name: "Структура", short: "Структ."},
-      {name: "Эффективность", short: "Эффект."},
-      {name: "Новизна", short: "Нов."},
-      {name: "Перспектива", short: "Персп."},
-      {name: "Качество", short: "Кач."},
-    ]},
-    {id: "task2", name: "Задание 2 (движение по траектории)", short: "Зад. 2", fields: [
-      {name: "Среднее отклонение", short: "Отклон."},
-      {name: "Баллы", short: "Баллы"},
-    ]},
-    {id: "task3", name: "Задание 3 (растения на островах)", short: "Зад. 3", fields: [
-      {name: "Остров 1", short: "Остр. 1"},
-      {name: "Остров 2", short: "Остр. 2"},
-      {name: "Остров 3", short: "Остр. 3"},
-      {name: "Баллы", short: "Баллы"},
-    ]},
-    {id: "task4", name: "Задание 4 (подводные объекты)", short: "Зад. 4", fields: [
-      {name: "Кол-во объектов", short: "Объекты"},
-      {name: "Баллы", short: "Баллы"},
-      {name: "Бонус за непрерывность", short: "Бонус"},
-    ]},
-    {id: "competition", name: "Конкурсное задание", short: "Конкурс", fields: [
-      {name: "Время (сек)", short: "Время"},
-      {name: "Балл за время", short: "Б. времени"},
-      {name: "Прохождение ворот", short: "Ворота"},
-      {name: "Парковка", short: "Парковка"},
-      {name: "Нужный гараж", short: "Гараж"},
-      {name: "Штрафные баллы", short: "Штраф"},
-    ]},
-    {id: "extra", name: "Дополнительные баллы", short: "Доп.", fields: [
-      {name: "За внеконкурсное задание", short: "Внеконкурс"},
-    ]},
+    {
+      id: "qualification",
+      name: "Квалификация",
+      short: "Квал.",
+      fields: [
+        {name: "Сумма размерений", short: "Разм."},
+        {name: "Штрафные баллы", short: "Штраф"},
+        {name: "Вес (кг)", short: "Вес"},
+        {name: "Бонусные баллы", short: "Бонус"},
+      ],
+    },
+    {
+      id: "presentation",
+      name: "Презентация",
+      short: "През.",
+      fields: [
+        {name: "Структура", short: "Структ."},
+        {name: "Эффективность", short: "Эффект."},
+        {name: "Новизна", short: "Нов."},
+        {name: "Перспектива", short: "Персп."},
+        {name: "Качество", short: "Кач."},
+      ],
+    },
+    {
+      id: "task2",
+      name: "Задание 2 (движение по траектории)",
+      short: "Зад. 2",
+      fields: [
+        {name: "Среднее отклонение", short: "Отклон."},
+        {name: "Баллы", short: "Баллы"},
+      ],
+    },
+    {
+      id: "task3",
+      name: "Задание 3 (растения на островах)",
+      short: "Зад. 3",
+      fields: [
+        {name: "Остров 1", short: "Остр. 1"},
+        {name: "Остров 2", short: "Остр. 2"},
+        {name: "Остров 3", short: "Остр. 3"},
+        {name: "Баллы", short: "Баллы"},
+      ],
+    },
+    {
+      id: "task4",
+      name: "Задание 4 (подводные объекты)",
+      short: "Зад. 4",
+      fields: [
+        {name: "Кол-во объектов", short: "Объекты"},
+        {name: "Баллы", short: "Баллы"},
+        {name: "Бонус за непрерывность", short: "Бонус"},
+      ],
+    },
+    {
+      id: "competition",
+      name: "Конкурсное задание",
+      short: "Конкурс",
+      fields: [
+        {name: "Время (сек)", short: "Время"},
+        {name: "Балл за время", short: "Б. времени"},
+        {name: "Прохождение ворот", short: "Ворота"},
+        {name: "Парковка", short: "Парковка"},
+        {name: "Нужный гараж", short: "Гараж"},
+        {name: "Штрафные баллы", short: "Штраф"},
+      ],
+    },
+    {
+      id: "extra",
+      name: "Дополнительные баллы",
+      short: "Доп.",
+      fields: [{name: "За внеконкурсное задание", short: "Внеконкурс"}],
+    },
   ],
 };
 
 // * ===== 3. ЧИСТЫЕ УТИЛИТЫ =====
 function escHtml(s) {
   return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 function showToast(message, type = "info") {
   const container = document.getElementById("toastContainer");
@@ -254,17 +323,29 @@ function formatFio(fio) {
 }
 function formatDescription(desc) {
   if (!desc || desc.trim() === "") return '<div class="detail-value text-muted">—</div>';
-  return desc.split("\n").filter((p) => p.trim() !== "").map((para) => {
-    const sentences = para.split(". ").filter((s) => s.trim() !== "");
-    if (sentences.length > 1)
-      return sentences.map((s) => `<p style="margin-bottom:0.5rem;color:#334155;font-size:1rem;line-height:1.6">${s.endsWith(".") ? s : s + "."}</p>`).join("");
-    return `<p style="margin-bottom:0.5rem;color:#334155;font-size:1rem;line-height:1.6">${para.trim()}</p>`;
-  }).join("");
+  return desc
+    .split("\n")
+    .filter((p) => p.trim() !== "")
+    .map((para) => {
+      const sentences = para.split(". ").filter((s) => s.trim() !== "");
+      if (sentences.length > 1)
+        return sentences
+          .map(
+            (s) =>
+              `<p style="margin-bottom:0.5rem;color:#334155;font-size:1rem;line-height:1.6">${s.endsWith(".") ? s : s + "."}</p>`,
+          )
+          .join("");
+      return `<p style="margin-bottom:0.5rem;color:#334155;font-size:1rem;line-height:1.6">${para.trim()}</p>`;
+    })
+    .join("");
 }
 function parsePhotosField(value) {
   if (!value) return [];
   if (Array.isArray(value)) return value.map((v) => String(v).trim()).filter((v) => v.length > 0);
-  return String(value).split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+  return String(value)
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 }
 function isDirectImageLink(url) {
   return /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url);
@@ -307,7 +388,10 @@ function formatTimeValue(v) {
   if (total === null) return String(v == null ? "" : v).trim();
   let mins = Math.floor(total / 60);
   let secs = Math.round(total - mins * 60);
-  if (secs === 60) { mins += 1; secs = 0; }
+  if (secs === 60) {
+    mins += 1;
+    secs = 0;
+  }
   return `${mins}:${String(secs).padStart(2, "0")}`;
 }
 function pluralizeTeams(n) {
@@ -337,9 +421,16 @@ function entrySortKey(id, name) {
   if (m) return Number(m[1]);
   m = String(name || "").match(/(\d{6})-(\d{6})$/);
   if (m) {
-    const d = m[1], t = m[2];
-    return new Date(2000 + Number(d.slice(0, 2)), Number(d.slice(2, 4)) - 1, Number(d.slice(4, 6)),
-      Number(t.slice(0, 2)), Number(t.slice(2, 4)), Number(t.slice(4, 6))).getTime();
+    const d = m[1],
+      t = m[2];
+    return new Date(
+      2000 + Number(d.slice(0, 2)),
+      Number(d.slice(2, 4)) - 1,
+      Number(d.slice(4, 6)),
+      Number(t.slice(0, 2)),
+      Number(t.slice(2, 4)),
+      Number(t.slice(4, 6)),
+    ).getTime();
   }
   return 0;
 }
@@ -347,7 +438,8 @@ function entrySortKey(id, name) {
 // * ===== 4. КОМАНДЫ: ИМЕНА, ID, СЛУЖЕБНЫЕ ПОЛЯ =====
 function sortTeamsByName(teams) {
   return [...teams].sort((a, b) =>
-    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru"));
+    getTeamDisplayName(a).toLowerCase().trim().localeCompare(getTeamDisplayName(b).toLowerCase().trim(), "ru"),
+  );
 }
 function getTeamDupIndex(team) {
   const m = String(team.id || "").match(/-(\d+)$/);
@@ -369,7 +461,9 @@ function getTeamCity(team) {
   return org?.city || team.city || "";
 }
 function teamLeaderSurname(team) {
-  const parts = String(team.teamLeader || "").trim().split(/\s+/);
+  const parts = String(team.teamLeader || "")
+    .trim()
+    .split(/\s+/);
   return parts[0] || "";
 }
 function getTeamPlace(team) {
@@ -427,11 +521,13 @@ function ensureApparatusClasses() {
   apparatusClasses = Object.values(map);
 }
 function getClassInfo(classId) {
-  return apparatusClasses.find((c) => c.id === classId) || {
-    id: classId,
-    name: DEFAULT_CLASS_NAMES[classId] || String(classId).toUpperCase(),
-    color: "badge-gray",
-  };
+  return (
+    apparatusClasses.find((c) => c.id === classId) || {
+      id: classId,
+      name: DEFAULT_CLASS_NAMES[classId] || String(classId).toUpperCase(),
+      color: "badge-gray",
+    }
+  );
 }
 function normalizeCompetitionSettings(settings) {
   for (const year in settings) {
@@ -445,7 +541,9 @@ function normalizeCompetitionSettings(settings) {
   return settings;
 }
 function getClassIdByValue(apparatusClass, year = currentYear) {
-  const value = String(apparatusClass || "").trim().toLowerCase();
+  const value = String(apparatusClass || "")
+    .trim()
+    .toLowerCase();
   if (!value) return "na";
   const yearSettings = competitionSettings[year] || {};
   for (const key in yearSettings) {
@@ -462,7 +560,9 @@ function getTeamClassId(team) {
   return getClassIdByValue(team.apparatusClass, team.year);
 }
 function getCategoryBadge(apparatusClass, extraClass = "") {
-  const value = String(apparatusClass || "").trim().toLowerCase();
+  const value = String(apparatusClass || "")
+    .trim()
+    .toLowerCase();
   const info = apparatusClasses.find((c) => value.includes(c.id) || value.includes(c.name.toLowerCase()));
   if (!info) return `<span class="badge category-badge ${extraClass} bg-secondary text-white">Н/Д</span>`;
   return `<span class="badge category-badge ${extraClass} ${info.color}">${info.name}</span>`;
@@ -472,7 +572,14 @@ function buildClassGroups(sortedTeams) {
   const groups = {};
   for (const key in yearSettings) {
     const info = getClassInfo(key);
-    groups[key] = {...yearSettings[key], id: key, name: info.name, fullName: getClassFullName(key), color: info.color, teams: []};
+    groups[key] = {
+      ...yearSettings[key],
+      id: key,
+      name: info.name,
+      fullName: getClassFullName(key),
+      color: info.color,
+      teams: [],
+    };
   }
   groups.other = {name: "Н/Д", fullName: "Класс не определён", color: "bg-secondary text-white", date: "", teams: []};
   sortedTeams.forEach((t) => {
@@ -502,13 +609,18 @@ function findOrCreateOrg(fullName, shortName, city) {
 // Эталон контактов: карточка организации, пустые поля добираются из заявок
 function getOrgEffective(org) {
   const base = {};
-  ORG_CONTACT_FIELDS.forEach((f) => { base[f.key] = String(org[f.key] || "").trim(); });
+  ORG_CONTACT_FIELDS.forEach((f) => {
+    base[f.key] = String(org[f.key] || "").trim();
+  });
   const teams = teamsData.filter((t) => t.orgId === org.id);
   ORG_CONTACT_FIELDS.forEach((f) => {
     if (base[f.key]) return;
     for (const t of teams) {
       const v = String(t[f.key] || "").trim();
-      if (v) { base[f.key] = v; break; }
+      if (v) {
+        base[f.key] = v;
+        break;
+      }
     }
   });
   return base;
@@ -535,8 +647,10 @@ function persistSyncState() {
 }
 function saveData() {
   try {
-    localStorage.setItem(STORAGE_KEY,
-      JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}),
+    );
     if (!suppressDirty) {
       pendingSync = true;
       persistSyncState();
@@ -592,11 +706,20 @@ function migrateData() {
         const org = findOrCreateOrg(orgName, team.shortName || "", team.city || "");
         orgMap[orgName.toLowerCase()] = org.id;
       }
-      const hasProtocol = team.protocol && (team.protocol.totalScore > 0 || team.protocol.place > 0 || team.protocol.competition);
-      teamsData.push({...team, orgId: orgMap[orgName.toLowerCase()], year: hasProtocol ? 2025 : 2026, shortName: team.shortName});
+      const hasProtocol =
+        team.protocol && (team.protocol.totalScore > 0 || team.protocol.place > 0 || team.protocol.competition);
+      teamsData.push({
+        ...team,
+        orgId: orgMap[orgName.toLowerCase()],
+        year: hasProtocol ? 2025 : 2026,
+        shortName: team.shortName,
+      });
       delete teamsData[teamsData.length - 1].organization;
     });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({organizations, apparatusClasses, competitionSettings, teams: teamsData}),
+    );
     localStorage.removeItem(STORAGE_KEY_OLD);
     return true;
   } catch (e) {
@@ -623,13 +746,24 @@ function runMigration() {
 function legacyProtocolToScores(team) {
   const p = team.protocol;
   if (!p) return null;
-  const pres = p.presentation || {}, qual = p.qualification || {}, comp = p.competition || {};
+  const pres = p.presentation || {},
+    qual = p.qualification || {},
+    comp = p.competition || {};
   const map = {
-    pres_struct: pres.structure, pres_sa: pres.analysis, pres_new: pres.novelty, pres_qual: pres.quality,
-    qual_place: p.dimensions, qual_weight: p.weight, qual_penalty: qual.penalty,
+    pres_struct: pres.structure,
+    pres_sa: pres.analysis,
+    pres_new: pres.novelty,
+    pres_qual: pres.quality,
+    qual_place: p.dimensions,
+    qual_weight: p.weight,
+    qual_penalty: qual.penalty,
     qual_ok: qual.completed ? "Да" : "",
-    task_time: comp.time, task_score: comp.timeScore, task_gate: comp.gates,
-    task_park: comp.parking, task_gar: comp.garage, task_penalty: comp.penalty,
+    task_time: comp.time,
+    task_score: comp.timeScore,
+    task_gate: comp.gates,
+    task_park: comp.parking,
+    task_gar: comp.garage,
+    task_penalty: comp.penalty,
   };
   const out = {};
   let any = false;
@@ -650,7 +784,9 @@ function findExtraGroup(list) {
     list.find((g) => {
       const gt = (((g && g.section) || "") + " " + ((g && g.sectionShort) || "")).toLowerCase();
       if (gt.includes("доп") && gt.includes("балл")) return true;
-      return ((g && g.fields) || []).some((f) => ((f.name || "") + " " + (f.short || "")).toLowerCase().includes("внеконкурс"));
+      return ((g && g.fields) || []).some((f) =>
+        ((f.name || "") + " " + (f.short || "")).toLowerCase().includes("внеконкурс"),
+      );
     }) ||
     null
   );
@@ -665,11 +801,27 @@ function migrateExtraGroup() {
       if (!Array.isArray(cfg.criteria)) cfg.criteria = [];
       let grp = findExtraGroup(cfg.criteria);
       if (grp) {
-        if (!grp.extra) { grp.extra = true; changed = true; }
+        if (!grp.extra) {
+          grp.extra = true;
+          changed = true;
+        }
       } else if (cfg.criteria.length) {
         cfg.criteria.push({
-          extra: true, section: "Доп. баллы", sectionShort: "Доп.", attempts: 1, multi: false,
-          fields: [{id: newFieldId(), name: "За внеконкурсное задание", short: "Внеконкурс", type: "int", sum: true, penalty: false}],
+          extra: true,
+          section: "Доп. баллы",
+          sectionShort: "Доп.",
+          attempts: 1,
+          multi: false,
+          fields: [
+            {
+              id: newFieldId(),
+              name: "За внеконкурсное задание",
+              short: "Внеконкурс",
+              type: "int",
+              sum: true,
+              penalty: false,
+            },
+          ],
         });
         changed = true;
       }
@@ -699,7 +851,10 @@ function runIntegrityMigration() {
       cfg.criteria.forEach((g) => {
         if (!Array.isArray(g.fields)) return;
         g.fields.forEach((f) => {
-          if (f && typeof f === "object" && !f.id) { f.id = newFieldId(); changed = true; }
+          if (f && typeof f === "object" && !f.id) {
+            f.id = newFieldId();
+            changed = true;
+          }
         });
       });
     }
@@ -712,10 +867,16 @@ function runIntegrityMigration() {
     }
     seen.add(t.id);
     const cid = getTeamClassId(t);
-    if (t.classId !== cid) { t.classId = cid; changed = true; }
+    if (t.classId !== cid) {
+      t.classId = cid;
+      changed = true;
+    }
     if (!teamHasScores(t)) {
       const legacy = legacyProtocolToScores(t);
-      if (legacy) { t.scores = legacy; changed = true; }
+      if (legacy) {
+        t.scores = legacy;
+        changed = true;
+      }
     }
     if (!t.scores) return;
     const groups = getClassCriteriaGroups(t.year, cid);
@@ -727,7 +888,10 @@ function runIntegrityMigration() {
         const legacyKeys = [
           `${cg.title}::${c.full || c.title}`,
           `${cg.fullTitle || cg.title}::${c.full || c.title}`,
-          c.full, c.title, c.key, `${gi}_${ci}`,
+          c.full,
+          c.title,
+          c.key,
+          `${gi}_${ci}`,
         ];
         for (const k of legacyKeys) {
           if (k && t.scores[k] !== undefined && t.scores[k] !== "") {
@@ -742,9 +906,15 @@ function runIntegrityMigration() {
   teamsData.forEach((t) => {
     if (!t.protocol || !teamHasScores(t)) return;
     const live = computeTeamTotal(t);
-    if (Number(t.protocol.totalScore) !== live) { t.protocol.totalScore = live; changed = true; }
+    if (Number(t.protocol.totalScore) !== live) {
+      t.protocol.totalScore = live;
+      changed = true;
+    }
     const p = getTeamPlace(t);
-    if (p && t.protocol.place !== p) { t.protocol.place = p; changed = true; }
+    if (p && t.protocol.place !== p) {
+      t.protocol.place = p;
+      changed = true;
+    }
   });
   const extraChanged = migrateExtraGroup();
   return changed || extraChanged;
@@ -753,16 +923,27 @@ function auditDatabase() {
   const issues = [];
   const add = (level, text) => issues.push({level, text});
   const ids = new Set();
-  let dup = 0, noFieldId = 0, idMismatch = 0, orphanScores = 0, staleTotal = 0, legacy = 0;
+  let dup = 0,
+    noFieldId = 0,
+    idMismatch = 0,
+    orphanScores = 0,
+    staleTotal = 0,
+    legacy = 0;
   for (const y in competitionSettings) {
     for (const cid in competitionSettings[y]) {
       const cfg = competitionSettings[y][cid];
-      (cfg.criteria || []).forEach((g) => (g.fields || []).forEach((f) => {
-        if (f && typeof f === "object" && !f.id) noFieldId++;
-      }));
+      (cfg.criteria || []).forEach((g) =>
+        (g.fields || []).forEach((f) => {
+          if (f && typeof f === "object" && !f.id) noFieldId++;
+        }),
+      );
       if (!Array.isArray(cfg.criteria) || !cfg.criteria.length) {
         const cnt = teamsData.filter((t) => String(t.year) === String(y) && getTeamClassId(t) === cid).length;
-        if (cnt) add("info", `${y} · ${getClassInfo(cid).name}: набор критериев не задан, используется стандартный (${cnt} команд).`);
+        if (cnt)
+          add(
+            "info",
+            `${y} · ${getClassInfo(cid).name}: набор критериев не задан, используется стандартный (${cnt} команд).`,
+          );
       }
     }
   }
@@ -771,7 +952,10 @@ function auditDatabase() {
     ids.add(t.id);
     const cid = getTeamClassId(t);
     if (!(competitionSettings[t.year] || {})[cid]) {
-      add("error", `«${getTeamDisplayName(t)}» (${t.year}): класс «${getClassInfo(cid).name}» не включён в этом году — команда попадает в «Н/Д».`);
+      add(
+        "error",
+        `«${getTeamDisplayName(t)}» (${t.year}): класс «${getClassInfo(cid).name}» не включён в этом году — команда попадает в «Н/Д».`,
+      );
     }
     const idParts = String(t.id || "").split("-");
     if (idParts.length >= 3 && (idParts[1] !== String(t.year) || idParts[2] !== cid)) idMismatch++;
@@ -779,10 +963,12 @@ function auditDatabase() {
     if (teamHasScores(t)) {
       const groups = getClassCriteriaGroups(t.year, cid);
       const known = new Set();
-      groups.forEach((cg) => cg.cols.forEach((c) => {
-        if (c.id) known.add("f:" + c.id);
-        known.add(`${cg.title}::${c.full || c.title}`);
-      }));
+      groups.forEach((cg) =>
+        cg.cols.forEach((c) => {
+          if (c.id) known.add("f:" + c.id);
+          known.add(`${cg.title}::${c.full || c.title}`);
+        }),
+      );
       const orphans = Object.keys(t.scores).filter((k) => !k.startsWith("f:") && !known.has(k) && t.scores[k] !== "");
       if (orphans.length) orphanScores++;
       const live = computeTeamTotal(t);
@@ -790,7 +976,8 @@ function auditDatabase() {
     }
   });
   if (dup) add("error", `Дублирующихся ID команд: ${dup}.`);
-  if (noFieldId) add("warn", `Полей критериев без постоянного ID: ${noFieldId} (переименование может оборвать связь с оценками).`);
+  if (noFieldId)
+    add("warn", `Полей критериев без постоянного ID: ${noFieldId} (переименование может оборвать связь с оценками).`);
   if (idMismatch) add("warn", `Команд, у которых ID не совпадает с фактическим годом/классом: ${idMismatch}.`);
   if (orphanScores) add("warn", `Команд с оценками-сиротами (поля переименованы или удалены): ${orphanScores}.`);
   if (staleTotal) add("warn", `Команд с устаревшей сохранённой суммой баллов: ${staleTotal}.`);
@@ -828,7 +1015,11 @@ function openIntegrityReport() {
   };
   document.getElementById("integrityReportBody").innerHTML =
     `<p class="text-muted small">Проверяются связи: год → класс → набор критериев → команда → оценки. Автопочинка проставляет постоянные ID полей, привязку команд к классу, переносит старые ключи оценок и пересчитывает суммы.</p><ul class="integrity-list">` +
-    auditDatabase().map((i) => `<li class="integrity-item"><i class="fas ${icons[i.level]}"></i><span>${escHtml(i.text)}</span></li>`).join("") +
+    auditDatabase()
+      .map(
+        (i) => `<li class="integrity-item"><i class="fas ${icons[i.level]}"></i><span>${escHtml(i.text)}</span></li>`,
+      )
+      .join("") +
     `</ul>`;
   bootstrap.Modal.getOrCreateInstance(el).show();
 }
@@ -837,7 +1028,8 @@ function archiveClassCriteria(year, classId) {
   const cfg = (competitionSettings[year] || {})[classId];
   if (!cfg || (!(cfg.criteria || []).length && !cfg.date)) return;
   const list = loadCriteriaTemplates().filter(
-    (t) => !(t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId));
+    (t) => !(t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId),
+  );
   list.push({
     id: "arch_" + year + "_" + classId,
     name: `Архив: ${getClassInfo(classId).name} ${year}`,
@@ -1453,12 +1645,20 @@ function buildMobileMenu() {
 }
 
 // * ===== 14. ВЕРСИЯ ПРИЛОЖЕНИЯ В ФУТЕРЕ =====
-const APP_MAJOR_VERSION = 1;
+// ===== ВЕРСИЯ ПРИЛОЖЕНИЯ: major.версияJS.версияCSS =====
+const APP_MAJOR_VERSION = 1; // меняется вручную при смене поколения
+function readQueryVersion(url) {
+  const m = String(url || "").match(/[?&]v=(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
+}
 function getAppVersionString() {
-  const script = document.querySelector('script[src*="app.js"]');
-  const m = script && script.src.match(/[?&]v=(\d+)/);
-  const build = m ? parseInt(m[1], 10) : 0;
-  return `${APP_MAJOR_VERSION}.${build}`;
+  const jsEl = Array.from(document.querySelectorAll("script[src]")).find((s) =>
+    /(^|\/)app(_new)?\.js(\?|$)/.test(s.src),
+  );
+  const cssEl = Array.from(document.querySelectorAll('link[rel="stylesheet"][href]')).find((l) =>
+    /(^|\/)styles\.css(\?|$)/.test(l.href),
+  );
+  return `${APP_MAJOR_VERSION}.${readQueryVersion(jsEl && jsEl.src)}.${readQueryVersion(cssEl && cssEl.href)}`;
 }
 function renderFooterVersion() {
   const el = document.getElementById("appVersion");
@@ -1546,7 +1746,16 @@ window.addEventListener(
 
 // * ===== 16. НАВИГАЦИЯ ПО СТРАНИЦАМ =====
 function hideAllPages() {
-  ["listPage", "detailPage", "editPage", "competitionPage", "protocolPage", "masterPage", "orgManagerPage", "apparatusPage"].forEach((id) => {
+  [
+    "listPage",
+    "detailPage",
+    "editPage",
+    "competitionPage",
+    "protocolPage",
+    "masterPage",
+    "orgManagerPage",
+    "apparatusPage",
+  ].forEach((id) => {
     const el = document.getElementById(id);
     if (el) {
       el.classList.remove("active");
@@ -1736,7 +1945,8 @@ function renderTeams(teams) {
       html += `<div class="mt-4 group-header-wrap">${groupHeaderHtml(g)}</div><div class="row g-3 mb-4">${g.teams.map((t) => renderTeamCard(t)).join("")}</div>`;
     }
   }
-  if (!isGrouped) html = `<span class="teams-total-count">${filtered.length} ${pluralizeTeams(filtered.length)}</span>` + html;
+  if (!isGrouped)
+    html = `<span class="teams-total-count">${filtered.length} ${pluralizeTeams(filtered.length)}</span>` + html;
   container.innerHTML = html;
 }
 
@@ -1781,7 +1991,8 @@ function showTeamDetails(teamId) {
   const descHtml = formatDescription(team.description);
   const photos = team.photos || [];
   let photosHtml;
-  if (photos.length === 0) photosHtml = `<div class="detail-value text-muted" style="font-size:1rem">Фото не загружено</div>`;
+  if (photos.length === 0)
+    photosHtml = `<div class="detail-value text-muted" style="font-size:1rem">Фото не загружено</div>`;
   else {
     const gridClass = photos.length === 1 ? "apparatus-photo-grid single-photo" : "apparatus-photo-grid";
     const items = photos
@@ -1835,7 +2046,8 @@ function saveTeamName() {
   showTeamDetails(team.id);
   showToast(v ? `Название команды: «${v}»` : "Возвращено авто-имя организации", "success");
   const gh = getGitHubSettings();
-  if (gh && gh.owner && gh.repo && gh.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  if (gh && gh.owner && gh.repo && gh.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
 }
 function addPhotoLinkField(url = "") {
   const container = document.getElementById("photoLinksContainer");
@@ -1883,7 +2095,22 @@ function createNewTeam() {
   isNewTeam = true;
   returnToView = "list";
   document.getElementById("editFormTitle").textContent = `Новая команда (${currentYear})`;
-  ["editOrgSearch", "editShortName", "editCity", "editRegion", "editPostalCode", "editAddress", "editPhone", "editEmail", "editOrgLeader", "editApparatusClass", "editApparatusName", "editDescription", "editTeamLeader", "editTeamLeaderPhone"].forEach((id) => {
+  [
+    "editOrgSearch",
+    "editShortName",
+    "editCity",
+    "editRegion",
+    "editPostalCode",
+    "editAddress",
+    "editPhone",
+    "editEmail",
+    "editOrgLeader",
+    "editApparatusClass",
+    "editApparatusName",
+    "editDescription",
+    "editTeamLeader",
+    "editTeamLeaderPhone",
+  ].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
@@ -1947,7 +2174,10 @@ function updateOrgDatalist() {
   datalist.innerHTML = organizations
     .slice()
     .sort((a, b) => String(a.fullName || "").localeCompare(String(b.fullName || ""), "ru"))
-    .map((o) => `<option value="${escHtml(o.fullName)}" data-id="${o.id}">${escHtml(o.shortName ? o.shortName + " - " + o.fullName : o.fullName)}</option>`)
+    .map(
+      (o) =>
+        `<option value="${escHtml(o.fullName)}" data-id="${o.id}">${escHtml(o.shortName ? o.shortName + " - " + o.fullName : o.fullName)}</option>`,
+    )
     .join("");
 }
 document.addEventListener("input", function (e) {
@@ -2284,7 +2514,8 @@ function addOrganization() {
 }
 function deleteOrganization(orgId) {
   const teamCount = teamsData.filter((t) => t.orgId === orgId).length;
-  if (teamCount > 0 && !confirm(`Эта организация используется в ${teamCount} командах. Удалить справочную запись?`)) return;
+  if (teamCount > 0 && !confirm(`Эта организация используется в ${teamCount} командах. Удалить справочную запись?`))
+    return;
   organizations = organizations.filter((o) => o.id !== orgId);
   saveData();
   renderOrgManager();
@@ -2292,7 +2523,11 @@ function deleteOrganization(orgId) {
   showToast("Организация удалена", "success");
 }
 function mergeDuplicateOrganizations() {
-  const norm = (s) => String(s || "").toLowerCase().replace(/\s+/g, " ").trim();
+  const norm = (s) =>
+    String(s || "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
   const n = organizations.length;
   const parent = organizations.map((_, i) => i);
   const find = (i) => {
@@ -2307,9 +2542,12 @@ function mergeDuplicateOrganizations() {
   };
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
-      const a = organizations[i], b = organizations[j];
-      const af = norm(a.fullName), bf = norm(b.fullName);
-      const as = norm(a.shortName), bs = norm(b.shortName);
+      const a = organizations[i],
+        b = organizations[j];
+      const af = norm(a.fullName),
+        bf = norm(b.fullName);
+      const as = norm(a.shortName),
+        bs = norm(b.shortName);
       const isDup = (af && af === bf) || (as && bs && as === bs) || (as && as === bf) || (bs && bs === af);
       if (isDup) union(i, j);
     }
@@ -2325,10 +2563,18 @@ function mergeDuplicateOrganizations() {
     return;
   }
   const report = merges.map((c) => c.map((i) => `«${organizations[i].fullName}»`).join("  =  ")).join("\n");
-  if (!confirm(`Будут объединены дубликаты:\n\n${report}\n\nОстанется запись с самым полным названием, все команды будут привязаны к ней. Продолжить?`)) return;
+  if (
+    !confirm(
+      `Будут объединены дубликаты:\n\n${report}\n\nОстанется запись с самым полным названием, все команды будут привязаны к ней. Продолжить?`,
+    )
+  )
+    return;
   const removeIds = new Set();
   merges.forEach((c) => {
-    const keepIdx = c.reduce((best, i) => (organizations[i].fullName.length > organizations[best].fullName.length ? i : best), c[0]);
+    const keepIdx = c.reduce(
+      (best, i) => (organizations[i].fullName.length > organizations[best].fullName.length ? i : best),
+      c[0],
+    );
     const keep = organizations[keepIdx];
     c.forEach((i) => {
       if (i === keepIdx) return;
@@ -2391,7 +2637,8 @@ function saveOrgEditor() {
   updateOrgDatalist();
   showToast("Данные организации сохранены", "success");
   const gh = getGitHubSettings();
-  if (gh?.owner && gh?.repo && gh?.token) commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  if (gh?.owner && gh?.repo && gh?.token)
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
 }
 function ensureOrgMismatchModal() {
   let el = document.getElementById("orgMismatchModal");
@@ -2414,7 +2661,10 @@ function askOrgMismatch(org, diffs) {
     document.getElementById("orgMismatchBody").innerHTML =
       `<p class="small text-muted mb-2">Новая заявка содержит данные организации «${escHtml(org.fullName)}», отличающиеся от сохранённых в базе. Сравните значения и выберите действие.</p>
 <table class="table table-sm align-middle mb-0"><thead><tr><th style="width:32%">Поле</th><th>В базе</th><th>В заявке</th></tr></thead><tbody>${diffs
-        .map((d) => `<tr><td class="fw-semibold">${escHtml(d.label)}</td><td class="org-diff-old">${escHtml(d.old) || "—"}</td><td class="org-diff-new">${escHtml(d.neu)}</td></tr>`)
+        .map(
+          (d) =>
+            `<tr><td class="fw-semibold">${escHtml(d.label)}</td><td class="org-diff-old">${escHtml(d.old) || "—"}</td><td class="org-diff-new">${escHtml(d.neu)}</td></tr>`,
+        )
         .join("")}</tbody></table>`;
     const modal = bootstrap.Modal.getOrCreateInstance(el);
     const rep = el.querySelector("#orgMismatchReplace");
@@ -2461,7 +2711,9 @@ function classColorOptions(selected) {
     {val: "badge-yellow", label: "Жёлтый"},
     {val: "badge-gray", label: "Серый"},
   ];
-  return opts.map((o) => `<option value="${o.val}" ${o.val === selected ? "selected" : ""}>${o.label}</option>`).join("");
+  return opts
+    .map((o) => `<option value="${o.val}" ${o.val === selected ? "selected" : ""}>${o.label}</option>`)
+    .join("");
 }
 function renderApparatusManager() {
   const container = document.getElementById("apparatusContent");
@@ -2525,13 +2777,17 @@ function toggleYearClass(year, classId, checked) {
       const arch = loadCriteriaTemplates().find(
         (t) => t.archive && String(t.archive.year) === String(year) && t.archive.classId === classId,
       );
-      competitionSettings[year][classId] = {date: arch?.date || "", criteria: arch ? normalizeCriteria(arch.criteria) : []};
+      competitionSettings[year][classId] = {
+        date: arch?.date || "",
+        criteria: arch ? normalizeCriteria(arch.criteria) : [],
+      };
       if (arch) showToast("Набор критериев восстановлен из архива", "success");
     }
   } else {
     const teamCount = teamsData.filter((t) => String(t.year) === String(year) && getTeamClassId(t) === classId).length;
     let msg = `Отключить класс ${info.name} за ${year} год?`;
-    if (teamCount) msg += `\n\nКоманд в базе: ${teamCount}. Они сохранятся, но попадут в группу «Н/Д», пока класс не включён.`;
+    if (teamCount)
+      msg += `\n\nКоманд в базе: ${teamCount}. Они сохранятся, но попадут в группу «Н/Д», пока класс не включён.`;
     msg += `\n\nНабор критериев и дата уйдут в архив и вернутся при повторном включении.`;
     if (!confirm(msg)) {
       renderApparatusManager();
@@ -2570,7 +2826,9 @@ function updateApparatusClass(idx, field, value) {
   showToast("Справочник классов обновлён", "success");
 }
 function addApparatusClass() {
-  const rawId = prompt("ID нового класса (латинскими буквами, без пробелов,\nнапример: mrs — будет использоваться в ID команд):");
+  const rawId = prompt(
+    "ID нового класса (латинскими буквами, без пробелов,\nнапример: mrs — будет использоваться в ID команд):",
+  );
   if (!rawId) return;
   const id = rawId.trim().toLowerCase();
   if (!/^[a-z]+$/.test(id)) {
@@ -2874,13 +3132,15 @@ function clearFieldShort(gIdx, fIdx) {
 function setFieldFlag(gIdx, fIdx, flag, value) {
   syncCriteriaFromDom();
   const f = tempCriteria[gIdx].fields[fIdx];
-  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: "", type: "int", sum: true, penalty: false};
+  if (typeof f === "string")
+    tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: "", type: "int", sum: true, penalty: false};
   tempCriteria[gIdx].fields[fIdx][flag] = value;
 }
 function setFieldType(gIdx, fIdx, type) {
   syncCriteriaFromDom();
   const f = tempCriteria[gIdx].fields[fIdx];
-  if (typeof f === "string") tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: "", type: "int", sum: true, penalty: false};
+  if (typeof f === "string")
+    tempCriteria[gIdx].fields[fIdx] = {id: newFieldId(), name: f, short: "", type: "int", sum: true, penalty: false};
   const field = tempCriteria[gIdx].fields[fIdx];
   field.type = type;
   if (type === "text" || type === "bool" || type === "time") {
@@ -2913,7 +3173,14 @@ function moveGroup(gIdx, direction) {
 }
 function addFieldToGroup(gIdx) {
   syncCriteriaFromDom();
-  tempCriteria[gIdx].fields.push({id: newFieldId(), name: "Новое поле", short: "", type: "int", sum: true, penalty: false});
+  tempCriteria[gIdx].fields.push({
+    id: newFieldId(),
+    name: "Новое поле",
+    short: "",
+    type: "int",
+    sum: true,
+    penalty: false,
+  });
   renderCriteriaOffcanvas();
 }
 function removeField(gIdx, fIdx) {
@@ -3086,7 +3353,13 @@ function criteriaHistory() {
 }
 function pushCriteriaHistory(year, classId, criteria) {
   const list = criteriaHistory();
-  list.push({id: "h" + Date.now(), year: String(year), classId, ts: Date.now(), criteria: JSON.parse(JSON.stringify(criteria))});
+  list.push({
+    id: "h" + Date.now(),
+    year: String(year),
+    classId,
+    ts: Date.now(),
+    criteria: JSON.parse(JSON.stringify(criteria)),
+  });
   localStorage.setItem(CRITERIA_HISTORY_KEY, JSON.stringify(list.slice(-60)));
 }
 function restoreCriteriaSnapshot(id) {
@@ -3183,7 +3456,16 @@ function migrateExtraGroup() {
           sectionShort: "Доп.",
           attempts: 1,
           multi: false,
-          fields: [{id: newFieldId(), name: "За внеконкурсное задание", short: "Внеконкурс", type: "int", sum: true, penalty: false}],
+          fields: [
+            {
+              id: newFieldId(),
+              name: "За внеконкурсное задание",
+              short: "Внеконкурс",
+              type: "int",
+              sum: true,
+              penalty: false,
+            },
+          ],
         });
         changed = true;
       }
@@ -3272,7 +3554,12 @@ function importRawData(rawData) {
   let incoming;
   if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
     incoming = transformYandexFormsData(rawData);
-  } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === "object" && rawData[0].organization) {
+  } else if (
+    Array.isArray(rawData) &&
+    rawData.length > 0 &&
+    typeof rawData[0] === "object" &&
+    rawData[0].organization
+  ) {
     incoming = rawData;
   } else {
     throw new Error("Неизвестный формат данных");
@@ -3287,7 +3574,10 @@ function importRawData(rawData) {
   });
   saveData();
   showTeamsView();
-  showToast(`Добавлено команд: ${added} (год ${currentYear}). Пропущено дубликатов: ${incoming.length - added}.`, "success");
+  showToast(
+    `Добавлено команд: ${added} (год ${currentYear}). Пропущено дубликатов: ${incoming.length - added}.`,
+    "success",
+  );
 }
 function attachFileInputListener() {
   const input = document.getElementById("fileInput");
@@ -3345,14 +3635,21 @@ async function loadDefaultData() {
     const rawData = await response.json();
     if (rawData.organizations && rawData.teams) {
       organizations = rawData.organizations || [];
-      competitionSettings = normalizeCompetitionSettings(rawData.competitionSettings || getDefaultCompetitionSettings());
+      competitionSettings = normalizeCompetitionSettings(
+        rawData.competitionSettings || getDefaultCompetitionSettings(),
+      );
       apparatusClasses = rawData.apparatusClasses || [];
       ensureApparatusClasses();
       teamsData = rawData.teams || [];
       criteriaTemplates = Array.isArray(rawData.criteriaTemplates) ? rawData.criteriaTemplates : [];
     } else if (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
       teamsData = transformYandexFormsData(rawData);
-    } else if (Array.isArray(rawData) && rawData.length > 0 && typeof rawData[0] === "object" && rawData[0].organization) {
+    } else if (
+      Array.isArray(rawData) &&
+      rawData.length > 0 &&
+      typeof rawData[0] === "object" &&
+      rawData[0].organization
+    ) {
       teamsData = rawData;
     } else {
       throw new Error("Неизвестный формат данных");
@@ -3444,10 +3741,24 @@ function parseTextApplication() {
     return "";
   };
   const known = [
-    "Организация", "Город (населённый пункт)", "Город", "Республика/край/область", "Регион",
-    "Почтовый индекс", "Индекс", "Адрес", "Телефон/факс", "Телефон", "Email", "E-mail",
-    "ФИО руководителя организации", "Класс аппарата", "Краткое описание аппарата", "Фото аппарата",
-    "ФИО руководителя команды", "Контактный телефон руководителя команды",
+    "Организация",
+    "Город (населённый пункт)",
+    "Город",
+    "Республика/край/область",
+    "Регион",
+    "Почтовый индекс",
+    "Индекс",
+    "Адрес",
+    "Телефон/факс",
+    "Телефон",
+    "Email",
+    "E-mail",
+    "ФИО руководителя организации",
+    "Класс аппарата",
+    "Краткое описание аппарата",
+    "Фото аппарата",
+    "ФИО руководителя команды",
+    "Контактный телефон руководителя команды",
     "Даю согласие на обработку персональных данных",
   ];
   let description = get("Краткое описание аппарата");
@@ -3644,7 +3955,10 @@ function appendTeamsFromData(rawData, label) {
   });
   saveData();
   showTeamsView();
-  showToast(`Добавлено команд из ${label}: ${added} (год ${currentYear}). Пропущено: ${incoming.length - added}.`, "success");
+  showToast(
+    `Добавлено команд из ${label}: ${added} (год ${currentYear}). Пропущено: ${incoming.length - added}.`,
+    "success",
+  );
 }
 function importTeamsFromJSONPick() {
   pickFile(".json,application/json", (file) => {
@@ -3661,7 +3975,10 @@ function importTeamsFromJSONPick() {
 }
 function importTeamsFromExcelPick() {
   if (typeof XLSX === "undefined") {
-    showToast("Библиотека Excel не подключена: положите xlsx.full.min.js в lib/ и добавьте script в index.html", "error");
+    showToast(
+      "Библиотека Excel не подключена: положите xlsx.full.min.js в lib/ и добавьте script в index.html",
+      "error",
+    );
     return;
   }
   pickFile(".xlsx,.xls,.csv", (file) => {
@@ -3857,16 +4174,34 @@ async function backupProject() {
   const skipped = [];
   zip.file(
     "data/teams.json",
-    JSON.stringify({organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData}, null, 2),
+    JSON.stringify(
+      {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData},
+      null,
+      2,
+    ),
   );
   included.push("data/teams.json (актуальные данные на момент бэкапа)");
   const assets = [
-    "index.html", "app.js", "styles.css", "favicon.svg",
-    "lib/bootstrap.min.css", "lib/all.min.css", "lib/bootstrap.bundle.min.js",
-    "lib/xlsx.full.min.js", "lib/pdf.min.js", "lib/pdf.worker.min.js", "lib/jszip.min.js",
-    "webfonts/fa-solid-900.woff2", "webfonts/fa-brands-400.woff2", "webfonts/fa-regular-400.woff2",
-    "webfonts/fa-solid-900.ttf", "webfonts/fa-brands-400.ttf", "webfonts/fa-regular-400.ttf",
-    "lib/webfonts/fa-solid-900.woff2", "lib/webfonts/fa-brands-400.woff2", "lib/webfonts/fa-regular-400.woff2",
+    "index.html",
+    "app.js",
+    "styles.css",
+    "favicon.svg",
+    "lib/bootstrap.min.css",
+    "lib/all.min.css",
+    "lib/bootstrap.bundle.min.js",
+    "lib/xlsx.full.min.js",
+    "lib/pdf.min.js",
+    "lib/pdf.worker.min.js",
+    "lib/jszip.min.js",
+    "webfonts/fa-solid-900.woff2",
+    "webfonts/fa-brands-400.woff2",
+    "webfonts/fa-regular-400.woff2",
+    "webfonts/fa-solid-900.ttf",
+    "webfonts/fa-brands-400.ttf",
+    "webfonts/fa-regular-400.ttf",
+    "lib/webfonts/fa-solid-900.woff2",
+    "lib/webfonts/fa-brands-400.woff2",
+    "lib/webfonts/fa-regular-400.woff2",
   ];
   for (const path of assets) {
     try {
@@ -3951,7 +4286,16 @@ function getClassCriteriaGroups(year, classId) {
     const looksLikeGroups = raw.some((g) => g && (g.fields || g.cols || g.columns || g.items));
     groups = looksLikeGroups
       ? raw.map(mapGroup)
-      : [{key: "custom", title: cfg.name || "Критерии", fullTitle: "", attempts: 1, extra: false, cols: raw.map(mapCol)}];
+      : [
+          {
+            key: "custom",
+            title: cfg.name || "Критерии",
+            fullTitle: "",
+            attempts: 1,
+            extra: false,
+            cols: raw.map(mapCol),
+          },
+        ];
   } else if (typeof raw === "object") {
     groups = Object.entries(raw).map(([k, g]) => Object.assign(mapGroup(g, 0), {key: k}));
   }
@@ -4073,7 +4417,8 @@ function scoreCell(team, cg, c, gi, ci, a, rowspan, extraCls) {
   let cls = `cg-tint-${c.tint} m-hide${extraCls || ""}`;
   if (present) {
     const type = c.type || "int";
-    if (type === "bool") display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
+    if (type === "bool")
+      display = isBoolTrue(v) ? '<span class="cg-bool-yes">✓</span>' : '<span class="cg-bool-no">✗</span>';
     else if (type === "text") {
       display = escHtml(v);
       cls += " cg-text";
@@ -4207,7 +4552,11 @@ function calculatePlacesForClass(classId) {
     showToast("Сначала заполните хотя бы один протокол в этом классе", "error");
     return;
   }
-  if (!confirm(`Рассчитать места в классе «${className}» за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`))
+  if (
+    !confirm(
+      `Рассчитать места в классе «${className}» за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`,
+    )
+  )
     return;
   const count = assignPlaces(teams);
   const map = readCompSortMap();
@@ -4224,7 +4573,11 @@ function calculatePlaces() {
     showToast(`За ${currentYear} год нет команд ни в одном классе`, "error");
     return;
   }
-  if (!confirm(`Рассчитать места во всех классах за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`))
+  if (
+    !confirm(
+      `Рассчитать места во всех классах за ${currentYear} год по сумме баллов?\nТекущие места будут перезаписаны.`,
+    )
+  )
     return;
   let total = 0;
   const map = readCompSortMap();
@@ -4305,7 +4658,11 @@ function renderCompetition() {
     const extraPool = [2, 3, 4];
     critGroups.forEach((cg) => {
       const t = String(cg.title || "").toLowerCase();
-      const tint = t.includes("презентац") ? 0 : t.includes("квалификац") ? 1 : extraPool[extraIdx++ % extraPool.length];
+      const tint = t.includes("презентац")
+        ? 0
+        : t.includes("квалификац")
+          ? 1
+          : extraPool[extraIdx++ % extraPool.length];
       cg.tint = tint;
       cg.cols.forEach((c) => {
         c.tint = tint;
@@ -4572,7 +4929,8 @@ function saveProtocol() {
         const el = document.getElementById(`proto-${gi}-${ci}-a${a}`);
         if (!el) return;
         const type = c.type || "int";
-        const value = type === "bool" ? (el.checked ? "Да" : "Нет") : type === "time" ? formatTimeValue(el.value) : el.value;
+        const value =
+          type === "bool" ? (el.checked ? "Да" : "Нет") : type === "time" ? formatTimeValue(el.value) : el.value;
         if (c.id) scores["f:" + c.id + suf] = value;
         scores[`${cg.title}::${c.full || c.title}` + suf] = value;
       });
@@ -4582,12 +4940,18 @@ function saveProtocol() {
   team.classId = classId;
   const draw = document.getElementById("protoDrawNumber")?.value || "";
   const extraEl = document.getElementById("protoExtraBonus");
-  const extra = extraEl ? parseFloat(extraEl.value) || 0 : team.extra ?? 0;
+  const extra = extraEl ? parseFloat(extraEl.value) || 0 : (team.extra ?? 0);
   const place = parseInt(document.getElementById("protoPlace")?.value) || 0;
   team.draw = draw;
   team.extra = extra;
   team.place = place;
-  team.protocol = {...(team.protocol || {}), drawNumber: draw, extraBonus: extra, place, totalScore: computeTeamTotal(team)};
+  team.protocol = {
+    ...(team.protocol || {}),
+    drawNumber: draw,
+    extraBonus: extra,
+    place,
+    totalScore: computeTeamTotal(team),
+  };
   protocolFormDirty = false;
   saveData();
   updateSyncIndicator();
@@ -4671,7 +5035,7 @@ function renderMasterByOrg(cid, years) {
     if (!team.orgId || getTeamClassId(team) !== cid) return;
     if (!byOrg[team.orgId]) byOrg[team.orgId] = {org: organizations.find((o) => o.id === team.orgId), years: {}};
     const place = getTeamPlace(team);
-    const score = teamHasScores(team) ? computeTeamTotal(team) : team.protocol?.totalScore ?? null;
+    const score = teamHasScores(team) ? computeTeamTotal(team) : (team.protocol?.totalScore ?? null);
     const cur = byOrg[team.orgId].years[team.year];
     if (!cur || (place !== null && (cur.place === null || place < cur.place))) {
       byOrg[team.orgId].years[team.year] = {place, score};
@@ -4739,7 +5103,7 @@ function renderMasterByTeam(cid, years) {
   html += `<th></th></tr></thead><tbody>`;
   teams.forEach((t) => {
     const place = getTeamPlace(t);
-    const score = teamHasScores(t) ? computeTeamTotal(t) : t.protocol?.totalScore ?? null;
+    const score = teamHasScores(t) ? computeTeamTotal(t) : (t.protocol?.totalScore ?? null);
     const leaderSurname = teamLeaderSurname(t);
     const apparatus = (t.apparatusName || "").trim();
     const subLines =
