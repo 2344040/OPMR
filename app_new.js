@@ -5011,16 +5011,23 @@ function updateProtocolTotals() {
   if (t) t.textContent = Math.round(grand * 100) / 100;
   decorateProtocolAttempts();
 }
+
 function saveProtocol() {
-  const team = teamsData.find((t) => t.id === currentProtocolTeamId);
-  if (!team) return;
-  if (!canEditProtocols()) {
+  // 1. Явная проверка прав (если вдруг роль viewer)
+  if (typeof canEditProtocols === "function" && !canEditProtocols()) {
     showToast("Недостаточно прав для сохранения протокола", "error");
     return;
   }
-  const classId = getTeamClassId(team);
+
+  const team = teamsData.find((t) => t.id === currentProtocolTeamId);
+  if (!team) return;
+
+  const classId =
+    typeof getTeamClassId === "function" ? getTeamClassId(team) : getClassIdByValue(team.apparatusClass, team.year);
   const critGroups = getClassCriteriaGroups(team.year, classId);
   const scores = {...(team.scores || {})};
+
+  // Сбор данных с учётом попыток
   critGroups.forEach((cg, gi) => {
     const A = cg.attempts || 1;
     for (let a = 1; a <= A; a++) {
@@ -5036,12 +5043,14 @@ function saveProtocol() {
       });
     }
   });
+
   team.scores = scores;
   team.classId = classId;
+
   const draw = document.getElementById("protoDrawNumber")?.value || "";
-  const extraEl = document.getElementById("protoExtraBonus");
-  const extra = extraEl ? parseFloat(extraEl.value) || 0 : (team.extra ?? 0);
+  const extra = parseFloat(document.getElementById("protoExtraBonus")?.value) || 0;
   const place = parseInt(document.getElementById("protoPlace")?.value) || 0;
+
   team.draw = draw;
   team.extra = extra;
   team.place = place;
@@ -5052,16 +5061,29 @@ function saveProtocol() {
     place,
     totalScore: computeTeamTotal(team),
   };
-  protocolFormDirty = false;
+
+  // Сохраняем в память браузера
   saveData();
-  updateSyncIndicator();
+
+  // Проверяем, есть ли доступ к GitHub на ЭТОМ устройстве
   const gh = getGitHubSettings();
   if (gh?.owner && gh?.repo && gh?.token) {
-    showToast("Сохранение в GitHub...", "info");
-    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+    showToast("Отправка изменений на сервер...", "info");
+    commitToGitHub().then((r) => {
+      if (r.success) {
+        showToast("✅ Протокол успешно сохранён и отправлен на сервер!", "success");
+      } else {
+        showToast("❌ Ошибка отправки: " + r.message, "error");
+      }
+    });
   } else {
-    showToast("Протокол сохранён локально", "success");
+    // Явное предупреждение для судьи, если токен не введён
+    showToast(
+      "⚠️ Протокол сохранён ТОЛЬКО в этом браузере. Для отправки на сервер введите токен GitHub в настройках.",
+      "error",
+    );
   }
+
   showCompetitionView();
 }
 
@@ -5841,13 +5863,16 @@ commitToGitHub = async function (...a) {
   try {
     const token = decodeURIComponent(m[1]);
     const s = JSON.parse(localStorage.getItem("opmr_gh_settings") || "null") || {};
-    localStorage.setItem("opmr_gh_settings", JSON.stringify({
-      ...s,
-      owner: "2344040",
-      repo: "OPMR",
-      branch: "main",
-      token
-    }));
+    localStorage.setItem(
+      "opmr_gh_settings",
+      JSON.stringify({
+        ...s,
+        owner: "2344040",
+        repo: "OPMR",
+        branch: "main",
+        token,
+      }),
+    );
     // Убираем токен из адресной строки и истории
     history.replaceState(null, "", location.pathname + location.search);
     if (typeof showToast === "function") showToast("Настройки GitHub применены из ссылки", "success");
