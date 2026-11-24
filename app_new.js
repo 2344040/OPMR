@@ -5470,3 +5470,148 @@ async function opmrInit() {
   if (pendingSync) showToast("Есть изменения, не сохранённые на сервере — нажмите «Сохранить» на индикаторе", "info");
 }
 opmrInit();
+
+// ============================================================
+// РОЛИ ДОСТУПА: зритель / судья / администратор
+// Самодостаточный модуль-надстройка (вставляется один раз в конец app.js)
+// ============================================================
+const OPMR_ROLE_KEY = "opmr_role";
+const OPMR_JUDGE_PASSWORD = "opmr2026judge"; // ← задайте свой пароль судьи
+
+function opmrGetRole() {
+  const stored = localStorage.getItem(OPMR_ROLE_KEY);
+  if (stored === "admin" || stored === "judge") return stored;
+  return localStorage.getItem("opmr_admin_mode") === "true" ? "admin" : "viewer";
+}
+function opmrCanEditProtocols() {
+  return opmrGetRole() !== "viewer";
+}
+function opmrSetRole(r) {
+  localStorage.setItem(OPMR_ROLE_KEY, r);
+  localStorage.setItem("opmr_admin_mode", String(r === "admin"));
+  isAdmin = r === "admin";
+  try { userRole = r; } catch (e) {} // совместимость, если ранее уже ставился блок ролей
+  renderHeaderButtons();
+  opmrApplyProtocolGuard();
+  if (currentView === "competition") renderCompetition();
+  else if (currentView === "teams") renderTeams(teamsData);
+}
+// Вход/выход: кнопка замка в шапке
+const _roleOrigToggle = toggleAdminMode;
+toggleAdminMode = function () {
+  if (opmrGetRole() !== "viewer") {
+    opmrSetRole("viewer");
+    showToast("Режим редактирования выключен", "info");
+    if (currentTeamId && document.getElementById("detailPage").classList.contains("active")) showTeamDetails(currentTeamId);
+    return;
+  }
+  const input = document.getElementById("adminPasswordInput");
+  const err = document.getElementById("adminPasswordError");
+  if (input) input.value = "";
+  if (err) err.style.display = "none";
+  new bootstrap.Modal(document.getElementById("adminPasswordModal")).show();
+  setTimeout(() => input && input.focus(), 300);
+};
+// Проверка пароля: админ, судья, иначе ошибка
+const _roleOrigCheck = checkAdminPassword;
+checkAdminPassword = function () {
+  const input = document.getElementById("adminPasswordInput");
+  const err = document.getElementById("adminPasswordError");
+  const v = input ? input.value : "";
+  if (v === ADMIN_PASSWORD) opmrSetRole("admin");
+  else if (v === OPMR_JUDGE_PASSWORD) opmrSetRole("judge");
+  else {
+    if (err) err.style.display = "block";
+    if (input) { input.value = ""; input.focus(); }
+    return;
+  }
+  const inst = bootstrap.Modal.getInstance(document.getElementById("adminPasswordModal"));
+  if (inst) inst.hide();
+  showToast(
+    opmrGetRole() === "admin"
+      ? "Режим администратора включён"
+      : "Режим судьи: доступно заполнение и сохранение протоколов",
+    "success",
+  );
+  if (currentTeamId && document.getElementById("detailPage").classList.contains("active")) showTeamDetails(currentTeamId);
+};
+// Перекраска кнопки входа + пункт в мобильном меню (после каждого рендера шапки)
+function opmrPaintRoleButton() {
+  const role = opmrGetRole();
+  const btn = document.querySelector('#headerButtons button[onclick="toggleAdminMode()"]');
+  if (btn) {
+    btn.className = "btn btn-upload " + (role === "viewer" ? "btn-outline-secondary" : "btn-dark");
+    btn.title = role === "viewer" ? "Войти как судья или администратор" : "Выйти в режим просмотра";
+    btn.innerHTML =
+      role === "admin"
+        ? '<i class="fas fa-user-shield"></i><span class="btn-text ms-2">Админ</span>'
+        : role === "judge"
+          ? '<i class="fas fa-gavel"></i><span class="btn-text ms-2">Судья</span>'
+          : '<i class="fas fa-lock"></i><span class="btn-text ms-2">Вход</span>';
+  }
+  const mb = document.getElementById("mobileMenuBody");
+  if (mb && !mb.querySelector("[data-opmr-role-item]")) {
+    const sec = document.createElement("div");
+    sec.className = "mobile-menu-section";
+    sec.textContent = "Доступ";
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "mobile-menu-item";
+    item.dataset.opmrRoleItem = "1";
+    item.setAttribute("onclick", "toggleAdminMode(); hideMobileMenu();");
+    item.innerHTML = '<i class="fas fa-lock"></i><span data-opmr-role-label></span>';
+    mb.appendChild(sec);
+    mb.appendChild(item);
+  }
+  const label = mb && mb.querySelector("[data-opmr-role-label]");
+  if (label)
+    label.textContent =
+      role === "viewer" ? "Вход (судья / админ)" : role === "judge" ? "Выйти из режима судьи" : "Выйти из режима админа";
+}
+const _roleOrigHeader = renderHeaderButtons;
+renderHeaderButtons = function (...a) {
+  const r = _roleOrigHeader.apply(this, a);
+  opmrPaintRoleButton();
+  return r;
+};
+// Блокировка протокола для зрителя
+function opmrApplyProtocolGuard() {
+  const page = document.getElementById("protocolPage");
+  if (!page || !page.classList.contains("active")) return;
+  const form = document.getElementById("protocolForm");
+  if (!form) return;
+  const allowed = opmrCanEditProtocols();
+  form.querySelectorAll("input, select, textarea").forEach((el) => { el.disabled = !allowed; });
+  const topSave = document.querySelector('#protocolPage button[onclick="saveProtocol()"]');
+  if (topSave) topSave.style.display = allowed ? "" : "none";
+  const bar = form.querySelector(".d-flex.gap-2.mt-3");
+  if (!bar) return;
+  const save = bar.querySelector('[onclick="saveProtocol()"]');
+  if (save) save.style.display = allowed ? "" : "none";
+  let note = bar.querySelector(".proto-access-note");
+  if (!allowed && !note) {
+    note = document.createElement("div");
+    note.className = "alert alert-secondary py-2 mb-0 w-100 proto-access-note";
+    note.innerHTML = '<i class="fas fa-lock me-2"></i>Просмотр без права изменения. Нажмите «Вход» в шапке и введите пароль судьи или администратора.';
+    bar.prepend(note);
+  }
+  if (allowed && note) note.remove();
+}
+const _roleOrigTotals = updateProtocolTotals;
+updateProtocolTotals = function (...a) {
+  const r = _roleOrigTotals.apply(this, a);
+  opmrApplyProtocolGuard();
+  return r;
+};
+const _roleOrigSaveProtocol = saveProtocol;
+saveProtocol = function (...a) {
+  if (!opmrCanEditProtocols()) {
+    showToast("Недостаточно прав для сохранения протокола", "error");
+    return;
+  }
+  return _roleOrigSaveProtocol.apply(this, a);
+};
+// Синхронизация роли при старте
+isAdmin = opmrGetRole() === "admin";
+renderHeaderButtons();
+opmrApplyProtocolGuard();
