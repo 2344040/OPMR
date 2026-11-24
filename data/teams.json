@@ -1,6 +1,6 @@
 {
   "meta": {
-    "savedAt": 1795527694607,
+    "savedAt": 1795527710747,
     "teams": 69
   },
   "organizations": [
@@ -5739,11 +5739,11 @@
         "f:fmwkpofc38fjyn": "",
         "Доп.::За внеконкурсное задание": ""
       },
-      "draw": "2",
+      "draw": "-2",
       "extra": 0,
       "place": 0,
       "protocol": {
-        "drawNumber": "2",
+        "drawNumber": "-2",
         "extraBonus": 0,
         "place": 0,
         "totalScore": 10
