@@ -5879,6 +5879,34 @@ commitToGitHub = async function (...a) {
   } catch {}
 })();
 
+// ===== ЗАПЛАТКА: чип синхронизации должен гаснуть после успешного коммита =====
+(function () {
+  const _orig = commitToGitHub;
+  commitToGitHub = function (...args) {
+    const p = _orig.apply(this, args);
+    if (p && typeof p.then === "function") {
+      return p.then((r) => {
+        if (r && r.success) {
+          pendingSync = false;
+          lastSyncAt = Date.now();
+          try {
+            localStorage.setItem(
+              "opmr_sync_state",
+              JSON.stringify({ pending: false, at: lastSyncAt }),
+            );
+          } catch {}
+          try {
+            localStorage.setItem("opmr_last_push_at", String(Date.now()));
+          } catch {}
+          updateSyncIndicator();
+        }
+        return r;
+      });
+    }
+    return p;
+  };
+})();
+
 opmrInit();
 
 // * ============================================================
