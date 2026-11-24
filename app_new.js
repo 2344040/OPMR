@@ -1084,14 +1084,27 @@ function archiveClassCriteria(year, classId) {
 // * ============================================================
 
 // * ===== 9. GITHUB: НАСТРОЙКИ И ПРОВЕРКА СОЕДИНЕНИЯ =====
+
+// ===== УЧЁТНЫЕ ДАННЫЕ GITHUB: локальные настройки устройства, иначе вшитый fallback =====
+const EMBEDDED_GH_SETTINGS = {
+  owner: "2344040", // ← владелец репозитория
+  repo: "OPMR", // ← имя репозитория
+  branch: "main", // ← ветка с data/teams.json
+  token: "", // ← fine-grained токен (см. ниже)
+};
 function getGitHubSettings() {
   try {
     const s = localStorage.getItem(GH_SETTINGS_KEY);
-    return s ? JSON.parse(s) : null;
-  } catch {
-    return null;
-  }
+    if (s) {
+      const p = JSON.parse(s);
+      if (p && p.owner && p.repo && p.token) return p; // свои настройки устройства важнее
+    }
+  } catch {}
+  if (EMBEDDED_GH_SETTINGS.owner && EMBEDDED_GH_SETTINGS.repo && EMBEDDED_GH_SETTINGS.token)
+    return {...EMBEDDED_GH_SETTINGS};
+  return null;
 }
+
 function saveGitHubSettings() {
   const settings = {
     owner: document.getElementById("ghOwner").value.trim(),
@@ -5469,6 +5482,357 @@ async function opmrInit() {
   updateSyncIndicator();
   if (pendingSync) showToast("Есть изменения, не сохранённые на сервере — нажмите «Сохранить» на индикаторе", "info");
 }
+
+// ============================================================
+// * СИНХРОНИЗАЦИЯ СУДЬИ: автосверка с сервером, слияние, конфликты протоколов
+// ============================================================
+const OPMR_SYNC_BASE_KEY = "opmr_sync_base";
+let opmrSyncRunning = false;
+let opmrLastMergeCheck = 0;
+let opmrPayloadCache = {ts: 0, payload: null};
+
+function opmrReadBase() {
+  try {
+    return JSON.parse(localStorage.getItem(OPMR_SYNC_BASE_KEY));
+  } catch {
+    return null;
+  }
+}
+function opmrWriteBase(p) {
+  try {
+    localStorage.setItem(OPMR_SYNC_BASE_KEY, JSON.stringify(p));
+  } catch {}
+}
+function opmrLocalPayload() {
+  return {organizations, apparatusClasses, competitionSettings, criteriaTemplates, teams: teamsData};
+}
+// Сравнимый «слепок» протокольной части команды
+function opmrProtoSlice(t) {
+  return JSON.stringify([
+    t.scores || null,
+    t.protocol || null,
+    t.place ?? 0,
+    t.draw ?? "",
+    t.extra ?? 0,
+    t.teamName || "",
+  ]);
+}
+async function opmrFetchServerPayload(force) {
+  if (!force && opmrPayloadCache.payload && Date.now() - opmrPayloadCache.ts < 15000) return opmrPayloadCache.payload;
+  const urls = [];
+  const gh = getGitHubSettings();
+  if (gh && gh.owner && gh.repo)
+    urls.push(
+      `https://raw.githubusercontent.com/${gh.owner}/${gh.repo}/${gh.branch || "main"}/data/teams.json?ts=${Date.now()}`,
+    );
+  urls.push(`data/teams.json?ts=${Date.now()}`);
+  for (const u of urls) {
+    try {
+      const res = await fetch(u, {cache: "no-store"});
+      if (!res.ok) continue;
+      const raw = await res.json();
+      if (raw && Array.isArray(raw.teams)) {
+        opmrPayloadCache = {ts: Date.now(), payload: raw};
+        return raw;
+      }
+    } catch {}
+  }
+  return null;
+}
+// Если подключена ранняя авто-подтяжка — читаем через общий кэш, без двойных запросов
+if (typeof tryFetchJson === "function") {
+  const _opmrOrigTry = tryFetchJson;
+  tryFetchJson = async function (url) {
+    if (/teams\.json/.test(String(url)) && opmrPayloadCache.payload && Date.now() - opmrPayloadCache.ts < 15000)
+      return opmrPayloadCache.payload;
+    const r = await _opmrOrigTry.call(this, url);
+    if (r && Array.isArray(r.teams)) opmrPayloadCache = {ts: Date.now(), payload: r};
+    return r;
+  };
+}
+function opmrDiffCount(a, b) {
+  const keys = new Set([...Object.keys(a.scores || {}), ...Object.keys(b.scores || {})]);
+  let n = 0;
+  keys.forEach((k) => {
+    if (String((a.scores || {})[k] ?? "") !== String((b.scores || {})[k] ?? "")) n++;
+  });
+  if ((a.place ?? 0) !== (b.place ?? 0)) n++;
+  if (JSON.stringify(a.protocol || null) !== JSON.stringify(b.protocol || null)) n++;
+  return n;
+}
+// ===== ТРЁХСТОРОННЕЕ СЛИЯНИЕ: base → local / server =====
+function opmrComputeMerge(base, local, server) {
+  const notes = [];
+  const merged = {};
+  ["organizations", "apparatusClasses", "competitionSettings", "criteriaTemplates"].forEach((k) => {
+    const b = JSON.stringify(base ? (base[k] ?? null) : null);
+    const l = JSON.stringify(local[k] ?? null);
+    const s = JSON.stringify(server[k] ?? null);
+    if (l === s || s === b) merged[k] = local[k];
+    else if (l === b) merged[k] = server[k];
+    else {
+      merged[k] = local[k];
+      notes.push(`раздел «${k}» изменён с обеих сторон — оставлена локальная версия`);
+    }
+  });
+  const baseT = new Map((base.teams || []).map((t) => [t.id, t]));
+  const locT = new Map((local.teams || []).map((t) => [t.id, t]));
+  const srvT = new Map((server.teams || []).map((t) => [t.id, t]));
+  const mergedTeams = [];
+  const conflicts = [];
+  (local.teams || []).forEach((lt) => {
+    const st = srvT.get(lt.id);
+    const bt = baseT.get(lt.id);
+    if (!st) {
+      if (bt && opmrProtoSlice(lt) === opmrProtoSlice(bt)) return; // сервер удалил, локально не трогали
+      if (bt) {
+        conflicts.push({id: lt.id, localTeam: lt, serverTeam: null, kind: "deleted"});
+        mergedTeams.push(lt);
+      } else mergedTeams.push(lt); // новая локальная команда
+      return;
+    }
+    const bs = bt ? opmrProtoSlice(bt) : null;
+    const ls = opmrProtoSlice(lt);
+    const ss = opmrProtoSlice(st);
+    if (ls === ss) {
+      mergedTeams.push(lt);
+      return;
+    }
+    if (bs !== null && ls === bs) {
+      mergedTeams.push(st);
+      return;
+    } // правили только на сервере
+    if (bs !== null && ss === bs) {
+      mergedTeams.push(lt);
+      return;
+    } // правили только локально
+    conflicts.push({id: lt.id, localTeam: lt, serverTeam: st, kind: "proto"});
+    mergedTeams.push(lt);
+  });
+  (server.teams || []).forEach((st) => {
+    if (!locT.has(st.id)) mergedTeams.push(st); // появились на сервере — принимаем
+  });
+  merged.teams = mergedTeams;
+  return {merged, conflicts, notes};
+}
+function opmrNeedsPush(merged, server) {
+  const srvT = new Map((server.teams || []).map((t) => [t.id, t]));
+  if (merged.teams.length !== (server.teams || []).length) return true;
+  for (const t of merged.teams) {
+    const st = srvT.get(t.id);
+    if (!st || opmrProtoSlice(t) !== opmrProtoSlice(st)) return true;
+  }
+  return ["organizations", "apparatusClasses", "competitionSettings", "criteriaTemplates"].some(
+    (k) => JSON.stringify(merged[k]) !== JSON.stringify(server[k]),
+  );
+}
+function opmrChangedVsLocal(merged, local) {
+  if (merged.teams.length !== local.teams.length) return true;
+  const locT = new Map(local.teams.map((t) => [t.id, t]));
+  for (const t of merged.teams) {
+    const lt = locT.get(t.id);
+    if (!lt || opmrProtoSlice(t) !== opmrProtoSlice(lt)) return true;
+  }
+  return ["organizations", "apparatusClasses", "competitionSettings", "criteriaTemplates"].some(
+    (k) => JSON.stringify(merged[k]) !== JSON.stringify(local[k]),
+  );
+}
+function opmrApplyMerged(merged, server, needsPush, changed) {
+  const prev = suppressDirty;
+  suppressDirty = true;
+  organizations = merged.organizations || [];
+  apparatusClasses = merged.apparatusClasses || [];
+  ensureApparatusClasses();
+  competitionSettings = normalizeCompetitionSettings(merged.competitionSettings || getDefaultCompetitionSettings());
+  criteriaTemplates = Array.isArray(merged.criteriaTemplates) ? merged.criteriaTemplates : [];
+  teamsData = merged.teams || [];
+  saveData();
+  suppressDirty = prev;
+  opmrWriteBase(server);
+  pendingSync = needsPush;
+  persistSyncState();
+  updateSyncIndicator();
+  if (changed) refreshCurrentView();
+}
+// ===== МОДАЛКА КОНФЛИКТОВ =====
+function ensureConflictModal() {
+  let el = document.getElementById("opmrConflictModal");
+  if (el) return el;
+  el = document.createElement("div");
+  el.className = "modal fade";
+  el.id = "opmrConflictModal";
+  el.tabIndex = -1;
+  el.innerHTML = `<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+<div class="modal-header"><h5 class="modal-title"><i class="fas fa-code-branch me-2 text-warning"></i>Версии протоколов расходятся</h5></div>
+<div class="modal-body"><p class="text-muted small">У этих команд протоколы изменились и локально, и на сервере. Выберите версию для каждой строки.</p><div id="opmrConflictBody"></div></div>
+<div class="modal-footer flex-wrap gap-2"><button type="button" class="btn btn-outline-primary btn-sm" id="opmrConflictAllLocal">Все мои</button><button type="button" class="btn btn-outline-dark btn-sm" id="opmrConflictAllServer">Все серверные</button><button type="button" class="btn btn-primary" id="opmrConflictApply" disabled>Применить выбранное</button><button type="button" class="btn btn-outline-secondary" id="opmrConflictCancel">Отмена</button></div>
+</div></div>`;
+  document.body.appendChild(el);
+  return el;
+}
+function opmrAskConflicts(conflicts) {
+  return new Promise((resolve) => {
+    const el = ensureConflictModal();
+    const body = el.querySelector("#opmrConflictBody");
+    const applyBtn = el.querySelector("#opmrConflictApply");
+    const allL = el.querySelector("#opmrConflictAllLocal");
+    const allS = el.querySelector("#opmrConflictAllServer");
+    const cancel = el.querySelector("#opmrConflictCancel");
+    const choices = {};
+    const info = (t) => (t ? `Σ ${computeTeamTotal(t)} · место ${getTeamPlace(t) || "—"}` : "на сервере удалена");
+    body.innerHTML = conflicts
+      .map((c) => {
+        const t = c.localTeam || c.serverTeam;
+        const name = escHtml(getTeamDisplayName(t));
+        const meta = `${t.year} · ${escHtml(getClassInfo(getTeamClassId(t)).name)}${c.kind === "proto" ? ` · расхождений полей: ${opmrDiffCount(c.localTeam, c.serverTeam)}` : ""}`;
+        return `<div class="card mb-2 opmr-conflict-row" data-id="${escHtml(c.id)}"><div class="card-body py-2">
+<div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+<div><div class="fw-semibold">${name}</div><div class="text-muted small">${meta}</div></div>
+<div class="d-flex gap-2 flex-wrap">
+<button type="button" class="btn btn-sm btn-outline-primary" data-pick="local">Моя · ${info(c.localTeam)}</button>
+<button type="button" class="btn btn-sm btn-outline-dark" data-pick="server">${c.kind === "deleted" ? "Сервер: удалить" : "Сервер · " + info(c.serverTeam)}</button>
+</div></div></div></div>`;
+      })
+      .join("");
+    const refresh = () => {
+      body.querySelectorAll(".opmr-conflict-row").forEach((row) => {
+        const picked = choices[row.dataset.id];
+        row.querySelectorAll("button[data-pick]").forEach((b) => {
+          const mine = b.dataset.pick === "local";
+          const isPick = picked === b.dataset.pick;
+          b.classList.toggle("btn-primary", mine && isPick);
+          b.classList.toggle("btn-outline-primary", mine && !isPick);
+          b.classList.toggle("btn-dark", !mine && isPick);
+          b.classList.toggle("btn-outline-dark", !mine && !isPick);
+          b.disabled = !!picked && !isPick;
+        });
+        row.classList.toggle("resolved", !!picked);
+      });
+      applyBtn.disabled = conflicts.some((c) => !choices[c.id]);
+    };
+    const onBody = (e) => {
+      const b = e.target.closest("button[data-pick]");
+      if (!b) return;
+      choices[b.closest(".opmr-conflict-row").dataset.id] = b.dataset.pick;
+      refresh();
+    };
+    const onAllL = () => {
+      conflicts.forEach((c) => (choices[c.id] = "local"));
+      refresh();
+    };
+    const onAllS = () => {
+      conflicts.forEach((c) => (choices[c.id] = "server"));
+      refresh();
+    };
+    const finish = (val) => {
+      cleanup();
+      const inst = bootstrap.Modal.getInstance(el);
+      if (inst) inst.hide();
+      resolve(val);
+    };
+    const onApply = () => finish({...choices});
+    const onCancel = () => finish(null);
+    const onHidden = () => finish(null);
+    function cleanup() {
+      body.removeEventListener("click", onBody);
+      allL.removeEventListener("click", onAllL);
+      allS.removeEventListener("click", onAllS);
+      applyBtn.removeEventListener("click", onApply);
+      cancel.removeEventListener("click", onCancel);
+      el.removeEventListener("hidden.bs.modal", onHidden);
+    }
+    body.addEventListener("click", onBody);
+    allL.addEventListener("click", onAllL);
+    allS.addEventListener("click", onAllS);
+    applyBtn.addEventListener("click", onApply);
+    cancel.addEventListener("click", onCancel);
+    el.addEventListener("hidden.bs.modal", onHidden, {once: true});
+    refresh();
+    bootstrap.Modal.getOrCreateInstance(el).show();
+  });
+}
+// ===== ЯДРО СЛИЯНИЯ =====
+async function opmrMergeAgainstServer(server, opts = {}) {
+  if (opmrSyncRunning) return true;
+  opmrSyncRunning = true;
+  try {
+    const local = opmrLocalPayload();
+    const base = opmrReadBase() || server; // первый запуск: база = снимок сервера
+    const {merged, conflicts, notes} = opmrComputeMerge(base, local, server);
+    if (conflicts.length) {
+      const choices = await opmrAskConflicts(conflicts);
+      if (!choices) {
+        showToast("Сверка с сервером отменена — оставлена локальная версия", "info");
+        return false;
+      }
+      conflicts.forEach((c) => {
+        const pick = choices[c.id] || "local";
+        if (c.kind === "deleted") {
+          if (pick === "server") merged.teams = merged.teams.filter((t) => t.id !== c.id);
+        } else if (pick === "server") {
+          merged.teams = merged.teams.map((t) => (t.id === c.id ? c.serverTeam : t));
+        }
+      });
+    }
+    const needsPush = opmrNeedsPush(merged, server);
+    const changed = opmrChangedVsLocal(merged, local);
+    opmrApplyMerged(merged, server, needsPush, changed);
+    if (notes.length) showToast(`Дополнительно: ${notes.join("; ")}`, "info");
+    if (changed)
+      showToast(
+        opts.prePush ? "С сервера подтянуты свежие данные перед отправкой" : "Данные сверены с сервером и объединены",
+        "success",
+      );
+    return true;
+  } finally {
+    opmrSyncRunning = false;
+    opmrLastMergeCheck = Date.now();
+  }
+}
+async function opmrStartupSync() {
+  const server = await opmrFetchServerPayload();
+  if (!server) return; // офлайн — молча пропускаем
+  await opmrMergeAgainstServer(server, {startup: true});
+}
+// ===== ПУНКТ 2: проверка при каждом заходе =====
+const _opmrJsOrigInit = opmrInit;
+opmrInit = async function (...a) {
+  const r = await _opmrJsOrigInit.apply(this, a);
+  opmrLastMergeCheck = Date.now();
+  opmrStartupSync();
+  return r;
+};
+// и при возврате на вкладку, если есть несохранённые на сервер правки
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !pendingSync) return;
+  if (Date.now() - opmrLastMergeCheck < 60000) return;
+  opmrLastMergeCheck = Date.now();
+  opmrStartupSync();
+});
+// ===== ПУНКТ 3: перед любой отправкой — сверка и слияние =====
+async function opmrPrePushMerge() {
+  const gh = getGitHubSettings();
+  if (!gh || !gh.owner || !gh.repo || !gh.token) {
+    showToast("Для отправки изменений настройте GitHub (нужен токен с правом записи)", "error");
+    openGitHubSettings();
+    return false;
+  }
+  const server = await opmrFetchServerPayload(true);
+  if (!server)
+    return confirm(
+      "Не удалось получить свежие данные с сервера.\nОтправить без сверки — возможны перезаписи чужих правок?\n\nОК — отправить, Отмена — прервать.",
+    );
+  return opmrMergeAgainstServer(server, {prePush: true});
+}
+const _opmrJsOrigCommit = commitToGitHub;
+commitToGitHub = async function (...a) {
+  const ok = await opmrPrePushMerge();
+  if (!ok) return {success: false, message: "Отправка отменена: данные не сверены с сервером"};
+  const res = await _opmrJsOrigCommit.apply(this, a);
+  if (res && res.success) opmrWriteBase(opmrLocalPayload()); // база = то, что уехало на сервер
+  return res;
+};
+
 opmrInit();
 
 // * ============================================================
@@ -5490,7 +5854,9 @@ function opmrSetRole(r) {
   localStorage.setItem(OPMR_ROLE_KEY, r);
   localStorage.setItem("opmr_admin_mode", String(r === "admin"));
   isAdmin = r === "admin";
-  try { userRole = r; } catch (e) {} // совместимость, если ранее уже ставился блок ролей
+  try {
+    userRole = r;
+  } catch (e) {} // совместимость, если ранее уже ставился блок ролей
   renderHeaderButtons();
   opmrApplyProtocolGuard();
   if (currentView === "competition") renderCompetition();
@@ -5502,7 +5868,8 @@ toggleAdminMode = function () {
   if (opmrGetRole() !== "viewer") {
     opmrSetRole("viewer");
     showToast("Режим редактирования выключен", "info");
-    if (currentTeamId && document.getElementById("detailPage").classList.contains("active")) showTeamDetails(currentTeamId);
+    if (currentTeamId && document.getElementById("detailPage").classList.contains("active"))
+      showTeamDetails(currentTeamId);
     return;
   }
   const input = document.getElementById("adminPasswordInput");
@@ -5522,7 +5889,10 @@ checkAdminPassword = function () {
   else if (v === OPMR_JUDGE_PASSWORD) opmrSetRole("judge");
   else {
     if (err) err.style.display = "block";
-    if (input) { input.value = ""; input.focus(); }
+    if (input) {
+      input.value = "";
+      input.focus();
+    }
     return;
   }
   const inst = bootstrap.Modal.getInstance(document.getElementById("adminPasswordModal"));
@@ -5533,7 +5903,8 @@ checkAdminPassword = function () {
       : "Режим судьи: доступно заполнение и сохранение протоколов",
     "success",
   );
-  if (currentTeamId && document.getElementById("detailPage").classList.contains("active")) showTeamDetails(currentTeamId);
+  if (currentTeamId && document.getElementById("detailPage").classList.contains("active"))
+    showTeamDetails(currentTeamId);
 };
 // Перекраска кнопки входа + пункт в мобильном меню (после каждого рендера шапки)
 function opmrPaintRoleButton() {
@@ -5566,7 +5937,11 @@ function opmrPaintRoleButton() {
   const label = mb && mb.querySelector("[data-opmr-role-label]");
   if (label)
     label.textContent =
-      role === "viewer" ? "Вход (судья / админ)" : role === "judge" ? "Выйти из режима судьи" : "Выйти из режима админа";
+      role === "viewer"
+        ? "Вход (судья / админ)"
+        : role === "judge"
+          ? "Выйти из режима судьи"
+          : "Выйти из режима админа";
 }
 const _roleOrigHeader = renderHeaderButtons;
 renderHeaderButtons = function (...a) {
@@ -5581,7 +5956,9 @@ function opmrApplyProtocolGuard() {
   const form = document.getElementById("protocolForm");
   if (!form) return;
   const allowed = opmrCanEditProtocols();
-  form.querySelectorAll("input, select, textarea").forEach((el) => { el.disabled = !allowed; });
+  form.querySelectorAll("input, select, textarea").forEach((el) => {
+    el.disabled = !allowed;
+  });
   const topSave = document.querySelector('#protocolPage button[onclick="saveProtocol()"]');
   if (topSave) topSave.style.display = allowed ? "" : "none";
   const bar = form.querySelector(".d-flex.gap-2.mt-3");
@@ -5592,7 +5969,8 @@ function opmrApplyProtocolGuard() {
   if (!allowed && !note) {
     note = document.createElement("div");
     note.className = "alert alert-secondary py-2 mb-0 w-100 proto-access-note";
-    note.innerHTML = '<i class="fas fa-lock me-2"></i>Просмотр без права изменения. Нажмите «Вход» в шапке и введите пароль судьи или администратора.';
+    note.innerHTML =
+      '<i class="fas fa-lock me-2"></i>Просмотр без права изменения. Нажмите «Вход» в шапке и введите пароль судьи или администратора.';
     bar.prepend(note);
   }
   if (allowed && note) note.remove();
