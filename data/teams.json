@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "savedAt": 1795523647696,
+    "teams": 69
+  },
   "organizations": [
     {
       "id": "001",
@@ -9875,6 +9879,58 @@
       ],
       "orgId": "032",
       "applicationNumber": "2599427135",
+      "teamName": "",
+      "classId": "tnpa"
+    },
+    {
+      "id": "031-2026-tnpa-3",
+      "created": "24.11.2026",
+      "orgId": "031",
+      "year": 2026,
+      "shortName": "Робототехнический центр ФМЛ №239",
+      "city": "",
+      "region": "",
+      "postalCode": "",
+      "address": "",
+      "phone": "",
+      "email": "",
+      "orgLeader": "Филиппов Сергей Александрович",
+      "apparatusClass": "ТНПА",
+      "apparatusName": "ТНПА \"Кит\"",
+      "description": "ТНПА \"Кит\" пятимоторный модульный робот",
+      "teamLeader": "Василевская Мария Юрьевна",
+      "teamLeaderPhone": "89006538330",
+      "photos": [],
+      "members": [
+        {
+          "fio": "Василевская Мария Юрьевна",
+          "birth": "1998-10-12",
+          "passport": "4018215101",
+          "isStudent": "Да",
+          "order": ""
+        },
+        {
+          "fio": "Башта Борис Евгеньевич",
+          "birth": "2013-05-26",
+          "passport": "III - AK 686082",
+          "isStudent": "Да",
+          "order": ""
+        },
+        {
+          "fio": "Палагин Максим Сергеевич",
+          "birth": "2012-10-23",
+          "passport": "IV - AK 817846",
+          "isStudent": "Да",
+          "order": ""
+        },
+        {
+          "fio": "Рубцов Ярослав Алексеевич",
+          "birth": "2013-03-12",
+          "passport": "III - AK 648551",
+          "isStudent": "Да",
+          "order": ""
+        }
+      ],
       "teamName": "",
       "classId": "tnpa"
     }
