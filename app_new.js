@@ -5834,6 +5834,26 @@ commitToGitHub = async function (...a) {
   return res;
 };
 
+// ===== Одноразовая настройка GitHub по ссылке вида https://сайт/#gh=github_pat_... =====
+(function () {
+  const m = location.hash.match(/[#&]gh=([^&]+)/);
+  if (!m) return;
+  try {
+    const token = decodeURIComponent(m[1]);
+    const s = JSON.parse(localStorage.getItem("opmr_gh_settings") || "null") || {};
+    localStorage.setItem("opmr_gh_settings", JSON.stringify({
+      ...s,
+      owner: "2344040",
+      repo: "OPMR",
+      branch: "main",
+      token
+    }));
+    // Убираем токен из адресной строки и истории
+    history.replaceState(null, "", location.pathname + location.search);
+    if (typeof showToast === "function") showToast("Настройки GitHub применены из ссылки", "success");
+  } catch {}
+})();
+
 opmrInit();
 
 // * ============================================================
