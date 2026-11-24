@@ -5064,26 +5064,15 @@ function saveProtocol() {
 
   // Сохраняем в память браузера
   saveData();
-
-  // Проверяем, есть ли доступ к GitHub на ЭТОМ устройстве
+  protocolFormDirty = false;
+  updateSyncIndicator();
   const gh = getGitHubSettings();
   if (gh?.owner && gh?.repo && gh?.token) {
-    showToast("Отправка изменений на сервер...", "info");
-    commitToGitHub().then((r) => {
-      if (r.success) {
-        showToast("✅ Протокол успешно сохранён и отправлен на сервер!", "success");
-      } else {
-        showToast("❌ Ошибка отправки: " + r.message, "error");
-      }
-    });
+    showToast("Сохранение в GitHub...", "info");
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
   } else {
-    // Явное предупреждение для судьи, если токен не введён
-    showToast(
-      "⚠️ Протокол сохранён ТОЛЬКО в этом браузере. Для отправки на сервер введите токен GitHub в настройках.",
-      "error",
-    );
+    showToast("Протокол сохранён локально", "success");
   }
-
   showCompetitionView();
 }
 
@@ -5890,10 +5879,7 @@ commitToGitHub = async function (...a) {
           pendingSync = false;
           lastSyncAt = Date.now();
           try {
-            localStorage.setItem(
-              "opmr_sync_state",
-              JSON.stringify({ pending: false, at: lastSyncAt }),
-            );
+            localStorage.setItem("opmr_sync_state", JSON.stringify({pending: false, at: lastSyncAt}));
           } catch {}
           try {
             localStorage.setItem("opmr_last_push_at", String(Date.now()));
