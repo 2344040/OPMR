@@ -4236,7 +4236,7 @@ async function finalizeImportedTeam(t, modalId) {
   saveData();
   const inst = bootstrap.Modal.getInstance(document.getElementById(modalId));
   if (inst) inst.hide();
-  showTeamsView();
+  editTeam(team.id);
   showToast(
     `Команда «${org.shortName || org.fullName}» добавлена в ${year} год (ID: ${finalId}, участников: ${team.members.length})`,
     "success",
