@@ -1,6 +1,6 @@
 {
   "meta": {
-    "savedAt": 1795640956948,
+    "savedAt": 1795641033559,
     "teams": 70
   },
   "organizations": [
@@ -8987,7 +8987,7 @@
       ],
       "orgId": "031",
       "applicationNumber": "2598310036",
-      "teamName": "",
+      "teamName": "РЦ ФМЛ №239",
       "classId": "tnpa",
       "place": 0,
       "protocol": {
@@ -9045,8 +9045,7 @@
       "protocol": {
         "place": 0,
         "totalScore": 0
-      },
-      "teamName": "РЦ ФМЛ №239 (2)"
+      }
     },
     {
       "id": "032-2026-anpa",
