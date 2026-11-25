@@ -405,7 +405,7 @@ function scoreContribution(col, v) {
   if (v === "" || v === undefined || v === null) return null;
   const type = col.type || "int";
   if (type === "text" || type === "time") return null;
-  if (type === "bool") return col.sum !== false && isBoolTrue(v) ? 1 : 0;
+  if (type === "bool") return null; // bool-поля не учитываются в сумме (справочная информация)
   const n = parseScoreNumber(v);
   if (n === null) return null;
   if (col.penalty) return -Math.abs(n);
@@ -4916,7 +4916,12 @@ function renderProtocolForm(teamId) {
         const id = `proto-${gi}-${ci}-a${a}`;
         let fieldHtml;
         if (type === "bool") {
-          fieldHtml = `<div class="form-check mt-2"><input class="form-check-input proto-calc" type="checkbox" id="${id}" data-gi="${gi}" data-ci="${ci}" data-attempt="${a}" data-type="bool" data-sum="${c.sum !== false ? 1 : 0}" ${isBoolTrue(val) ? "checked" : ""}><label class="form-check-label" for="${id}">Да</label></div>`;
+          const cur = isBoolTrue(val) ? "Да" : val === false || String(val).trim().toLowerCase() === "нет" ? "Нет" : "";
+          fieldHtml = `<select class="form-select form-select-sm proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-attempt="${a}" data-type="bool" data-sum="${c.sum !== false ? 1 : 0}">
+            <option value="" ${cur === "" ? "selected" : ""}>Не заполнялось</option>
+            <option value="Да" ${cur === "Да" ? "selected" : ""}>Выполнено ✓</option>
+            <option value="Нет" ${cur === "Нет" ? "selected" : ""}>Не выполнено ✗</option>
+          </select>`;
         } else if (type === "text") {
           fieldHtml = `<input type="text" class="form-control proto-calc" id="${id}" data-gi="${gi}" data-ci="${ci}" data-attempt="${a}" data-type="text" value="${escHtml(val)}" placeholder="Текст">`;
         } else if (type === "time") {
@@ -4985,7 +4990,7 @@ function updateProtocolTotals() {
         const type = inp.dataset.type || "int";
         if (type === "text" || type === "time") return;
         if (type === "bool") {
-          if (inp.dataset.sum === "1" && inp.checked) s += 1;
+          if (inp.dataset.sum === "1" && inp.value === "Да") s += 1;
           return;
         }
         const n = parseScoreNumber(inp.value);
@@ -5036,8 +5041,7 @@ function saveProtocol() {
         const el = document.getElementById(`proto-${gi}-${ci}-a${a}`);
         if (!el) return;
         const type = c.type || "int";
-        const value =
-          type === "bool" ? (el.checked ? "Да" : "Нет") : type === "time" ? formatTimeValue(el.value) : el.value;
+        const value = type === "bool" ? el.value : type === "time" ? formatTimeValue(el.value) : el.value;
         if (c.id) scores["f:" + c.id + suf] = value;
         scores[`${cg.title}::${c.full || c.title}` + suf] = value;
       });
@@ -5079,49 +5083,59 @@ function saveProtocol() {
 function clearProtocol() {
   const team = teamsData.find((t) => t.id === currentProtocolTeamId);
   if (!team) return;
-  
+
   const displayName = getTeamDisplayName(team);
-  
-  if (!confirm(`⚠️ ВНИМАНИЕ!\n\nВы собираетесь полностью очистить протокол команды "${displayName}".\n\nБудут удалены:\n• Все оценки и баллы\n• Номер по жребию\n• Место в соревнованиях\n• Дополнительные баллы\n• Все попытки и квалификации\n\nЭто действие необратимо. Продолжить?`)) {
+
+  if (
+    !confirm(
+      `⚠️ ВНИМАНИЕ!\n\nВы собираетесь полностью очистить протокол команды "${displayName}".\n\nБудут удалены:\n• Все оценки и баллы\n• Номер по жребию\n• Место в соревнованиях\n• Дополнительные баллы\n• Все попытки и квалификации\n\nЭто действие необратимо. Продолжить?`,
+    )
+  ) {
     return;
   }
-  
-  if (!confirm(`Вы уверены, что хотите удалить ВСЕ данные протокола команды "${displayName}"?\n\nНажмите ОК для подтверждения.`)) {
+
+  if (
+    !confirm(
+      `Вы уверены, что хотите удалить ВСЕ данные протокола команды "${displayName}"?\n\nНажмите ОК для подтверждения.`,
+    )
+  ) {
     return;
   }
-  
+
   // Полностью очистить scores (удалить все ключи, включая булевы)
   team.scores = {};
-  
+
   // Полностью очистить protocol
   team.protocol = {};
-  
+
   // Удалить дополнительные поля (не присваивать пустые значения, а именно удалить)
   delete team.draw;
   delete team.extra;
   delete team.place;
-  
+
   // Сохранить локально
   saveData();
-  
+
   showToast(`Протокол команды "${displayName}" полностью очищен`, "success");
-  
+
   // Перерисовать форму
   renderProtocolForm(currentProtocolTeamId);
-  
+
   // Отправить на сервер
   const gh = getGitHubSettings();
   if (gh?.owner && gh?.repo && gh?.token) {
     showToast("Отправка изменений на сервер... Не закрывайте страницу", "info");
-    commitToGitHub().then((r) => {
-      if (r.success) {
-        showToast("✅ Данные очищены и отправлены на сервер", "success");
-      } else {
-        showToast("⚠️ Локально очищено, но ошибка отправки: " + r.message, "warning");
-      }
-    }).catch((e) => {
-      showToast("❌ Ошибка отправки: " + e.message + ". Данные очищены локально.", "error");
-    });
+    commitToGitHub()
+      .then((r) => {
+        if (r.success) {
+          showToast("✅ Данные очищены и отправлены на сервер", "success");
+        } else {
+          showToast("⚠️ Локально очищено, но ошибка отправки: " + r.message, "warning");
+        }
+      })
+      .catch((e) => {
+        showToast("❌ Ошибка отправки: " + e.message + ". Данные очищены локально.", "error");
+      });
   } else {
     showToast("⚠️ GitHub не настроен — данные очищены только локально. Сделайте бэкап.", "warning");
   }
