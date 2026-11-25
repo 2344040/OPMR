@@ -1,6 +1,6 @@
 {
   "meta": {
-    "savedAt": 1795641107496,
+    "savedAt": 1795641140564,
     "teams": 70
   },
   "organizations": [
@@ -9045,7 +9045,8 @@
       "protocol": {
         "place": 0,
         "totalScore": 0
-      }
+      },
+      "teamName": "РЦ ФМЛ №239 (2)"
     },
     {
       "id": "032-2026-anpa",
