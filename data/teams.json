@@ -1,6 +1,6 @@
 {
   "meta": {
-    "savedAt": 1795532284538,
+    "savedAt": 1795604572217,
     "teams": 69
   },
   "organizations": [
@@ -9592,7 +9592,7 @@
       "id": "034-2026-bek",
       "created": "23.11.2026",
       "year": 2026,
-      "shortName": "ГБНОУ «СПб ГДТЮ»",
+      "shortName": "",
       "city": "Санкт-Петерург",
       "region": "",
       "postalCode": "191011",
@@ -9660,7 +9660,7 @@
           "order": ""
         }
       ],
-      "orgId": "034",
+      "orgId": "027",
       "applicationNumber": "2605524924",
       "teamName": "",
       "classId": "bek",
