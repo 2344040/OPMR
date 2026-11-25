@@ -4936,7 +4936,7 @@ function renderProtocolForm(teamId) {
   if (!classHasExtraGroup(team.year, classId)) {
     html += `<div class="detail-section"><h5 class="detail-section-title">Дополнительные баллы</h5><div class="row g-3"><div class="col-md-6"><label class="form-label">За внеконкурсное задание</label><input type="number" step="any" class="form-control proto-calc" id="protoExtraBonus" value="${p.extraBonus ?? team.extra ?? 0}"></div></div></div>`;
   }
-  html += `<div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? team.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
+  html += `<div class="detail-section" style="background:#f0f9ff;border:2px solid #3b82f6"><div class="row g-3 align-items-center"><div class="col-md-8"><div class="detail-label" style="font-size:1rem">ИТОГО БАЛЛОВ</div><div class="detail-value" style="font-size:2rem;font-weight:700;color:#1d4ed8" id="protoTotal">0</div></div><div class="col-md-4"><label class="form-label">Место</label><input type="number" class="form-control" id="protoPlace" value="${p.place ?? team.place ?? ""}" style="font-size:1.5rem;font-weight:700;text-align:center"></div></div></div><div class="d-flex gap-2 mt-3"><button type="button" class="btn btn-primary btn-action px-4" onclick="saveProtocol()"><i class="fas fa-save me-2"></i>Сохранить протокол</button><button type="button" class="btn btn-outline-danger btn-action px-4" onclick="clearProtocol()" title="Очистить все данные протокола"><i class="fas fa-trash-alt me-2"></i>Очистить протокол</button><button type="button" class="btn btn-outline-secondary btn-action" onclick="showCompetitionView()">Отмена</button></div></form>`;
   container.innerHTML = html;
   const form = document.getElementById("protocolForm");
   const onEdit = () => {
@@ -5074,6 +5074,43 @@ function saveProtocol() {
     showToast("Протокол сохранён локально", "success");
   }
   showCompetitionView();
+}
+
+function clearProtocol() {
+  const team = teamsData.find((t) => t.id === currentProtocolTeamId);
+  if (!team) return;
+  
+  const displayName = getTeamDisplayName(team);
+  
+  if (!confirm(`⚠️ ВНИМАНИЕ!\n\nВы собираетесь полностью очистить протокол команды "${displayName}".\n\nБудут удалены:\n• Все оценки и баллы\n• Номер по жребию\n• Место в соревнованиях\n• Дополнительные баллы\n\nЭто действие необратимо. Продолжить?`)) {
+    return;
+  }
+  
+  // Дополнительная защита: спросить ещё раз
+  if (!confirm(`Вы уверены, что хотите удалить ВСЕ данные протокола команды "${displayName}"?\n\nНажмите ОК для подтверждения.`)) {
+    return;
+  }
+  
+  // Очистить данные
+  team.scores = {};
+  team.protocol = { drawNumber: "", extraBonus: 0, place: 0, totalScore: 0 };
+  team.draw = "";
+  team.extra = 0;
+  team.place = 0;
+  
+  saveData();
+  
+  showToast(`Протокол команды "${displayName}" полностью очищен`, "success");
+  
+  // Перерисовать форму
+  renderProtocolForm(currentProtocolTeamId);
+  
+  // Отправить на сервер
+  const gh = getGitHubSettings();
+  if (gh?.owner && gh?.repo && gh?.token) {
+    showToast("Отправка изменений на сервер...", "info");
+    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+  }
 }
 
 // * ===== 31. СВОДНАЯ ТАБЛИЦА: два режима =====
