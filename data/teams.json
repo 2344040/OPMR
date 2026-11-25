@@ -1,6 +1,6 @@
 {
   "meta": {
-    "savedAt": 1795640527012,
+    "savedAt": 1795640838886,
     "teams": 70
   },
   "organizations": [
@@ -210,6 +210,12 @@
       "phone": "+7 (812) 239-02-39",
       "email": "2tsfilippova@gmail.com",
       "orgLeader": "Филиппова Татьяна Сергеевна"
+    },
+    {
+      "id": "036",
+      "fullName": "МГТУ им. Н. Э. Баумана",
+      "shortName": "МГТУ им. Н. Э. Баумана",
+      "city": "Москва"
     }
   ],
   "apparatusClasses": [
@@ -5363,13 +5369,14 @@
           "order": "02.22-02.06 №4343 АК"
         }
       ],
-      "shortName": "Гидронавтика",
+      "shortName": "МГТУ им. Н. Э. Баумана",
       "year": 2026,
-      "orgId": "002",
+      "orgId": "036",
       "apparatusName": "«Агент000» (ТНПА)",
       "classId": "tnpa",
       "scores": {},
-      "protocol": {}
+      "protocol": {},
+      "teamName": ""
     },
     {
       "created": "10.11.2026",
