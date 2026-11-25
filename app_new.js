@@ -5082,22 +5082,26 @@ function clearProtocol() {
   
   const displayName = getTeamDisplayName(team);
   
-  if (!confirm(`⚠️ ВНИМАНИЕ!\n\nВы собираетесь полностью очистить протокол команды "${displayName}".\n\nБудут удалены:\n• Все оценки и баллы\n• Номер по жребию\n• Место в соревнованиях\n• Дополнительные баллы\n\nЭто действие необратимо. Продолжить?`)) {
+  if (!confirm(`⚠️ ВНИМАНИЕ!\n\nВы собираетесь полностью очистить протокол команды "${displayName}".\n\nБудут удалены:\n• Все оценки и баллы\n• Номер по жребию\n• Место в соревнованиях\n• Дополнительные баллы\n• Все попытки и квалификации\n\nЭто действие необратимо. Продолжить?`)) {
     return;
   }
   
-  // Дополнительная защита: спросить ещё раз
   if (!confirm(`Вы уверены, что хотите удалить ВСЕ данные протокола команды "${displayName}"?\n\nНажмите ОК для подтверждения.`)) {
     return;
   }
   
-  // Очистить данные
+  // Полностью очистить scores (удалить все ключи, включая булевы)
   team.scores = {};
-  team.protocol = { drawNumber: "", extraBonus: 0, place: 0, totalScore: 0 };
-  team.draw = "";
-  team.extra = 0;
-  team.place = 0;
   
+  // Полностью очистить protocol
+  team.protocol = {};
+  
+  // Удалить дополнительные поля (не присваивать пустые значения, а именно удалить)
+  delete team.draw;
+  delete team.extra;
+  delete team.place;
+  
+  // Сохранить локально
   saveData();
   
   showToast(`Протокол команды "${displayName}" полностью очищен`, "success");
@@ -5108,8 +5112,18 @@ function clearProtocol() {
   // Отправить на сервер
   const gh = getGitHubSettings();
   if (gh?.owner && gh?.repo && gh?.token) {
-    showToast("Отправка изменений на сервер...", "info");
-    commitToGitHub().then((r) => showToast(r.message, r.success ? "success" : "error"));
+    showToast("Отправка изменений на сервер... Не закрывайте страницу", "info");
+    commitToGitHub().then((r) => {
+      if (r.success) {
+        showToast("✅ Данные очищены и отправлены на сервер", "success");
+      } else {
+        showToast("⚠️ Локально очищено, но ошибка отправки: " + r.message, "warning");
+      }
+    }).catch((e) => {
+      showToast("❌ Ошибка отправки: " + e.message + ". Данные очищены локально.", "error");
+    });
+  } else {
+    showToast("⚠️ GitHub не настроен — данные очищены только локально. Сделайте бэкап.", "warning");
   }
 }
 
