@@ -1,6 +1,6 @@
 {
   "meta": {
-    "savedAt": 1795529590980,
+    "savedAt": 1795532284538,
     "teams": 69
   },
   "organizations": [
@@ -178,6 +178,23 @@
       "phone": "+7 916 445 5144",
       "email": "kolya.toropof@gmail.com",
       "orgLeader": "Торопов Николай Владимирович"
+    },
+    {
+      "id": "033",
+      "fullName": "Президентский ФМЛ #239",
+      "shortName": "Президентский ФМЛ #239",
+      "city": "Санкт-Петербург",
+      "postalCode": "191028",
+      "address": "г. Санкт-Петербург, ул. Кирочная, д. 8",
+      "phone": "+7 (812) 239-02-39",
+      "email": "2tsfilippova@gmail.com",
+      "orgLeader": "Филиппова Татьяна Сергеевна"
+    },
+    {
+      "id": "034",
+      "fullName": "ГБОУ Школа №1293",
+      "shortName": "ГБОУ  №1293",
+      "city": "Москва"
     }
   ],
   "apparatusClasses": [
@@ -9467,7 +9484,7 @@
     {
       "id": "033-2026-bek",
       "created": "20.11.2026",
-      "orgId": "033",
+      "orgId": "034",
       "year": 2026,
       "shortName": "ГБОУ  №1293",
       "city": "Москва",
