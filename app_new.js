@@ -3745,18 +3745,49 @@ function handleEditPageFileUpload(event) {
 
 async function loadDefaultData() {
   const hadLocal = loadData();
-  if (!hadLocal && localStorage.getItem(STORAGE_KEY_OLD)) {
-    new bootstrap.Modal(document.getElementById("migrationModal")).show();
-  } else if (!hadLocal) {
-    const ok = await fetchServerData(false);
-    if (!ok) {
-      document.getElementById("teamsContainer").innerHTML =
-        `<div class="col-12 text-center text-muted py-5"><i class="fas fa-exclamation-triangle fa-2x mb-2" style="color:#f59e0b"></i><div>Не удалось загрузить данные ни из памяти браузера, ни с сервера.<br>Войдите в режим Админ и загрузите файл вручную.</div></div>`;
+  
+  // Всегда проверяем сервер, даже если есть локальные данные
+  const server = await opmrFetchServerPayload(true);
+  
+  if (server) {
+    const local = opmrLocalPayload();
+    const base = opmrReadBase() || server;
+    const { merged, conflicts } = opmrComputeMerge(base, local, server);
+    
+    if (conflicts.length) {
+      // Если есть конфликты — показываем модалку
+      const choices = await opmrAskConflicts(conflicts);
+      if (choices) {
+        conflicts.forEach((c) => {
+          if (c.kind === "deleted") {
+            if (choices[c.id] === "server") merged.teams = merged.teams.filter((t) => t.id !== c.id);
+          } else if (choices[c.id] === "server") {
+            merged.teams = merged.teams.map((t) => (t.id === c.id ? c.serverTeam : t));
+          }
+        });
+      }
     }
-  } else {
-    const changed = await fetchServerData(true);
-    if (changed) showToast("Загружены более свежие данные с сервера", "info");
+    
+    const needsPush = opmrNeedsPush(merged, server);
+    const changed = opmrChangedVsLocal(merged, local);
+    opmrApplyMerged(merged, server, needsPush, changed);
+    
+    if (changed) {
+      showToast("Загружены свежие данные с сервера", "success");
+    }
+  } else if (!hadLocal) {
+    // Если нет ни localStorage, ни сервера — показываем ошибку
+    document.getElementById("teamsContainer").innerHTML =
+      `<div class="col-12 text-center text-muted py-5">
+        <i class="fas fa-exclamation-triangle fa-2x mb-2" style="color:#f59e0b"></i>
+        <div>Не удалось загрузить данные.<br>Проверьте подключение к интернету.</div>
+      </div>`;
   }
+  
+  if (hadLocal && !localStorage.getItem("opmr_teams_data_v2")) {
+    new bootstrap.Modal(document.getElementById("migrationModal")).show();
+  }
+  
   renderTeams(teamsData);
   renderHeaderButtons();
   renderYearSwitcher();
