@@ -5918,20 +5918,13 @@ document.addEventListener("visibilitychange", () => {
   opmrStartupSync();
 });
 // ===== ПУНКТ 3: перед любой отправкой — сверка и слияние =====
+
 async function opmrPrePushMerge() {
-  const gh = getGitHubSettings();
-  if (!gh || !gh.owner || !gh.repo || !gh.token) {
-    showToast("Для отправки изменений настройте GitHub (нужен токен с правом записи)", "error");
-    openGitHubSettings();
-    return false;
-  }
-  const server = await opmrFetchServerPayload(true);
-  if (!server)
-    return confirm(
-      "Не удалось получить свежие данные с сервера.\nОтправить без сверки — возможны перезаписи чужих правок?\n\nОК — отправить, Отмена — прервать.",
-    );
-  return opmrMergeAgainstServer(server, {prePush: true});
+  // ВРЕМЕННО ОТКЛЮЧЕНО: подтяжка с сервера перед пушем
+  // чтобы не затирать локальные изменения при быстром переключении между командами
+  return true;
 }
+
 const _opmrJsOrigCommit = commitToGitHub;
 commitToGitHub = async function (...a) {
   const ok = await opmrPrePushMerge();
